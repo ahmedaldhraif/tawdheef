@@ -1,17 +1,16 @@
 # Tawdheef guides
 
-Start with the app, connect your agent and CV, then choose where to apply.
+Start with the setup guide to connect your agent, install the skill and prepare your CV. Then choose where to apply.
 These are the same source guides used by the Tawdheef website.
 
 ## Get started
 
-- [Set up Tawdheef](get-started.md)
+- [Set up Tawdheef with your agent](use-the-skill.md)
 - [Connect Codex or Claude Code](connect-your-agent.md)
 - [Create or connect your CV](connect-your-cv.md)
 
 ## Use Tawdheef
 
-- [Use the Tawdheef skill](use-the-skill.md)
 - [Add a country directory](use-directory-packs.md)
 - [Start your first application run](apply-to-jobs.md)
 - [Check replies and reports](replies-and-reports.md)

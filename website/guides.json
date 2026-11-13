@@ -1,10 +1,10 @@
 [
   {
-    "slug": "get-started",
-    "title": "Set up Tawdheef",
-    "description": "Download the app and let Codex or Claude Code handle local setup while you complete your sign-ins.",
+    "slug": "use-the-skill",
+    "title": "Set up Tawdheef with your agent",
+    "description": "Download the free app, connect Codex or Claude Code and your CV, then choose where to apply.",
     "category": "Start",
-    "source": "docs/guides/get-started.md",
+    "source": "docs/guides/use-the-skill.md",
     "related": ["connect-your-agent", "connect-your-cv", "troubleshoot"],
     "next": "connect-your-agent"
   },
@@ -14,7 +14,7 @@
     "description": "Connect the local tracker tools, install the workflow skill and verify the assistant you want Run to use.",
     "category": "Start",
     "source": "docs/guides/connect-your-agent.md",
-    "related": ["get-started", "connect-your-cv", "use-the-skill"],
+    "related": ["use-the-skill", "connect-your-cv", "troubleshoot"],
     "next": "connect-your-cv"
   },
   {
@@ -23,16 +23,7 @@
     "description": "Create a free digital CV on Tabbio or connect your existing account, then check that Tawdheef can read it.",
     "category": "Start",
     "source": "docs/guides/connect-your-cv.md",
-    "related": ["get-started", "connect-your-agent", "troubleshoot"],
-    "next": "use-directory-packs"
-  },
-  {
-    "slug": "use-the-skill",
-    "title": "Use the Tawdheef skill",
-    "description": "Install the optional workflow guidance and give your agent practical requests for shortlists, applications and reply checks.",
-    "category": "Use",
-    "source": "docs/guides/use-the-skill.md",
-    "related": ["connect-your-agent", "apply-to-jobs", "replies-and-reports"],
+    "related": ["use-the-skill", "connect-your-agent", "troubleshoot"],
     "next": "use-directory-packs"
   },
   {
@@ -68,7 +59,7 @@
     "description": "Find the next fix for startup, assistant sign-in, CV reads, browser tools, email setup or incomplete pack imports.",
     "category": "Fix",
     "source": "docs/guides/troubleshoot.md",
-    "related": ["get-started", "connect-your-agent", "connect-your-cv"],
+    "related": ["use-the-skill", "connect-your-agent", "connect-your-cv"],
     "next": "connect-your-agent"
   },
   {

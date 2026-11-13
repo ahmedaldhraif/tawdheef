@@ -9,11 +9,11 @@ export function repositoryLinkResolver(config){return href=>{
  const prefix=config.intendedRepository+'/blob/main/';if(!href.startsWith(prefix))return href;
  const [source,hash]=href.slice(prefix.length).split('#');
  const guide=source.match(/^docs\/guides\/([a-z-]+)\.md$/);
- if(guide)return guide[1]==='README'?'/guides/':'/guides/'+guide[1]+'/'+(hash?'#'+hash:'');
+ if(guide)return guide[1]==='README'?'/guides/':'/guides/'+(guide[1]==='get-started'?'use-the-skill':guide[1])+'/'+(hash?'#'+hash:'');
  if(source==='docs/guides/README.md')return'/guides/';
  if(source==='docs/FIRST-RUN.md'){
   const anchors={'give-your-agent-one-setup-request':'agent','agent-checklist':'agent','get-the-folder':'install','your-part':'cv'};
-  return'/get-started/'+(anchors[hash]?'#'+anchors[hash]:'');
+  return'/guides/use-the-skill/'+(anchors[hash]?'#'+anchors[hash]:'');
  }
  if(source==='directories/README.md')return'/directories/';
  if(source==='website/about.md')return'/about/';
@@ -41,18 +41,23 @@ export async function loadGuides(root){
  return metadata;
 }
 
-export function createGuidePages({guides,config,firstRunPrompt,prompt,code}){
+export function createGuidePages({guides,config,firstRunPrompt,prompt,code,sourceDownload,releaseUrl}){
  const resolveLink=repositoryLinkResolver(config);
  const path=guide=>'/guides/'+guide.slug+'/';
- const nav=current=>`<nav aria-label="Guides">${groups.map(([key,title])=>`<div class="guide-nav-group"><span>${title}</span>${guides.filter(guide=>guide.category===key).map(guide=>`<a href="${path(guide)}" ${current===guide.slug?'aria-current="page"':''}>${esc(guide.title)}</a>`).join('')}</div>`).join('')}</nav>`;
+ const nav=current=>`<nav aria-label="Guides"><a class="guide-all" href="/guides/">All guides</a>${groups.map(([key,title])=>`<div class="guide-nav-group"><span>${title}</span>${guides.filter(guide=>guide.category===key).map(guide=>`<a href="${path(guide)}" ${current===guide.slug?'aria-current="page"':''}>${esc(guide.title)}</a>`).join('')}</div>`).join('')}</nav>`;
  const render=guide=>renderMarkdown(guide.markdown,{prefix:guide.slug,resolveLink,widget:(token,index)=>{
   if(token==='[setup-prompt]: #')return prompt(guide.slug+'-setup',firstRunPrompt,'Setup request');
+  if(token==='[app-download]: #')return `<div class="actions"><a class="button" href="${sourceDownload}">Download from GitHub</a><a href="${releaseUrl}">Release notes &amp; checksums</a></div>`;
   if(token==='{{skill-install}}')return code(guide.slug+'-skill','npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef');
   return null;
  }});
  function hub(){return `<div class="page-head"><h1>Guides.</h1><p>Set up Tawdheef, connect your CV and get on with your job search.</p></div><div class="guide-search"><label for="guide-search">Find a guide</label><input id="guide-search" type="search" placeholder="Try CV, packs or replies" autocomplete="off" aria-describedby="guide-search-status"/><p id="guide-search-status" role="status">${guides.length} guides</p></div><div class="guide-categories">${groups.map(([key,title])=>`<section class="guide-category" data-guide-category><h2>${title}</h2><div>${guides.filter(guide=>guide.category===key).map(guide=>`<a class="guide-link" href="${path(guide)}" data-guide-item data-guide-search="${esc([guide.slug,guide.title,guide.description,guide.markdown].join(' '))}"><h3>${esc(guide.title)}</h3><p>${esc(guide.description)}</p></a>`).join('')}</div></section>`).join('')}</div><p id="guide-empty" class="note" hidden>No guides match. Try another word or clear the search.</p><section class="guide-support"><h2>Something missing?</h2><p><a href="${config.intendedRepository}/issues/new?template=bug.yml">Report a problem on GitHub</a> or <a href="/directories/#contribute">help improve a directory</a>.</p></section>`;}
  function detail(guide){
   const content=render(guide),toc=content.headings.filter(item=>item.level===2);
+  if(guide.slug==='use-the-skill'){
+   // Keep incoming links to the former standalone setup page useful.
+   for(const[alias,target]of[['manual','if-you-prefer-the-terminal'],['first-run','workflow'],['tabbio-agent','cv'],['help','privacy']])content.html=content.html.replace(new RegExp(`(<h[23] id="${target}")`),`<span id="${alias}" class="anchor-alias" aria-hidden="true"></span>$1`);
+  }
   const contents=`<nav aria-label="On this page">${toc.map(item=>`<a href="#${item.id}">${esc(item.title)}</a>`).join('')}</nav>`;
   const next=guides.find(item=>item.slug===guide.next),related=guides.filter(item=>(guide.related||[]).includes(item.slug));
   return `<div class="guide-layout"><aside class="guide-sidebar">${nav(guide.slug)}</aside><article class="guide-article"><details class="guide-mobile-nav"><summary>Browse guides</summary>${nav(guide.slug)}</details><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/guides/">Guides</a><span aria-hidden="true">/</span><span>${esc(guide.title)}</span></nav><header class="guide-head"><div class="guide-title-row">${guide.slug==='use-the-skill'?'<img class="guide-skill-mark" src="/brand/mark.svg" alt="" width="44" height="44" aria-hidden="true"/>':''}<h1>${esc(guide.title)}</h1></div><p>${esc(guide.description)}</p></header>${toc.length?`<details class="guide-mobile-contents"><summary>On this page</summary>${contents}</details>`:''}<div class="docs-content guide-body">${content.html}</div>${next?`<a class="guide-next" href="${path(next)}"><span>Next guide</span><strong>${esc(next.title)} <span aria-hidden="true">→</span></strong></a>`:''}${related.length?`<div class="guide-related"><span>Related guides</span>${related.map(item=>`<a href="${path(item)}">${esc(item.title)}</a>`).join('')}</div>`:''}<div class="guide-source"><a href="${config.intendedRepository}/blob/main/${guide.source}">Read or improve this guide on GitHub</a></div></article><aside class="guide-page-contents">${toc.length?'<span>On this page</span>'+contents:''}</aside></div>`;
@@ -62,7 +67,7 @@ export function createGuidePages({guides,config,firstRunPrompt,prompt,code}){
 
 export function aboutPage(markdown,config){
  const content=renderMarkdown(markdown,{prefix:'about',resolveLink:repositoryLinkResolver(config)});
- content.html=content.html.replace('<p><a href="/get-started/">Get started</a></p>','<p class="about-start"><a class="button" href="/get-started/">Get started</a></p>');
+ content.html=content.html.replace('<p><a href="/guides/use-the-skill/">Get started</a></p>','<p class="about-start"><a class="button" href="/guides/use-the-skill/">Get started</a></p>');
  const title=markdown.match(/^# (.+)$/m)?.[1]||'About Tawdheef';
  return `<div class="page-head about-head"><h1>${esc(title)}</h1></div><div class="about-author"><a href="${config.authorLinkedInUrl}" class="about-author-link"><img src="/site-assets/people/ahmed-aldhraif.png" alt="Ahmed AlDhraif" width="64" height="64"/><span><strong>Ahmed AlDhraif</strong><span>Creator of Tawdheef</span></span><img class="about-linkedin" src="/brands/linkedin-original.ico" alt="LinkedIn" width="20" height="20"/></a></div><article class="docs-content about-body">${content.html}</article>`;
 }
