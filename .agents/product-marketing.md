@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v9
+**Document version:** v10
 **Last updated:** 2026-11-13
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -107,14 +107,13 @@ parameters; they do not prove a resulting signup or upgrade.
 
 ## Guides and public information
 
-- `/guides/`: choose the next task, with plain descriptions and direct links.
-- `/get-started/`: source download or clone, local setup, CV connection,
-  readiness check and first chosen Run; keep this the canonical start page.
-- `/guides/get-started/`: reuse that canonical setup source or direct readers
-  there; do not maintain a second, conflicting installation workflow.
+- `/guides/`: searchable index of the eight guides, reached through All guides.
+- `/guides/use-the-skill/`: the main setup and skill article. Lead with the
+  app download and canonical agent setup request, then CLI/MCP connection,
+  free Tabbio CV connection and verification. Standalone skill install is secondary.
+- `/get-started/` and `/guides/get-started/`: permanent redirects to that
+  article, with existing setup anchors preserved.
 - `/guides/connect-your-agent/`: actual local Codex/Claude Code setup and checks.
-- `/guides/use-the-skill/`: the canonical skill explanation, install command,
-  client invocation and guidance-versus-tools/account distinction.
 - `/guides/connect-your-cv/`: free Tabbio CV creation or existing-account connection;
   distinguish tracker CV reads from a separate Tabbio editing connection.
 - `/guides/use-directory-packs/`: public pack discovery, extract/import all CSV
@@ -136,10 +135,13 @@ existing links still reach the canonical guide. Use the approved Arabic Grid
 SVG at `/brand/mark.svg` beside the skill-guide heading; a typed ت is text,
 not the selected logo. Preserve the mark's proportions and two square dots.
 Skills are instructions, not new tools or proof of authentication. The homepage
-walkthrough demonstrates the real product without inventing activity, connected
+preview uses one real app image without tabs. Three homepage steps explain
+agent setup, CV connection and choosing companies for Run. An optional quick
+CLI recipe installs browser tools, configures the chosen client and starts
+the app. The preview does not invent activity, connected
 accounts, submission receipts or testimonials. Guidance on setup, backups and
 updates should follow existing canonical docs. An update to the public website
-or GitHub source does not change an already published v0.1.1 release asset.
+or GitHub source does not change an already published release asset.
 
 These choices come from reviewed reference patterns and the owner's approval;
 they do not establish better conversion, ranking or agent citations.
@@ -166,6 +168,9 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
+- v10 (2026-11-13) — Combined setup and the skill in one primary guide,
+  brought direct CLI connection into the homepage flow and removed preview tabs.
+  Kept the searchable guide index and redirected earlier setup/skill links.
 - v9 (2026-11-13) — Owner placed the skill inside Guides at
   `/guides/use-the-skill/`, with legacy skill-route redirects and no separate
   Skills navigation item. Required the approved SVG mark rather than a typed

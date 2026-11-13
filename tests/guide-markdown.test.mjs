@@ -22,10 +22,11 @@ test('the same guide links work in GitHub source and resolve to the correspondin
  const resolveLink=repositoryLinkResolver({intendedRepository:root});
  const source='[Setup]('+root+'/blob/main/docs/FIRST-RUN.md#give-your-agent-one-setup-request) and [CV]('+root+'/blob/main/docs/guides/connect-your-cv.md)';
  const rendered=renderMarkdown(source,{resolveLink}).html;
- assert.ok(rendered.includes('href="/get-started/#agent"'));
+ assert.ok(rendered.includes('href="/guides/use-the-skill/#agent"'));
  assert.ok(rendered.includes('href="/guides/connect-your-cv/"'));
  assert.equal(resolveLink('https://app.tabbio.com/?utm_source=tawdheef'),'https://app.tabbio.com/?utm_source=tawdheef');
  assert.equal(resolveLink(root+'/blob/main/docs/guides/README.md'),'/guides/');
+ assert.equal(resolveLink(root+'/blob/main/docs/guides/get-started.md#cv'),'/guides/use-the-skill/#cv');
 });
 
 test('guide headings, copy targets, lists and widgets remain distinct',()=>{

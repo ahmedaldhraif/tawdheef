@@ -8,19 +8,20 @@ This is a navigation aid for this repository. It does not override AGENTS.md, gr
 
 ## Start here
 
+- [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main setup and skill guide. Connect the project CLI/MCP tools, install workflow guidance and verify the assistant and CV. Canonical website route: /guides/use-the-skill/.
 - [README](https://github.com/ahmedaldhraif/tawdheef/blob/main/README.md): What the app does, prerequisites and the first useful action.
 - [License](https://github.com/ahmedaldhraif/tawdheef/blob/main/LICENSE): MIT license for project code; third-party data and artwork retain their own terms.
 - [Agent instructions](https://github.com/ahmedaldhraif/tawdheef/blob/main/AGENTS.md): Setup, operator and developer modes; scope, evidence and provider boundaries.
 - [Claude Code entry point](https://github.com/ahmedaldhraif/tawdheef/blob/main/CLAUDE.md): Shared project instructions.
 - [First-run guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/FIRST-RUN.md): Agent-assisted local setup and account sign-ins in Connections.
-- [Tawdheef skill](https://github.com/ahmedaldhraif/tawdheef/blob/main/skills/tawdheef/SKILL.md): Job-search workflow guidance; installing a skill does not install or authenticate the app.
+- [Raw Tawdheef skill](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/skills/tawdheef/SKILL.md): Operational workflow instructions; installing a skill does not install or authenticate the app.
 - [Tool schemas](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/docs/tools.json): Current CLI/MCP contracts; discover runtime capabilities before acting.
 - [Release configuration](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/website/config.json): Current releaseTag and GitHub repository URL.
 - [GitHub releases](https://api.github.com/repos/ahmedaldhraif/tawdheef/releases): Machine-readable release assets including prereleases. Do not assume releases/latest includes the configured prerelease.
 
 ## Set up the app and CV
 
-Download the app's versioned source ZIP from the chosen release or clone the repository. Open that folder in Codex or Claude Code and ask it to follow docs/FIRST-RUN.md. Node.js 24+ is required; npm start installs missing locked dependencies, builds and starts the local app. Agent setup creates project-only MCP settings and the Tawdheef skill through npm run agent -- codex or npm run agent -- claude-code; custom settings and user data must be preserved.
+Follow the main setup and skill guide at docs/guides/use-the-skill.md. Download the app's versioned source ZIP from the chosen release or clone the repository. Open that folder in Codex or Claude Code. Node.js 24+ is required; npm start installs missing locked dependencies, builds and starts the local app. Connect the chosen client through npm run agent -- codex or npm run agent -- claude-code; these create project-only MCP settings and install the Tawdheef skill. Preserve custom settings and user data. docs/FIRST-RUN.md holds the detailed agent setup request.
 
 A readable connected CV is required for the local app's Run button. Existing Tabbio users connect their account in Connections → Your CV → Tabbio CV. People without a CV can create their free digital CV at https://app.tabbio.com, using their real information, then connect it. Choose the Run assistant and Check connections. get_setup_status with verify:true checks assistant sign-in and reads the already connected CV; setup does not authorise applications, CV edits, messages, events or schedules.
 
@@ -56,9 +57,8 @@ The public repository and website do not expose a person's local tracker, connec
 ## Practical guides
 
 - [Guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md): Setup, agent and CV connections, directory packs, application runs, replies and fixes. These Markdown files are also rendered on the public website.
-- [Set up Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/get-started.md): Prepare the local folder and use the canonical first-run request.
+- [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main entry for setup, project CLI connection, skill installation and practical requests. Website aliases /get-started/, /guides/get-started/, /skills/ and /skills/tawdheef/ redirect to /guides/use-the-skill/.
 - [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md): Project tools and skill setup for Codex or Claude Code.
-- [Use the Tawdheef skill](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Install the reusable workflow guidance and use practical shortlist, application and reply requests. The canonical website page is /guides/use-the-skill/; legacy /skills/ links lead there.
 - [Connect your CV](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-cv.md): Create a free Tabbio CV or connect an existing one, then verify a fresh read.
 - [Use directory packs](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-directory-packs.md): Download, extract and preview all CSV parts before importing.
 - [Apply to jobs](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md): Explicit targets, the local Run and real outcome evidence.
@@ -71,14 +71,12 @@ The public repository and website do not expose a person's local tracker, connec
 - [Tawdheef guides — Setup, CVs, directories and applications](https://www.tawdheef.com/guides/)
 - [About Tawdheef — Built by Ahmed AlDhraif](https://www.tawdheef.com/about/)
 - [Tawdheef — Auto Job Apply & Application Tracker](https://www.tawdheef.com/)
-- [Get started with Tawdheef — Run your free local tracker](https://www.tawdheef.com/get-started/)
 - [Free community directory packs for Tawdheef](https://www.tawdheef.com/directories/)
 - [Tawdheef project, privacy and policies](https://www.tawdheef.com/policies/)
 - [UAE careers directory — 772 organisation & source records | Tawdheef](https://www.tawdheef.com/directories/uae/)
-- [Set up Tawdheef | Tawdheef guides](https://www.tawdheef.com/guides/get-started/)
+- [Set up Tawdheef with your agent | Tawdheef guides](https://www.tawdheef.com/guides/use-the-skill/)
 - [Connect Codex or Claude Code | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-agent/)
 - [Create or connect your CV | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-cv/)
-- [Use the Tawdheef skill | Tawdheef guides](https://www.tawdheef.com/guides/use-the-skill/)
 - [Add a country directory | Tawdheef guides](https://www.tawdheef.com/guides/use-directory-packs/)
 - [Start your first application run | Tawdheef guides](https://www.tawdheef.com/guides/apply-to-jobs/)
 - [Check replies and reports | Tawdheef guides](https://www.tawdheef.com/guides/replies-and-reports/)
