@@ -22,7 +22,7 @@ export function inlineMarkdown(text,{resolveLink=href=>href}={}){
  return value;
 }
 
-export function renderMarkdown(source,{prefix='guide',skipTitle=true,widget=()=>null,resolveLink=href=>href}={}){
+export function renderMarkdown(source,{prefix='guide',skipTitle=true,widget=()=>null,resolveLink=href=>href,copyLabel='Copy',copyAria='Copy code'}={}){
  const lines=String(source).replaceAll('\r\n','\n').split('\n');
  const out=[],headings=[],ids=new Map();let block=0;
  const inline=text=>inlineMarkdown(text,{resolveLink});
@@ -36,13 +36,14 @@ export function renderMarkdown(source,{prefix='guide',skipTitle=true,widget=()=>
    const code=[];i++;while(i<lines.length&&!/^```\s*$/.test(lines[i]))code.push(lines[i++]);
    if(i===lines.length)throw new Error('Close the code fence in '+prefix);i++;
    const id=prefix+'-code-'+block;
-   out.push(`<div class="guide-code"><button class="copy" type="button" data-copy="${id}" aria-label="Copy code">Copy</button><pre id="${id}"><code>${escapeHtml(code.join('\n'))}</code></pre></div>`);continue;
+   out.push(`<div class="guide-code"><button class="copy" type="button" data-copy="${id}" aria-label="${escapeHtml(copyAria)}">${escapeHtml(copyLabel)}</button><pre id="${id}" dir="ltr"><code>${escapeHtml(code.join('\n'))}</code></pre></div>`);continue;
   }
   const heading=line.match(/^(#{1,3})\s+(.+)$/);
   if(heading){
    i++;const level=heading[1].length;if(level===1&&skipTitle)continue;
-   const base=slug(heading[2]),n=(ids.get(base)||0)+1;ids.set(base,n);const id=base+(n>1?'-'+n:'');
-   headings.push({id,title:heading[2].replace(/[*`]/g,''),level});out.push(`<h${level} id="${id}">${inline(heading[2])}</h${level}>`);continue;
+   const explicit=heading[2].match(/\s+\{#([a-z][a-z0-9-]*)\}$/),text=explicit?heading[2].slice(0,explicit.index):heading[2];
+   const base=explicit?.[1]||slug(text),n=(ids.get(base)||0)+1;ids.set(base,n);const id=base+(n>1?'-'+n:'');
+   headings.push({id,title:text.replace(/[*`]/g,''),level});out.push(`<h${level} id="${id}">${inline(text)}</h${level}>`);continue;
   }
   if(/^---+$/.test(line.trim())){out.push('<hr/>');i++;continue;}
   if(/^>\s?/.test(line)){

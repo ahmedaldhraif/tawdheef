@@ -1,0 +1,74 @@
+[
+  {
+    "slug": "use-the-skill",
+    "title": "أعدّ Tawdheef مع مساعدك",
+    "description": "نزّل التطبيق المجاني، واربط Codex أو Claude Code وسيرتك الذاتية، ثم ابحث عن وظائف مناسبة وابنِ ملفاتك المهنية.",
+    "category": "Start",
+    "source": "docs/i18n/ar/guides/use-the-skill.md",
+    "related": ["connect-your-agent", "connect-your-cv", "troubleshoot"],
+    "next": "connect-your-agent"
+  },
+  {
+    "slug": "connect-your-agent",
+    "title": "اربط Codex أو Claude Code",
+    "description": "اربط أدوات المتتبّع المحلية، وثبّت مهارة سير العمل، وتحقّق من المساعد الذي تريد استخدامه مع Run.",
+    "category": "Start",
+    "source": "docs/i18n/ar/guides/connect-your-agent.md",
+    "related": ["use-the-skill", "connect-your-cv", "troubleshoot"],
+    "next": "connect-your-cv"
+  },
+  {
+    "slug": "connect-your-cv",
+    "title": "أنشئ سيرتك أو اربطها",
+    "description": "أنشئ سيرة رقمية مجانية على Tabbio أو اربط حسابك الحالي، ثم تحقّق من قدرة Tawdheef على قراءتها.",
+    "category": "Start",
+    "source": "docs/i18n/ar/guides/connect-your-cv.md",
+    "related": ["use-the-skill", "connect-your-agent", "troubleshoot"],
+    "next": "use-directory-packs"
+  },
+  {
+    "slug": "use-directory-packs",
+    "title": "أضف دليل جهات لدولة",
+    "description": "نزّل حزمة دولة مجانية من GitHub، وفك ضغطها واستورد كل أجزاء CSV إلى التبويب المختار.",
+    "category": "Use",
+    "source": "docs/i18n/ar/guides/use-directory-packs.md",
+    "related": ["connect-your-cv", "for-agents", "apply-to-jobs"],
+    "next": "apply-to-jobs"
+  },
+  {
+    "slug": "apply-to-jobs",
+    "title": "ابحث عن وظائف مناسبة وابنِ ملفاتك المهنية",
+    "description": "اختر الشركات ليتقدّم مساعدك إلى الوظائف المناسبة أو يبني ملفات مهنية لفرص مستقبلية.",
+    "category": "Use",
+    "source": "docs/i18n/ar/guides/apply-to-jobs.md",
+    "related": ["connect-your-cv", "use-directory-packs", "replies-and-reports"],
+    "next": "replies-and-reports"
+  },
+  {
+    "slug": "replies-and-reports",
+    "title": "تابع الردود والتقارير",
+    "description": "راجع ردود الطلبات المتابَعة، واحفظ تقريرًا محليًا واختر الجدولة دون بدء طلبات جديدة.",
+    "category": "Use",
+    "source": "docs/i18n/ar/guides/replies-and-reports.md",
+    "related": ["apply-to-jobs", "troubleshoot", "use-directory-packs"],
+    "next": null
+  },
+  {
+    "slug": "troubleshoot",
+    "title": "عالج مشكلة في الإعداد أو التشغيل",
+    "description": "اعرف الحل التالي لمشكلة بدء التشغيل أو تسجيل الدخول أو قراءة السيرة أو أدوات المتصفح أو البريد أو استيراد الحزم.",
+    "category": "Fix",
+    "source": "docs/i18n/ar/guides/troubleshoot.md",
+    "related": ["use-the-skill", "connect-your-agent", "connect-your-cv"],
+    "next": "connect-your-agent"
+  },
+  {
+    "slug": "for-agents",
+    "title": "استخدم Tawdheef بصفتك مساعدًا",
+    "description": "اقرأ قواعد الأدوات المحلية، واكتشف الحزم العامة وسجّل النتائج الفعلية ضمن النطاق المطلوب.",
+    "category": "Reference",
+    "source": "docs/i18n/ar/guides/for-agents.md",
+    "related": ["connect-your-agent", "use-directory-packs", "apply-to-jobs"],
+    "next": "use-directory-packs"
+  }
+]

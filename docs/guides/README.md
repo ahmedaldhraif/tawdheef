@@ -1,5 +1,7 @@
 # Tawdheef guides
 
+English | [العربية](../i18n/ar/guides/README.md)
+
 Tawdheef has one installable skill and eight practical guides. The website’s **Skills** overview at `/skills/` brings them together, with the skill command and a Get started action for the local app. These Markdown guides also work directly on GitHub.
 
 ## Install the skill
@@ -19,7 +21,7 @@ This installs workflow guidance. For the app and its CLI/MCP connection, start w
 ## Use Tawdheef
 
 - [Add a country directory](use-directory-packs.md)
-- [Start your first application run](apply-to-jobs.md)
+- [Find matching jobs and build career profiles](apply-to-jobs.md)
 - [Check replies and reports](replies-and-reports.md)
 
 ## Get help

@@ -10,12 +10,16 @@ import { loadGuides, createGuidePages, aboutPage } from './guides.mjs';
 import { walkthrough } from './walkthrough.mjs';
 import { pageLayout } from './layout.mjs';
 import { skillsOverview } from './skills.mjs';
+import { homeContent } from './home.mjs';
+import { ui } from './i18n/ui.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 await packageBrand(root);
 const config=JSON.parse(await readFile(join(root,'website/config.json'),'utf8'));
 const firstRunGuide=await readFile(join(root,'docs/FIRST-RUN.md'),'utf8');
 const guides=await loadGuides(root);
+const guidesAr=await loadGuides(root,{locale:'ar'});
+const guideSets={en:guides,ar:guidesAr};
 const aboutMarkdown=await readFile(join(root,'website/about.md'),'utf8');
 const firstRunPrompt=firstRunGuide.match(/^> (Set up Tawdheef[^\r\n]+)$/m)?.[1];
 if(!firstRunPrompt)throw new Error('The first-run guide must include its copyable setup request.');
@@ -48,51 +52,21 @@ const prompts={
   apply:'Use Tawdheef. Read my selected companies and connected CV. Start an application run for these named targets, check for duplicates, and help me apply. Record each real outcome with its evidence. Hand off anything that needs my sign-in or approval.',
   review:'Use Tawdheef. Review my tracked applications and refresh replies for the relevant threads. Summarise real changes and next actions. Do not start new applications or send follow-ups.'
 };
-const code=(id,text)=>`<div class="install-line"><code id="${id}">${esc(text)}</code><button class="copy" type="button" data-copy="${id}" aria-label="Copy command">Copy</button></div>`;
-const prompt=(id,text,label='Example prompt')=>`<div class="prompt"><div class="prompt-header"><span>${label}</span><button class="copy" type="button" data-copy="${id}" aria-label="Copy ${label.toLowerCase()}">Copy</button></div><pre id="${id}">${esc(text)}</pre></div>`;
+const codeFor=locale=>(id,text)=>`<div class="install-line" dir="ltr"><code id="${id}">${esc(text)}</code><button class="copy" type="button" data-copy="${id}" aria-label="${esc(ui[locale].copyCommand)}">${esc(ui[locale].copy)}</button></div>`;
+const promptFor=locale=>(id,text,label=ui[locale].setupRequest)=>`<div class="prompt"><div class="prompt-header"><span>${esc(label)}</span><button class="copy" type="button" data-copy="${id}" aria-label="${esc(ui[locale].copy)} ${esc(label)}">${esc(ui[locale].copy)}</button></div><pre id="${id}" dir="ltr">${esc(text)}</pre></div>`;
+const code=codeFor('en'),prompt=promptFor('en');
 const cta=(text,href,secondary=false)=>`<a class="button${secondary?' secondary':''}" href="${href}">${text}</a>`;
 const faq=entries=>`<div class="faq">${entries.map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div>`;
 const directoryRow=pack=>`<article class="directory-row"><img class="flag" src="/flags/${esc(pack.country)}.svg" width="38" height="25" alt=""/><div class="directory-text"><h3><a href="/directories/${pack.id}/">${esc(pack.name)}</a></h3><p>${new Intl.NumberFormat('en').format(pack.recordCount)} companies &amp; sources · ${displayDate(pack.snapshotDate)}</p></div><div class="pack-actions"><a href="${packDownload(pack)}">Download</a><a href="${config.repositoryPublished?repository+'/tree/main/directories/'+pack.id:'/downloads/'+pack.id+'-source.json'}">${config.repositoryPublished?'GitHub':'Source'}</a></div></article>`;
 const costCopy='Tawdheef is free and MIT licensed. Your AI client, model usage and connected providers may have their own plans or costs. Tawdheef does not require its own model API key.';
 const tabbioCopy='Tabbio’s free plan lets you build, share and export a digital CV. Connect it to your agent so it can work from your current information. Tawdheef’s CV connection reads the CV you authorise; CV edits and analytics depend on the tools and permissions Tabbio exposes.';
 const guidePages=createGuidePages({guides,config,firstRunPrompt,prompt,code,sourceDownload,releaseUrl});
+const guidePagesAr=createGuidePages({guides:guidesAr,config,firstRunPrompt,prompt:promptFor('ar'),code:codeFor('ar'),sourceDownload,releaseUrl,locale:'ar'});
+const guidePageSets={en:guidePages,ar:guidePagesAr};
 
-function layout(options){return pageLayout(options,{config,repositoryHome,cta,guidePages,guides});}
+function layout(options){const locale=options.path?.startsWith('/ar/')?'ar':'en';return pageLayout({...options,locale},{config,repositoryHome,cta,guidePages:guidePageSets[locale],guides:guideSets[locale]});}
 
-function homePage(){return `
-<section class="hero">
-<h1>Auto-apply to jobs.<br/>Track your applications.</h1>
-<p class="subtitle">Free, open-source software for you and your <span class="agent-options"><span class="agent-name"><img src="/brands/chatgpt.svg" width="20" height="20" alt=""/>ChatGPT</span> or <span class="agent-name"><img src="/brands/claude.svg" width="22" height="22" alt=""/>Claude</span> agent.</span></p>
-<div class="actions">${cta('Get the free app','/skills/#get-started')}<a class="hero-explainer" href="#walkthrough">See how it works</a></div>
-<div class="creator-credit"><a class="creator-handle" href="${config.authorLinkedInUrl}" target="_blank" rel="noopener" aria-label="Built by Ahmed AlDhraif, view LinkedIn profile"><img class="credit-avatar" src="/site-assets/people/ahmed-aldhraif.png" width="32" height="32" alt="" decoding="async"/><span>Built by <strong>Ahmed AlDhraif</strong></span><img class="credit-linkedin" src="/brands/linkedin-original.ico" width="18" height="18" alt=""/></a></div>
-</section>
-${walkthrough()}
-<div class="facts"><div><strong>Free & open source</strong><span>Open-source app.<br/>MIT licensed code.</span></div><div><strong>Saved locally</strong><span>Tracking is saved<br/>on your computer.</span></div><div><strong>${featuredPacks.length} country packs</strong><span>Use a directory.<br/>Help improve it.</span></div></div>
-<section class="section" id="how-it-works"><h2>Set up once. Start applying.</h2><p>Connect your agent and CV, then choose where to apply.</p><div class="workflow"><article><span class="step">1</span><div><h3>Connect your agent</h3><p><a href="/guides/use-the-skill/#install">Download Tawdheef</a> and open the folder in Codex or Claude Code. Ask your agent to set it up, or use the <a href="#quick-setup">CLI quick start</a> below.</p></div></article><article><span class="step">2</span><div><h3>Connect your free CV</h3><p><a href="/guides/use-the-skill/#cv">Create a free Tabbio CV or connect yours</a> in Connections, then choose your assistant and check connections.</p></div></article><article><span class="step">3</span><div><h3>Choose companies. Start Run.</h3><p>Use the included directory or add a country pack. Choose your targets; your agent applies and Tawdheef tracks outcomes and replies.</p></div></article></div><div class="quick-setup" id="quick-setup" aria-labelledby="quick-setup-title"><h3 id="quick-setup-title">CLI quick start</h3><p>With <a href="https://nodejs.org/en/download">Node.js 24+</a>, run these in the downloaded folder:</p>${code('quick-cli','npm run setup -- --browser\nnpm run agent -- codex --browser\nnpm start')}<p>Using Claude Code? Replace the second command with <code>npm run agent -- claude-code --browser</code>. These prepare the app, MCP tools and skill. Complete sign-ins and connect your CV in the app.</p></div><div class="actions">${cta('Set up with your agent','/skills/#get-started')}<a href="/guides/">All guides</a></div></section>
-<section class="section tabbio-section" id="tabbio" aria-labelledby="tabbio-title">
-<div class="tabbio-heading"><a class="tabbio-brand" href="${config.tabbioUrl}" aria-label="Tabbio"><img src="/brands/tabbio-wordmark-violet-original.svg" width="144" height="35" alt="Tabbio"/></a><span class="free-label">Free digital CV</span></div>
-<h2 id="tabbio-title">Your CV, ready for recruiters and agents.</h2>
-<p class="tabbio-summary">Tabbio works worldwide.</p>
-<ul class="cv-benefits">
-<li><div class="benefit-heading"><span class="benefit-brands" aria-hidden="true"><img src="/brands/mcp-original.svg" width="22" height="22" alt=""/><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 9 3 3-3 3m6 0h4"/></svg></span><h3>A CV your agent can update</h3></div><p>Read, update and share your latest CV <span class="keep-word">through <a href="https://www.tabbio.com/en/mcp">MCP</a> or <a href="https://www.tabbio.com/en/cli">CLI</a>.</span></p></li>
-<li><div class="benefit-heading"><span class="benefit-brands" aria-hidden="true"><img src="/brands/google-original.ico" width="22" height="22" alt=""/><img src="/brands/bing-original.ico" width="22" height="22" alt=""/></span><h3>Made to be found</h3></div><p>Publish a CV that Google, Bing, AI search and other agents can read.</p></li>
-<li><div class="benefit-heading"><span class="benefit-brands" aria-hidden="true"><img src="/brands/tabbio.svg" width="22" height="22" alt=""/></span><h3>Open to work on Tabbio</h3></div><p>Show Tabbio employers you’re open to work so they can reach out.</p></li>
-</ul>
-<div class="identity-option"><img src="/brands/uae-pass-original.png" width="28" height="23" alt=""/><p>Optional identity verification with UAE PASS. <span>For eligible users; Tabbio is available worldwide.</span></p></div>
-<div class="tabbio-actions">${cta('Create your free CV',config.tabbioSignupUrl+'?utm_source=tawdheef&utm_medium=website&utm_campaign=live_cv')}<a class="connect-existing" href="/guides/use-the-skill/#cv">Connect your CV</a></div>
-<p class="tabbio-detail">Public CVs are eligible for search indexing. <a href="https://docs.tabbio.com/en/career/search-preview">About visibility</a></p>
-</section>
-<section class="section"><h2>Country packs. Built to be shared.</h2><p>Download a directory from GitHub and import it into Tawdheef. Add companies, fix links or contribute any country for others to use.</p>${featuredPacks.map(directoryRow).join('')}<div class="actions">${cta('How packs work','/directories/#how-packs-work',true)}${cta('Contribute on GitHub',contributeUrl,true)}</div></section>
-<section class="section"><h2>Questions before you start?</h2>${faq([
- ['Is it really free?',costCopy+' <a href="/guides/use-the-skill/#privacy">See costs and connections</a>.'],
- ['Do I need to know how to code?','No coding is needed. Open the downloaded folder in Codex or Claude Code and ask your agent to set it up. Node.js 24 or newer is required. <a href="/guides/use-the-skill/">Read the setup guide</a>.'],
- ['Does it apply for me?','Your agent can send emails and complete supported forms when you explicitly start a run for named targets. Sign-ins, CAPTCHAs, provider approvals and LinkedIn steps may need you. <a href="/guides/apply-to-jobs/">See how applications work</a>.'],
- ['Do I need Tabbio?','You can browse directories and track applications without Tabbio. Run requires a connected Tabbio CV. <a href="/guides/connect-your-cv/">Create or connect your free CV</a>.'],
- ['What does Tawdheef mean?','Tawdheef (توظيف) means employment in Arabic. The app is for job seekers anywhere; <a href="/directories/#contribute">directory contributions from any country are welcome</a>.'],
- ['Can I use it on my phone?','The website works on your phone. The local app and agent run on your computer, and the default server is available only there. <a href="/guides/use-the-skill/#privacy">See local requirements</a>.'],
- ['Where does my data go?','Your tracking records stay in a local database. AI, CV and email services connect online under their own permissions. <a href="/policies/#privacy">Read the privacy guide</a>.'],
- ['Can I add a country or fix a company?','Yes. Use a pack, fix a link or contribute a directory for any country. Packs include dated sources, not live vacancies. <a href="/directories/#contribute">Find packs and contribute</a>.']
-])}</section><section class="closing"><h2>Ready to start?</h2><p>Start with the free app. Add a directory. Bring your agent.</p>${cta('Get Tawdheef','/skills/#get-started')}</section>`;}
+function homePage(locale='en'){return homeContent({locale,config,sourceDownload,featuredPacks,packDownload,contributeUrl,code:codeFor(locale),cta});}
 
 function directoryPage(){return `<div class="page-head"><h1>Country directories.<br/>Shared on GitHub.</h1><p>Free directory packs for Tawdheef. Start with the GCC, add your country or help keep a list current.</p></div>
 <section class="section pack-list"><h2>Choose a pack.</h2><p>Each download comes from GitHub Releases and includes import files and original sources.</p>${featuredPacks.map(directoryRow).join('')}<p class="note">Dated research lists, not live job feeds. <a href="/directories/uae/">Original UAE starter snapshot</a>.</p></section>
@@ -118,24 +92,30 @@ function uaePage(){
 }
 
 const pages=[
- ['/skills/','Tawdheef Skills — Install, set up and apply with your agent','Install the Tawdheef job-search skill, connect the local app through CLI or MCP and follow practical guides for CVs, directories and applications.',()=>skillsOverview({guides,config,sourceDownload,releaseUrl,firstRunPrompt,code,prompt}),'skills',true],
- ['/guides/','Tawdheef guides — Setup, CVs, directories and applications','Practical guides for setting up Tawdheef, connecting your agent and CV, importing country packs and tracking applications.',guidePages.hub,'guides'],
- ['/about/','About Tawdheef — Built by Ahmed AlDhraif','Why Tawdheef exists, how the free open-source job application app works and how the separate Tabbio CV service fits.',()=>aboutPage(aboutMarkdown,config),''],
- ['/', 'Tawdheef — Auto Job Apply & Application Tracker', 'Free, open-source software to auto-apply for jobs with your agent and track applications and replies. Country directory packs, MCP and CLI. By Ahmed AlDhraif.', homePage, ''], ['/directories/','Free community directory packs for Tawdheef','Free country packs for Tawdheef. Use the GCC directories, fix an entry or contribute any country on GitHub.',directoryPage,'directories'],
+ ['/skills/','Tawdheef Skills — Set up your local job-search app','Connect Tawdheef’s local CLI and MCP tools to Codex or Claude Code. Find matching jobs, build career profiles and track real outcomes.',()=>skillsOverview({guides,config,sourceDownload,releaseUrl,firstRunPrompt,code,prompt}),'skills',true],
+ ['/guides/','Tawdheef guides — Setup, matching jobs and career profiles','Set up Tawdheef with Codex or Claude Code, connect your CV and use local CLI and MCP tools for matching jobs, career profiles and tracking.',guidePages.hub,'guides'],
+ ['/about/','About Tawdheef — Built by Ahmed AlDhraif','Why Tawdheef exists: a free, open-source local app for matching jobs and career profiles, with CLI and MCP access for your agent.',()=>aboutPage(aboutMarkdown,config),''],
+ ['/', 'Tawdheef — Find matching jobs. Build career profiles.', 'Free, open-source job-search app for matching jobs and career profiles. Local-first, with built-in CLI and MCP for Codex and Claude Code.', homePage, ''],
+ ['/directories/','Free community directory packs for Tawdheef','Free country packs for Tawdheef. Use the GCC directories, fix an entry or contribute any country on GitHub.',directoryPage,'directories'],
  ['/policies/','Tawdheef project, privacy and policies','An independent open-source project by Ahmed AlDhraif. Code licence, data sources, privacy, responsible use and brand guidance.',policiesPage,''],
  ['/directories/uae/','UAE careers directory — 772 organisation & source records | Tawdheef','A free UAE research directory for your job search and AI agent: 772 organisation/source records, original evidence and published careers routes. Snapshot 10 November 2026.',uaePage,'directories']
 ];
 for(const guide of guides)pages.push(['/guides/'+guide.slug+'/',guide.title+' | Tawdheef guides',guide.description,()=>guidePages.detail(guide),'guides',true]);
 for(const pack of featuredPacks)pages.push(['/directories/'+pack.id+'/',countryTitle(pack)+' company and careers directory | Tawdheef',new Intl.NumberFormat('en').format(pack.recordCount)+' researched companies and recruitment sources in '+pack.name+'. Free Tawdheef directory pack for your AI job search. Snapshot '+displayDate(pack.snapshotDate)+'.',()=>countryPackPage(pack),'directories']);
+pages.push(['/ar/','Tawdheef — وظائف تناسبك وملفات مهنية','تطبيق مجاني ومفتوح المصدر للبحث عن عمل مع مساعدك. CLI وMCP محليان، وربط سيرتك الذاتية على Tabbio.',()=>homePage('ar'),'']);
+pages.push(['/ar/skills/','مهارات Tawdheef — الإعداد والعمل مع مساعدك','ثبّت مهارة Tawdheef واربط التطبيق المحلي بمساعدك وسيرتك الذاتية. أوامر واضحة وأدلة عملية بالعربية.',()=>skillsOverview({guides:guidesAr,config,sourceDownload,releaseUrl,firstRunPrompt,code:codeFor('ar'),prompt:promptFor('ar'),locale:'ar'}),'skills',true]);
+pages.push(['/ar/guides/',ui.ar.guidesTitle+' | Tawdheef',ui.ar.guidesDescription,guidePagesAr.hub,'guides']);
+for(const guide of guidesAr)pages.push(['/ar/guides/'+guide.slug+'/',guide.title+' | Tawdheef',guide.description,()=>guidePagesAr.detail(guide),'guides',true]);
 function structuredData(path,title,description){
- const graph=[{'@type':'WebPage','@id':config.domain+path,name:title,description,url:config.domain+path,inLanguage:'en',isPartOf:{'@id':config.domain+'/#website'}},{'@type':'WebSite','@id':config.domain+'/#website',name:'Tawdheef',alternateName:'توظيف',url:config.domain}];
- if(path==='/')graph.push({'@type':'SoftwareApplication',name:'Tawdheef',alternateName:'توظيف',applicationCategory:'BusinessApplication',operatingSystem:'Node.js 24+',description,softwareRequirements:'Node.js 24 or newer; your own compatible agent client for agent workflows',license:config.domain+'/downloads/LICENSE.txt',author:{'@type':'Person',name:config.author,url:config.authorUrl,sameAs:[config.authorLinkedInUrl,config.githubProfile]},offers:{'@type':'Offer',price:'0',priceCurrency:'USD',description:'The app is free. AI clients and connected providers may have their own costs.'}});
+ const locale=path.startsWith('/ar/')?'ar':'en',plain=locale==='ar'?path.slice(3):path;
+ const graph=[{'@type':'WebPage','@id':config.domain+path,name:title,description,url:config.domain+path,inLanguage:locale,isPartOf:{'@id':config.domain+'/#website'}},{'@type':'WebSite','@id':config.domain+'/#website',name:'Tawdheef',alternateName:'توظيف',url:config.domain}];
+ if(plain==='/')graph.push({'@type':'SoftwareApplication',name:'Tawdheef',alternateName:'توظيف',applicationCategory:'BusinessApplication',operatingSystem:'Node.js 24+',description,softwareRequirements:'Node.js 24 or newer; your own compatible agent client for agent workflows',license:config.domain+'/downloads/LICENSE.txt',author:{'@type':'Person',name:config.author,url:config.authorUrl,sameAs:[config.authorLinkedInUrl,config.githubProfile]},offers:{'@type':'Offer',price:'0',priceCurrency:'USD',description:'The app is free. AI clients and connected providers may have their own costs.'}});
  if(path==='/directories/uae/')graph.push({'@type':'Dataset',name:'UAE careers directory — 10 November 2026 research snapshot',description:`${count} organisation/source records with stable source IDs, original evidence and missing-data notes. Not a current vacancy feed.`,url:config.domain+path,temporalCoverage:'2026-11-10',spatialCoverage:{'@type':'Place',name:'United Arab Emirates'},distribution:{'@type':'DataDownload',encodingFormat:'application/zip',contentUrl:packDownload(packs.find(pack=>pack.id==='uae'))}});
  const currentPack=featuredPacks.find(pack=>path==='/directories/'+pack.id+'/');
  const datasets=path==='/directories/'?featuredPacks:currentPack?[currentPack]:[];
  for(const pack of datasets)graph.push({'@type':'Dataset','@id':config.domain+'/directories/'+pack.id+'/#dataset',name:pack.name+' company and careers directory',description:pack.recordCount+' dated organisation/source records with public recruitment routes and retained evidence. Not a live vacancy feed.',url:config.domain+'/directories/'+pack.id+'/',temporalCoverage:pack.snapshotDate,spatialCoverage:{'@type':'Country',name:pack.name},creator:{'@type':'Person',name:config.author,url:config.authorUrl},distribution:[{'@type':'DataDownload',encodingFormat:'application/zip',contentUrl:config.repositoryPublished?packDownload(pack):config.domain+packDownload(pack)},{'@type':'DataDownload',encodingFormat:'application/json',contentUrl:config.repositoryPublished?'https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/'+pack.id+'/index.json':config.domain+'/downloads/'+pack.id+'-index.json'}]});
- if(path!=='/'){const crumbs=[{'@type':'ListItem',position:1,name:'Tawdheef',item:config.domain+'/'}];for(const[parent,label]of[['/guides/','Guides'],['/directories/','Directories']])if(path.startsWith(parent)&&path!==parent)crumbs.push({'@type':'ListItem',position:2,name:label,item:config.domain+parent});crumbs.push({'@type':'ListItem',position:crumbs.length+1,name:title,item:config.domain+path});graph.push({'@type':'BreadcrumbList',itemListElement:crumbs});}
- if(path.startsWith('/guides/')&&path!=='/guides/')graph.push({'@type':'TechArticle',headline:title,description,url:config.domain+path,inLanguage:'en',isPartOf:{'@id':config.domain+'/skills/'},author:{'@type':'Person',name:config.author,url:config.authorUrl}});
+ if(plain!=='/'){const crumbs=[{'@type':'ListItem',position:1,name:'Tawdheef',item:config.domain+(locale==='ar'?'/ar/':'/')}];for(const[parent,label]of[['/guides/','Guides'],['/directories/','Directories']])if(plain.startsWith(parent)&&plain!==parent)crumbs.push({'@type':'ListItem',position:2,name:label,item:config.domain+(locale==='ar'?'/ar':'')+parent});crumbs.push({'@type':'ListItem',position:crumbs.length+1,name:title,item:config.domain+path});graph.push({'@type':'BreadcrumbList',itemListElement:crumbs});}
+ if(plain.startsWith('/guides/')&&plain!=='/guides/')graph.push({'@type':'TechArticle',headline:title,description,url:config.domain+path,inLanguage:locale,isPartOf:{'@id':config.domain+(locale==='ar'?'/ar':'')+'/skills/'},author:{'@type':'Person',name:config.author,url:config.authorUrl}});
  if(path==='/about/')graph.push({'@type':'AboutPage',name:title,url:config.domain+path,about:{'@type':'SoftwareApplication',name:'Tawdheef'},author:{'@type':'Person',name:config.author,url:config.authorUrl,sameAs:[config.authorLinkedInUrl,config.githubProfile]}});
  return '<script type="application/ld+json">'+JSON.stringify({'@context':'https://schema.org','@graph':graph}).replaceAll('<','\\u003c')+'</script>';
 }
@@ -143,8 +123,8 @@ const staticOut=join(root,'site-dist'); await mkdir(staticOut,{recursive:true});
 for(const preview of [true,false]){
  const base=preview?join(root,'public'):staticOut;
  for(const [path,title,description,body,active,wide] of pages){
-  const folder=join(base,preview&&path==='/'?'welcome':path.slice(1)); await mkdir(folder,{recursive:true});
-  const html=layout({title,description,path,body:body(),active,preview,home:preview?'/welcome/':'/',wide});
+  const folder=join(base,preview&&(path==='/'||path==='/ar/')?(path==='/ar/'?'welcome/ar':'welcome'):path.slice(1)); await mkdir(folder,{recursive:true});
+  const html=layout({title,description,path,body:body(),active,preview,home:preview?(path.startsWith('/ar/')?'/welcome/ar/':'/welcome/'):(path.startsWith('/ar/')?'/ar/':'/'),wide});
   await writeFile(join(folder,'index.html'),html.replace('</head>',structuredData(path,title,description)+'</head>'));
  }
 }
