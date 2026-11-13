@@ -2,7 +2,7 @@
 
 **3,583 organisation/source records** · Research snapshot: **2026-11-13**
 
-[Download ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/uae-expanded-directory-pack.zip) · [Release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1) · [Tawdheef app](https://github.com/ahmedaldhraif/tawdheef)
+[Download ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/uae-expanded-directory-pack.zip) · [Release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) · [Tawdheef app](https://github.com/ahmedaldhraif/tawdheef)
 
 3,583 researched organisations and recruitment sources in United Arab Emirates, with original public evidence and missing-data notes.
 

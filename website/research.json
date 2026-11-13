@@ -100,6 +100,60 @@
       "url": "https://docs.github.com/en/actions/reference/security/secure-use",
       "observed": "GitHub recommends least-privilege workflow tokens, protecting secrets, reviewing dependency/action supply chains and avoiding privileged untrusted-code execution.",
       "applied": "Recommend read-only PR checks, isolated fixtures without live account credentials, reviewed release permissions and dependency update/security reporting controls. Repository settings must be verified after creation; source configuration is not proof of enabled protection."
+    },
+    {
+      "url": "https://openseo.so/",
+      "reviewedOn": "2026-11-13",
+      "observed": "Outcome-led homepage with a clear action, agent setup route, examples, product capabilities and an open-source source link.",
+      "applied": "Preserve Tawdheef's existing centered hero and approved promise; add a genuine product walkthrough and links into task guidance. No copied testimonials, adoption counts or hosted connection claims."
+    },
+    {
+      "url": "https://openseo.so/docs",
+      "reviewedOn": "2026-11-13",
+      "observed": "A documentation hub groups getting started, practical guides, account help, reference and self-hosting.",
+      "applied": "Expose Tawdheef's existing canonical setup and operational knowledge through a small Guides hub; keep actual local/client/provider requirements visible."
+    },
+    {
+      "url": "https://openseo.so/docs/skills",
+      "reviewedOn": "2026-11-13",
+      "observed": "The skills overview separates workflow instructions from MCP tools and links focused workflows to their source.",
+      "applied": "Connect Tawdheef's one real skill to task guides and source instructions. Do not invent extra skills or treat skill installation as app/MCP/account setup. The site's Skills link resolves here; direct /skills was unavailable during this review."
+    },
+    {
+      "url": "https://openseo.so/docs/agent-setup",
+      "reviewedOn": "2026-11-13",
+      "observed": "Setup distinguishes client type, existing installation, instructions, sign-in, reload, successful tool verification and later skill updates.",
+      "applied": "Keep Tawdheef's single setup request and real readiness checks; explain local Codex/Claude Code and preserve custom configuration. OpenSEO's hosted ChatGPT/Claude connections do not establish a Tawdheef hosted endpoint."
+    },
+    {
+      "url": "https://openseo.so/docs/skills/setup",
+      "reviewedOn": "2026-11-13",
+      "observed": "An installation matrix distinguishes tool-only connections from bundles containing skills, with client-specific discovery and update guidance.",
+      "applied": "State separately what Tawdheef's app setup, skill installer and MCP configuration actually provide. Link maintenance and recovery to the canonical local docs."
+    },
+    {
+      "url": "https://openseo.so/docs/troubleshooting",
+      "reviewedOn": "2026-11-13",
+      "observed": "A symptom-led index sends connection, sign-in and workflow failures to specific recovery guides and excludes credentials from support requests.",
+      "applied": "Add a practical Troubleshoot guide for the existing local app, using doctor/readiness checks, safe configuration recovery and receipt inspection after uncertain submissions."
+    },
+    {
+      "url": "https://openseo.so/docs/mcp",
+      "reviewedOn": "2026-11-13",
+      "observed": "Connection, authentication, client options, tool reference and focused next workflows are explained separately.",
+      "applied": "Provide a Tawdheef agent reference linking actual stdio/CLI tools, schemas and source catalog. Do not transplant hosted remote-MCP buttons, endpoints or web-client support."
+    },
+    {
+      "url": "https://openseo.so/docs/skills/seo-project-setup",
+      "reviewedOn": "2026-11-13",
+      "observed": "A workflow page explains when to use it, inputs, what gets saved, expected output and related next steps.",
+      "applied": "Structure Tawdheef guides around a person's task, prerequisites, actual saved records, outcomes and handoffs. Demonstrations must not fabricate submission receipts or private account states."
+    },
+    {
+      "url": "https://openseo.so/about",
+      "reviewedOn": "2026-11-13",
+      "observed": "A separate authored page explains the creator, product purpose, agent workflow and open-source approach.",
+      "applied": "Write Tawdheef's About from supplied and verified facts only: Arabic name meaning, independent Ahmed maintenance, practical local app, tools/packs and separate Tabbio CV service. Do not invent an origin story or borrow the reference's biography."
     }
   ],
   "claims": [
@@ -170,7 +224,7 @@
     ],
     "verificationStatus": "Source workflow files were read. Remote repository controls and hosted runs were not verified by this research."
   },
-  "liveStatus": "Public repository and v0.1.0 preview release verified on 13 November 2026, including all 14 release assets. Website pages are built locally; live domain deployment, search indexing and AI citations have not been established.",
+  "liveStatus": "The project owner reports the public repository and v0.1.1 preview release are live. This documentation task does not replace release assets, publish the domain, establish search indexing or verify AI citations.",
   "heroDecision": {
     "basis": "Explicit owner-approved positioning and copy decision; not a tested conversion result.",
     "headline": "Auto-apply to jobs. Track your applications.",
@@ -206,5 +260,15 @@
     "scope": "User's Codex or Claude Code performs supported email/form steps; authentication, CAPTCHA, provider restrictions and LinkedIn manual steps remain real. Tracking is local. Tawdheef is free/MIT; AI client/provider costs are separate. Basic directory/manual tracking works without Tabbio, while Run requires its connected CV.",
     "community": "Any country is welcome through source-backed issues and pull requests. Existing packs are dated research, not live vacancies or proof of successful submissions.",
     "evidenceLimit": "Approved messaging is not conversion, ranking, adoption or successful provider-integration evidence."
+  },
+  "documentationDecision": {
+    "date": "2026-11-13",
+    "basis": "The owner approved implementing Guides, About and a real-product walkthrough after a read-only comparison with OpenSEO.",
+    "observedGap": "Tawdheef already has substantial setup, recovery, integration and agent material in repository Markdown. The public website previously concentrated it into setup and skill pages rather than a task-oriented web guide hub.",
+    "humanPath": "Understand the app → get started locally → connect agent and CV → use a real directory → choose targets/actions → review outcomes and replies.",
+    "agentPath": "For agents guide → llms.txt and current capabilities/tool schemas → directory catalog → compact index → canonical evidence, with explicit local-operation authority.",
+    "aboutSource": "website/about.md is the canonical human body. Use supplied facts and verified profile URLs; renderer may add the provided portrait.",
+    "preserved": "Approved centered hero, assets, free/open-source message, GitHub-first release download, current v0.1.1 release snapshot, independent project maintenance and free Tabbio CV funnel.",
+    "notClaimed": "No comparative conversion benefit, indexing/AI-citation guarantee, imported social proof, new hosted connection or fabricated community contribution is established."
   }
 }

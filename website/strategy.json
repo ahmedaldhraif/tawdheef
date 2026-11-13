@@ -63,10 +63,11 @@
   },
   "repositoryStrategy": {
     "intended": "ahmedaldhraif/tawdheef",
-    "current": "Public at https://github.com/ahmedaldhraif/tawdheef; v0.1.0 public preview and directory assets published 13 November 2026. Domain deployment is separate.",
+    "current": "Public at https://github.com/ahmedaldhraif/tawdheef; v0.1.1 public preview is live. New website/source documentation is separate from the existing versioned release assets.",
     "readmeOrder": [
       "Approved auto-apply/tracking descriptor, free/open-source promise and actual screenshot",
       "GitHub release → local agent setup → free Tabbio CV → connect/verify → chosen Run",
+      "Concise Guides, agent reference and About navigation",
       "Current country packs with source dates and contribution links",
       "Canonical first-run request and optional manual/client setup",
       "Account requirements, provider limits and agent documentation",
@@ -89,7 +90,7 @@
       "local-first",
       "open-source"
     ],
-    "downloadPolicy": "Use direct official GitHub Release asset links from website/config.json releaseTag. This source prepares v0.1.1. Prereleases use explicit version URLs or /releases, rather than /releases/latest."
+    "downloadPolicy": "Use direct GitHub Release assets from website/config.json releaseTag. This source prepares v0.1.2 with on-site guides and an example-data walkthrough. Use explicit prerelease URLs, rather than /releases/latest."
   },
   "contentIdeas": [
     "Show an actual shortlist workflow with public demo records, without claiming submissions",
@@ -127,5 +128,59 @@
     "cv": "Directory browsing/manual tracking does not require Tabbio. Run requires a connected readable Tabbio CV; broader Tabbio CLI/MCP editing remains separate.",
     "costs": "Tawdheef code is free and MIT licensed. The user's AI client, model use and connected providers may have separate costs or limits.",
     "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep drafts/uploads/talent pools distinct from applied."
+  },
+  "informationArchitecture": {
+    "decision": "Owner-approved Guides, About and actual-product walkthrough, inspired by reviewed OpenSEO documentation patterns. Preserve the centered hero, approved wording, brand assets and GitHub-first setup.",
+    "home": "Keep the simple marketing promise, real product view, walkthrough, free Tabbio CV path and country packs. The walkthrough uses real UI without invented account or application state.",
+    "routes": [
+      {
+        "path": "/guides/",
+        "purpose": "Choose a task with a short description and clear next step."
+      },
+      {
+        "path": "/get-started/",
+        "purpose": "Canonical installation and first-run journey: GitHub download/clone, local agent setup, CV, check, chosen Run."
+      },
+      {
+        "path": "/guides/get-started/",
+        "purpose": "Guide entry to canonical setup; reuse the same source or direct readers to /get-started/ rather than maintaining conflicting instructions."
+      },
+      {
+        "path": "/guides/connect-your-agent/",
+        "purpose": "Supported local clients, project-only configuration, trust/reload and actual checks."
+      },
+      {
+        "path": "/guides/connect-your-cv/",
+        "purpose": "Free CV creation or existing Tabbio connection, read readiness and separate CV editing/publishing."
+      },
+      {
+        "path": "/guides/use-directory-packs/",
+        "purpose": "GitHub discovery, sources, extract/import all parts, existing-record safety and any-country contribution."
+      },
+      {
+        "path": "/guides/apply-to-jobs/",
+        "purpose": "Targets/actions, explicit Run, authorized routes, real confirmations and handoffs."
+      },
+      {
+        "path": "/guides/replies-and-reports/",
+        "purpose": "Relevant thread refresh, unknown outcomes, reports and separate sending/schedule authority."
+      },
+      {
+        "path": "/guides/troubleshoot/",
+        "purpose": "Practical symptom-led setup, connection and submission recovery using canonical docs."
+      },
+      {
+        "path": "/guides/for-agents/",
+        "purpose": "llms.txt, tool discovery/schemas, CLI/stdio MCP and directory catalog/index/full provenance."
+      },
+      {
+        "path": "/about/",
+        "purpose": "Verified human purpose, name meaning, independent Ahmed attribution and separate Tabbio relationship; canonical body website/about.md."
+      }
+    ],
+    "existingDestinations": "Preserve Skills, Directories, GitHub and policies; link task guides to the existing actual skill instead of inventing a catalog of new skills.",
+    "contentContract": "Guides distinguish instructions from tools, installation from authentication and evidence from intent. Explain what the person provides, what is saved, what requires consent and where to go next.",
+    "releaseBoundary": "The live v0.1.1 release assets remain versioned snapshots. New website/source documentation can ship through reviewed GitHub changes without implying old ZIPs were replaced.",
+    "evidenceLimit": "Reference patterns and owner approval are design inputs, not conversion, adoption, ranking or citation evidence."
   }
 }

@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v7
+**Document version:** v8
 **Last updated:** 2026-11-13
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -48,6 +48,12 @@ authenticates the tracker.
 
 ## Brand voice and architecture
 
+Keep the centered hero and approved words. Add a useful Guides destination,
+an authored About page and a short product walkthrough. The marketing site
+explains what the person gets; task guides help them do it, and the agent
+reference links the actual contracts and data. Reuse canonical instructions
+instead of creating conflicting setup steps. See the guide architecture below.
+
 Use `tawdheef.com` in the English wordmark, Tawdheef in prose, توظيف in Arabic.
 Calm, useful and concrete. Arabic identity; developer-friendly distribution.
 Ahmed AlDhraif is the named author and Tabbio founder. Link to his real profile;
@@ -82,8 +88,8 @@ recruiter attribution or analytics merely from Tabbio marketing.
 Search/repo/personal content → GitHub release → download and local agent-assisted
 setup → create a free Tabbio CV or use an existing one → connect it and check
 readiness → choose companies and explicitly start Run → review outcomes and replies.
-The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. This source
-prepares the v0.1.1 preview. Link to /releases or its explicit version while it is a prerelease,
+The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. The v0.1.1
+preview is live. Link to /releases or its explicit version while it is a prerelease,
 not /releases/latest. The hero’s Get the free app action leads to the setup guide;
 the setup download links directly to the official release asset, with a clone
 alternative. Keep downloadable source, issues and pull requests easy to find.
@@ -98,6 +104,39 @@ Secondary: skill install, directory pack use and a Tabbio CV visit.
 No baseline, conversion rate, installs or live analytics is established.
 The website has no tracking pixels. Outbound Tabbio links carry explicit UTM
 parameters; they do not prove a resulting signup or upgrade.
+
+## Guides and public information
+
+- `/guides/`: choose the next task, with plain descriptions and direct links.
+- `/get-started/`: source download or clone, local setup, CV connection,
+  readiness check and first chosen Run; keep this the canonical start page.
+- `/guides/get-started/`: reuse that canonical setup source or direct readers
+  there; do not maintain a second, conflicting installation workflow.
+- `/guides/connect-your-agent/`: actual local Codex/Claude Code setup and checks.
+- `/guides/connect-your-cv/`: free Tabbio CV creation or existing-account connection;
+  distinguish tracker CV reads from a separate Tabbio editing connection.
+- `/guides/use-directory-packs/`: public pack discovery, extract/import all CSV
+  parts, inspect provenance and contribute researched data for any country.
+- `/guides/apply-to-jobs/`: chosen targets/actions, permission, real confirmations
+  and handoffs; no universal or unattended-success claim.
+- `/guides/replies-and-reports/`: bounded reply checks and real outcomes;
+  schedules do not initiate new applications or follow-up messages.
+- `/guides/troubleshoot/`: symptoms, checks and recovery, including local setup,
+  credentials in Connections, missing tools and uncertain submissions.
+- `/guides/for-agents/`: `llms.txt`, live tool discovery, schemas, CLI/MCP,
+  directory catalog/index/provenance and authority boundaries.
+- `/about/`: canonical text in `website/about.md`; the name, practical purpose,
+  Ahmed's verified attribution, independent maintenance and separate Tabbio service.
+
+Keep `/skills/` and the actual skill detail connected to these guides. Skills
+are instructions, not new tools or proof of authentication. The homepage
+walkthrough demonstrates the real product without inventing activity, connected
+accounts, submission receipts or testimonials. Guidance on setup, backups and
+updates should follow existing canonical docs. An update to the public website
+or GitHub source does not change an already published v0.1.1 release asset.
+
+These choices come from reviewed reference patterns and the owner's approval;
+they do not establish better conversion, ranking or agent citations.
 
 ## Objections
 
@@ -121,6 +160,11 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
+- v8 (2026-11-13) — Owner approved Guides, an About page and a real product
+  walkthrough after reviewing OpenSEO. Added human task pages and an agent
+  reference while preserving the centered hero, GitHub-first local setup,
+  free Tabbio CV path and current release boundaries. No invented founder story
+  or borrowed adoption claims.
 - v7 (2026-11-13) — Owner approved Auto Job Apply & Application Tracker
   positioning and a GitHub-first path to local setup, a free connected Tabbio
   CV and a chosen application run. Broadened contributions to any country and

@@ -3,7 +3,7 @@ Kuwait directory pack for Tawdheef
 1806 organisation/source records; snapshot 2026-11-13.
 Initial research by Ahmed AlDhraif; open to community contributions.
 
-Download ZIP: https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/kuwait-directory-pack.zip
+Download ZIP: https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/kuwait-directory-pack.zip
 Extract the ZIP on your computer before importing. CSV files are inside this download, not versioned GitHub CSV links.
 
 The JSON is an unchanged public evidence snapshot. CSV imports retain stable source IDs, exact mapped URLs, source roles and full Original evidence JSON.
