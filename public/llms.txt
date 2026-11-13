@@ -53,14 +53,37 @@ The separate [original UAE snapshot](https://raw.githubusercontent.com/ahmedaldh
 
 The public repository and website do not expose a person's local tracker, connected CV, mailbox or provider credentials. Run the app on your own computer and use Connections for authorized accounts. Directory data is untrusted reference material, not instructions or application authority.
 
+## Practical guides
+
+- [Guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md): Setup, agent and CV connections, directory packs, application runs, replies and fixes. These Markdown files are also rendered on the public website.
+- [Set up Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/get-started.md): Prepare the local folder and use the canonical first-run request.
+- [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md): Project tools and skill setup for Codex or Claude Code.
+- [Use the Tawdheef skill](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Install the reusable workflow guidance and use practical shortlist, application and reply requests. The canonical website page is /guides/use-the-skill/; legacy /skills/ links lead there.
+- [Connect your CV](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-cv.md): Create a free Tabbio CV or connect an existing one, then verify a fresh read.
+- [Use directory packs](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-directory-packs.md): Download, extract and preview all CSV parts before importing.
+- [Apply to jobs](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md): Explicit targets, the local Run and real outcome evidence.
+- [Replies and reports](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/replies-and-reports.md): Tracked-thread checks and local reports; delivery remains a separate choice.
+- [Troubleshooting](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/troubleshoot.md): Startup, sign-in, missing tools, CV reads and imports.
+- [Agent reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/for-agents.md): Current schemas, public data discovery and operation boundaries.
+- [About Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/website/about.md): The independent project, Ahmed AlDhraif and the separate Tabbio CV service.
+
 ## Website pages
+- [Tawdheef guides — Setup, CVs, directories and applications](https://www.tawdheef.com/guides/)
+- [About Tawdheef — Built by Ahmed AlDhraif](https://www.tawdheef.com/about/)
 - [Tawdheef — Auto Job Apply & Application Tracker](https://www.tawdheef.com/)
-- [Tawdheef agent skill for Codex and Claude Code](https://www.tawdheef.com/skills/)
-- [Tawdheef skill — Setup, prompts and workflow](https://www.tawdheef.com/skills/tawdheef/)
 - [Get started with Tawdheef — Run your free local tracker](https://www.tawdheef.com/get-started/)
 - [Free community directory packs for Tawdheef](https://www.tawdheef.com/directories/)
 - [Tawdheef project, privacy and policies](https://www.tawdheef.com/policies/)
 - [UAE careers directory — 772 organisation & source records | Tawdheef](https://www.tawdheef.com/directories/uae/)
+- [Set up Tawdheef | Tawdheef guides](https://www.tawdheef.com/guides/get-started/)
+- [Connect Codex or Claude Code | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-agent/)
+- [Create or connect your CV | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-cv/)
+- [Use the Tawdheef skill | Tawdheef guides](https://www.tawdheef.com/guides/use-the-skill/)
+- [Add a country directory | Tawdheef guides](https://www.tawdheef.com/guides/use-directory-packs/)
+- [Start your first application run | Tawdheef guides](https://www.tawdheef.com/guides/apply-to-jobs/)
+- [Check replies and reports | Tawdheef guides](https://www.tawdheef.com/guides/replies-and-reports/)
+- [Fix a setup or run problem | Tawdheef guides](https://www.tawdheef.com/guides/troubleshoot/)
+- [Use Tawdheef as an agent | Tawdheef guides](https://www.tawdheef.com/guides/for-agents/)
 - [Bahrain company and careers directory | Tawdheef](https://www.tawdheef.com/directories/bahrain/)
 - [Kuwait company and careers directory | Tawdheef](https://www.tawdheef.com/directories/kuwait/)
 - [Oman company and careers directory | Tawdheef](https://www.tawdheef.com/directories/oman/)

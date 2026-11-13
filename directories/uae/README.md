@@ -2,7 +2,7 @@
 
 **772 organisation/source records** · Research snapshot: **2026-11-10**
 
-[Download ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/uae-directory-pack.zip) · [Release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1) · [Tawdheef app](https://github.com/ahmedaldhraif/tawdheef)
+[Download ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/uae-directory-pack.zip) · [Release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) · [Tawdheef app](https://github.com/ahmedaldhraif/tawdheef)
 
 The original 772-record UAE research snapshot bundled with Tawdheef. Later researched snapshots are separate packs.
 

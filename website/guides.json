@@ -1,0 +1,83 @@
+[
+  {
+    "slug": "get-started",
+    "title": "Set up Tawdheef",
+    "description": "Download the app and let Codex or Claude Code handle local setup while you complete your sign-ins.",
+    "category": "Start",
+    "source": "docs/guides/get-started.md",
+    "related": ["connect-your-agent", "connect-your-cv", "troubleshoot"],
+    "next": "connect-your-agent"
+  },
+  {
+    "slug": "connect-your-agent",
+    "title": "Connect Codex or Claude Code",
+    "description": "Connect the local tracker tools, install the workflow skill and verify the assistant you want Run to use.",
+    "category": "Start",
+    "source": "docs/guides/connect-your-agent.md",
+    "related": ["get-started", "connect-your-cv", "use-the-skill"],
+    "next": "connect-your-cv"
+  },
+  {
+    "slug": "connect-your-cv",
+    "title": "Create or connect your CV",
+    "description": "Create a free digital CV on Tabbio or connect your existing account, then check that Tawdheef can read it.",
+    "category": "Start",
+    "source": "docs/guides/connect-your-cv.md",
+    "related": ["get-started", "connect-your-agent", "troubleshoot"],
+    "next": "use-directory-packs"
+  },
+  {
+    "slug": "use-the-skill",
+    "title": "Use the Tawdheef skill",
+    "description": "Install the optional workflow guidance and give your agent practical requests for shortlists, applications and reply checks.",
+    "category": "Use",
+    "source": "docs/guides/use-the-skill.md",
+    "related": ["connect-your-agent", "apply-to-jobs", "replies-and-reports"],
+    "next": "use-directory-packs"
+  },
+  {
+    "slug": "use-directory-packs",
+    "title": "Add a country directory",
+    "description": "Download a free country pack from GitHub, extract it and import every CSV part into your chosen tab.",
+    "category": "Use",
+    "source": "docs/guides/use-directory-packs.md",
+    "related": ["connect-your-cv", "for-agents", "apply-to-jobs"],
+    "next": "apply-to-jobs"
+  },
+  {
+    "slug": "apply-to-jobs",
+    "title": "Start your first application run",
+    "description": "Choose companies, describe the work you want and let your assistant carry out the actions you select.",
+    "category": "Use",
+    "source": "docs/guides/apply-to-jobs.md",
+    "related": ["connect-your-cv", "use-directory-packs", "replies-and-reports"],
+    "next": "replies-and-reports"
+  },
+  {
+    "slug": "replies-and-reports",
+    "title": "Check replies and reports",
+    "description": "Review tracked replies, save a local report and choose optional schedules without starting new applications.",
+    "category": "Use",
+    "source": "docs/guides/replies-and-reports.md",
+    "related": ["apply-to-jobs", "troubleshoot", "use-directory-packs"],
+    "next": null
+  },
+  {
+    "slug": "troubleshoot",
+    "title": "Fix a setup or run problem",
+    "description": "Find the next fix for startup, assistant sign-in, CV reads, browser tools, email setup or incomplete pack imports.",
+    "category": "Fix",
+    "source": "docs/guides/troubleshoot.md",
+    "related": ["get-started", "connect-your-agent", "connect-your-cv"],
+    "next": "connect-your-agent"
+  },
+  {
+    "slug": "for-agents",
+    "title": "Use Tawdheef as an agent",
+    "description": "Read the local tool contract, discover public packs and record actual outcomes within the requested scope.",
+    "category": "Reference",
+    "source": "docs/guides/for-agents.md",
+    "related": ["connect-your-agent", "use-directory-packs", "apply-to-jobs"],
+    "next": "use-directory-packs"
+  }
+]

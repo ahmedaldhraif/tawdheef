@@ -10,18 +10,20 @@ Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, w
 
 Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldhraif), founder of [Tabbio](https://www.tabbio.com/en).
 
-[Download the app](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/tawdheef-0.1.1-source.zip) · [Release notes](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1) · [Setup guide](docs/FIRST-RUN.md) · [Directory packs](#gcc-directory-packs)
+[Download the app](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/tawdheef-0.1.2-source.zip) · [Release notes](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) · [Setup guide](docs/FIRST-RUN.md) · [Directory packs](#gcc-directory-packs)
 
 <img src="public/site-assets/tracker-desktop.png" alt="Tawdheef's local directory and application tracker, showing the public UAE research snapshot" width="100%" />
 
 ## Start here
 
-1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1) and extract it.
+1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.
 2. Open the folder in Codex or Claude Code and [ask your agent to set it up](docs/FIRST-RUN.md). Node.js 24+ is required.
 3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or use your existing one. Connect it in the app’s **Connections** panel and check readiness.
 4. Choose companies and start **Run**. Your agent applies through supported email or browser routes; Tawdheef keeps the outcomes and receipts. Sign-ins, CAPTCHAs and provider approvals may need you; LinkedIn application steps stay manual.
 
 The app is free; your AI client and connected providers may have their own costs or limits. You can browse directories and track applications without Tabbio. **Run requires a connected Tabbio CV.**
+
+Read the [guides](docs/guides/README.md) for setup, connections, applications and replies. [Troubleshoot a problem](docs/guides/troubleshoot.md), explore the [agent reference](docs/guides/for-agents.md) and [skill](docs/guides/use-the-skill.md), or learn [about Tawdheef](website/about.md). The website renders these same guides, so the instructions stay consistent.
 
 ## GCC directory packs
 
@@ -29,12 +31,12 @@ Start with the GCC. Any country is welcome.
 
 | Country | Records | Download | Public source |
 | --- | ---: | --- | --- |
-| United Arab Emirates | 3,583 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/uae-expanded-directory-pack.zip) | [UAE data](directories/uae-expanded/) |
-| Saudi Arabia | 4,256 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/saudi-arabia-directory-pack.zip) | [Saudi data](directories/saudi-arabia/) |
-| Qatar | 671 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/qatar-directory-pack.zip) | [Qatar data](directories/qatar/) |
-| Oman | 2,587 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/oman-directory-pack.zip) | [Oman data](directories/oman/) |
-| Kuwait | 1,806 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/kuwait-directory-pack.zip) | [Kuwait data](directories/kuwait/) |
-| Bahrain | 811 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/bahrain-directory-pack.zip) | [Bahrain data](directories/bahrain/) |
+| United Arab Emirates | 3,583 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/uae-expanded-directory-pack.zip) | [UAE data](directories/uae-expanded/) |
+| Saudi Arabia | 4,256 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/saudi-arabia-directory-pack.zip) | [Saudi data](directories/saudi-arabia/) |
+| Qatar | 671 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/qatar-directory-pack.zip) | [Qatar data](directories/qatar/) |
+| Oman | 2,587 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/oman-directory-pack.zip) | [Oman data](directories/oman/) |
+| Kuwait | 1,806 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/kuwait-directory-pack.zip) | [Kuwait data](directories/kuwait/) |
+| Bahrain | 811 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/bahrain-directory-pack.zip) | [Bahrain data](directories/bahrain/) |
 
 **13,714 organisation/source records, dated 13 November 2026.** These include campuses, agencies, portals, programmes and unresolved leads, not just independent employers. They are not live job offers or tested application routes. The original [772-record UAE starter snapshot](directories/uae/) stays available separately and overlaps expanded UAE; it is not 772 additional unique organisations.
 
@@ -121,4 +123,4 @@ Tawdheef is maintained personally by Ahmed AlDhraif. Tabbio operates its own CV 
 
 Keep CVs, mailbox contents, credentials and private tracking out of contributions. Read [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and [the release guide](docs/RELEASE.md). Development checks are `npm test`, `npm run build` and `npm run release:check`, using isolated data.
 
-Version **0.1.1** is a public preview. Builds and fixture tests do not establish live provider access or successful applications. Release downloads include checksums. Provider artwork, fonts and source evidence retain their own rights; see [third-party notices](THIRD-PARTY-NOTICES.md).
+Version **0.1.2** is a public preview. Builds and fixture tests do not establish live provider access or successful applications. Release downloads include checksums. Provider artwork, fonts and source evidence retain their own rights; see [third-party notices](THIRD-PARTY-NOTICES.md).

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2 — guides and product walkthrough
+
+- Eight practical guides on the website, generated from the same Markdown available on GitHub.
+- Guide search, section navigation, copyable commands, related guides and clear next steps.
+- An About page for Ahmed's independent project and its separate Tabbio CV integration.
+- A three-step walkthrough with actual app screenshots and clearly labelled example data.
+- Connected guide, directory, skill, source and contribution paths across the site and README.
+
 ## 0.1.1 — GitHub packs and agent setup
 
 - Filter the company list by city and type, then run the matching unfinished companies across every page or just the checked rows.
