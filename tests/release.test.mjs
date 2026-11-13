@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -83,6 +83,23 @@ test('agent setup browser flag creates both real client entries and preserves co
   assert.equal(await readFile(join(root, '.mcp.json'), 'utf8'), '{"custom":"keep browser settings"}');
   assert.equal(await readFile(join(root, '.codex/config.toml'), 'utf8'), toml);
 });
+test('agent setup CLI runs through a linked project path', async t => {
+  const root = await fixture(t), project = join(root, 'project'), linked = join(root, 'linked-project');
+  for (const folder of ['scripts', 'server', 'skills/tawdheef']) await mkdir(join(project, folder), { recursive: true });
+  for (const file of ['scripts/agent-setup.mjs', 'server/integrations.mjs']) await writeFile(join(project, file), await readFile(new URL('../' + file, import.meta.url)));
+  await writeFile(join(project, 'skills/tawdheef/SKILL.md'), 'isolated skill fixture');
+  await symlink(project, linked, process.platform === 'win32' ? 'junction' : 'dir');
+  const result = spawnSync(process.execPath, [join(linked, 'scripts/agent-setup.mjs'), 'codex', '--check', '--json'], {
+    cwd: linked, env: { ...process.env, APPLY_TRACKER_DATA: join(root, 'private data'), APPLY_TRACKER_PORT: '4018' }, encoding: 'utf8', windowsHide: true,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(result.stdout.trim(), 'The CLI must return JSON through linked project paths');
+  const preview = JSON.parse(result.stdout);
+  assert.deepEqual(preview.clients, ['codex']);
+  assert.ok(preview.files.every(file => file.status === 'would create'));
+  await assert.rejects(readFile(join(project, '.codex/config.toml')), { code: 'ENOENT' });
+});
+
 test('launch reuses a matching build and detects edited or added source and asset files', async t => {
   const root = await fixture(t);
   for (const folder of ['src', 'public', 'dist']) await mkdir(join(root, folder));

@@ -1,5 +1,5 @@
 /** Explicit, project-only MCP setup. Never edits home-directory client settings. */
-import { readFile, writeFile, mkdir, readdir, lstat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, lstat, realpath } from 'node:fs/promises';
 import { dirname, join, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClientConfig, INTEGRATIONS_ROOT } from '../server/integrations.mjs';
@@ -51,7 +51,11 @@ export async function configureAgent(client, options = {}) {
   };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// argv and module URLs can retain different path aliases (macOS /var,
+// linked project paths or Windows short names). Normalize both identities.
+const invokedScript = process.argv[1] ? await realpath(resolve(process.argv[1])).catch(() => null) : null;
+const ownScript = await realpath(fileURLToPath(import.meta.url));
+if (invokedScript === ownScript) {
   const [client, ...flags] = process.argv.slice(2);
   if (!client || client === '--help') console.log('Connect this project: npm run agent -- codex | claude-code | both\nAdd --browser to include installed Playwright browser tools for this chat, --check for a preview, or --json for machine output. Install the browser first with npm run setup -- --browser. Creates project MCP settings and the Tawdheef skill; never replaces existing files or signs into accounts.');
   else if (flags.some(flag => !['--browser', '--check', '--json'].includes(flag))) { console.error('Only --browser, --check and --json are supported.'); process.exitCode = 1; }
