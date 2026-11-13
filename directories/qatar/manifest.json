@@ -1,0 +1,129 @@
+{
+  "id": "qatar",
+  "name": "Qatar",
+  "country": "QA",
+  "countries": [
+    "QA"
+  ],
+  "kind": "country",
+  "description": "671 researched organisations and recruitment sources in Qatar, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 671,
+  "formatVersion": 1,
+  "source": "directories/qatar/source.json",
+  "sourceSha256": "dda16ab7cf2b948ccfa996793899690e4ceef091a1a79786f7e3524b11299f55",
+  "sourceRoleCounts": {
+    "Listed company": 55,
+    "Public or nonprofit institution": 27,
+    "Regulated financial institution": 63,
+    "Private employer": 13,
+    "Industrial exhibitor / potential employer": 20,
+    "Employer": 9,
+    "University or education institution": 2,
+    "Healthcare employer": 2,
+    "Public institution": 3,
+    "Recruitment agency": 4,
+    "University": 8,
+    "Government entity": 30,
+    "Nonprofit": 3,
+    "Cultural institution; employment route may be shared": 7,
+    "Government-linked employer": 12,
+    "Government healthcare provider": 2,
+    "Private university": 1,
+    "Industrial employer": 5,
+    "Public education institution": 1,
+    "Chamber": 1,
+    "Government-linked institution": 1,
+    "Foundation": 1,
+    "Government cultural institution": 1,
+    "Public university": 2,
+    "Programme of Education Above All; shared employer route": 1,
+    "Tourism promotion source": 1,
+    "Commercial employer / business lead": 179,
+    "Industry association / employer source": 1,
+    "School/campus": 123,
+    "Government healthcare facility/campus": 31,
+    "Healthcare facility/campus": 31,
+    "Facilities industry employer / supplier": 11,
+    "Higher education institution / employer": 14,
+    "Higher education campus / academy": 4,
+    "Higher education programme teaching location": 2
+  },
+  "importNormalizations": [
+    {
+      "sourceId": "qatar_edu_fm_255efb89116154d8",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_bf6e2f6bfd18fa07",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_525837b3b2125c40",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_b031bfa5bd7ad31e",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_6ed05c9c270fd012",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_77a25f68221fbfb1",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_2e6014193a63d8b0",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_43736bd9795a8f89",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_c6a10d1ea9c3fd93",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_619f25191b7bd4d4",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "qatar_edu_fm_aaf7c2aae03a5b46",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    }
+  ],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "qatar-directory.json",
+    "import": "qatar-directory.csv",
+    "imports": [
+      "qatar-directory.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "oman",
+  "name": "Oman",
+  "country": "OM",
+  "countries": [
+    "OM"
+  ],
+  "kind": "country",
+  "description": "2,587 researched organisations and recruitment sources in Oman, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 2587,
+  "formatVersion": 1,
+  "source": "directories/oman/source.json",
+  "sourceSha256": "d156881e583fdada9ebc325db1dc35962b2e39d142320f66d799dd9d76100661",
+  "sourceRoleCounts": {
+    "Organisation / employer lead": 1,
+    "Industrial-city business lead": 1504,
+    "Commercial employer": 463,
+    "Listed employer": 98,
+    "Government entity": 61,
+    "Exhibitor / business lead": 25,
+    "Government-linked employer": 6,
+    "Recruitment agency": 2,
+    "Government recruitment portal": 1,
+    "Commercial employer / business lead": 20,
+    "School/campus": 93,
+    "Government healthcare facility/campus": 255,
+    "Healthcare facility/campus": 18,
+    "Facilities management employer": 2,
+    "Higher education institution / employer": 25,
+    "Higher education college / parent-university campus": 1,
+    "Higher education campus": 11,
+    "Nursery/early childhood centre": 1
+  },
+  "importNormalizations": [],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "oman-directory.json",
+    "import": "oman-directory.csv",
+    "imports": [
+      "oman-directory.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "kuwait",
+  "name": "Kuwait",
+  "country": "KW",
+  "kind": "country",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "source": "directories/kuwait/source.json",
+  "description": "1,806 researched organisations and recruitment sources in Kuwait, with original public evidence and missing-data notes.",
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested."
+  ]
+}

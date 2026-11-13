@@ -1,0 +1,480 @@
+{
+  "id": "kuwait",
+  "name": "Kuwait",
+  "country": "KW",
+  "countries": [
+    "KW"
+  ],
+  "kind": "country",
+  "description": "1,806 researched organisations and recruitment sources in Kuwait, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 1806,
+  "formatVersion": 1,
+  "source": "directories/kuwait/source.json",
+  "sourceSha256": "74ee1b0ff9142532da58daea3a8597ef12a4f01dc4c742d6525f0662fc60e077",
+  "sourceRoleCounts": {
+    "Professional services employer": 45,
+    "Listed company": 134,
+    "Employer": 4,
+    "Private employer": 8,
+    "Private hospital": 5,
+    "Government entity": 63,
+    "Regulated financial institution": 16,
+    "School": 4,
+    "Private university": 4,
+    "Industrial exhibitor / potential employer": 12,
+    "University": 1,
+    "Recruitment agency": 3,
+    "Healthcare employer": 1,
+    "Nonprofit": 3,
+    "Government-linked employer": 10,
+    "Chamber": 1,
+    "Foundation": 1,
+    "Public university": 1,
+    "Public institution": 1,
+    "Employer lead; current operation not established": 65,
+    "Commercial employer / business lead": 31,
+    "School/campus": 1341,
+    "Healthcare facility/campus": 33,
+    "Higher education institution / employer": 10,
+    "Facilities management employer": 4,
+    "Facilities industry employer / supplier": 5
+  },
+  "importNormalizations": [
+    {
+      "sourceId": "kuwait_school_moe_1_80",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_80",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_91",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_91",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_116",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_116",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_205",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_205",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_291",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_291",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_312",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_312",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_314",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_314",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_317",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_317",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_318",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_318",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_329",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_329",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_353",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_353",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_363",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_363",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_377",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_377",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_380",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_380",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_383",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_383",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_387",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_387",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_389",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_389",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_434",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_434",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_437",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_437",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_459",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_459",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_507",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_507",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_567",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_567",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_577",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_577",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_655",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_655",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_675",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_675",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_700",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_700",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_746",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_746",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_825",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_825",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_900",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_900",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_943",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_943",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_962",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_962",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1184",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1184",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1220",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1220",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1223",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1223",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1407",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1407",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1414",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1414",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1433",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1433",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1440",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_1_1440",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_2_77",
+      "field": "name",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_school_moe_2_77",
+      "field": "arabicName",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_edu_fm_678045e8f1483af3",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_edu_fm_3966f96da57a0763",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_edu_fm_0b5289547f3f206a",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_edu_fm_50682fe5311f4889",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "kuwait_edu_fm_78653e3af250f90c",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    }
+  ],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "kuwait-directory.json",
+    "import": "kuwait-directory.csv",
+    "imports": [
+      "kuwait-directory.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

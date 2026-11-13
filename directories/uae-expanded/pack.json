@@ -1,0 +1,20 @@
+{
+  "id": "uae-expanded",
+  "name": "United Arab Emirates",
+  "country": "AE",
+  "kind": "country",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "source": "directories/uae-expanded/source.json",
+  "description": "3,583 researched organisations and recruitment sources in United Arab Emirates, with original public evidence and missing-data notes.",
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Separate expanded snapshot; overlaps the original 772-record UAE baseline. Do not add both pack counts as unique organisations."
+  ],
+  "overlaps": [
+    "uae"
+  ]
+}

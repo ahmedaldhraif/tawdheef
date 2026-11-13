@@ -1,0 +1,12 @@
+.col-progress { min-width: 168px; width: 180px; }
+.col-type { min-width: 170px; }
+.company-progress { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding: 4px 0; min-height: 44px; width: 100%; border: 0; background: transparent; box-shadow: none; color: #35353f; font-size: 12px; text-align: start; }
+.company-progress:hover { background: transparent; color: #23734b; }
+.company-progress > span { display: flex; align-items: center; gap: 5px; line-height: 1.4; }
+.company-progress svg { flex-shrink: 0; color: #23734b; }
+.progress-count { color: #62626b; font-variant-numeric: tabular-nums; }
+.progress-history { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 5px; color: #62626b; font-size: 12px; }
+.progress-history li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.progress-history time { margin-inline-start: auto; }
+.progress-history a { overflow-wrap: anywhere; }
+.report-progress-note { margin-block: 8px 14px; }

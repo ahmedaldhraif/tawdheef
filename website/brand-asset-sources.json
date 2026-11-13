@@ -1,0 +1,70 @@
+{
+  "assets": [
+    {
+      "file": "public/brands/uae-pass-original.png",
+      "sourceUrl": "https://www.tabbio.com/icons/uaepass-tabbio.png",
+      "discoveredOn": "https://www.tabbio.com/en",
+      "downloadedAt": "2026-11-13",
+      "bytes": 75782,
+      "sha256": "dad37f51e289a3ebc36a4f68e2525c4bee2bd4ca4c602ba84a573aab4b6cbd0a",
+      "preservation": "Original bytes, unmodified.",
+      "rights": "Respective brand owner retains rights; used to identify the provider."
+    },
+    {
+      "file": "public/brands/tabbio-wordmark-original.svg",
+      "sourceUrl": "https://www.tabbio.com/marketing/footer/tabbio-footer-en.svg",
+      "discoveredOn": "https://www.tabbio.com/en",
+      "downloadedAt": "2026-11-13",
+      "bytes": 5703,
+      "sha256": "5e6d74282b07be246e1fc41049fbdc631bdbeb41eedb11105e3e17e2857bfb4b",
+      "preservation": "Original bytes, unmodified.",
+      "rights": "Respective brand owner retains rights; used to identify the provider."
+    },
+    {
+      "file": "public/site-assets/people/ahmed-aldhraif.png",
+      "source": "User-supplied official portrait",
+      "originalFilename": "Ahmed Profile Pic offical.png",
+      "sha256": "cee7be5737baae022377a0f8a997ad69bb1e320e2c7b12f84dde82f4fb4668e0",
+      "bytes": 928082,
+      "preservation": "Original bytes; circular presentation is CSS only."
+    },
+    {
+      "file": "public/brands/linkedin-original.ico",
+      "sourceUrl": "https://www.linkedin.com/favicon.ico",
+      "discoveredOn": "https://brand.linkedin.com/in-logo",
+      "downloadedAt": "2026-11-13",
+      "bytes": 24838,
+      "sha256": "19b079c09197fba68d021fa3ba394ec91703909ffd237efa3eb9a2bca13148ec",
+      "preservation": "Original bytes, unmodified.",
+      "rights": "LinkedIn retains rights; used as a hyperlink to the author profile."
+    },
+    {
+      "file": "public/brands/tabbio-wordmark-violet-original.svg",
+      "source": "User-supplied official Tabbio English violet wordmark",
+      "originalFilename": "Tabbio_MainLogoEnglish-03.svg",
+      "receivedAt": "2026-11-13",
+      "bytes": 3864,
+      "sha256": "72f07527b381c54f6dc1138159c3adcc535c6710ada2216a36becf5d0f6430e2",
+      "preservation": "Original bytes, unmodified. Displayed at its original aspect ratio.",
+      "rights": "Tabbio retains rights; supplied by the owner for use in this section."
+    },
+    {
+      "file": "public/brands/google-original.ico",
+      "sourceUrl": "https://www.google.com/favicon.ico",
+      "downloadedAt": "2026-11-13",
+      "bytes": 5430,
+      "sha256": "6da5620880159634213e197fafca1dde0272153be3e4590818533fab8d040770",
+      "preservation": "Original bytes, unmodified.",
+      "rights": "Respective brand owner retains rights; identifies the named search service, without endorsement."
+    },
+    {
+      "file": "public/brands/bing-original.ico",
+      "sourceUrl": "https://www.bing.com/favicon.ico",
+      "downloadedAt": "2026-11-13",
+      "bytes": 4286,
+      "sha256": "5b2c34b3c4e8dd898b664dba6c3786e2ff9869eff55d673aa48361f11325ed07",
+      "preservation": "Original bytes, unmodified.",
+      "rights": "Respective brand owner retains rights; identifies the named search service, without endorsement."
+    }
+  ]
+}

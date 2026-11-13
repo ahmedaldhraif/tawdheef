@@ -1,0 +1,30 @@
+[
+  {
+    "file": "Manrope-OFL.txt",
+    "sha256": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b"
+  },
+  {
+    "file": "Manrope-variable.ttf",
+    "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6"
+  },
+  {
+    "file": "Manrope-variable.woff2",
+    "sha256": "76ce2491e56bed5388c4fac9b375780c4290859f4b9fe6cf0927ed3e158c00c9"
+  },
+  {
+    "file": "NotoKufiArabic-OFL.txt",
+    "sha256": "07fc70bfeb985cc1a87a8587d0a0c80bab11c86c9dc3fd95b6f0cb332f983e96"
+  },
+  {
+    "file": "NotoKufiArabic-variable.ttf",
+    "sha256": "494f6b61469d7a02a2d63f0fc4930bb007388d8cfe551de5eb98354e100889f3"
+  },
+  {
+    "file": "NotoKufiArabic-variable.woff2",
+    "sha256": "27add123729d6a04172f9e27a5bff1667dbff74c228ae137ada171a5f483e3d8"
+  },
+  {
+    "file": "sources.json",
+    "sha256": "8d6c4142dc5248b1be69ecab1e9ca47b8199a570bd277c288ef12b9d919c5f38"
+  }
+]

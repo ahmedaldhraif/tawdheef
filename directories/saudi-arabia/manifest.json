@@ -1,0 +1,123 @@
+{
+  "id": "saudi-arabia",
+  "name": "Saudi Arabia",
+  "country": "SA",
+  "countries": [
+    "SA"
+  ],
+  "kind": "country",
+  "description": "4,256 researched organisations and recruitment sources in Saudi Arabia, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 4256,
+  "formatVersion": 1,
+  "source": "directories/saudi-arabia/source.json",
+  "sourceSha256": "0dd1aaa4c7af38cd9b3febb76534194292480df02ba92b083dcc05a9776650f6",
+  "sourceRoleCounts": {
+    "Employer": 178,
+    "Employer roster lead": 161,
+    "Recruitment agency": 10,
+    "Government-linked employer": 105,
+    "Government entity": 82,
+    "Commercial employer": 38,
+    "University employer": 31,
+    "Organisation / employer lead": 1,
+    "Employer lead; current operation not established": 200,
+    "Industry association / employer source": 1,
+    "Commercial employer / business lead": 78,
+    "School/campus": 398,
+    "Regional education authority / employer source": 16,
+    "Healthcare cluster / HHC group employer": 20,
+    "Healthcare facility/campus (HHC group)": 2493,
+    "Healthcare facility/campus": 60,
+    "Facilities management employer / supplier": 26,
+    "Facilities industry employer / supplier": 12,
+    "Strategic partnership vocational institution / campus": 50,
+    "Higher education institution / employer": 44,
+    "Technical college / institute campus": 249,
+    "Nursery/early childhood centre": 1,
+    "School operator / employer group": 2
+  },
+  "importNormalizations": [
+    {
+      "sourceId": "saudi_edu_fm_be30a1ace3c44f22",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_43a998b6041be005",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_57b85c3eacaa3f32",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_f18143edad177011",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_019962b1d70aafee",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_208d6e6bc0c3a3c8",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_5838fabae3459b4b",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_98e954927dba91f1",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_90392bb9c03588f4",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_32337f349e2da4d3",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_9666ef073af51ab3",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "saudi_edu_fm_5750ee960f9104ff",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    }
+  ],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "saudi-arabia-directory.json",
+    "import": "saudi-arabia-directory-01.csv",
+    "imports": [
+      "saudi-arabia-directory-01.csv",
+      "saudi-arabia-directory-02.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

@@ -1,0 +1,55 @@
+name: Directory data
+description: Add an organisation or correct a directory entry in any country
+title: "[Directory] "
+body:
+  - type: markdown
+    attributes:
+      value: "A public source link is enough to start. Use this for any country. Do not include a CV, private contact details, tracking records, passwords or account data."
+  - type: input
+    id: country
+    attributes:
+      label: Country or directory
+      placeholder: "Country name, and the pack name if it already exists"
+    validations:
+      required: true
+  - type: input
+    id: organisation
+    attributes:
+      label: Organisation and existing record ID
+      description: Keep the record ID when correcting an existing entry. A new organisation does not need one yet.
+      placeholder: "Organisation name; record ID if known"
+    validations:
+      required: true
+  - type: dropdown
+    id: change
+    attributes:
+      label: What needs changing?
+      options:
+        - Add an organisation
+        - Correct a link or contact route
+        - Correct a name, source role or other detail
+        - Report a duplicate or an unavailable route
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Proposed change
+      description: Say what is currently shown and what should replace it. Distinguish an employer from an agency, portal or programme. Say when something is unknown.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Public source links
+      description: Link to the pages that support the change, preferably the organisation's own site. Include the actual careers/contact destination and the date you checked it. Do not guess an email address, ownership or nationality eligibility.
+      placeholder: "Source URL:\nWhat it confirms:\nChecked on: YYYY-MM-DD"
+    validations:
+      required: true
+  - type: checkboxes
+    id: public-data
+    attributes:
+      label: Public data only
+      options:
+        - label: This report contains public directory information, not private applicant or account data.
+          required: true

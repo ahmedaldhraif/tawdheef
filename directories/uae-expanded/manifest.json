@@ -1,0 +1,264 @@
+{
+  "id": "uae-expanded",
+  "name": "United Arab Emirates",
+  "country": "AE",
+  "countries": [
+    "AE"
+  ],
+  "kind": "country",
+  "description": "3,583 researched organisations and recruitment sources in United Arab Emirates, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 3583,
+  "formatVersion": 1,
+  "source": "directories/uae-expanded/source.json",
+  "sourceSha256": "8aa9c30e3c147924d7820e09eecbd8272f5cf36e57ffb53cbb4b01d21be0ef66",
+  "sourceRoleCounts": {
+    "Organisation / employer lead": 772,
+    "International employer": 61,
+    "Emirate government": 294,
+    "Government-linked employer": 53,
+    "Commercial employer": 211,
+    "Healthcare employer": 18,
+    "Education employer": 11,
+    "Recruitment agency": 28,
+    "Job board": 15,
+    "Listed company / employer lead": 50,
+    "Free zone": 21,
+    "Federal government": 61,
+    "Foundation": 10,
+    "Government portal": 12,
+    "Programme": 4,
+    "Emirati programme": 1,
+    "Industry association / employer source": 1,
+    "Commercial employer / business lead": 455,
+    "School/campus": 882,
+    "Nursery/early childhood centre": 349,
+    "Healthcare facility/campus": 156,
+    "Higher education institution / employer": 78,
+    "Facilities industry employer / supplier": 40
+  },
+  "importNormalizations": [
+    {
+      "sourceId": "uae_edu_fm_9c45688c1f881462",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_e1ee14bcb82d5448",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_38c028380172ab23",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_a21d3e81954b3d63",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_1549a2ce3f2cefcc",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_f9e48c4fd5fe3076",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_e9f21f040dd9f232",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_faf0cf2566683a01",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_a2a3b21e7b5a81da",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_5fdb12f32f06084e",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_284d101e3910f2ee",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_f8d9b68d3bb33ebb",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_bc285200f8e8f1ab",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_3a5a3f076e0c0f82",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_a4899a37f42cb70c",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_12642abe8c249d75",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_f2ac75e4ca9a881d",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_331e5f24f6f8d1ea",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_f916c81fdbf7fa7b",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_abd0b184610d8b13",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_aace8b837dc588b1",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_b5f61a61f9cfa5b2",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_b61e410e1c1f788b",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_89a9e9e2a6bb7ab6",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_748ae9649436bf25",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_37d8db2e02d4b4ab",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_6a2cfb0bf112fabb",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_ecac7330defb89e4",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_ce00d6a0211d114c",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_48366b9f02674fe5",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_60e8b83a304baaba",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_e4355c94ab97a00e",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_d943c6cae99785d7",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_972e954090b80eb8",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_9210da176c25b175",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_6b6d8b4056856e51",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_23bb27b7059128e0",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_4a14491901a42a44",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_264c2af998e3dd80",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    },
+    {
+      "sourceId": "uae_edu_fm_b430f91825dd75bb",
+      "field": "location",
+      "operation": "Importer trims surrounding whitespace; unchanged original retained in JSON"
+    }
+  ],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "uae-expanded-directory.json",
+    "import": "uae-expanded-directory-01.csv",
+    "imports": [
+      "uae-expanded-directory-01.csv",
+      "uae-expanded-directory-02.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Separate expanded snapshot; overlaps the original 772-record UAE baseline. Do not add both pack counts as unique organisations.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

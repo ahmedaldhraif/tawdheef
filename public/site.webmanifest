@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "Tawdheef | توظيف",
+  "short_name": "Tawdheef",
+  "description": "Your company directory and job applications, together on your computer.",
+  "lang": "en",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#5A2AFF",
+  "icons": [
+    { "src": "/brand/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

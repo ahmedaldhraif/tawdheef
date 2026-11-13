@@ -1,0 +1,195 @@
+{
+  "reviewedOn": "2026-11-13",
+  "references": [
+    {
+      "url": "https://aiforui.dev",
+      "observed": "Centered proposition, creator byline, restrained native controls and a clear next step.",
+      "applied": "A centered proposition, one explanatory paragraph, quiet Ahmed attribution and one start action, using Tawdheef's own brand and exact product wording."
+    },
+    {
+      "url": "https://aiforui.dev/skills",
+      "observed": "Install command near the explanation, a useful skills catalogue, examples and a connection to the creator's broader offer.",
+      "applied": "One actual Tawdheef skill, a working checkout install command, example prompts and contextual Tabbio CV links."
+    },
+    {
+      "url": "https://github.com/emilkowalski/skills",
+      "observed": "A short purpose statement, clear install command and specific skill descriptions.",
+      "applied": "Repository-local installable skill with distinct instructions and references; no fabricated remote package status."
+    },
+    {
+      "url": "https://github.com/shadcn-ui/ui",
+      "observed": "Brief positioning, ownership/customisation emphasis, direct documentation and contribution paths.",
+      "applied": "An understandable open-source promise, usable source and visible setup/docs."
+    },
+    {
+      "url": "https://github.com/ollama/ollama",
+      "observed": "Prominent platform setup, practical first-use commands and links into the ecosystem.",
+      "applied": "Concrete Node/setup commands before optional connections; distinguish the app from the model/client."
+    },
+    {
+      "url": "https://github.com/supabase/supabase",
+      "observed": "A concrete product description, useful capability links, local/self-hosted/hosted distinctions and a separate ecosystem identity.",
+      "applied": "Keep the local tracker and deployable marketing site separate; use Powered by Tabbio as a clear optional relationship."
+    },
+    {
+      "url": "https://github.com/meta/astryx",
+      "observed": "Coherent spacing, accessible controls, semantic UI and native-feeling interactions.",
+      "applied": "44px touch targets, clear type roles, one primary CV action and an instant native navigation popover; no added runtime library."
+    },
+    {
+      "url": "https://appflowy.com/",
+      "observed": "The hero names the self-hosted AI workspace category, explains its scope, offers a free-start or self-host action, then shows the product.",
+      "applied": "Name the free local job application app clearly, keep one explanatory sentence and a direct start action, then show the actual tracker."
+    },
+    {
+      "url": "https://anythingllm.com/",
+      "observed": "A short ownership-led outcome is followed by a concrete local/private category sentence, a free-download action and product evidence.",
+      "applied": "Lead with the job-application outcome and explain local ownership without borrowing unsupported privacy or cost claims."
+    },
+    {
+      "url": "https://plane.so/",
+      "observed": "The hero identifies its category and human/agent audience, follows with a practical explanation and a start action, then demonstrates the product.",
+      "applied": "Explain what Tawdheef does in one paragraph with familiar AI names inline; keep the product view stronger than provider artwork or founder attribution. Technical client requirements remain in setup, workflow and FAQ content."
+    },
+    {
+      "url": "https://cal.com/",
+      "observed": "The hero leads with a familiar scheduling outcome, provides a clear signup action and demonstrates a concrete booking flow immediately below.",
+      "applied": "Keep the application outcome and next action prominent, followed by real local tracker evidence rather than a decorative profile card."
+    },
+    {
+      "url": "https://github.com/localsend/localsend",
+      "observed": "The README identifies a familiar utility and local operating model, then provides screenshots, clear download paths, platform requirements and contribution links.",
+      "applied": "State Tawdheef's job-application purpose plainly, show the actual tracker, distinguish source setup from a packaged installer and keep directory contributions easy to find. This is a presentation inference, not conversion evidence."
+    },
+    {
+      "url": "https://github.com/p0deje/Maccy",
+      "observed": "The README describes one concrete utility, gives a short feature list, installation and practical usage instructions, and identifies the official distribution source.",
+      "applied": "Keep the repository opening focused on the real app and a working first-use path. Clearly identify the maintainer and official source without treating forks as forbidden or borrowing another project's security claims."
+    },
+    {
+      "url": "https://github.com/usememos/memos",
+      "observed": "The README pairs an everyday-use description with demo/install/docs links, a real interface image, a concrete quickstart and separate API/MCP ecosystem links.",
+      "applied": "Keep benefit, screenshot and setup near the top; place skills, country packs and Tabbio CV context in useful linked sections. Do not infer adoption or conversion from the reference's popularity."
+    },
+    {
+      "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes",
+      "observed": "GitHub describes README content covering purpose, usefulness, setup, help and maintainers, and supports relative links and section anchors.",
+      "applied": "Use a concise product opening and direct setup/contribution links; validate relative paths and anchors. A readable README is not a ranking guarantee."
+    },
+    {
+      "url": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics",
+      "observed": "Topics classify repositories for discovery and contribution. Names use lowercase letters, numbers and hyphens; GitHub allows up to 20 topics.",
+      "applied": "Choose a small relevant set describing job applications, local operation, country directories and actual AI/MCP clients. Do not use unrelated trending tags or claim that topics guarantee visibility."
+    },
+    {
+      "url": "https://docs.github.com/en/account-and-profile/how-tos/profile-customization/managing-your-profile-readme",
+      "observed": "A public repository named after a GitHub username can display its root README on the user's profile.",
+      "applied": "Ahmed's personal profile can link to the actual Tawdheef repository and setup page after publication. This is a separate owner-controlled change, not an automatic step of a website build."
+    },
+    {
+      "url": "https://developers.google.com/search/docs/essentials",
+      "observed": "Google prioritises useful, reliable content, meaningful titles/headings, crawlable links and appropriate technical access. Meeting requirements does not guarantee crawling, indexing or serving.",
+      "applied": "Describe the real application and researched country packs with original coverage notes, dates, source roles and setup links. Do not create empty country doorway pages or claim certified search compliance."
+    },
+    {
+      "url": "https://developers.google.com/search/docs/appearance/ai-features",
+      "observed": "Google's AI search features use the same SEO foundations. Eligible pages must be indexed and snippet-eligible; no special AI text file or schema is required, and inclusion is not guaranteed.",
+      "applied": "Keep important app and directory facts in visible text, link the pages clearly and align structured data with visible content. Treat llms.txt as an optional information aid, not an AI-ranking mechanism or evidence of citation."
+    },
+    {
+      "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+      "observed": "GitHub recommends least-privilege workflow tokens, protecting secrets, reviewing dependency/action supply chains and avoiding privileged untrusted-code execution.",
+      "applied": "Recommend read-only PR checks, isolated fixtures without live account credentials, reviewed release permissions and dependency update/security reporting controls. Repository settings must be verified after creation; source configuration is not proof of enabled protection."
+    }
+  ],
+  "claims": [
+    {
+      "claim": "Free Tabbio CV creation, sharing and PDF export",
+      "source": "https://www.tabbio.com/en",
+      "basis": "Public FAQ; not a tested account entitlement in this task."
+    },
+    {
+      "claim": "Tabbio MCP can expose scoped CV reads and updates",
+      "source": "https://docs.tabbio.com/en/mcp/tools",
+      "basis": "Public registry documentation includes cv.get, cv.update and profile update tools; local Tawdheef currently maps readCV, so broader edits are described as a separate Tabbio capability."
+    },
+    {
+      "claim": "Tabbio free aggregate CV views, richer analytics subject to entitlement",
+      "source": "https://docs.tabbio.com/en/mcp/tools",
+      "basis": "analytics.personalGet documentation; no user analytics were read or attributed."
+    },
+    {
+      "claim": "Role-specific CV tailoring",
+      "source": "https://docs.tabbio.com/en/career/tailored-cvs",
+      "basis": "Public feature documentation; availability and paid limits remain subject to the account's current plan."
+    },
+    {
+      "claim": "772 UAE organisation/source records from10November2026",
+      "source": "data/uae-directory.json",
+      "basis": "Counted original source records; not an estimate of vacancies or live employers."
+    },
+    {
+      "claim": "UAE PASS identity verification",
+      "source": "https://docs.tabbio.com/en/account/uae-pass",
+      "basis": "Identity values such as name; not verification of CV experience or qualifications."
+    },
+    {
+      "claim": "Employer visibility, public indexing choice and Open to work",
+      "source": "https://docs.tabbio.com/en/account/privacy",
+      "basis": "Visibility is controlled by the user. Public profiles may be eligible for indexing; neither indexing nor employer contact is guaranteed. Open-to-work is separate."
+    },
+    {
+      "claim": "Ahmed AlDhraif LinkedIn profile URL",
+      "source": "https://github.com/ahmedaldhraif",
+      "basis": "The official GitHub profile links directly to https://www.linkedin.com/in/ahmedaldhraif. Used as the quiet founder-credit link; no LinkedIn actions or live profile widget."
+    },
+    {
+      "claim": "Tabbio CLI and MCP access",
+      "source": "https://www.tabbio.com/en/mcp",
+      "basis": "Official guide documents the CLI and MCP reaching the same career tools; structured data, scoped reads/writes and approvals. The tracker CV adapter remains a read integration. General Tabbio account access is worldwide; UAE PASS is optional."
+    }
+  ],
+  "interpretation": "The reviewed heroes suggest an outcome/category, explanatory sentence, primary CTA and product-evidence hierarchy. This is a design inference, not evidence that the pattern improves conversions. Funnel patterns are design inferences from the reviewed sources, not proven conversion advantages. No original source copy, testimonials or star counts were transplanted.",
+  "discoverabilityFindings": {
+    "evidence": "Official GitHub documentation supports useful README content, descriptive topics and profile links. Google documentation supports visible helpful content and standard crawl/index eligibility for both ordinary and AI search.",
+    "inference": "Clear category wording, genuine product evidence, practical setup and specific country-source pages are sensible discovery and onboarding choices. The reviewed projects do not establish their causal effect on Tawdheef's performance.",
+    "limits": "No measured ranking, indexing, AI citation, downloads, conversions or production adoption is established. No first, best, complete, guaranteed-free-provider or automatic-search-inclusion claim is supported.",
+    "maintainerControlsRecommended": [
+      "Enable and verify private vulnerability reporting when the public repository exists.",
+      "Enable dependency alerts and review Dependabot updates for npm and GitHub Actions.",
+      "Require relevant passing checks on the main branch and review public source/data changes; use review rules appropriate for a personal maintainer.",
+      "Keep PR workflow tokens read-only; do not run untrusted PR code with privileged pull_request_target or release credentials.",
+      "Use hosted isolated fixture tests, never the maintainer's private tracker, CV, mailbox, credentials or account sign-ins in public CI.",
+      "Keep write permissions limited to the reviewed release job and review action dependencies; consider verified SHA pinning or supported workflow dependency locking.",
+      "Treat policies, scans and branch controls as risk reduction rather than legal immunity, security certification or control over independent forks."
+    ],
+    "verificationStatus": "Source workflow files were read. Remote repository controls and hosted runs were not verified by this research."
+  },
+  "liveStatus": "All Tawdheef work is local. Intended repository and domain have not been published or verified by this work.",
+  "heroDecision": {
+    "basis": "Design response to the owner's request for plainer presentation; not an approved conversion result.",
+    "headline": "A free, open-source app to apply for jobs.",
+    "description": "Find companies, apply and track replies with your ChatGPT or Claude agent.",
+    "layout": "Centered headline and one explanatory paragraph, with original ChatGPT and Claude marks inline with their names. No separate badge, audience row, technical client captions or duplicate central ta mark; one black primary action and a plain explanatory link.",
+    "primaryAction": "Get the free app",
+    "secondaryAction": "See how it works",
+    "attribution": "The supplied portrait, Built by Ahmed AlDhraif text and original LinkedIn favicon square form one quiet LinkedIn link. No registered-mark artwork and no Founder of Tabbio role line.",
+    "logoPlacement": "The ta symbol stays in the header and favicon, without another large mark in the hero."
+  },
+  "providerIdentification": {
+    "ChatGPT": "Familiar name with the original generic OpenAI Blossom artwork inline in the single hero paragraph, rather than in a separate label, audience row or integration button.",
+    "Claude": "Familiar name with the original generic Claude mark inline in the same paragraph.",
+    "heroParagraph": "Find companies, apply and track replies with your ChatGPT or Claude agent.",
+    "localOperators": {
+      "ChatGPT": "Codex",
+      "Claude": "Claude Code"
+    },
+    "localRequirementPlacement": "Explain Codex and Claude Code in setup, workflow and FAQ content; do not stack technical operator labels under the hero's audience names.",
+    "boundary": "The local tracker is operated through Codex or Claude Code. Direct tracker operation from the ChatGPT or Claude website is not claimed. Tabbio CV MCP compatibility with those web clients is a separate capability.",
+    "existingProviderAssets": {
+      "Codex": "Original OpenAI Blossom; no distinct Codex product mark was verified.",
+      "Claude Code": "Original official documentation favicon remains available for the explicit local-app provider label."
+    },
+    "policy": "Artwork used for compatibility identification, not endorsement; see THIRD-PARTY-NOTICES.md."
+  }
+}

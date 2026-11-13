@@ -1,0 +1,13 @@
+{
+  "id": "uae",
+  "name": "United Arab Emirates — original snapshot",
+  "country": "AE",
+  "kind": "country",
+  "featured": false,
+  "historical": true,
+  "snapshotDate": "2026-11-10",
+  "source": "data/uae-directory.json",
+  "sourceSha256": "531e80df9a72b5a4c06c253dcf0f776dc89107b7711d564b830690bcf1f7549f",
+  "description": "The original 772-record UAE research snapshot bundled with Tawdheef. Later researched snapshots are separate packs.",
+  "notes": ["Original 772-record baseline. Do not add its count to a later UAE pack as unique organisations."]
+}

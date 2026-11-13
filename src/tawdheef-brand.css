@@ -1,0 +1,63 @@
+.tawdheef-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+.tawdheef-mark {
+  display: block;
+  flex: 0 0 auto;
+  fill: #5a2aff;
+  overflow: visible;
+}
+.tawdheef-wordmark {
+  display: block;
+  height: 21px;
+  width: auto;
+}
+.tawdheef-wordmark-ar {
+  height: 24px;
+}
+.tawdheef-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.tawdheef-mark.is-busy .tawdheef-dot-a {
+  animation: tawdheef-dot 1120ms cubic-bezier(.45, 0, .55, 1) infinite;
+}
+.tawdheef-mark.is-busy .tawdheef-dot-b {
+  animation: tawdheef-dot 1120ms cubic-bezier(.45, 0, .55, 1) 140ms infinite;
+}
+@keyframes tawdheef-dot {
+  0%, 70%, 100% { opacity: 1; transform: translateY(0); }
+  35% { opacity: .48; transform: translateY(-2px); }
+}
+.tabbio-endorsement {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #62626b;
+  text-decoration: none;
+  margin-inline-start: 12px;
+  white-space: nowrap;
+}
+.tabbio-endorsement img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.tabbio-endorsement:focus-visible {
+  outline: 2px solid #5a2aff;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .tabbio-endorsement { display: none; }
+  .tawdheef-brand { gap: 5px; }
+  .tawdheef-wordmark { height: 19px; }
+  .tawdheef-wordmark-ar { height: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tawdheef-mark.is-busy .tawdheef-dot { animation: none; }
+}

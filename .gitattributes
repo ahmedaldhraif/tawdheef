@@ -1,0 +1,14 @@
+* text=auto
+*.sh text eol=lf
+*.command text eol=lf
+*.mjs text eol=lf
+*.cmd text eol=crlf
+*.png binary
+*.ico binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+# Preserve reviewed source bytes and published source checksums on every OS.
+data/uae-directory.json -text
+directories/**/source.json -text
+directories/**/index.json text eol=lf

@@ -1,0 +1,23 @@
+{
+  "id": "",
+  "name": "",
+  "arabicName": "",
+  "sector": "",
+  "location": "",
+  "type": "",
+  "sourceRole": "",
+  "website": "",
+  "careersUrl": "",
+  "applyUrl": "",
+  "linkedinUrl": "",
+  "email": "",
+  "routeStatus": "",
+  "checkedAt": "",
+  "sourceFields": {
+    "evidenceUrls": [],
+    "fieldEvidence": {},
+    "missingDataNotes": [],
+    "sourceNotes": [],
+    "licenseNotes": ""
+  }
+}

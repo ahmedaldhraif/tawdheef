@@ -1,0 +1,78 @@
+.list-options-trigger {
+  min-height: 40px;
+  padding: 8px 11px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #dedee3;
+  border-radius: 7px;
+  color: #4d4d58;
+}
+.list-options-trigger[aria-expanded="true"] {
+  background: #f1f1f4;
+  border-color: #c6c6d0;
+}
+.list-options-menu {
+  position: fixed;
+  inset: auto;
+  width: 210px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 5px;
+  border: 1px solid #dedee3;
+  border-radius: 9px;
+  background: #fff;
+  color: #252525;
+  box-shadow:
+    0 4px 6px #1d1d2410,
+    0 12px 28px #1d1d2415;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  z-index: 100;
+}
+.list-options-menu[data-open="false"] {
+  display: none;
+}
+.list-options-menu[data-open="true"] {
+  display: block;
+}
+.list-options-menu [role="menuitem"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #35353f;
+  text-align: start;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+}
+.list-options-menu [role="menuitem"]:focus {
+  background: #f1f1f4;
+}
+@media (hover: hover) and (pointer: fine) {
+  .list-options-menu [role="menuitem"]:hover {
+    background: #f1f1f4;
+  }
+}
+.list-options-menu [role="menuitem"]:focus-visible {
+  outline: 2px solid #85a9ef;
+  outline-offset: -2px;
+}
+.list-options-menu:focus-visible {
+  outline: none;
+}
+@media (pointer: coarse) {
+  .list-options-menu [role="menuitem"] {
+    min-height: 44px;
+  }
+}

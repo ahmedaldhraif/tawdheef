@@ -1,0 +1,52 @@
+{
+  "id": "uae",
+  "name": "United Arab Emirates — original snapshot",
+  "country": "AE",
+  "countries": [
+    "AE"
+  ],
+  "kind": "country",
+  "description": "The original 772-record UAE research snapshot bundled with Tawdheef. Later researched snapshots are separate packs.",
+  "featured": false,
+  "historical": true,
+  "snapshotDate": "2026-11-10",
+  "recordCount": 772,
+  "formatVersion": 1,
+  "source": "data/uae-directory.json",
+  "sourceSha256": "531e80df9a72b5a4c06c253dcf0f776dc89107b7711d564b830690bcf1f7549f",
+  "sourceRoleCounts": {
+    "International employer": 61,
+    "Emirate government": 266,
+    "Government-linked employer": 53,
+    "Commercial employer": 211,
+    "Healthcare employer": 18,
+    "Education employer": 11,
+    "Recruitment agency": 28,
+    "Job board": 15,
+    "Free zone": 21,
+    "Federal government": 61,
+    "Foundation": 10,
+    "Government portal": 12,
+    "Programme": 4,
+    "Emirati programme": 1
+  },
+  "importNormalizations": [],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "Repository code is MIT licensed. Retained public source facts, third-party sites and marks keep their own terms; inspect original evidence.",
+  "files": {
+    "original": "uae-directory.json",
+    "import": "uae-directory.csv",
+    "imports": [
+      "uae-directory.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Original 772-record baseline. Do not add its count to a later UAE pack as unique organisations.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

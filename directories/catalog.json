@@ -1,0 +1,366 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "id": "bahrain",
+      "name": "Bahrain",
+      "country": "BH",
+      "countries": [
+        "BH"
+      ],
+      "kind": "country",
+      "description": "811 researched organisations and recruitment sources in Bahrain, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 811,
+      "path": "bahrain/manifest.json",
+      "download": "bahrain/bahrain-directory-pack.zip",
+      "source": "directories/bahrain/source.json",
+      "sourceSha256": "325538befa3c963bff8e791491d33a2fef21f3ab752b8fd0482d9cd805d45fe9",
+      "sourceRoleCounts": {
+        "Commercial employer": 135,
+        "Listed employer": 37,
+        "Exhibitor / business lead": 16,
+        "Government-linked employer": 18,
+        "Government-directory organisation; role unconfirmed": 12,
+        "Government entity": 78,
+        "Recruitment agency": 2,
+        "Organisation / employer lead": 1,
+        "Commercial employer / business lead": 17,
+        "School/campus": 326,
+        "Healthcare facility/campus": 14,
+        "Licensed healthcare facility/campus": 42,
+        "Healthcare support business / medical laundry": 6,
+        "Higher education institution / employer": 107
+      },
+      "files": {
+        "original": "bahrain-directory.json",
+        "import": "bahrain-directory.csv",
+        "imports": [
+          "bahrain-directory.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "kuwait",
+      "name": "Kuwait",
+      "country": "KW",
+      "countries": [
+        "KW"
+      ],
+      "kind": "country",
+      "description": "1,806 researched organisations and recruitment sources in Kuwait, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 1806,
+      "path": "kuwait/manifest.json",
+      "download": "kuwait/kuwait-directory-pack.zip",
+      "source": "directories/kuwait/source.json",
+      "sourceSha256": "74ee1b0ff9142532da58daea3a8597ef12a4f01dc4c742d6525f0662fc60e077",
+      "sourceRoleCounts": {
+        "Professional services employer": 45,
+        "Listed company": 134,
+        "Employer": 4,
+        "Private employer": 8,
+        "Private hospital": 5,
+        "Government entity": 63,
+        "Regulated financial institution": 16,
+        "School": 4,
+        "Private university": 4,
+        "Industrial exhibitor / potential employer": 12,
+        "University": 1,
+        "Recruitment agency": 3,
+        "Healthcare employer": 1,
+        "Nonprofit": 3,
+        "Government-linked employer": 10,
+        "Chamber": 1,
+        "Foundation": 1,
+        "Public university": 1,
+        "Public institution": 1,
+        "Employer lead; current operation not established": 65,
+        "Commercial employer / business lead": 31,
+        "School/campus": 1341,
+        "Healthcare facility/campus": 33,
+        "Higher education institution / employer": 10,
+        "Facilities management employer": 4,
+        "Facilities industry employer / supplier": 5
+      },
+      "files": {
+        "original": "kuwait-directory.json",
+        "import": "kuwait-directory.csv",
+        "imports": [
+          "kuwait-directory.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "oman",
+      "name": "Oman",
+      "country": "OM",
+      "countries": [
+        "OM"
+      ],
+      "kind": "country",
+      "description": "2,587 researched organisations and recruitment sources in Oman, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 2587,
+      "path": "oman/manifest.json",
+      "download": "oman/oman-directory-pack.zip",
+      "source": "directories/oman/source.json",
+      "sourceSha256": "d156881e583fdada9ebc325db1dc35962b2e39d142320f66d799dd9d76100661",
+      "sourceRoleCounts": {
+        "Organisation / employer lead": 1,
+        "Industrial-city business lead": 1504,
+        "Commercial employer": 463,
+        "Listed employer": 98,
+        "Government entity": 61,
+        "Exhibitor / business lead": 25,
+        "Government-linked employer": 6,
+        "Recruitment agency": 2,
+        "Government recruitment portal": 1,
+        "Commercial employer / business lead": 20,
+        "School/campus": 93,
+        "Government healthcare facility/campus": 255,
+        "Healthcare facility/campus": 18,
+        "Facilities management employer": 2,
+        "Higher education institution / employer": 25,
+        "Higher education college / parent-university campus": 1,
+        "Higher education campus": 11,
+        "Nursery/early childhood centre": 1
+      },
+      "files": {
+        "original": "oman-directory.json",
+        "import": "oman-directory.csv",
+        "imports": [
+          "oman-directory.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "qatar",
+      "name": "Qatar",
+      "country": "QA",
+      "countries": [
+        "QA"
+      ],
+      "kind": "country",
+      "description": "671 researched organisations and recruitment sources in Qatar, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 671,
+      "path": "qatar/manifest.json",
+      "download": "qatar/qatar-directory-pack.zip",
+      "source": "directories/qatar/source.json",
+      "sourceSha256": "dda16ab7cf2b948ccfa996793899690e4ceef091a1a79786f7e3524b11299f55",
+      "sourceRoleCounts": {
+        "Listed company": 55,
+        "Public or nonprofit institution": 27,
+        "Regulated financial institution": 63,
+        "Private employer": 13,
+        "Industrial exhibitor / potential employer": 20,
+        "Employer": 9,
+        "University or education institution": 2,
+        "Healthcare employer": 2,
+        "Public institution": 3,
+        "Recruitment agency": 4,
+        "University": 8,
+        "Government entity": 30,
+        "Nonprofit": 3,
+        "Cultural institution; employment route may be shared": 7,
+        "Government-linked employer": 12,
+        "Government healthcare provider": 2,
+        "Private university": 1,
+        "Industrial employer": 5,
+        "Public education institution": 1,
+        "Chamber": 1,
+        "Government-linked institution": 1,
+        "Foundation": 1,
+        "Government cultural institution": 1,
+        "Public university": 2,
+        "Programme of Education Above All; shared employer route": 1,
+        "Tourism promotion source": 1,
+        "Commercial employer / business lead": 179,
+        "Industry association / employer source": 1,
+        "School/campus": 123,
+        "Government healthcare facility/campus": 31,
+        "Healthcare facility/campus": 31,
+        "Facilities industry employer / supplier": 11,
+        "Higher education institution / employer": 14,
+        "Higher education campus / academy": 4,
+        "Higher education programme teaching location": 2
+      },
+      "files": {
+        "original": "qatar-directory.json",
+        "import": "qatar-directory.csv",
+        "imports": [
+          "qatar-directory.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "saudi-arabia",
+      "name": "Saudi Arabia",
+      "country": "SA",
+      "countries": [
+        "SA"
+      ],
+      "kind": "country",
+      "description": "4,256 researched organisations and recruitment sources in Saudi Arabia, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 4256,
+      "path": "saudi-arabia/manifest.json",
+      "download": "saudi-arabia/saudi-arabia-directory-pack.zip",
+      "source": "directories/saudi-arabia/source.json",
+      "sourceSha256": "0dd1aaa4c7af38cd9b3febb76534194292480df02ba92b083dcc05a9776650f6",
+      "sourceRoleCounts": {
+        "Employer": 178,
+        "Employer roster lead": 161,
+        "Recruitment agency": 10,
+        "Government-linked employer": 105,
+        "Government entity": 82,
+        "Commercial employer": 38,
+        "University employer": 31,
+        "Organisation / employer lead": 1,
+        "Employer lead; current operation not established": 200,
+        "Industry association / employer source": 1,
+        "Commercial employer / business lead": 78,
+        "School/campus": 398,
+        "Regional education authority / employer source": 16,
+        "Healthcare cluster / HHC group employer": 20,
+        "Healthcare facility/campus (HHC group)": 2493,
+        "Healthcare facility/campus": 60,
+        "Facilities management employer / supplier": 26,
+        "Facilities industry employer / supplier": 12,
+        "Strategic partnership vocational institution / campus": 50,
+        "Higher education institution / employer": 44,
+        "Technical college / institute campus": 249,
+        "Nursery/early childhood centre": 1,
+        "School operator / employer group": 2
+      },
+      "files": {
+        "original": "saudi-arabia-directory.json",
+        "import": "saudi-arabia-directory-01.csv",
+        "imports": [
+          "saudi-arabia-directory-01.csv",
+          "saudi-arabia-directory-02.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "uae",
+      "name": "United Arab Emirates — original snapshot",
+      "country": "AE",
+      "countries": [
+        "AE"
+      ],
+      "kind": "country",
+      "description": "The original 772-record UAE research snapshot bundled with Tawdheef. Later researched snapshots are separate packs.",
+      "featured": false,
+      "historical": true,
+      "snapshotDate": "2026-11-10",
+      "recordCount": 772,
+      "path": "uae/manifest.json",
+      "download": "uae/uae-directory-pack.zip",
+      "source": "data/uae-directory.json",
+      "sourceSha256": "531e80df9a72b5a4c06c253dcf0f776dc89107b7711d564b830690bcf1f7549f",
+      "sourceRoleCounts": {
+        "International employer": 61,
+        "Emirate government": 266,
+        "Government-linked employer": 53,
+        "Commercial employer": 211,
+        "Healthcare employer": 18,
+        "Education employer": 11,
+        "Recruitment agency": 28,
+        "Job board": 15,
+        "Free zone": 21,
+        "Federal government": 61,
+        "Foundation": 10,
+        "Government portal": 12,
+        "Programme": 4,
+        "Emirati programme": 1
+      },
+      "files": {
+        "original": "uae-directory.json",
+        "import": "uae-directory.csv",
+        "imports": [
+          "uae-directory.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
+    },
+    {
+      "id": "uae-expanded",
+      "name": "United Arab Emirates",
+      "country": "AE",
+      "countries": [
+        "AE"
+      ],
+      "kind": "country",
+      "description": "3,583 researched organisations and recruitment sources in United Arab Emirates, with original public evidence and missing-data notes.",
+      "featured": true,
+      "historical": false,
+      "snapshotDate": "2026-11-13",
+      "recordCount": 3583,
+      "path": "uae-expanded/manifest.json",
+      "download": "uae-expanded/uae-expanded-directory-pack.zip",
+      "source": "directories/uae-expanded/source.json",
+      "sourceSha256": "8aa9c30e3c147924d7820e09eecbd8272f5cf36e57ffb53cbb4b01d21be0ef66",
+      "sourceRoleCounts": {
+        "Organisation / employer lead": 772,
+        "International employer": 61,
+        "Emirate government": 294,
+        "Government-linked employer": 53,
+        "Commercial employer": 211,
+        "Healthcare employer": 18,
+        "Education employer": 11,
+        "Recruitment agency": 28,
+        "Job board": 15,
+        "Listed company / employer lead": 50,
+        "Free zone": 21,
+        "Federal government": 61,
+        "Foundation": 10,
+        "Government portal": 12,
+        "Programme": 4,
+        "Emirati programme": 1,
+        "Industry association / employer source": 1,
+        "Commercial employer / business lead": 455,
+        "School/campus": 882,
+        "Nursery/early childhood centre": 349,
+        "Healthcare facility/campus": 156,
+        "Higher education institution / employer": 78,
+        "Facilities industry employer / supplier": 40
+      },
+      "files": {
+        "original": "uae-expanded-directory.json",
+        "import": "uae-expanded-directory-01.csv",
+        "imports": [
+          "uae-expanded-directory-01.csv",
+          "uae-expanded-directory-02.csv"
+        ],
+        "index": "index.json"
+      },
+      "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+      "overlaps": [
+        "uae"
+      ]
+    }
+  ]
+}

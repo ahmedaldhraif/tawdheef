@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#5A2AFF" />
+  <meta name="description" content="Tawdheef identity: Arabic Grid logo, bilingual wordmarks, icons, colour and motion." />
+  <title>Tawdheef · Brand system</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="guide.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to brand guide</a>
+  <header class="site-header">
+    <a href="#" aria-label="Tawdheef brand guide"><img src="logo-latin-purple.svg" alt="tawdheef.com" width="192" height="48" /></a>
+    <nav aria-label="Brand guide"><a href="#logos">Logo</a><a href="#icons">Icons</a><a href="#type">Type & colour</a><a href="#motion">Motion</a><a class="download" href="tawdheef-brand-kit.zip" download>Download kit <span aria-hidden="true">↓</span></a></nav>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="intro-title">
+      <div class="hero-copy">
+        <p class="edition">Brand system · Arabic Grid · v1.0</p>
+        <h1 id="intro-title">Arabic at heart.<br />Clear at every size.</h1>
+        <p class="lead">A precise identity for Tawdheef, your job-hunt directory and application tracker.</p>
+        <p class="arabic-intro" lang="ar" dir="rtl">توظيف<br /><span>رتّب رحلة بحثك عن عمل.</span></p>
+        <div class="hero-links"><a href="#logos">Explore the identity</a><a href="tokens.json" download>Brand tokens</a></div>
+      </div>
+      <div class="hero-art"><img src="mark-white.svg" alt="Tawdheef: a geometric Arabic ta with two square dots" width="600" height="600" /><span class="art-caption">ت · Two dots. A distinct identity.</span></div>
+    </section>
+
+    <section class="section" id="logos" aria-labelledby="logo-title">
+      <div class="section-intro"><h2 id="logo-title">One mark. Two languages.</h2><p>The square dots and open geometric body come from <span lang="ar">ت</span>, the first letter of <span lang="ar">توظيف</span>. The mark stands on its own. Tabbio is an optional endorsement.</p></div>
+      <div class="preview-controls">
+        <label for="lockup">Logo format <select id="lockup"><option value="latin">English</option><option value="arabic">Arabic</option><option value="bilingual">Bilingual</option><option value="stacked">Stacked</option></select></label>
+        <div class="surface-controls" role="group" aria-label="Preview background"><button type="button" data-surface="light" aria-pressed="true">Light</button><button type="button" data-surface="dark" aria-pressed="false">Dark</button><button type="button" data-surface="purple" aria-pressed="false">Purple</button></div>
+        <label class="check"><input type="checkbox" id="endorsement" /> Show endorsement</label>
+      </div>
+      <div class="logo-stage" id="logo-stage" data-surface="light">
+        <img id="lockup-preview" src="logo-latin-purple.svg" alt="Tawdheef English logo" width="620" height="160" />
+        <div class="endorsement" id="endorsement-preview" hidden><span>Powered by</span><img src="tabbio-original.svg" alt="" width="20" height="20" /><span>Tabbio</span></div>
+      </div>
+      <div class="asset-caption"><p><strong>tawdheef.com</strong> in the wordmark. <strong>Tawdheef</strong> in sentences. <span lang="ar">توظيف</span> in Arabic.</p><a id="lockup-download" href="logo-latin-purple.svg" download>Download this SVG</a></div>
+      <div class="rule-grid">
+        <article><h3>Room to breathe</h3><div class="clear-space"><span class="space top">1 dot</span><div><img src="mark.svg" alt="Clear space around the Tawdheef mark" width="160" height="160" /></div></div><p>Keep at least one dot’s width clear on every side of the visible artwork. This applies inside a container, too.</p></article>
+        <article><h3>Consistent geometry</h3><div class="geometry"><svg viewBox="0 0 100 100" aria-label="Logo grid: square dots and equal-weight body" role="img"><defs><pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="#d6c9ff" stroke-width=".3"/></pattern></defs><rect width="100" height="100" fill="url(#grid)"/><path d="M10 40.4H26V59.6H74V40.4H90V75.6H10Z" fill="#5A2AFF"/><g fill="#5A2AFF"><rect x="31.333333" y="24.4" width="16" height="16"/><rect x="52.666667" y="24.4" width="16" height="16"/></g></svg></div><p>Both dots are squares. Each matches the body’s stroke weight. Corners stay square; proportions stay fixed.</p></article>
+        <article><h3>Tabbio, when useful</h3><div class="parent-demo"><img src="mark.svg" alt="Tawdheef mark" width="120" height="120" /><div class="parent-line">Powered by <img src="tabbio-original.svg" alt="" width="22" height="22" /> Tabbio</div></div><p>Place the endorsement in a footer, launch artwork or about page. Leave it off favicons, app icons and compact headers.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="icons" aria-labelledby="icon-title">
+      <div class="section-intro"><h2 id="icon-title">Made for the small places.</h2><p>Static favicons, crisp browser tabs and safe app-icon margins. Small masters use integer pixel edges so the dots remain distinct.</p></div>
+      <div class="icon-panels"><div class="icon-family"><img src="app-icon.svg" width="144" height="144" alt="Purple Tawdheef app icon" /><img src="app-icon-light.svg" width="112" height="112" alt="Light Tawdheef app icon" /><img src="avatar-dark.svg" width="88" height="88" alt="Dark Tawdheef avatar" /></div><div class="size-family" aria-label="Icons shown at actual CSS sizes"><div><img src="mark-16.svg" width="16" height="16" alt="16 pixel icon" /><span>16 px</span></div><div><img src="mark-24.svg" width="24" height="24" alt="24 pixel icon" /><span>24 px</span></div><div><img src="mark-32.svg" width="32" height="32" alt="32 pixel icon" /><span>32 px</span></div><div><img src="mark.svg" width="48" height="48" alt="48 pixel icon" /><span>48 px</span></div></div></div>
+      <div class="asset-caption"><p>Minimum standalone symbol: 16 px. Use the supplied 16, 24 and 32 px masters at those sizes.</p><a href="favicon.ico" download>Download favicon ICO</a></div>
+      <div class="downloads"><a href="app-icon-512.png" download>App icon · 512 px</a><a href="apple-touch-icon.png" download>Apple touch icon · 180 px</a><a href="mark.svg" download>Symbol · SVG</a><a href="github-social.png" download>GitHub social · 1280 × 640</a></div>
+    </section>
+
+    <section class="section" id="type" aria-labelledby="type-title">
+      <div class="section-intro"><h2 id="type-title">Calm type. Confident colour.</h2><p>Manrope and Noto Kufi Arabic pair a friendly Latin voice with a structured Arabic rhythm. The application keeps its familiar platform font for working text.</p></div>
+      <div class="type-grid"><article><span class="type-label">Manrope · 750</span><p class="latin-specimen"><img src="wordmark-latin-ink.svg" alt="tawdheef.com" width="615" height="64" /></p><p class="type-sentence">Your job search, organised.</p><p>Use lowercase <strong>tawdheef.com</strong> for the logo, <strong>Tawdheef</strong> in prose, and <strong>tawdheef</strong> for repository names and handles.</p></article><article lang="ar" dir="rtl"><span class="type-label">Noto Kufi Arabic · 750</span><p class="arabic-specimen">توظيف</p><p class="type-sentence">رتّب رحلة بحثك عن عمل.</p><p>دليل جهات العمل ومتابعة طلبات التوظيف</p></article></div>
+      <div class="swatches"><button class="swatch purple" data-hex="#5A2AFF" type="button"><span>Tabbio purple</span><strong>#5A2AFF</strong><small>Brand, focus and links · 6.5:1 on white</small></button><button class="swatch ink" data-hex="#18181B" type="button"><span>Ink</span><strong>#18181B</strong><small>Primary text and monochrome artwork</small></button><button class="swatch white" data-hex="#FFFFFF" type="button"><span>White</span><strong>#FFFFFF</strong><small>Working surfaces and reversed artwork</small></button><button class="swatch lavender" data-hex="#EEE8FF" type="button"><span>Lavender</span><strong>#EEE8FF</strong><small>Quiet brand backgrounds</small></button></div>
+      <p class="small-note">Select a swatch to copy its hex value. Use green for confirmed success, rather than treating brand purple as an application outcome.</p>
+    </section>
+
+    <section class="section" id="motion" aria-labelledby="motion-title">
+      <div class="section-intro"><h2 id="motion-title">The dots can do the talking.</h2><p>The body stays grounded. The dots briefly settle into place, or pulse while something is loading. Idle logos and favicons stay still.</p></div>
+      <div class="motion-layout"><div class="motion-stage"><svg id="motion-mark" viewBox="0 0 100 100" width="280" height="280" role="img" aria-label="Tawdheef motion demonstration"><g fill="#5A2AFF"><path d="M10 40.4H26V59.6H74V40.4H90V75.6H10Z"/><rect class="dot dot-a" x="31.333333" y="24.4" width="16" height="16"/><rect class="dot dot-b" x="52.666667" y="24.4" width="16" height="16"/></g></svg><p id="motion-state" role="status">Idle · static mark</p></div><div class="motion-copy"><h3>A small signal with a purpose.</h3><p>This is a motion demonstration. It does not indicate application activity.</p><div class="motion-buttons"><button type="button" id="settle">Play entrance</button><button type="button" id="busy" aria-pressed="false">Preview loading</button><button type="button" id="stop">Stop</button></div><dl><div><dt>Entrance</dt><dd>240 ms · 45 ms stagger</dd></div><div><dt>Loading</dt><dd>1120 ms · 140 ms stagger</dd></div><div><dt>Reduced motion</dt><dd>Static mark with a text status</dd></div></dl><a href="mark-animated.svg" download>Download animated SVG</a></div></div>
+    </section>
+
+    <section class="section" aria-labelledby="use-title">
+      <div class="section-intro"><h2 id="use-title">Ready to use.</h2><p>Every master logo is SVG path artwork. No embedded raster images, missing-font substitutions or generated texture.</p></div>
+      <img class="social-preview" src="github-social.svg" alt="Tawdheef GitHub social preview: bilingual logo and Your job search, organised." width="1280" height="640" />
+      <div class="usage-grid"><article><h3>Keep it intact</h3><p>Use the supplied artwork. Preserve proportions, square dots, colour and breathing room. Use white artwork on dark or purple backgrounds.</p></article><article><h3>Keep it readable</h3><p>English lockups start at 180 px wide; Arabic at 140 px. Bilingual starts at 260 px; stacked at 160 px. Below that, use the symbol alone.</p></article><article><h3>Keep it practical</h3><p>Use the symbol for GitHub avatars and browser tabs. Use the wordmark in app headers. Keep the optional Tabbio line separate.</p></article></div>
+      <div class="final-download"><a class="download" href="tawdheef-brand-kit.zip" download>Download the complete kit <span aria-hidden="true">↓</span></a><p>SVG, PNG, ICO, local fonts, licences, motion source and brand tokens.</p></div>
+    </section>
+  </main>
+  <footer class="guide-footer"><span>Tawdheef · توظيف</span><span>Powered by <img src="tabbio-original.svg" alt="" width="18" height="18" /> Tabbio</span><span>Brand system v1.0 · 13 November 2026</span></footer>
+  <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
+  <script src="guide.js"></script>
+</body>
+</html>

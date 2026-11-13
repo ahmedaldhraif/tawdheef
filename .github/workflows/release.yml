@@ -1,0 +1,62 @@
+name: Prepare draft release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing reviewed version tag (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --include=optional
+      - run: npm test
+      - run: npm run release:check
+      - run: npm run build
+
+  draft:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify tag matches source version
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json")); if(process.env.RELEASE_TAG!==`v${p.version}`) process.exit(1);'
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
+      - run: npm ci --include=optional
+      - run: npm run release:prepare
+      - run: npm run release:smoke
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - name: Create draft prerelease with verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$RELEASE_TAG" release/"$RELEASE_TAG"/* --verify-tag --draft --prerelease --title "Tawdheef ${RELEASE_TAG#v} public preview" --notes-file release/"$RELEASE_TAG"/RELEASE-NOTES.md

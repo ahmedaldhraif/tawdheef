@@ -1,0 +1,52 @@
+{
+  "id": "bahrain",
+  "name": "Bahrain",
+  "country": "BH",
+  "countries": [
+    "BH"
+  ],
+  "kind": "country",
+  "description": "811 researched organisations and recruitment sources in Bahrain, with original public evidence and missing-data notes.",
+  "featured": true,
+  "historical": false,
+  "snapshotDate": "2026-11-13",
+  "recordCount": 811,
+  "formatVersion": 1,
+  "source": "directories/bahrain/source.json",
+  "sourceSha256": "325538befa3c963bff8e791491d33a2fef21f3ab752b8fd0482d9cd805d45fe9",
+  "sourceRoleCounts": {
+    "Commercial employer": 135,
+    "Listed employer": 37,
+    "Exhibitor / business lead": 16,
+    "Government-linked employer": 18,
+    "Government-directory organisation; role unconfirmed": 12,
+    "Government entity": 78,
+    "Recruitment agency": 2,
+    "Organisation / employer lead": 1,
+    "Commercial employer / business lead": 17,
+    "School/campus": 326,
+    "Healthcare facility/campus": 14,
+    "Licensed healthcare facility/campus": 42,
+    "Healthcare support business / medical laundry": 6,
+    "Higher education institution / employer": 107
+  },
+  "importNormalizations": [],
+  "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
+  "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
+  "files": {
+    "original": "bahrain-directory.json",
+    "import": "bahrain-directory.csv",
+    "imports": [
+      "bahrain-directory.csv"
+    ],
+    "index": "index.json"
+  },
+  "notes": [
+    "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
+    "Research snapshot, not a current vacancy feed",
+    "A portal, agency or programme is not automatically an employer",
+    "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
+    "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
+    "No private tracking or application activity included"
+  ]
+}

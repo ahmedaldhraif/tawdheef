@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tawdheef reviewed directory pack definition",
+  "type": "object",
+  "required": ["id", "name", "country", "snapshotDate", "source"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "country": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "Actual two-letter primary country code, not inferred eligibility." },
+    "countries": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z]{2}$" } },
+    "kind": { "enum": ["country", "sector", "regional"] },
+    "snapshotDate": { "type": "string", "format": "date" },
+    "source": { "type": "string", "description": "Repository-relative reviewed public JSON source. Canonical contribution sources live under directories/<id>/source.json." },
+    "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "description": { "type": "string" },
+    "featured": { "type": "boolean" },
+    "historical": { "type": "boolean" },
+    "credit": { "type": "string" },
+    "license": { "type": "string", "description": "Reuse notes for contributor-owned curation and retained source-specific terms; no blanket third-party rights grant." },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "overlaps": { "type": "array", "items": { "type": "string" }, "description": "Pack IDs with overlapping records; do not add their counts as unique organisations." }
+  }
+}

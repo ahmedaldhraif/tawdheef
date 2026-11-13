@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a problem with local setup or tracker behavior
+body:
+  - type: markdown
+    attributes:
+      value: "Use synthetic examples. Do not attach your .local folder, CV, mailbox contents, OAuth credentials or tokens. For vulnerabilities, read SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: App version and operating system
+      placeholder: "0.1.0, Windows 11, Node 24"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened, and what did you expect?
+      description: Include repeatable steps with private details removed.
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message
+      description: Paste only the relevant message after removing account details and private paths.

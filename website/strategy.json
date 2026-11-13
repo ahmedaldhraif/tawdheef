@@ -1,0 +1,112 @@
+{
+  "date": "2026-11-13",
+  "positioning": "A free, open-source app to apply for jobs.",
+  "qualifier": "Free and open-source wording is part of the headline; no separate badge.",
+  "category": "Free, local, open-source job application app",
+  "heroHierarchy": [
+    "Centered headline: A free, open-source app to apply for jobs.",
+    "One paragraph: Find companies, apply and track replies with your ChatGPT or Claude agent, with original marks inline with their names",
+    "One black Get the free app primary action and a plain See how it works link",
+    "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork",
+    "Actual local tracker product view"
+  ],
+  "heroDecision": "The owner's selected centered presentation uses one headline and one paragraph, without a badge, separate audience row, technical client captions or Founder of Tabbio line. The ta mark remains in the header and favicon, without a duplicate central hero logo. Local client requirements stay in setup, workflow and FAQ content. No conversion improvement is claimed.",
+  "entryPoints": [
+    "Ahmed AlDhraif's personal GitHub and content",
+    "Free UAE careers directory",
+    "Agent skill for Codex and Claude Code",
+    "Open-source job application tracker searches"
+  ],
+  "funnel": [
+    {
+      "stage": "Discover",
+      "value": "Useful directory or a clear agent workflow",
+      "cta": "Explore sources or get Tawdheef"
+    },
+    {
+      "stage": "Start",
+      "value": "A free app and working setup path",
+      "cta": "Download source and run setup"
+    },
+    {
+      "stage": "Use",
+      "value": "A shortlist grounded in real CV information",
+      "cta": "Connect agent and optionally connect Tabbio CV"
+    },
+    {
+      "stage": "Continue",
+      "value": "A current digital CV instead of repeated uploads",
+      "cta": "Create or maintain a free Tabbio CV"
+    },
+    {
+      "stage": "Expand",
+      "value": "Additional help when the person actually wants it",
+      "cta": "Explore Tabbio's current paid features"
+    }
+  ],
+  "directoryStrategy": {
+    "launchPack": "United Arab Emirates: 772 dated organisation/source records",
+    "expansion": "Create country and sector pages only when a real researched pack exists",
+    "template": "Country, coverage, snapshot date, source roles, live source explorer, preserved provenance, import instructions, CV context and skill CTA",
+    "seo": "Original useful country content with distinct metadata, canonical URLs, crawlable source names, sitemap and linked setup; no empty country doorway pages"
+  },
+  "repositoryStrategy": {
+    "intended": "ahmedaldhraif/tawdheef",
+    "current": "Prepared locally; not published by this build",
+    "readmeOrder": [
+      "Benefit and actual screenshot",
+      "Honest free/local requirements",
+      "Quickstart",
+      "Agent skill",
+      "Directory packs",
+      "Optional Tabbio CV",
+      "Operational docs and contribution rules"
+    ],
+    "releaseAssets": [
+      "Sanitised source ZIP",
+      "Skill ZIP",
+      "UAE source pack",
+      "Brand kit",
+      "Desktop and mobile screenshots"
+    ],
+    "topics": [
+      "job-search",
+      "job-application-tracker",
+      "mcp",
+      "codex",
+      "claude-code",
+      "uae",
+      "local-first",
+      "open-source"
+    ]
+  },
+  "contentIdeas": [
+    "Show an actual shortlist workflow with public demo records, without claiming submissions",
+    "Explain why a portal is not an employer using UAE source evidence",
+    "Show how a current authorised CV changes the shortlist conversation",
+    "Walk through real setup and provider permissions",
+    "Invite evidence-backed improvements to the UAE pack"
+  ],
+  "measurement": {
+    "websiteTracking": "No pixels or analytics library included",
+    "outboundTabbio": "Readable UTM parameters distinguish website, skill, setup, directory and GitHub visits",
+    "futureMeasures": [
+      "Source downloads",
+      "Successful local setup (explicit opt-in only)",
+      "Skill installs when a public package exists",
+      "Directory contributions",
+      "Tabbio signup attribution if the destination supports it with consent"
+    ],
+    "currentResults": "Unknown; no production performance claim"
+  },
+  "publishChecklist": [
+    "Create and review the public repository on Ahmed's account",
+    "Verify source archive contains no private data",
+    "Set repositoryPublished and intendedRepository to the verified actual URL",
+    "Rebuild website",
+    "Deploy only static site-dist to the domain",
+    "Keep tracker server loopback-only",
+    "Verify live Tabbio plan and tool claims before launch",
+    "Run a real phone and desktop review"
+  ]
+}
