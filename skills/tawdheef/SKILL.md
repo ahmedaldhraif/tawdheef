@@ -15,7 +15,7 @@ Ordinary use means operate records, not develop the app. Do not edit UI, code, d
 
 ## Set up when asked
 
-Start with [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md) for the app download, project CLI connection and skill installation. The canonical website entry is https://www.tawdheef.com/guides/use-the-skill/.
+Start with [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md) for the app download, project CLI connection and skill installation. The canonical website entry is https://www.tawdheef.com/skills/.
 
 Read [references/setup.md](references/setup.md) and the checkout's `docs/FIRST-RUN.md`. Inspect existing state with `get_setup_status` before adding anything. Install only missing project tools and configure the chosen client through the provided commands; keep custom settings and data. The user completes sign-in, consent and private credential entry in Connections. That panel also chooses the Run assistant and offers Check connections. Verify the selected assistant and CV with `get_setup_status` using `verify:true`. Finish with Ready or one concrete Needs you item. Never start job-search runs, create events or enable schedules during setup.
 

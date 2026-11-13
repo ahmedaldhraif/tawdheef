@@ -64,7 +64,7 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: "30mb" }));
 // Older setup and skill links lead directly to the shared setup guide.
-app.get(["/skills", "/skills/", "/skills/tawdheef", "/skills/tawdheef/", "/get-started", "/get-started/", "/guides/get-started", "/guides/get-started/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
+app.get(["/skills/tawdheef", "/skills/tawdheef/", "/get-started", "/get-started/", "/guides/get-started", "/guides/get-started/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
 const wrap = (fn) => async (req, res, next) => {
   try {
     const value = await fn(req, res);
