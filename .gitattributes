@@ -2,6 +2,7 @@
 *.sh text eol=lf
 *.command text eol=lf
 *.mjs text eol=lf
+docs/tools.json text eol=lf
 *.cmd text eol=crlf
 *.png binary
 *.ico binary
