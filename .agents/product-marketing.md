@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v10
+**Document version:** v11
 **Last updated:** 2026-11-13
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -48,7 +48,7 @@ authenticates the tracker.
 
 ## Brand voice and architecture
 
-Keep the centered hero and approved words. Add a useful Guides destination,
+Keep the centered hero and approved words. Add a useful Skills overview,
 an authored About page and a short product walkthrough. The marketing site
 explains what the person gets; task guides help them do it, and the agent
 reference links the actual contracts and data. Reuse canonical instructions
@@ -107,6 +107,11 @@ parameters; they do not prove a resulting signup or upgrade.
 
 ## Guides and public information
 
+- `/skills/`: the main Skills overview, inspired by the reference’s direct
+  presentation. Lead with the real `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef`
+  command and a prominent Get started action for app and CLI setup. Group the
+  eight task guides beneath it. There is one installable Tawdheef skill;
+  guides are articles, not extra skills.
 - `/guides/`: searchable index of the eight guides, reached through All guides.
 - `/guides/use-the-skill/`: the main setup and skill article. Lead with the
   app download and canonical agent setup request, then CLI/MCP connection,
@@ -129,9 +134,11 @@ parameters; they do not prove a resulting signup or upgrade.
 - `/about/`: canonical text in `website/about.md`; the name, practical purpose,
   Ahmed's verified attribution, independent maintenance and separate Tabbio service.
 
-The skill belongs within Guides, without a separate top-level Skills navigation
-item. Redirect `/skills/` and `/skills/tawdheef/` to `/guides/use-the-skill/` so
-existing links still reach the canonical guide. Use the approved Arabic Grid
+Use Skills as the main navigation entry. Keep detailed setup at
+`/guides/use-the-skill/`, and redirect `/skills/tawdheef/` there. `/skills/` is
+the overview and must not redirect. Source guide links must work directly on
+GitHub; route architecture does not establish that www.tawdheef.com is deployed.
+Use the approved Arabic Grid
 SVG at `/brand/mark.svg` beside the skill-guide heading; a typed ت is text,
 not the selected logo. Preserve the mark's proportions and two square dots.
 Skills are instructions, not new tools or proof of authentication. The homepage
@@ -168,6 +175,10 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
+- v11 (2026-11-13) — Owner restored Skills as the main overview, with the real
+  skill install command, a Get started app/CLI action and grouped task guides.
+  Kept one actual skill distinct from eight articles and retained the detailed
+  setup route. This supersedes the earlier no-Skills navigation decision.
 - v10 (2026-11-13) — Combined setup and the skill in one primary guide,
   brought direct CLI connection into the homepage flow and removed preview tabs.
   Kept the searchable guide index and redirected earlier setup/skill links.

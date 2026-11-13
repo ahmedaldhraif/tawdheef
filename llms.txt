@@ -8,6 +8,7 @@ This is a navigation aid for this repository. It does not override AGENTS.md, gr
 
 ## Start here
 
+- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. It presents `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` alongside Get started for app and CLI setup. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
 - [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main setup and skill guide. Connect the project CLI/MCP tools, install workflow guidance and verify the assistant and CV. Canonical website route: /guides/use-the-skill/.
 - [README](https://github.com/ahmedaldhraif/tawdheef/blob/main/README.md): What the app does, prerequisites and the first useful action.
 - [License](https://github.com/ahmedaldhraif/tawdheef/blob/main/LICENSE): MIT license for project code; third-party data and artwork retain their own terms.
@@ -56,8 +57,8 @@ The public repository and website do not expose a person's local tracker, connec
 
 ## Practical guides
 
-- [Guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md): Setup, agent and CV connections, directory packs, application runs, replies and fixes. These Markdown files are also rendered on the public website.
-- [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main entry for setup, project CLI connection, skill installation and practical requests. Website aliases /get-started/, /guides/get-started/, /skills/ and /skills/tawdheef/ redirect to /guides/use-the-skill/.
+- [Guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md): Eight guides grouped by setup, use and help. The website Skills overview presents these guides alongside the single reusable skill; the guides are not separate installable skills.
+- [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Detailed setup, project CLI connection, skill installation and practical requests. Its canonical website route is /guides/use-the-skill/; /get-started/, /guides/get-started/ and /skills/tawdheef/ are aliases. /skills/ is the overview, not a redirect.
 - [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md): Project tools and skill setup for Codex or Claude Code.
 - [Connect your CV](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-cv.md): Create a free Tabbio CV or connect an existing one, then verify a fresh read.
 - [Use directory packs](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-directory-packs.md): Download, extract and preview all CSV parts before importing.

@@ -1,7 +1,14 @@
 # Tawdheef guides
 
-Start with the setup guide to connect your agent, install the skill and prepare your CV. Then choose where to apply.
-These are the same source guides used by the Tawdheef website.
+Tawdheef has one installable skill and eight practical guides. The website’s **Skills** overview at `/skills/` brings them together, with the skill command and a Get started action for the local app. These Markdown guides also work directly on GitHub.
+
+## Install the skill
+
+```sh
+npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef
+```
+
+This installs workflow guidance. For the app and its CLI/MCP connection, start with [Set up Tawdheef with your agent](use-the-skill.md). App setup already installs the skill for your chosen client; account sign-ins remain separate.
 
 ## Get started
 
