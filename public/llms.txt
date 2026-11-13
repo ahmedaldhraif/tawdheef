@@ -10,7 +10,7 @@ This is a navigation aid for this repository. It does not override AGENTS.md, gr
 
 ## Start here
 
-- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. It presents `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` alongside Get started for app and CLI setup. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
+- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. App setup comes first and includes CLI/MCP tools and the skill. The secondary Install the skill only section contains `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` for workflow instructions alone. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
 - [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main setup and skill guide. Connect the project CLI/MCP tools, install workflow guidance and verify the assistant and CV. Canonical website route: /guides/use-the-skill/.
 - [README](https://github.com/ahmedaldhraif/tawdheef/blob/main/README.md): What the app does, prerequisites and the first useful action.
 - [License](https://github.com/ahmedaldhraif/tawdheef/blob/main/LICENSE): MIT license for project code; third-party data and artwork retain their own terms.
@@ -71,13 +71,13 @@ The public repository and website do not expose a person's local tracker, connec
 - [About Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/website/about.md): The independent project, Ahmed AlDhraif and the separate Tabbio CV service.
 
 ## Website pages
-- [Tawdheef Skills — Set up your local job-search app](https://www.tawdheef.com/skills/)
-- [Tawdheef guides — Setup, matching jobs and career profiles](https://www.tawdheef.com/guides/)
-- [About Tawdheef — Built by Ahmed AlDhraif](https://www.tawdheef.com/about/)
-- [Tawdheef — Find matching jobs. Build career profiles.](https://www.tawdheef.com/)
+- [Tawdheef Skills | Set up your local job-search app](https://www.tawdheef.com/skills/)
+- [Tawdheef guides | Setup, matching jobs and career profiles](https://www.tawdheef.com/guides/)
+- [About Tawdheef | Built by Ahmed AlDhraif](https://www.tawdheef.com/about/)
+- [Tawdheef | Find matching jobs. Build career profiles.](https://www.tawdheef.com/)
 - [Free community directory packs for Tawdheef](https://www.tawdheef.com/directories/)
 - [Tawdheef project, privacy and policies](https://www.tawdheef.com/policies/)
-- [UAE careers directory — 772 organisation & source records | Tawdheef](https://www.tawdheef.com/directories/uae/)
+- [UAE careers directory | 772 organisation & source records | Tawdheef](https://www.tawdheef.com/directories/uae/)
 - [Set up Tawdheef with your agent | Tawdheef guides](https://www.tawdheef.com/guides/use-the-skill/)
 - [Connect Codex or Claude Code | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-agent/)
 - [Create or connect your CV | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-cv/)
@@ -92,8 +92,8 @@ The public repository and website do not expose a person's local tracker, connec
 - [Qatar company and careers directory | Tawdheef](https://www.tawdheef.com/directories/qatar/)
 - [Saudi Arabia company and careers directory | Tawdheef](https://www.tawdheef.com/directories/saudi-arabia/)
 - [UAE company and careers directory | Tawdheef](https://www.tawdheef.com/directories/uae-expanded/)
-- [Tawdheef — وظائف تناسبك وملفات مهنية](https://www.tawdheef.com/ar/)
-- [مهارات Tawdheef — الإعداد والعمل مع مساعدك](https://www.tawdheef.com/ar/skills/)
+- [Tawdheef | وظائف تناسبك وملفات مهنية](https://www.tawdheef.com/ar/)
+- [مهارات Tawdheef | الإعداد والعمل مع مساعدك](https://www.tawdheef.com/ar/skills/)
 - [الأدلة | Tawdheef](https://www.tawdheef.com/ar/guides/)
 - [أعدّ Tawdheef مع مساعدك | Tawdheef](https://www.tawdheef.com/ar/guides/use-the-skill/)
 - [اربط Codex أو Claude Code | Tawdheef](https://www.tawdheef.com/ar/guides/connect-your-agent/)

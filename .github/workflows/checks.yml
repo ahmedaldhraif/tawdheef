@@ -22,3 +22,5 @@ jobs:
       - run: node scripts/marketing/build-directory-pack.mjs --check
       - run: npm run release:check
       - run: npm run build
+      - run: node website/build.mjs
+      - run: node scripts/marketing/check-seo.mjs

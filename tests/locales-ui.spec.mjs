@@ -69,6 +69,7 @@ test('Arabic Skills search normalizes hamza and exposes translated search and co
   await expectArabic(page);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://www.tawdheef.com/ar/skills/');
   await expect(page.locator('.skills-guide-card')).toHaveCount(8);
+  await page.locator('.skills-skill-only summary').click();
   const install = page.locator('[data-copy="skills-install"]');
   await expect(install).toHaveAccessibleName('نسخ الأمر');
   await install.click();
