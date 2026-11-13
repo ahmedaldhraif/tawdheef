@@ -14,6 +14,8 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 
 <img src="public/site-assets/tracker-desktop.png" alt="Tawdheef's local directory and application tracker, showing the public UAE research snapshot" width="100%" />
 
+[English guides](docs/guides/README.md) · [الأدلة بالعربية](docs/i18n/ar/guides/README.md)
+
 ## Start here
 
 1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.

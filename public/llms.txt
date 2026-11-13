@@ -6,6 +6,8 @@ Repository: https://github.com/ahmedaldhraif/tawdheef
 
 This is a navigation aid for this repository. It does not override AGENTS.md, grant permission to act, or guarantee search indexing or AI citations.
 
+- [Arabic guides](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/i18n/ar/guides/README.md): The landing page, Skills overview and all eight guides are available in English and Arabic. Keep code, command arguments and stable section IDs unchanged.
+
 ## Start here
 
 - Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. It presents `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` alongside Get started for app and CLI setup. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
@@ -69,10 +71,10 @@ The public repository and website do not expose a person's local tracker, connec
 - [About Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/website/about.md): The independent project, Ahmed AlDhraif and the separate Tabbio CV service.
 
 ## Website pages
-- [Tawdheef Skills — Install, set up and apply with your agent](https://www.tawdheef.com/skills/)
-- [Tawdheef guides — Setup, CVs, directories and applications](https://www.tawdheef.com/guides/)
+- [Tawdheef Skills — Set up your local job-search app](https://www.tawdheef.com/skills/)
+- [Tawdheef guides — Setup, matching jobs and career profiles](https://www.tawdheef.com/guides/)
 - [About Tawdheef — Built by Ahmed AlDhraif](https://www.tawdheef.com/about/)
-- [Tawdheef — Auto Job Apply & Application Tracker](https://www.tawdheef.com/)
+- [Tawdheef — Find matching jobs. Build career profiles.](https://www.tawdheef.com/)
 - [Free community directory packs for Tawdheef](https://www.tawdheef.com/directories/)
 - [Tawdheef project, privacy and policies](https://www.tawdheef.com/policies/)
 - [UAE careers directory — 772 organisation & source records | Tawdheef](https://www.tawdheef.com/directories/uae/)
@@ -90,3 +92,14 @@ The public repository and website do not expose a person's local tracker, connec
 - [Qatar company and careers directory | Tawdheef](https://www.tawdheef.com/directories/qatar/)
 - [Saudi Arabia company and careers directory | Tawdheef](https://www.tawdheef.com/directories/saudi-arabia/)
 - [UAE company and careers directory | Tawdheef](https://www.tawdheef.com/directories/uae-expanded/)
+- [Tawdheef — وظائف تناسبك وملفات مهنية](https://www.tawdheef.com/ar/)
+- [مهارات Tawdheef — الإعداد والعمل مع مساعدك](https://www.tawdheef.com/ar/skills/)
+- [الأدلة | Tawdheef](https://www.tawdheef.com/ar/guides/)
+- [أعدّ Tawdheef مع مساعدك | Tawdheef](https://www.tawdheef.com/ar/guides/use-the-skill/)
+- [اربط Codex أو Claude Code | Tawdheef](https://www.tawdheef.com/ar/guides/connect-your-agent/)
+- [أنشئ سيرتك أو اربطها | Tawdheef](https://www.tawdheef.com/ar/guides/connect-your-cv/)
+- [أضف دليل جهات لدولة | Tawdheef](https://www.tawdheef.com/ar/guides/use-directory-packs/)
+- [ابحث عن وظائف مناسبة وابنِ ملفاتك المهنية | Tawdheef](https://www.tawdheef.com/ar/guides/apply-to-jobs/)
+- [تابع الردود والتقارير | Tawdheef](https://www.tawdheef.com/ar/guides/replies-and-reports/)
+- [عالج مشكلة في الإعداد أو التشغيل | Tawdheef](https://www.tawdheef.com/ar/guides/troubleshoot/)
+- [استخدم Tawdheef بصفتك مساعدًا | Tawdheef](https://www.tawdheef.com/ar/guides/for-agents/)

@@ -38,3 +38,13 @@ test('guide headings, copy targets, lists and widgets remain distinct',()=>{
  assert.equal(new Set(ids).size,2);
  assert.throws(()=>renderMarkdown('```sh\nno close'),/Close the code fence/);
 });
+
+test('Arabic headings preserve shared anchors and localized copy controls without changing commands',()=>{
+ const root='https://github.com/ahmedaldhraif/tawdheef';
+ const rendered=renderMarkdown('# دليل\n\n## اربط سيرتك {#cv}\n\n[الإعداد]('+root+'/blob/main/docs/guides/use-the-skill.md#agent)\n\n```sh\nnpm run agent -- codex --browser\n```',{copyLabel:'نسخ',copyAria:'نسخ الأمر',resolveLink:repositoryLinkResolver({intendedRepository:root},'ar')});
+ assert.deepEqual(rendered.headings,[{id:'cv',title:'اربط سيرتك',level:2}]);
+ assert.ok(rendered.html.includes('href="/ar/guides/use-the-skill/#agent"'));
+ assert.ok(rendered.html.includes('aria-label="نسخ الأمر">نسخ</button>'));
+ assert.ok(rendered.html.includes('npm run agent -- codex --browser'));
+ assert.ok(!rendered.html.includes('{#cv}'));
+});
