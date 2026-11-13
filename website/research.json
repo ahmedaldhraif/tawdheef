@@ -165,7 +165,7 @@
     ],
     "verificationStatus": "Source workflow files were read. Remote repository controls and hosted runs were not verified by this research."
   },
-  "liveStatus": "All Tawdheef work is local. Intended repository and domain have not been published or verified by this work.",
+  "liveStatus": "Public repository and v0.1.0 preview release verified on 13 November 2026, including all 14 release assets. Website pages are built locally; live domain deployment, search indexing and AI citations have not been established.",
   "heroDecision": {
     "basis": "Design response to the owner's request for plainer presentation; not an approved conversion result.",
     "headline": "A free, open-source app to apply for jobs.",
