@@ -314,7 +314,7 @@ test('dialog focus stays inside, Escape closes it, and focus returns to the trig
   await expect(trigger).toBeFocused();
 });
 
-test('agent configuration points to the actual project and isolated local data', async ({ page, request }) => {
+test('agent configuration points to the actual project and isolated local data', async ({ page, request, baseURL }) => {
   await openTracker(page);
   const config = await json(request, '/api/agent-config');
   const server = config.mcpServers['apply-tracker'];
@@ -324,7 +324,7 @@ test('agent configuration points to the actual project and isolated local data',
   expect(existsSync(server.args[0])).toBeTruthy();
   expect(server.args[0].replaceAll('\\', '/')).toMatch(/\/server\/mcp\.mjs$/);
   expect(server.env.APPLY_TRACKER_DATA).toContain('apply-tracker-ui-');
-  expect(server.env.APPLY_TRACKER_PORT).toBe('4017');
+  expect(server.env.APPLY_TRACKER_PORT).toBe(new URL(baseURL).port);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Codex — View setup', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Connect AI', exact: true });
@@ -596,8 +596,8 @@ test('Undo remains available while its notification is hovered or keyboard focus
   await expect(row.getByRole('button', { name: 'Edit Notes for UI Timed Undo', exact: true })).toHaveText('Original note');
 });
 
-test('mobile Connections keeps touch controls and OAuth fields readable without page overflow', async ({ browser }) => {
-  const context = await browser.newContext({ baseURL: 'http://127.0.0.1:4017', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+test('mobile Connections keeps touch controls and OAuth fields readable without page overflow', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
     await openTracker(page);

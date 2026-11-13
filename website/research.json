@@ -9,12 +9,12 @@
     {
       "url": "https://aiforui.dev/skills",
       "observed": "Install command near the explanation, a useful skills catalogue, examples and a connection to the creator's broader offer.",
-      "applied": "One actual Tawdheef skill, a working checkout install command, example prompts and contextual Tabbio CV links."
+      "applied": "One actual Tawdheef skill, a public repository install command, example prompts, a separate app-setup path and contextual free Tabbio CV links."
     },
     {
       "url": "https://github.com/emilkowalski/skills",
       "observed": "A short purpose statement, clear install command and specific skill descriptions.",
-      "applied": "Repository-local installable skill with distinct instructions and references; no fabricated remote package status."
+      "applied": "A public repository-installable skill with distinct instructions and references; guidance alone does not install the app, connect MCP or authenticate accounts."
     },
     {
       "url": "https://github.com/shadcn-ui/ui",
@@ -24,7 +24,7 @@
     {
       "url": "https://github.com/ollama/ollama",
       "observed": "Prominent platform setup, practical first-use commands and links into the ecosystem.",
-      "applied": "Concrete Node/setup commands before optional connections; distinguish the app from the model/client."
+      "applied": "A practical first-use path: release download, agent-assisted local setup and optional manual commands; distinguish the tracker from the user's own model/client."
     },
     {
       "url": "https://github.com/supabase/supabase",
@@ -147,6 +147,11 @@
       "claim": "Tabbio CLI and MCP access",
       "source": "https://www.tabbio.com/en/mcp",
       "basis": "Official guide documents the CLI and MCP reaching the same career tools; structured data, scoped reads/writes and approvals. The tracker CV adapter remains a read integration. General Tabbio account access is worldwide; UAE PASS is optional."
+    },
+    {
+      "claim": "Six current GCC packs contain 13,714 organisation/source records dated 13 November 2026",
+      "source": "directories/catalog.json",
+      "basis": "Current repository pack catalog; source roles and provenance remain distinct. Not a count of vacancies, tested routes or independent employers. The historical UAE starter overlaps expanded UAE."
     }
   ],
   "interpretation": "The reviewed heroes suggest an outcome/category, explanatory sentence, primary CTA and product-evidence hierarchy. This is a design inference, not evidence that the pattern improves conversions. Funnel patterns are design inferences from the reviewed sources, not proven conversion advantages. No original source copy, testimonials or star counts were transplanted.",
@@ -167,19 +172,21 @@
   },
   "liveStatus": "Public repository and v0.1.0 preview release verified on 13 November 2026, including all 14 release assets. Website pages are built locally; live domain deployment, search indexing and AI citations have not been established.",
   "heroDecision": {
-    "basis": "Design response to the owner's request for plainer presentation; not an approved conversion result.",
-    "headline": "A free, open-source app to apply for jobs.",
-    "description": "Find companies, apply and track replies with your ChatGPT or Claude agent.",
-    "layout": "Centered headline and one explanatory paragraph, with original ChatGPT and Claude marks inline with their names. No separate badge, audience row, technical client captions or duplicate central ta mark; one black primary action and a plain explanatory link.",
-    "primaryAction": "Get the free app",
+    "basis": "Explicit owner-approved positioning and copy decision; not a tested conversion result.",
+    "headline": "Auto-apply to jobs. Track your applications.",
+    "description": "Free, open-source software for you and your ChatGPT or Claude agent.",
+    "layout": "Centered headline and one supporting paragraph with original ChatGPT and Claude marks inline. No separate badge, audience row, stacked technical client captions or duplicate central ta mark; one black primary action and a plain explanatory link.",
+    "primaryAction": "Get the free app → setup guide",
     "secondaryAction": "See how it works",
     "attribution": "The supplied portrait, Built by Ahmed AlDhraif text and original LinkedIn favicon square form one quiet LinkedIn link. No registered-mark artwork and no Founder of Tabbio role line.",
-    "logoPlacement": "The ta symbol stays in the header and favicon, without another large mark in the hero."
+    "logoPlacement": "The ta symbol stays in the header and favicon, without another large mark in the hero.",
+    "category": "Auto Job Apply & Application Tracker",
+    "distribution": "Use the configured explicit releaseTag for direct official GitHub Release assets; preserve source, contribution and clone routes."
   },
   "providerIdentification": {
-    "ChatGPT": "Familiar name with the original generic OpenAI Blossom artwork inline in the single hero paragraph, rather than in a separate label, audience row or integration button.",
-    "Claude": "Familiar name with the original generic Claude mark inline in the same paragraph.",
-    "heroParagraph": "Find companies, apply and track replies with your ChatGPT or Claude agent.",
+    "ChatGPT": "Familiar name with the original generic OpenAI Blossom artwork inline in the supporting hero paragraph; not a direct local-web integration claim.",
+    "Claude": "Familiar name with the original generic Claude artwork inline in the supporting hero paragraph.",
+    "heroParagraph": "Free, open-source software for you and your ChatGPT or Claude agent.",
     "localOperators": {
       "ChatGPT": "Codex",
       "Claude": "Claude Code"
@@ -191,5 +198,13 @@
       "Claude Code": "Original official documentation favicon remains available for the explicit local-app provider label."
     },
     "policy": "Artwork used for compatibility identification, not endorsement; see THIRD-PARTY-NOTICES.md."
+  },
+  "approvedPositioning": {
+    "category": "Auto Job Apply & Application Tracker",
+    "meaning": "Tawdheef (توظيف) means employment in Arabic; this is a job-seeker app, not recruiter SaaS.",
+    "path": "GitHub release → extract/open locally → agent-assisted setup → free Tabbio CV or existing CV → connect and verify → choose targets → explicitly start Run → review evidence and replies.",
+    "scope": "User's Codex or Claude Code performs supported email/form steps; authentication, CAPTCHA, provider restrictions and LinkedIn manual steps remain real. Tracking is local. Tawdheef is free/MIT; AI client/provider costs are separate. Basic directory/manual tracking works without Tabbio, while Run requires its connected CV.",
+    "community": "Any country is welcome through source-backed issues and pull requests. Existing packs are dated research, not live vacancies or proof of successful submissions.",
+    "evidenceLimit": "Approved messaging is not conversion, ranking, adoption or successful provider-integration evidence."
   }
 }

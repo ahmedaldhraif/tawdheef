@@ -467,7 +467,8 @@
     "imports": [
       "kuwait-directory.csv"
     ],
-    "index": "index.json"
+    "index": "index.json",
+    "readme": "README.md"
   },
   "notes": [
     "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.",
@@ -476,5 +477,10 @@
     "Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate",
     "Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV",
     "No private tracking or application activity included"
-  ]
+  ],
+  "releaseTag": "v0.1.1",
+  "releaseUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1",
+  "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/kuwait-directory-pack.zip",
+  "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/kuwait/index.json",
+  "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/kuwait/source.json"
 }

@@ -1,71 +1,81 @@
 {
   "date": "2026-11-13",
-  "positioning": "A free, open-source app to apply for jobs.",
-  "qualifier": "Free and open-source wording is part of the headline; no separate badge.",
-  "category": "Free, local, open-source job application app",
+  "positioning": "Tawdheef — Auto Job Apply & Application Tracker",
+  "qualifier": "Free, open-source software is visible in the supporting sentence; no separate badge.",
+  "category": "Auto Job Apply & Application Tracker",
   "heroHierarchy": [
-    "Centered headline: A free, open-source app to apply for jobs.",
-    "One paragraph: Find companies, apply and track replies with your ChatGPT or Claude agent, with original marks inline with their names",
-    "One black Get the free app primary action and a plain See how it works link",
-    "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork",
-    "Actual local tracker product view"
+    "Centered headline: Auto-apply to jobs. Track your applications.",
+    "One paragraph: Free, open-source software for you and your ChatGPT or Claude agent, with original marks inline.",
+    "One black Get the free app primary action to the setup guide and a plain See how it works link.",
+    "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork.",
+    "Actual local tracker product view."
   ],
-  "heroDecision": "The owner's selected centered presentation uses one headline and one paragraph, without a badge, separate audience row, technical client captions or Founder of Tabbio line. The ta mark remains in the header and favicon, without a duplicate central hero logo. Local client requirements stay in setup, workflow and FAQ content. No conversion improvement is claimed.",
+  "heroDecision": "The owner approved explicit auto-apply and application-tracking positioning. The exact category stays in naming/search context; natural sentences lead the centered hero. Retain one paragraph, no badge, separate audience row, stacked client captions, Founder of Tabbio line or duplicate central ta mark. Auto-apply is a user-started run through the person's own local agent and authorized connections; no universal, unattended or guaranteed-success claim. This is an owner decision, not measured conversion evidence.",
   "entryPoints": [
     "Ahmed AlDhraif's personal GitHub and content",
-    "Free UAE careers directory",
+    "Real country directory packs and their sources",
     "Agent skill for Codex and Claude Code",
-    "Open-source job application tracker searches"
+    "Auto job apply and open-source application tracker searches"
   ],
   "funnel": [
     {
       "stage": "Discover",
-      "value": "Useful directory or a clear agent workflow",
-      "cta": "Explore sources or get Tawdheef"
+      "value": "A clear auto-apply and tracking promise, actual product view and sourced country packs",
+      "cta": "Get the free app → setup guide"
     },
     {
-      "stage": "Start",
-      "value": "A free app and working setup path",
-      "cta": "Download source and run setup"
+      "stage": "Download",
+      "value": "Official public source and preview release",
+      "cta": "Download a direct GitHub Release asset or clone the repository"
     },
     {
-      "stage": "Use",
-      "value": "A shortlist grounded in real CV information",
-      "cta": "Connect agent and optionally connect Tabbio CV"
+      "stage": "Set up",
+      "value": "Agent-assisted setup on the person's computer with Node.js 24+ and their installed, signed-in Codex or Claude Code",
+      "cta": "Open the folder and copy the first-run request"
     },
     {
-      "stage": "Continue",
-      "value": "A current digital CV instead of repeated uploads",
-      "cta": "Create or maintain a free Tabbio CV"
+      "stage": "Connect CV",
+      "value": "A free current digital CV for the application run",
+      "cta": "Create a free Tabbio CV or use an existing one; connect in Connections and check readiness"
     },
     {
-      "stage": "Expand",
-      "value": "Additional help when the person actually wants it",
-      "cta": "Explore Tabbio's current paid features"
+      "stage": "Apply and track",
+      "value": "Authorized supported email/form applications and evidence-backed outcomes",
+      "cta": "Choose targets and explicitly start Run; review applications, replies and Needs you steps"
+    },
+    {
+      "stage": "Contribute",
+      "value": "Useful country packs with maintained source evidence",
+      "cta": "Fix a link, add a company or contribute any country through GitHub issues or pull requests"
+    },
+    {
+      "stage": "Optional further help",
+      "value": "Separate Tabbio services if useful",
+      "cta": "Explore current Tabbio plans without obscuring the free CV route"
     }
   ],
   "directoryStrategy": {
-    "launchPack": "United Arab Emirates: 772 dated organisation/source records",
+    "launchPack": "Six current GCC packs: 13,714 dated organisation/source records; the original 772-record UAE starter overlaps expanded UAE and remains historical.",
     "expansion": "Create country and sector pages only when a real researched pack exists",
     "template": "Country, coverage, snapshot date, source roles, live source explorer, preserved provenance, import instructions, CV context and skill CTA",
-    "seo": "Original useful country content with distinct metadata, canonical URLs, crawlable source names, sitemap and linked setup; no empty country doorway pages"
+    "seo": "Original useful country content with distinct metadata, canonical URLs, crawlable source names, sitemap and linked setup; no empty country doorway pages",
+    "contributions": "Anyone may propose a company correction or a pack for any country through issues or pull requests, with public evidence and preserved stable IDs/source roles. Do not imply existing community authors or verified live vacancies."
   },
   "repositoryStrategy": {
     "intended": "ahmedaldhraif/tawdheef",
     "current": "Public at https://github.com/ahmedaldhraif/tawdheef; v0.1.0 public preview and directory assets published 13 November 2026. Domain deployment is separate.",
     "readmeOrder": [
-      "Benefit and actual screenshot",
-      "Honest free/local requirements",
-      "Quickstart",
-      "Agent skill",
-      "Directory packs",
-      "Optional Tabbio CV",
-      "Operational docs and contribution rules"
+      "Approved auto-apply/tracking descriptor, free/open-source promise and actual screenshot",
+      "GitHub release → local agent setup → free Tabbio CV → connect/verify → chosen Run",
+      "Current country packs with source dates and contribution links",
+      "Canonical first-run request and optional manual/client setup",
+      "Account requirements, provider limits and agent documentation",
+      "Operational, policy, security and contribution docs"
     ],
     "releaseAssets": [
-      "Sanitised source ZIP",
-      "Skill ZIP",
-      "UAE source pack",
+      "Sanitized source ZIP and checksums",
+      "Skill ZIP with setup references",
+      "Six current country directory packs plus original UAE starter pack",
       "Brand kit",
       "Desktop and mobile screenshots"
     ],
@@ -78,14 +88,16 @@
       "uae",
       "local-first",
       "open-source"
-    ]
+    ],
+    "downloadPolicy": "Use direct official GitHub Release asset links from website/config.json releaseTag. This source prepares v0.1.1. Prereleases use explicit version URLs or /releases, rather than /releases/latest."
   },
   "contentIdeas": [
     "Show an actual shortlist workflow with public demo records, without claiming submissions",
     "Explain why a portal is not an employer using UAE source evidence",
     "Show how a current authorised CV changes the shortlist conversation",
     "Walk through real setup and provider permissions",
-    "Invite evidence-backed improvements to the UAE pack"
+    "Show a user-started application run and real receipt handling without inventing provider access or outcomes",
+    "Invite evidence-backed corrections and country packs from anywhere through GitHub issues or pull requests"
   ],
   "measurement": {
     "websiteTracking": "No pixels or analytics library included",
@@ -108,5 +120,12 @@
     "Keep tracker server loopback-only",
     "Verify live Tabbio plan and tool claims before launch",
     "Run a real phone and desktop review"
-  ]
+  ],
+  "operatingBoundaries": {
+    "localClient": "Codex or Claude Code supplies the local agent; browser ChatGPT/Claude chats do not read local stdio configuration.",
+    "authorization": "Only an explicit named application run authorizes sending or submission; sign-ins, CAPTCHA, provider approvals and LinkedIn steps may need the person.",
+    "cv": "Directory browsing/manual tracking does not require Tabbio. Run requires a connected readable Tabbio CV; broader Tabbio CLI/MCP editing remains separate.",
+    "costs": "Tawdheef code is free and MIT licensed. The user's AI client, model use and connected providers may have separate costs or limits.",
+    "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep drafts/uploads/talent pools distinct from applied."
+  }
 }

@@ -1,20 +1,49 @@
 # Let your agent set up Tawdheef
 
+Tawdheef is an **Auto Job Apply & Application Tracker** for your computer.
+The app is free; your coding assistant and connected services may have their
+own plans or costs.
+
+## Get the folder
+
+Start at [Tawdheef on GitHub](https://github.com/ahmedaldhraif/tawdheef).
+Download `tawdheef-VERSION-source.zip` from the
+[release list](https://github.com/ahmedaldhraif/tawdheef/releases) and extract it,
+or clone the repository:
+
+```sh
+git clone https://github.com/ahmedaldhraif/tawdheef.git
+cd tawdheef
+```
+
+Use the app's source ZIP, not a country directory ZIP, to install Tawdheef.
+You need [Node.js 24 or newer](https://nodejs.org/en/download) and one signed-in
+coding assistant. `npm start` installs missing locked dependencies, builds the
+screen and opens [the local tracker](http://127.0.0.1:4000/).
+
+## Give your agent one setup request
+
 Open the downloaded Tawdheef folder in **Codex or Claude Code**. You only need one. Paste this:
 
-> Set up Tawdheef for me in this folder. Read AGENTS.md and docs/FIRST-RUN.md. Check what already works, then install missing project dependencies, start the app, add browser tools, and connect this project to the assistant I am using. Keep existing settings and data. Guide me through only the sign-ins or choices that need me; I will enter credentials in the local connection form. Check setup again and tell me the next step. Use get_setup_status (verify:true for the final check), or the equivalent CLI command. Do not change the app's code or design, send applications, create calendar events, or enable schedules during setup.
+> Set up Tawdheef for me in this folder. Read AGENTS.md and docs/FIRST-RUN.md. Check what already works, then install missing project dependencies, start the app, add browser tools, and connect this project to the assistant I am using. Keep existing settings and data. Help me create or connect my free Tabbio CV using only my real information. Guide me through only the sign-ins or choices that need me; I will enter credentials in the local connection form. Check setup again and tell me the next step. Use get_setup_status (verify:true for the final check), or the equivalent CLI command. Do not change the app's code or design, send applications, create calendar events, or enable schedules during setup.
 
 In the app, open **Connections**, choose Codex or Claude Code under **AI assistants**, then expand **Set up with my agent** and choose **Copy instructions**. Provider sign-ins, assistant choice and connection checks all live in Connections.
 
 ## Your part
 
 1. **Open the folder in your assistant.** If Node.js is missing, install [Node.js 24 or newer](https://nodejs.org/en/download). The agent then starts the app for you.
-2. **Complete your sign-ins.** Connect your Tabbio CV. Choose email if you want email applications and reply checks. Enter passwords or OAuth details only in the local connection form, never in chat.
-3. **Check connections, then Run.** Choose your assistant in Connections and use **Check connections**. Once ready, open **Run**, describe the jobs you want and choose the companies. Pressing Run starts real applications.
+2. **Create or connect your CV.** Open **Connections → Your CV → Tabbio CV → Connect** and finish the sign-in. No CV yet? [Create your free digital CV](https://app.tabbio.com), save your real experience, then return here to connect it. Choose your assistant in Connections and use **Check connections** to confirm a fresh CV read. A readable connected CV is required before Run.
+3. **Choose a country directory.** The original UAE snapshot is bundled. Download another [GitHub directory pack](../directories/README.md), extract it, add or select a tab and use **List options → Import list**. Preview and import every numbered CSV part into that same tab. Importing a pack does not start applications.
+4. **Check connections, then Run.** Choose your assistant in Connections and use **Check connections**. Once ready, open **Run**, describe the work you want and choose the companies and actions. Run can apply to matching jobs; career-profile creation and CV-only emails are optional choices. Pressing Run starts the selected actions for those targets.
 
-You can apply through browser tools without connecting email. Calendar and daily/weekly reports can wait. Fresh installs leave automatic checks and reports off; existing schedule choices are preserved. Add them later from Connections and the schedule control beside Last update.
+You can apply through browser tools without connecting email. Calendar and daily/weekly reports can wait. Fresh installs leave automatic checks and reports off; existing schedule choices are preserved. Add accounts later in Connections and configure schedules through the control beside Last update.
 
 ## What “ready” means
+
+Your agent handles installation and project setup; you complete account sign-ins
+and enter private credentials in Connections. Tawdheef reads your authorised
+CV. Updating or sharing it through [Tabbio MCP or CLI](https://www.tabbio.com/en/mcp)
+is a separate connection and task, not a tracker write capability.
 
 The check confirms that the chosen assistant can read its local sign-in state, the app can read your connected CV, a directory has records, and browser tools or a configured email route are available. Installing a client alone is not sign-in. A saved account alone is not proof that a fresh CV read works. Setup never sends a test application or email; provider permissions, usage limits and individual websites can still need attention during a run.
 

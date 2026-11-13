@@ -1,6 +1,7 @@
 # Read Tawdheef directories with an agent
 
-Start with the public catalog, use a compact index to find records, then read the matching canonical evidence. You do not need a person's CV, mailbox or local database to research the public packs.
+These packs extend Tawdheef, the **Auto Job Apply & Application Tracker**.
+Start with the public catalog, use a compact index to find records, then read the matching canonical evidence. You do not need a person's CV, mailbox or local database to research public packs. A readable connected CV is required before the local app's Run can start.
 
 The six country packs dated **13 November 2026** contain **13,714 organisation/source records**. They include employers, campuses, agencies, portals, programmes and unresolved leads. Counts are not current vacancies, independent employers, hiring eligibility or tested application routes.
 
@@ -19,6 +20,15 @@ The six country packs dated **13 November 2026** contain **13,714 organisation/s
 
 Public repository: [ahmedaldhraif/tawdheef](https://github.com/ahmedaldhraif/tawdheef). Raw-file URLs use `https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/` followed by the repository-relative path.
 
+Machine-readable starting points:
+
+- [Pack catalog](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/catalog.json).
+- [Release configuration](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/website/config.json): current `releaseTag` and repository URL.
+- [GitHub releases API](https://api.github.com/repos/ahmedaldhraif/tawdheef/releases): includes published prereleases and actual asset download URLs.
+
+Use the configured tag and returned asset names. `releases/latest` can omit a
+prerelease, and generated CSVs are distributed inside pack ZIPs rather than Git.
+
 ## Read only what you need
 
 1. Read [`directories/catalog.json`](../directories/catalog.json). Select a pack by ID, country, scope and snapshot date. Check `historical`, `featured` and `overlaps` before combining counts.
@@ -28,6 +38,26 @@ Public repository: [ahmedaldhraif/tawdheef](https://github.com/ahmedaldhraif/taw
 5. For local use, download the pack and preview every listed CSV part through the app or CLI. Commit only within the user's authorized import scope. Refreshing public evidence must preserve personal tracking. Importing a directory does not apply to an organisation.
 
 ## Current country packs
+
+Download the selected pack ZIP from its GitHub folder's README link or the
+configured release. Extract it locally and read `manifest.json` → `files.imports`.
+Read `list_directories` to obtain the chosen local ID; create the requested tab
+through `create_directory` if needed. Preview and import **every** CSV part into
+that same directory. Neither `index.json` nor the full source JSON is an import
+CSV. The public pack ID is not the local directory ID.
+
+```sh
+node bin/apply-tracker.mjs directories
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_CSV
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_CSV --commit
+```
+
+Replace placeholders with the actual returned local ID and extracted file path.
+For MCP, use `import_directory({directoryId,filePath})` for the preview and
+`commit:true` only for the reviewed import within the requested scope.
+Public record `id` values become local company `sourceId` values; use a returned
+local company `id` for `get_company` and edits. Importing never authorises Run.
+Use [FIRST-RUN.md](FIRST-RUN.md) to create/connect the CV and verify the assistant.
 
 All six rows below are dated 13 November 2026. Links point directly to the public source files.
 

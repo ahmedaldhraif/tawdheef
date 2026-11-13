@@ -15,6 +15,18 @@ const quote = value => '"'+String(value??'').replaceAll('"','""')+'"';
 const object = value => value!==null && typeof value==='object' && !Array.isArray(value);
 const dateValid = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10)===value;
 
+async function publicRelease(root){
+  const readOptional=async path=>{try{return JSON.parse(await readFile(join(root,path),'utf8'));}catch(error){if(error.code==='ENOENT')return{};throw error;}};
+  const [config,pkg]=await Promise.all([readOptional('website/config.json'),readOptional('package.json')]);
+  const repository=(config.intendedRepository||'https://github.com/ahmedaldhraif/tawdheef').replace(/\/$/,'');
+  assert.match(repository,/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/,'Use the actual public GitHub repository URL');
+  const releaseTag=config.releaseTag||(typeof pkg.version==='string'&&/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/i.test(pkg.version)?`v${pkg.version}`:null);
+  const releaseUrl=releaseTag?`${repository}/releases/tag/${encodeURIComponent(releaseTag)}`:`${repository}/releases`;
+  const assetBase=releaseTag?`${repository}/releases/download/${encodeURIComponent(releaseTag)}`:null;
+  const rawBase=repository.replace('https://github.com/','https://raw.githubusercontent.com/')+'/main/';
+  return{repository,releaseTag,releaseUrl,assetBase,rawBase};
+}
+
 async function sourcePath(root, source) {
   assert.equal(typeof source,'string','pack.source must name a reviewed public JSON file');
   assert.ok(!isAbsolute(source)&&!source.includes('\\'),'pack.source must be repository-relative, using / separators');
@@ -73,7 +85,7 @@ export function csvParts(records,{maxBytes=19*1024*1024,maxRows=20_000}={}){
   if(lines.length)parts.push(header+lines.join(''));return parts;
 }
 
-async function preparePack(root,def){
+async function preparePack(root,def,release){
   validateDefinition(def);const original=await readFile(await sourcePath(root,def.source)),digest=hash(original);
   if(def.sourceSha256)assert.equal(digest,def.sourceSha256,`${def.id}: pinned public source changed; review it instead of silently rebuilding`);
   const snapshot=validateSnapshot(JSON.parse(original),def),parts=csvParts(snapshot.records);
@@ -94,15 +106,17 @@ async function preparePack(root,def){
   }
   assert.equal(index,snapshot.records.length,`${def.id}: import lost records`);
   const roles={};for(const record of snapshot.records)roles[record.sourceRole]=(roles[record.sourceRole]??0)+1;
-  const files={original:`${def.id}-directory.json`,import:imports[0],imports,index:'index.json'};
+  const files={original:`${def.id}-directory.json`,import:imports[0],imports,index:'index.json',readme:'README.md'};
   const notes=[...(def.notes??[]),'Research snapshot, not a current vacancy feed','A portal, agency or programme is not automatically an employer','Published routes may be untested; inclusion does not establish hiring, eligibility, mailbox deliverability or permission to automate','Full original public evidence is retained byte-for-byte in JSON and as Original evidence JSON in CSV','No private tracking or application activity included'];
   const manifest={id:def.id,name:def.name,country:def.country,countries:def.countries??[def.country],kind:def.kind??'country',description:def.description??'',featured:def.featured!==false,historical:def.historical===true,snapshotDate:def.snapshotDate,recordCount:snapshot.records.length,formatVersion:1,source:def.source,sourceSha256:digest,sourceRoleCounts:roles,importNormalizations,credit:def.credit??'Initial research by Ahmed AlDhraif; open to community contributions',license:def.license??'Repository code is MIT licensed. Retained public source facts, third-party sites and marks keep their own terms; inspect original evidence.',files,notes};
+  Object.assign(manifest,{releaseTag:release.releaseTag,releaseUrl:release.releaseUrl,...(release.assetBase?{downloadUrl:`${release.assetBase}/${def.id}-directory-pack.zip`}:{}),indexUrl:`${release.rawBase}directories/${def.id}/index.json`,sourceUrl:release.rawBase+def.source});
   const discovery={formatVersion:1,id:manifest.id,name:manifest.name,country:manifest.country,countries:manifest.countries,snapshotDate:manifest.snapshotDate,recordCount:manifest.recordCount,sourceSha256:digest,originalJSON:files.original,canonicalSource:def.source,provenance:{recordIdField:'id',fullEvidenceField:'sourceFields',instructions:'This is a compact research-source index, not a vacancy feed. Read canonicalSource in the repository or originalJSON in the downloaded pack; locate the same stable record id to inspect full evidence and missing-data notes.'},records:snapshot.records.map(record=>({id:record.id,name:record.name,sourceRole:record.sourceRole,sector:record.sector??'',location:record.location??'',...Object.fromEntries(['website','careersUrl','applyUrl','linkedinUrl','email','routeStatus','checkedAt'].filter(field=>record[field]).map(field=>[field,record[field]]))}))};
   assert.deepEqual(discovery.records.map(record=>record.id),snapshot.records.map(record=>record.id),`${def.id}: compact index lost or changed source IDs`);
   const indexText=JSON.stringify(discovery,null,2)+'\n';
-  const readme=`${manifest.name} directory pack for Tawdheef\n\n${manifest.recordCount} organisation/source records; snapshot ${manifest.snapshotDate}.\n${manifest.credit}.\n\nThe JSON is an unchanged public evidence snapshot. CSV imports retain stable source IDs, exact mapped URLs, source roles and full Original evidence JSON.\n\nImport files: ${imports.join(', ')}\n${imports.length>1?'Import every numbered part into the same selected directory; each chunk is below the local importer limit.\n':''}\nUse List options > Import list and review the preview. CLI preview from the checkout:\nnode bin/apply-tracker.mjs import --directory DIRECTORY_ID --file directories/${def.id}/${imports[0]}\n\nUse the real directory ID. Add --commit only after reviewing the preview and authorising the import. Importing a pack does not apply to companies. Refreshing evidence must preserve existing tracking.\n\n${notes.map(note=>'- '+note).join('\n')}\n\nCorrections: submit the stable source ID, changed value, public evidence URL and date. Maintainers update the reviewed public source/new dated snapshot and rebuild; generated CSV is not the durable editing source. Never edit data/uae-directory.json or the original UAE pack.\n`;
-  const manifestText=JSON.stringify(manifest,null,2)+'\n',zip=new JSZip();zip.file(files.original,original);parts.forEach((part,i)=>zip.file(imports[i],part));zip.file(files.index,indexText);zip.file('manifest.json',manifestText);zip.file('README.txt',readme);
-  return{def,manifest,original,parts,imports,readme,manifestText,indexText,archive:await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE'}),warnings};
+  const readme=`${manifest.name} directory pack for Tawdheef\n\n${manifest.recordCount} organisation/source records; snapshot ${manifest.snapshotDate}.\n${manifest.credit}.\n\nDownload ZIP: ${manifest.downloadUrl||release.releaseUrl}\nExtract the ZIP on your computer before importing. CSV files are inside this download, not versioned GitHub CSV links.\n\nThe JSON is an unchanged public evidence snapshot. CSV imports retain stable source IDs, exact mapped URLs, source roles and full Original evidence JSON.\n\nImport files: ${imports.join(', ')}\n${imports.length>1?'Import every numbered part into the same selected directory; each chunk is below the local importer limit.\n':''}\nIn Tawdheef, create or select your directory tab, then use List options > Import list and review each CSV preview. CLI preview from the Tawdheef checkout, replacing both placeholders:\nnode bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_PACK/${imports[0]}\n\nUse the real directory ID returned by the tracker. Add --commit only after reviewing the preview and authorising the import. Importing a pack does not apply to companies. Refreshing evidence must preserve existing tracking.\n\n${notes.map(note=>'- '+note).join('\n')}\n\nCorrections: submit the stable source ID, changed value, public evidence URL and date. Maintainers update the reviewed public source/new dated snapshot and rebuild; generated CSV is not the durable editing source. Never edit data/uae-directory.json or the original UAE pack.\n`;
+  const readmeMarkdown=`# ${manifest.name} directory pack\n\n**${manifest.recordCount.toLocaleString('en-US')} organisation/source records** · Research snapshot: **${manifest.snapshotDate}**\n\n[Download ZIP](${manifest.downloadUrl||release.releaseUrl}) · [Release](${manifest.releaseUrl}) · [Tawdheef app](${release.repository})\n\n${manifest.description||'A researched directory add-on for Tawdheef, the Auto Job Apply & Application Tracker.'}\n\n## Add this pack to Tawdheef\n\n1. [Set up the app](${release.repository}/blob/main/docs/FIRST-RUN.md) if it is not running yet. A directory pack ZIP is an add-on, not the app installer.\n2. Download the ZIP above and **extract it locally**. The CSV imports are inside the ZIP; they are not files to fetch from Git.\n3. Create or select the country tab in Tawdheef, then open **List options → Import list**.\n4. Preview and import ${imports.length>1?'every numbered CSV part into that same tab':'the CSV into that tab'}: ${imports.map(file=>'`'+file+'`').join(', ')}. Review warnings before committing.\n\nFor an agent, read the extracted \`manifest.json\` → \`files.imports\` and use the local directory ID returned by \`list_directories\`. A pack ID is not a local directory ID. Importing a pack never starts applications.\n\n## Read with an agent\n\n- [Compact index](index.json): every stable record ID and primary facts.\n- [Full evidence](${manifest.sourceUrl}): match the same \`id\` and inspect \`sourceFields\`.\n- [Manifest](manifest.json): source integrity and import filenames.\n- Source SHA-256: \`${manifest.sourceSha256}\`. Hash the full source file bytes.\n\nThe index is for discovery, not an import file or a substitute for provenance. The ZIP retains the full original JSON as \`${files.original}\`.\n\n## Correct a record or add another country\n\n[Report a correction](${release.repository}/issues/new?template=directory-data.yml), [propose a pack](${release.repository}/issues/new?template=new-country-pack.yml), or follow the [contribution guide](${release.repository}/blob/main/docs/DIRECTORY-CONTRIBUTING.md). **Any country or industry is welcome.** Keep stable IDs and include public evidence URLs and dates. Edit reviewed source data; generated downloads are rebuilt.\n\n${manifest.credit}.\n\n## Scope and reuse\n\n${notes.map(note=>'- '+note).join('\n')}\n\n${manifest.license}\n`;
+  const manifestText=JSON.stringify(manifest,null,2)+'\n',zip=new JSZip();zip.file(files.original,original);parts.forEach((part,i)=>zip.file(imports[i],part));zip.file(files.index,indexText);zip.file('manifest.json',manifestText);zip.file('README.txt',readme);zip.file(files.readme,readmeMarkdown);
+  return{def,manifest,original,parts,imports,readme,readmeMarkdown,manifestText,indexText,archive:await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE'}),warnings};
 }
 
 export async function discoverDefinitions(root=ROOT){
@@ -119,15 +133,16 @@ export async function buildDirectoryPacks({root=ROOT,pack,check=false}={}){
   const definitions=await discoverDefinitions(root);assert.ok(definitions.length,'No reviewed directories/<id>/pack.json definitions found');
   if(pack)assert.ok(definitions.some(def=>def.id===pack),`Unknown pack: ${pack}`);
   // Validate the whole catalog before writing; a failing new pack cannot erase others.
-  const prepared=[];for(const def of definitions)prepared.push(await preparePack(root,def));
-  const catalog={version:1,packs:prepared.map(({manifest:m,def})=>({id:m.id,name:m.name,country:m.country,countries:m.countries,kind:m.kind,description:m.description,featured:m.featured,historical:m.historical,snapshotDate:m.snapshotDate,recordCount:m.recordCount,path:`${m.id}/manifest.json`,download:`${m.id}/${m.id}-directory-pack.zip`,source:m.source,sourceSha256:m.sourceSha256,sourceRoleCounts:m.sourceRoleCounts,files:m.files,credit:m.credit,...(def.overlaps?{overlaps:def.overlaps}:{})}))};
+  const release=await publicRelease(root),prepared=[];for(const def of definitions)prepared.push(await preparePack(root,def,release));
+  const catalog={version:1,repository:release.repository,releaseTag:release.releaseTag,releaseUrl:release.releaseUrl,packs:prepared.map(({manifest:m,def})=>({id:m.id,name:m.name,country:m.country,countries:m.countries,kind:m.kind,description:m.description,featured:m.featured,historical:m.historical,snapshotDate:m.snapshotDate,recordCount:m.recordCount,path:`${m.id}/manifest.json`,download:`${m.id}/${m.id}-directory-pack.zip`,downloadUrl:m.downloadUrl,indexUrl:m.indexUrl,sourceUrl:m.sourceUrl,source:m.source,sourceSha256:m.sourceSha256,sourceRoleCounts:m.sourceRoleCounts,files:m.files,credit:m.credit,...(def.overlaps?{overlaps:def.overlaps}:{})}))};
   if(!check){
     if(pack)for(const item of prepared){
       if(item.def.id===pack)continue;
       try{
         const folder=join(root,'directories',item.def.id),existing=JSON.parse(await readFile(join(folder,'manifest.json'),'utf8'));
         assert.equal(existing.sourceSha256,item.manifest.sourceSha256);
-        for(const name of[item.manifest.files.original,item.manifest.files.index,...item.imports,`${item.def.id}-directory-pack.zip`])await access(join(folder,name));
+        assert.equal(existing.releaseTag,item.manifest.releaseTag);
+        for(const name of[item.manifest.files.original,item.manifest.files.index,item.manifest.files.readme,...item.imports,`${item.def.id}-directory-pack.zip`])await access(join(folder,name));
       }catch{throw new Error(`${item.def.id}: another pack is missing or stale; run the full build before a targeted --pack build`);}
     }
     for(const item of prepared){
@@ -135,7 +150,7 @@ export async function buildDirectoryPacks({root=ROOT,pack,check=false}={}){
       await writeFile(join(out,item.manifest.files.original),item.original);
       await writeFile(join(out,item.manifest.files.index),item.indexText);
       for(let i=0;i<item.parts.length;i++)await writeFile(join(out,item.imports[i]),item.parts[i]);
-      await writeFile(join(out,'manifest.json'),item.manifestText);await writeFile(join(out,'README.txt'),item.readme);await writeFile(join(out,`${item.def.id}-directory-pack.zip`),item.archive);
+      await writeFile(join(out,'manifest.json'),item.manifestText);await writeFile(join(out,'README.txt'),item.readme);await writeFile(join(out,item.manifest.files.readme),item.readmeMarkdown);await writeFile(join(out,`${item.def.id}-directory-pack.zip`),item.archive);
     }
     await writeFile(join(root,'directories/catalog.json'),JSON.stringify(catalog,null,2)+'\n');
   }

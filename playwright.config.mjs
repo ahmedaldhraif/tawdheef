@@ -5,7 +5,9 @@ import { join } from 'node:path';
 
 // The server never opens the user's real .local database during browser checks.
 process.env.APPLY_TRACKER_UI_TEST_DATA ||= mkdtempSync(join(tmpdir(), 'apply-tracker-ui-'));
-const baseURL = 'http://127.0.0.1:4017';
+const baseURL = process.env.APPLY_TRACKER_UI_TEST_URL || 'http://127.0.0.1:4017';
+const testAddress = new URL(baseURL);
+if (testAddress.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(testAddress.hostname) || !testAddress.port) throw new Error('Use a loopback URL with an explicit port for browser tests.');
 
 export default defineConfig({
   testDir: './tests',
@@ -31,7 +33,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 30_000,
     env: {
-      APPLY_TRACKER_PORT: '4017',
+      APPLY_TRACKER_PORT: testAddress.port,
       APPLY_TRACKER_DATA: process.env.APPLY_TRACKER_UI_TEST_DATA,
       APPLY_TRACKER_INSTANCE: 'isolated-browser-tests',
     },

@@ -4,6 +4,9 @@ Free country, regional and sector packs for the local tracker. Contributions can
 add or improve data for **any country**. Initial research is by Ahmed AlDhraif;
 community contributions are welcome.
 
+These are add-ons for Tawdheef, the **Auto Job Apply & Application Tracker**.
+Start with a country, then use the same app and agent workflow.
+
 The catalog currently includes six researched country snapshots dated
 13 November 2026 and the separate original UAE snapshot dated 10 November 2026.
 Counts describe organisation/source records, including campuses and unresolved
@@ -12,7 +15,22 @@ The original UAE pack overlaps the expanded UAE pack; do not add both counts.
 
 ## Download and use
 
-Download a directory ZIP from the project's release assets or directory page.
+Open a pack below and use its **Download ZIP** release link:
+
+| Country | Records | GitHub pack |
+| --- | ---: | --- |
+| Bahrain | 811 | [bahrain](bahrain/) |
+| Kuwait | 1,806 | [kuwait](kuwait/) |
+| Oman | 2,587 | [oman](oman/) |
+| Qatar | 671 | [qatar](qatar/) |
+| Saudi Arabia | 4,256 | [saudi-arabia](saudi-arabia/) |
+| United Arab Emirates | 3,583 | [uae-expanded](uae-expanded/) |
+
+All six snapshots are dated 13 November 2026. The separate
+[original UAE snapshot](uae/) preserves the historical 772-record baseline.
+Downloads also appear in [GitHub releases](https://github.com/ahmedaldhraif/tawdheef/releases).
+
+Extract the selected `<pack-id>-directory-pack.zip` on your computer.
 Each ZIP includes the unchanged public source JSON, provenance manifest, import
 CSV files and instructions. Saudi Arabia and the expanded UAE pack have numbered
 CSV parts: preview and import every part into the same chosen tracker directory.
@@ -26,6 +44,22 @@ node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_DOWNLO
 Use the real directory ID. Add `--commit` only after reviewing and authorising
 the import. Importing reference data does not apply to any organisation, and
 refreshing evidence must preserve existing tracking.
+
+You can ask your agent: “Download the Bahrain pack from Tawdheef's GitHub
+release, extract it and preview its import into my Bahrain tab. Show me any
+warnings before committing. Do not start applications.” The same request works
+with another named pack. Use [the first-run guide](../docs/FIRST-RUN.md) to
+create/connect your Tabbio CV and verify the agent before Run.
+
+## For agents and other tools
+
+Read the [raw catalog](https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/catalog.json),
+then each pack's `files.index` for compact discovery. Use `canonicalSource` and
+the stable record `id` for full evidence; verify its source SHA-256. The catalog's
+`downloadUrl` points to a ZIP. Generated CSVs are inside it, not raw GitHub files.
+The [releases API](https://api.github.com/repos/ahmedaldhraif/tawdheef/releases)
+includes prereleases; `releases/latest` may not. See the
+[agent directory guide](../docs/AGENT-DIRECTORIES.md) for the full contract.
 
 ## Source and generated files
 

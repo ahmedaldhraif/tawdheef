@@ -219,7 +219,7 @@ test('workspace pointer highlight fades to idle and leaves table controls unobst
   await expect.poll(() => page.locator('tbody tr').count()).toBeLessThan(100);
 });
 
-test('workspace texture stays static for reduced motion and touch, and hides in forced colors', async ({ page, browser }) => {
+test('workspace texture stays static for reduced motion and touch, and hides in forced colors', async ({ page, browser, baseURL }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openTracker(page);
   await expect(page.locator('.workspace-dot-grid')).toBeVisible();
@@ -228,7 +228,7 @@ test('workspace texture stays static for reduced motion and touch, and hides in 
   expect(await page.locator('.workspace-dot-spotlight').evaluate(element => element.getAnimations().length)).toBe(0);
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.workspace-background')).toHaveCSS('display', 'none');
-  const touch = await browser.newContext({ baseURL: 'http://127.0.0.1:4017', viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'no-preference' });
+  const touch = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'no-preference' });
   const writes = [], errors = [];
   try {
     const touchPage = await touch.newPage();

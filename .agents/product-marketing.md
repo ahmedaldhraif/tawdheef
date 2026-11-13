@@ -1,32 +1,43 @@
 # Tawdheef product marketing context
 
-**Document version:** v6
+**Document version:** v7
 **Last updated:** 2026-11-13
 **Status:** Initial source-backed implementation; owner can revise wording.
 
 ## Product overview
 
-Tawdheef is a free, MIT-licensed local company directory and job application
-tracker for people and their agents. The screen, CLI and stdio MCP share one
+Tawdheef is a free, open-source **Auto Job Apply & Application Tracker**.
+People choose companies; their own agent applies through supported email or
+browser routes, and Tawdheef tracks outcomes and replies locally.
+The screen, CLI and stdio MCP share one
 SQLite store. Codex or Claude Code supplies the model and browser tools.
 The tracker does not include its own model or require its own model API key.
 
 ## Audience and jobs
 
-Start with jobseekers using Codex or Claude Code, particularly in the UAE.
+Start with job seekers using Codex or Claude Code, in any country.
 They need a researched starting list, a current CV, a shortlist that fits their
 preferences, evidence of actual submissions and a clear next action.
-The first pack contains 772 organisation/source records from 10 November 2026.
-People can import their own country or industry lists.
+Six current GCC packs contain 13,714 organisation/source records dated
+13 November 2026. The original 772-record UAE starter snapshot is preserved
+separately and overlaps expanded UAE. These are dated research lists, not
+live vacancies. People can import or contribute country or industry lists.
 
 ## Positioning
 
-Primary line: **A free, open-source app to apply for jobs.**
-Descriptor: **Find companies, apply and track replies with your ChatGPT or
+Approved category: **Auto Job Apply & Application Tracker**.
+Approved hero: **Auto-apply to jobs. Track your applications.**
+Supporting line: **Free, open-source software for you and your ChatGPT or
 Claude agent.**
 
+Keep the approved category intact in naming and search context. It is a
+descriptor; the sentence reads more naturally as a hero headline. Auto-apply
+means an explicitly started run through the user's local agent and authorized
+connections. It does not mean every website, every job or unattended success.
+
 Center the hero and put the original ChatGPT and Claude marks inline with
-their names in the descriptor. No separate audience row or extra labels.
+their names where familiar provider identification is useful. No separate
+audience row or extra labels. Keep free/open source visible in the main copy.
 Actual local Codex and Claude Code requirements belong on setup and workflow
 pages. Do not imply that browser chat products can access local stdio settings.
 
@@ -68,10 +79,19 @@ recruiter attribution or analytics merely from Tabbio marketing.
 
 ## Funnel and conversion
 
-Search/repo/personal content → practical country directory or workflow →
-download/setup Tawdheef → install skill/connect agent → use a real shortlist →
-optionally create/connect a free Tabbio digital CV → discover paid Tabbio help
-only when useful. Keep the free route fully usable and the relationship clear.
+Search/repo/personal content → GitHub release → download and local agent-assisted
+setup → create a free Tabbio CV or use an existing one → connect it and check
+readiness → choose companies and explicitly start Run → review outcomes and replies.
+The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. This source
+prepares the v0.1.1 preview. Link to /releases or its explicit version while it is a prerelease,
+not /releases/latest. The hero’s Get the free app action leads to the setup guide;
+the setup download links directly to the official release asset, with a clone
+alternative. Keep downloadable source, issues and pull requests easy to find.
+
+Directory/manual tracking is usable without Tabbio. Run requires a connected
+Tabbio CV. Tabbio remains a separate CV service, not the operator or warranty
+provider of this personally maintained project. Paid Tabbio help is a secondary
+option only when useful; the free CV path stays clear.
 
 Primary conversion: downloaded source or completed local setup.
 Secondary: skill install, directory pack use and a Tabbio CV visit.
@@ -82,7 +102,8 @@ parameters; they do not prove a resulting signup or upgrade.
 ## Objections
 
 - Free? Yes for the tracker; provider and AI costs remain separate.
-- Technical? Node.js24+ and initial terminal setup are required.
+- Technical? No coding is needed. Open the folder in Codex or Claude Code and
+  copy the agent setup request. Node.js 24+ is required; the guide helps with it.
 - Applications automatic? Only an explicit named run authorises supported
   agent actions. Sign-ins, CAPTCHAs and provider approvals may need the person.
 - Phone? Responsive site and UI; the default app runs on the user's computer,
@@ -100,6 +121,10 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
+- v7 (2026-11-13) — Owner approved Auto Job Apply & Application Tracker
+  positioning and a GitHub-first path to local setup, a free connected Tabbio
+  CV and a chosen application run. Broadened contributions to any country and
+  retained provider, local-client and real-evidence boundaries.
 - v6 (2026-11-13) — Owner requested three distinct, shorter CV benefits with
   MCP/CLI, Google/Bing and Tabbio marks beside their matching headings. Removed
   the repeated protocol row and approval copy; kept a short search eligibility note.
