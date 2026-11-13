@@ -130,7 +130,7 @@
     "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep drafts/uploads/talent pools distinct from applied."
   },
   "informationArchitecture": {
-    "decision": "Owner-approved Guides, About and actual-product walkthrough, inspired by reviewed OpenSEO documentation patterns. Preserve the centered hero, approved wording, brand assets and GitHub-first setup.",
+    "decision": "Owner-approved Guides, About and actual-product walkthrough, inspired by reviewed documentation patterns. The skill is one of nine guides rather than a separate top-level destination. Preserve the centered hero, approved wording, brand assets and GitHub-first setup.",
     "home": "Keep the simple marketing promise, real product view, walkthrough, free Tabbio CV path and country packs. The walkthrough uses real UI without invented account or application state.",
     "routes": [
       {
@@ -148,6 +148,10 @@
       {
         "path": "/guides/connect-your-agent/",
         "purpose": "Supported local clients, project-only configuration, trust/reload and actual checks."
+      },
+      {
+        "path": "/guides/use-the-skill/",
+        "purpose": "Canonical human skill guide: installation, actual client invocation, workflow and instructions-versus-tools/authentication boundaries."
       },
       {
         "path": "/guides/connect-your-cv/",
@@ -178,9 +182,22 @@
         "purpose": "Verified human purpose, name meaning, independent Ahmed attribution and separate Tabbio relationship; canonical body website/about.md."
       }
     ],
-    "existingDestinations": "Preserve Skills, Directories, GitHub and policies; link task guides to the existing actual skill instead of inventing a catalog of new skills.",
+    "existingDestinations": "Preserve Directories, GitHub, About and policies; place the actual skill in Guides, remove top-level Skills navigation and redirect legacy /skills/ and /skills/tawdheef/ to /guides/use-the-skill/.",
     "contentContract": "Guides distinguish instructions from tools, installation from authentication and evidence from intent. Explain what the person provides, what is saved, what requires consent and where to go next.",
     "releaseBoundary": "The live v0.1.1 release assets remain versioned snapshots. New website/source documentation can ship through reviewed GitHub changes without implying old ZIPs were replaced.",
-    "evidenceLimit": "Reference patterns and owner approval are design inputs, not conversion, adoption, ranking or citation evidence."
+    "evidenceLimit": "Reference patterns and owner approval are design inputs, not conversion, adoption, ranking or citation evidence.",
+    "guideCount": 9,
+    "skillPresentation": {
+      "canonical": "/guides/use-the-skill/",
+      "source": "docs/guides/use-the-skill.md",
+      "legacyRoutes": [
+        "/skills/",
+        "/skills/tawdheef/"
+      ],
+      "legacyBehavior": "Redirect both to the canonical guide.",
+      "navigation": "Guides contains the skill; no separate top-level Skills item.",
+      "artwork": "Use the original approved /brand/mark.svg beside the guide heading, preserving the Arabic Grid proportions and two square dots. Never substitute a typed ta glyph.",
+      "behaviorBoundary": "This changes marketing navigation and documentation, not tracker application-run behavior or provider permissions."
+    }
   }
 }

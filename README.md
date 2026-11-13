@@ -23,7 +23,7 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 
 The app is free; your AI client and connected providers may have their own costs or limits. You can browse directories and track applications without Tabbio. **Run requires a connected Tabbio CV.**
 
-Read the [guides](docs/guides/README.md) for setup, connections, applications and replies. [Troubleshoot a problem](docs/guides/troubleshoot.md), explore the [agent reference](docs/guides/for-agents.md) and [skill](skills/tawdheef/SKILL.md), or learn [about Tawdheef](website/about.md). The website renders these same guides, so the instructions stay consistent.
+Read the [guides](docs/guides/README.md) for setup, connections, applications and replies. [Troubleshoot a problem](docs/guides/troubleshoot.md), explore the [agent reference](docs/guides/for-agents.md) and [skill](docs/guides/use-the-skill.md), or learn [about Tawdheef](website/about.md). The website renders these same guides, so the instructions stay consistent.
 
 ## GCC directory packs
 

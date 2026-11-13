@@ -11,6 +11,7 @@ These are the same source guides used by the Tawdheef website.
 
 ## Use Tawdheef
 
+- [Use the Tawdheef skill](use-the-skill.md)
 - [Add a country directory](use-directory-packs.md)
 - [Start your first application run](apply-to-jobs.md)
 - [Check replies and reports](replies-and-reports.md)

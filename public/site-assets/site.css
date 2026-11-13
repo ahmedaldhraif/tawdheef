@@ -59,6 +59,7 @@
 
 .country-actions{display:flex;gap:12px;flex-wrap:wrap}.country-actions+.note{margin-top:18px}.pack-coverage{margin-top:24px;border-block:1px solid #e9e9ed}.pack-coverage summary{min-height:48px;padding:12px 0;font-size:14px;cursor:pointer}.pack-coverage ul{list-style:none;margin:0;padding:4px 0 16px}.pack-coverage li{display:flex;justify-content:space-between;gap:20px;padding:6px 0;font-size:13px;color:#62626b}.pack-coverage li span:last-child{font-variant-numeric:tabular-nums}.directory-text h3 a{text-decoration:none}.section>.button{margin-top:24px}
 .docs-content .actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:24px 0}
+.guide-title-row{display:flex;align-items:center;gap:12px}.guide-title-row h1{min-width:0}.guide-skill-mark{flex:0 0 44px;width:44px;height:44px;object-fit:contain}
 
 /* The walkthrough is an instant, keyboard-accessible view of the actual app. */
 .product-tour{margin:24px -40px 0}.tour-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(100%,490px);margin:0 auto 18px}.tour-tabs button{min-height:44px;padding:9px 12px;font-size:13px;line-height:1.4}.tour-tabs button:active{background:#eeeef1}.tour-frame{border:1px solid #dedee3;border-radius:12px;overflow:hidden;background:#f5f5f7;box-shadow:0 12px 36px -24px #18181b30}.tour-frame img{display:block;width:100%;height:auto}.product-tour figcaption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 24px;margin-top:14px;font-size:12px;line-height:1.7;color:#71717a}.product-tour figcaption span:first-child{color:#52525b}

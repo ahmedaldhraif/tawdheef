@@ -268,7 +268,17 @@
     "humanPath": "Understand the app → get started locally → connect agent and CV → use a real directory → choose targets/actions → review outcomes and replies.",
     "agentPath": "For agents guide → llms.txt and current capabilities/tool schemas → directory catalog → compact index → canonical evidence, with explicit local-operation authority.",
     "aboutSource": "website/about.md is the canonical human body. Use supplied facts and verified profile URLs; renderer may add the provided portrait.",
-    "preserved": "Approved centered hero, assets, free/open-source message, GitHub-first release download, current v0.1.1 release snapshot, independent project maintenance and free Tabbio CV funnel.",
-    "notClaimed": "No comparative conversion benefit, indexing/AI-citation guarantee, imported social proof, new hosted connection or fabricated community contribution is established."
+    "preserved": "Approved centered hero and assets, free/open-source message, GitHub-first setup, independent project maintenance, separate Tabbio CV service and existing operational authority. Versioned release snapshots remain distinct from new source/documentation.",
+    "notClaimed": "No comparative conversion benefit, indexing/AI-citation guarantee, imported social proof, new hosted connection or fabricated community contribution is established.",
+    "guideCount": 9,
+    "skillPlacement": {
+      "date": "2026-11-13",
+      "basis": "The owner's explicit correction places the skill within Guides and rejects a typed Arabic letter as a logo. No new external evidence or performance claim is added.",
+      "canonical": "/guides/use-the-skill/",
+      "source": "docs/guides/use-the-skill.md",
+      "legacy": "/skills/ and /skills/tawdheef/ redirect to the canonical guide; remove the separate Skills navigation item.",
+      "mark": "Approved /brand/mark.svg, the selected Arabic Grid artwork with two square dots, beside the guide heading; preserve exact proportions.",
+      "scope": "Human instructions and marketing routes change; tracking, application-run behavior, account ownership and provider permissions do not."
+    }
   }
 }

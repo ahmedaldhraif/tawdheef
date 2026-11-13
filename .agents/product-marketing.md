@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v8
+**Document version:** v9
 **Last updated:** 2026-11-13
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -113,6 +113,8 @@ parameters; they do not prove a resulting signup or upgrade.
 - `/guides/get-started/`: reuse that canonical setup source or direct readers
   there; do not maintain a second, conflicting installation workflow.
 - `/guides/connect-your-agent/`: actual local Codex/Claude Code setup and checks.
+- `/guides/use-the-skill/`: the canonical skill explanation, install command,
+  client invocation and guidance-versus-tools/account distinction.
 - `/guides/connect-your-cv/`: free Tabbio CV creation or existing-account connection;
   distinguish tracker CV reads from a separate Tabbio editing connection.
 - `/guides/use-directory-packs/`: public pack discovery, extract/import all CSV
@@ -128,8 +130,12 @@ parameters; they do not prove a resulting signup or upgrade.
 - `/about/`: canonical text in `website/about.md`; the name, practical purpose,
   Ahmed's verified attribution, independent maintenance and separate Tabbio service.
 
-Keep `/skills/` and the actual skill detail connected to these guides. Skills
-are instructions, not new tools or proof of authentication. The homepage
+The skill belongs within Guides, without a separate top-level Skills navigation
+item. Redirect `/skills/` and `/skills/tawdheef/` to `/guides/use-the-skill/` so
+existing links still reach the canonical guide. Use the approved Arabic Grid
+SVG at `/brand/mark.svg` beside the skill-guide heading; a typed ت is text,
+not the selected logo. Preserve the mark's proportions and two square dots.
+Skills are instructions, not new tools or proof of authentication. The homepage
 walkthrough demonstrates the real product without inventing activity, connected
 accounts, submission receipts or testimonials. Guidance on setup, backups and
 updates should follow existing canonical docs. An update to the public website
@@ -160,6 +166,11 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
+- v9 (2026-11-13) — Owner placed the skill inside Guides at
+  `/guides/use-the-skill/`, with legacy skill-route redirects and no separate
+  Skills navigation item. Required the approved SVG mark rather than a typed
+  Arabic letter. The guide set now contains nine pages; operating authority,
+  tracker behavior and provider permissions are unchanged.
 - v8 (2026-11-13) — Owner approved Guides, an About page and a real product
   walkthrough after reviewing OpenSEO. Added human task pages and an agent
   reference while preserving the centered hero, GitHub-first local setup,

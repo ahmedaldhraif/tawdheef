@@ -63,6 +63,8 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "30mb" }));
+// Legacy marketing links retain their destination when the skill moves into Guides.
+app.get(["/skills", "/skills/", "/skills/tawdheef", "/skills/tawdheef/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
 const wrap = (fn) => async (req, res, next) => {
   try {
     const value = await fn(req, res);

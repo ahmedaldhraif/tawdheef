@@ -14,7 +14,7 @@
     "description": "Connect the local tracker tools, install the workflow skill and verify the assistant you want Run to use.",
     "category": "Start",
     "source": "docs/guides/connect-your-agent.md",
-    "related": ["get-started", "connect-your-cv", "for-agents"],
+    "related": ["get-started", "connect-your-cv", "use-the-skill"],
     "next": "connect-your-cv"
   },
   {
@@ -24,6 +24,15 @@
     "category": "Start",
     "source": "docs/guides/connect-your-cv.md",
     "related": ["get-started", "connect-your-agent", "troubleshoot"],
+    "next": "use-directory-packs"
+  },
+  {
+    "slug": "use-the-skill",
+    "title": "Use the Tawdheef skill",
+    "description": "Install the optional workflow guidance and give your agent practical requests for shortlists, applications and reply checks.",
+    "category": "Use",
+    "source": "docs/guides/use-the-skill.md",
+    "related": ["connect-your-agent", "apply-to-jobs", "replies-and-reports"],
     "next": "use-directory-packs"
   },
   {
