@@ -1,7 +1,7 @@
 # Tawdheef product marketing context
 
-**Document version:** v11
-**Last updated:** 2026-11-13
+**Document version:** v12
+**Last updated:** 2026-11-14
 **Status:** Initial source-backed implementation; owner can revise wording.
 
 ## Product overview
@@ -26,9 +26,8 @@ live vacancies. People can import or contribute country or industry lists.
 ## Positioning
 
 Approved category: **Auto Job Apply & Application Tracker**.
-Approved hero: **Auto-apply to jobs. Track your applications.**
-Supporting line: **Free, open-source software for you and your ChatGPT or
-Claude agent.**
+Approved hero: **Find matching jobs. Build career profiles.**
+Supporting line: **A free, open-source job-search app for you and your Codex or Claude Code agent.**
 
 Keep the approved category intact in naming and search context. It is a
 descriptor; the sentence reads more naturally as a hero headline. Auto-apply
@@ -175,42 +174,46 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
 
-- v11 (2026-11-13) — Owner restored Skills as the main overview, with the real
+- v11 (2026-11-13); Owner restored Skills as the main overview, with the real
   skill install command, a Get started app/CLI action and grouped task guides.
   Kept one actual skill distinct from eight articles and retained the detailed
   setup route. This supersedes the earlier no-Skills navigation decision.
-- v10 (2026-11-13) — Combined setup and the skill in one primary guide,
+- v10 (2026-11-13); Combined setup and the skill in one primary guide,
   brought direct CLI connection into the homepage flow and removed preview tabs.
   Kept the searchable guide index and redirected earlier setup/skill links.
-- v9 (2026-11-13) — Owner placed the skill inside Guides at
+- v9 (2026-11-13); Owner placed the skill inside Guides at
   `/guides/use-the-skill/`, with legacy skill-route redirects and no separate
   Skills navigation item. Required the approved SVG mark rather than a typed
   Arabic letter. The guide set now contains nine pages; operating authority,
   tracker behavior and provider permissions are unchanged.
-- v8 (2026-11-13) — Owner approved Guides, an About page and a real product
+- v8 (2026-11-13); Owner approved Guides, an About page and a real product
   walkthrough after reviewing OpenSEO. Added human task pages and an agent
   reference while preserving the centered hero, GitHub-first local setup,
   free Tabbio CV path and current release boundaries. No invented founder story
   or borrowed adoption claims.
-- v7 (2026-11-13) — Owner approved Auto Job Apply & Application Tracker
+- v7 (2026-11-13); Owner approved Auto Job Apply & Application Tracker
   positioning and a GitHub-first path to local setup, a free connected Tabbio
   CV and a chosen application run. Broadened contributions to any country and
   retained provider, local-client and real-evidence boundaries.
-- v6 (2026-11-13) — Owner requested three distinct, shorter CV benefits with
+- v6 (2026-11-13); Owner requested three distinct, shorter CV benefits with
   MCP/CLI, Google/Bing and Tabbio marks beside their matching headings. Removed
   the repeated protocol row and approval copy; kept a short search eligibility note.
-- v5 (2026-11-13) — Owner requested the centered reference layout, a single
+- v5 (2026-11-13); Owner requested the centered reference layout, a single
   explanation naming ChatGPT/Claude agents and no extra labels. Removed the
   founder affiliation and added a small LinkedIn favicon beside Ahmed's name.
-- v4 (2026-11-13) — Owner chose plain free, open-source application wording,
+- v4 (2026-11-13); Owner chose plain free, open-source application wording,
   familiar ChatGPT/Claude names and a linked founder handle. Removed the
   purple badge, stacked client captions, profile box and LinkedIn artwork.
   Local-client requirements stay on setup and workflow pages.
-- v3 (2026-11-13) — Owner requested agent-first worldwide Tabbio positioning,
+- v3 (2026-11-13); Owner requested agent-first worldwide Tabbio positioning,
   real MCP artwork, CLI access, separate web and employer discovery, and
   optional UAE PASS identity verification. Added direct LinkedIn founder credit.
-- v2 (2026-11-13) — Owner chose tawdheef.com for the English wordmark,
+- v2 (2026-11-13); Owner chose tawdheef.com for the English wordmark,
   supplied a founder portrait and requested plainer conversion copy around
   Tabbio, UAE PASS identity, MCP and opt-in discovery.
-- v1 (2026-11-13) — Initial context from the local product, selected brand,
+- v1 (2026-11-13); Initial context from the local product, selected brand,
   owner brief and current public Tabbio material; established funnel and claims.
+
+## Current setup and language navigation
+
+App setup is the primary path on Skills. The three steps are set up the app (with the visible CLI commands), create or connect the Tabbio CV, then choose companies and Run. Install the skill only is a secondary disclosure after setup. Homepage CLI commands sit in the app setup step. The shared English/Arabic header uses native links in a segmented control, preserving the current section. Production has canonical localized URLs, reciprocal language alternates, sitemap.xml and public llms.txt navigation. The local preview stays noindex. Deployment and real indexing are separate checks.

@@ -1,4 +1,4 @@
-Tawdheef / توظيف — Brand system v1.0
+Tawdheef / توظيف | Brand system v1.0
 Selected direction: 04 Arabic Grid. Date: 13 November 2026.
 
 Names
