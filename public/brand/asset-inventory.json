@@ -171,13 +171,13 @@
   },
   {
     "file": "github-social.png",
-    "bytes": 32982,
-    "sha256": "78511268be95533105baaec4ddcd8d276f37f6efbc1de71b5aa1f8979cd593ed"
+    "bytes": 34241,
+    "sha256": "7966ce71bad78ae734b621da7659c04c084cb8a300a9719b41f63cc4f353d268"
   },
   {
     "file": "github-social.svg",
-    "bytes": 41711,
-    "sha256": "ebe1d6f8ef26aca588a1c5433780f24fc7a1a3e3ca79732c342c0f01992e1d99"
+    "bytes": 44566,
+    "sha256": "7f3b7d7f455ef29cc06fd1562de02bf86ffa25ddebbaa882bd40bc78003d9547"
   },
   {
     "file": "guide.css",
@@ -451,8 +451,8 @@
   },
   {
     "file": "tokens.json",
-    "bytes": 3186,
-    "sha256": "db8302e39001a1e709dc66a1eb44ccddfef3184d862af9e8f2b41f050c65c219"
+    "bytes": 3198,
+    "sha256": "397eefef8d9ba45f6f165cd36d6c687378dfb9dccf135d86f72eacccc3f317dd"
   },
   {
     "file": "wordmark-arabic-ink.png",

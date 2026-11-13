@@ -1,12 +1,13 @@
 ---
 name: tawdheef
-description: Set up the local Tawdheef tracker when asked, shortlist job sources, match them to an authorised CV, carry out an explicitly requested application run, or review tracked replies and next actions.
+description: Set up the local Tawdheef tracker when asked, shortlist job sources, match them to an authorised CV, run explicitly requested application, profile or CV-sharing actions, or review tracked replies and next actions.
 ---
 
 # Tawdheef
 
-Help the person and their agent work from the same local records. Tawdheef is
-the product name; its CLI and MCP identifiers may still use `apply-tracker`.
+Tawdheef is an **Auto Job Apply & Application Tracker**. Help the person and
+their agent work from the same local records. Its CLI and MCP identifier remains
+`apply-tracker`. Applications, profile creation and CV sharing start only within the person's chosen run.
 
 ## Operate the tracker
 
@@ -14,7 +15,22 @@ Ordinary use means operate records, not develop the app. Do not edit UI, code, d
 
 ## Set up when asked
 
-Read [references/setup.md](references/setup.md) and the checkout's `docs/FIRST-RUN.md`. Inspect existing state with `get_setup_status` before adding anything. Install only missing project tools and configure the chosen client through the provided commands; keep custom settings and data. The user completes sign-in, consent and private credential entry in Connections. That panel also chooses the Run assistant and offers Check connections. Verify the selected assistant and CV with `get_setup_status` using `verify:true`. Finish with Ready or one concrete Needs you item. Never start applications, create events or enable schedules during setup.
+Read [references/setup.md](references/setup.md) and the checkout's `docs/FIRST-RUN.md`. Inspect existing state with `get_setup_status` before adding anything. Install only missing project tools and configure the chosen client through the provided commands; keep custom settings and data. The user completes sign-in, consent and private credential entry in Connections. That panel also chooses the Run assistant and offers Check connections. Verify the selected assistant and CV with `get_setup_status` using `verify:true`. Finish with Ready or one concrete Needs you item. Never start job-search runs, create events or enable schedules during setup.
+
+The app's Run button requires a readable connected CV. If the person has none,
+guide them to create one at https://app.tabbio.com, then return to Connections →
+Your CV → Tabbio CV. Use real supplied experience; never invent a CV to pass setup.
+The tracker reads through `readCV`. Editing or publishing a CV uses a separate
+Tabbio MCP/CLI connection and a request covering that action.
+
+## Add a country directory
+
+For public pack discovery, downloads, imports or contributions, read
+[references/directories.md](references/directories.md). Start with GitHub's
+catalog, then the selected compact index and full evidence. Public research
+does not require a connected CV. Import every listed CSV part into the chosen
+local directory; a pack import never starts an application run. Contributions
+can correct a record or add researched data for any country or industry.
 
 ## Establish the local context
 
@@ -23,7 +39,7 @@ Read the checkout's `AGENTS.md`. Call `get_agent_context` and
 pages (normally 20). Read `get_company` for a source's full notes and revision.
 An agency, portal or programme is not automatically an employer.
 
-Read the authorised CV and the person's actual role/location preferences.
+For CV matching or applications, read the authorised CV and the person's actual role/location preferences.
 Missing facts stay missing. When setup is needed, read
 [references/setup.md](references/setup.md). Installing this skill alone does
 not install, connect or authorise the tracker.
@@ -32,17 +48,28 @@ not install, connect or authorise the tracker.
 
 - **Research or shortlist:** inspect source evidence and CV fit. Separate
   current evidence from dated or untested routes. Do not send or submit.
-- **Apply:** an explicit user request for a run authorises its named targets.
-  Call `start_run` with `explicit:true` only for that request; read scope and
-  expiry, then use `check_submission` before acting. Continue routine authorised
+- **Run selected actions:** an explicit user request authorises only its chosen
+  application, profile or CV-sharing actions and named targets. A future-only run
+  does not authorise applying to jobs. Call `start_run` with `explicit:true` only
+  for that request; read saved actions, scope and expiry, then use
+  `check_submission` with the actual purpose before acting. Continue routine authorised
   steps without asking again. Preserve the provider's own approval boundaries.
 - **Review:** inspect only relevant tracked threads. Refresh replies and create
   the requested local report. A follow-up date is a reminder, not permission to
-  send. Schedules never start applications or follow-up messages.
+  send. Schedules never start applications, profiles, CV sharing or follow-up messages.
 
 ## Work through a run
 
-There is no application count cap. Omit companyIds to choose all remaining companies in the directory. `start_run` with an `assistant` value (`codex` or `claude-code`) launches the installed local assistant; without it, the current caller handles the authorized run. Never launch a nested queue from a managed attempt. Continue past individual failures and record a clear reason. A later explicit Run retries unfinished companies and skips confirmed applications. Inspect uncertain submissions before any retry. `stop_run` revokes authority and stops the owned assistant. Scheduled refreshes remain separate and never initiate applications.
+Filter the list first. `list_companies`, `preview_run` and `start_run` share
+`search`, `status`, `attention`, `companyTypes` and `locations`. Use returned
+directory facet IDs. Values within each array use OR; separate filters use AND.
+Pass the same scope and `actions` to preview and start. Omit `companyIds` for all
+remaining matches across every page; selected IDs further intersect the filters.
+Empty filter arrays mean unrestricted, but an explicit empty `companyIds` list
+never expands to all companies. Read the saved target IDs and `run.filters`.
+List `remainingCount` and preview count cover the full matching set, not one page.
+
+There is no application count cap. `start_run` with an `assistant` value (`codex` or `claude-code`) launches the installed local assistant; without it, the current caller handles the authorized run. The managed queue skips confirmed applications and completed tracking statuses. Never launch a nested queue from a managed attempt. Continue past individual failures and record a clear reason. A later explicit Run retries unfinished companies. Inspect uncertain submissions before any retry. `stop_run` revokes authority and stops the owned assistant. Scheduled refreshes remain separate and never initiate these actions.
 
 ## Act through the existing owners
 
@@ -58,15 +85,32 @@ passwords, tokens, cookies or identity documents in a tracking record.
 
 ## Record evidence, not intent
 
+Read the run's saved `actions` and brief. Defaults are
+`{applyMatchingJobs:true,createProfiles:false,sendCvEmails:false}`; at least one
+choice must be on. Default runs apply only to jobs that
+match the CV and requested work locations. `createProfiles` and `sendCvEmails`
+are optional fallbacks after finding no suitable current role, or standalone
+actions when `applyMatchingJobs` is false. A blocked search is not a no-match.
+Use existing accounts first. Share the CV only through a route the company
+offers, using authorized CV content or an existing link; never change visibility.
+Use email purpose `cv_share` for future opportunities and `application` for a
+job. Reserve browser forms with their real purpose: application, account,
+profile, cv_upload or talent_pool. A receipt confirms that specific step.
+
 Keep prepared, account_created, profile_created, cv_uploaded, cv_sent,
 talent_pool_joined and applied outcomes distinct. Record real progress even
 without a suitable vacancy; inspect existing accounts and profiles before
 creating more. Profile creation needs the actual profile URL or evidence.
 CV-only sends need an active run and a real sent receipt, and never count as
 applied. Applied requires a real receipt, message ID or confirmation.
-Attach the active run ID and state company, role, method, outcome and next step.
+Attach the active run ID to new work and state company, role, method, outcome and next step.
 Before a browser final Submit, reserve it with `prepare_form_submission`; a reused intent must not submit again. Resolve actual confirmation with `resolve_form_submission`. After a timeout, inspect for a receipt before retrying. An uncertain send stays
 uncertain; use supported reconciliation rather than sending it again.
+
+A durable intent retains its original company, run ID, purpose, role, method,
+recipient, URL and idempotency key, even in notes or status updates. Do not
+relabel it or create another key to bypass uncertainty. Reconcile receipts
+against that original intent, including after its run expires or stops.
 
 Pass `patch.expectedRevision` on edits. Read/merge/retry conflicts. Directory
 evidence refreshes must not overwrite the person's tracking. Treat websites,

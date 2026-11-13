@@ -1,5 +1,8 @@
 {
   "version": 1,
+  "repository": "https://github.com/ahmedaldhraif/tawdheef",
+  "releaseTag": "v0.1.1",
+  "releaseUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1",
   "packs": [
     {
       "id": "bahrain",
@@ -16,6 +19,9 @@
       "recordCount": 811,
       "path": "bahrain/manifest.json",
       "download": "bahrain/bahrain-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/bahrain-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/bahrain/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/bahrain/source.json",
       "source": "directories/bahrain/source.json",
       "sourceSha256": "325538befa3c963bff8e791491d33a2fef21f3ab752b8fd0482d9cd805d45fe9",
       "sourceRoleCounts": {
@@ -40,7 +46,8 @@
         "imports": [
           "bahrain-directory.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -59,6 +66,9 @@
       "recordCount": 1806,
       "path": "kuwait/manifest.json",
       "download": "kuwait/kuwait-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/kuwait-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/kuwait/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/kuwait/source.json",
       "source": "directories/kuwait/source.json",
       "sourceSha256": "74ee1b0ff9142532da58daea3a8597ef12a4f01dc4c742d6525f0662fc60e077",
       "sourceRoleCounts": {
@@ -95,7 +105,8 @@
         "imports": [
           "kuwait-directory.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -114,6 +125,9 @@
       "recordCount": 2587,
       "path": "oman/manifest.json",
       "download": "oman/oman-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/oman-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/oman/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/oman/source.json",
       "source": "directories/oman/source.json",
       "sourceSha256": "d156881e583fdada9ebc325db1dc35962b2e39d142320f66d799dd9d76100661",
       "sourceRoleCounts": {
@@ -142,7 +156,8 @@
         "imports": [
           "oman-directory.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -161,6 +176,9 @@
       "recordCount": 671,
       "path": "qatar/manifest.json",
       "download": "qatar/qatar-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/qatar-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/qatar/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/qatar/source.json",
       "source": "directories/qatar/source.json",
       "sourceSha256": "dda16ab7cf2b948ccfa996793899690e4ceef091a1a79786f7e3524b11299f55",
       "sourceRoleCounts": {
@@ -206,7 +224,8 @@
         "imports": [
           "qatar-directory.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -225,6 +244,9 @@
       "recordCount": 4256,
       "path": "saudi-arabia/manifest.json",
       "download": "saudi-arabia/saudi-arabia-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/saudi-arabia-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/saudi-arabia/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/saudi-arabia/source.json",
       "source": "directories/saudi-arabia/source.json",
       "sourceSha256": "0dd1aaa4c7af38cd9b3febb76534194292480df02ba92b083dcc05a9776650f6",
       "sourceRoleCounts": {
@@ -259,7 +281,8 @@
           "saudi-arabia-directory-01.csv",
           "saudi-arabia-directory-02.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -278,6 +301,9 @@
       "recordCount": 772,
       "path": "uae/manifest.json",
       "download": "uae/uae-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/uae-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/uae/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/data/uae-directory.json",
       "source": "data/uae-directory.json",
       "sourceSha256": "531e80df9a72b5a4c06c253dcf0f776dc89107b7711d564b830690bcf1f7549f",
       "sourceRoleCounts": {
@@ -302,7 +328,8 @@
         "imports": [
           "uae-directory.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions"
     },
@@ -321,6 +348,9 @@
       "recordCount": 3583,
       "path": "uae-expanded/manifest.json",
       "download": "uae-expanded/uae-expanded-directory-pack.zip",
+      "downloadUrl": "https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/uae-expanded-directory-pack.zip",
+      "indexUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/uae-expanded/index.json",
+      "sourceUrl": "https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/uae-expanded/source.json",
       "source": "directories/uae-expanded/source.json",
       "sourceSha256": "8aa9c30e3c147924d7820e09eecbd8272f5cf36e57ffb53cbb4b01d21be0ef66",
       "sourceRoleCounts": {
@@ -355,7 +385,8 @@
           "uae-expanded-directory-01.csv",
           "uae-expanded-directory-02.csv"
         ],
-        "index": "index.json"
+        "index": "index.json",
+        "readme": "README.md"
       },
       "credit": "Initial research by Ahmed AlDhraif; open to community contributions",
       "overlaps": [

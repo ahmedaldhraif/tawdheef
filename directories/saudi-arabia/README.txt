@@ -3,15 +3,18 @@ Saudi Arabia directory pack for Tawdheef
 4256 organisation/source records; snapshot 2026-11-13.
 Initial research by Ahmed AlDhraif; open to community contributions.
 
+Download ZIP: https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.1/saudi-arabia-directory-pack.zip
+Extract the ZIP on your computer before importing. CSV files are inside this download, not versioned GitHub CSV links.
+
 The JSON is an unchanged public evidence snapshot. CSV imports retain stable source IDs, exact mapped URLs, source roles and full Original evidence JSON.
 
 Import files: saudi-arabia-directory-01.csv, saudi-arabia-directory-02.csv
 Import every numbered part into the same selected directory; each chunk is below the local importer limit.
 
-Use List options > Import list and review the preview. CLI preview from the checkout:
-node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file directories/saudi-arabia/saudi-arabia-directory-01.csv
+In Tawdheef, create or select your directory tab, then use List options > Import list and review each CSV preview. CLI preview from the Tawdheef checkout, replacing both placeholders:
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_PACK/saudi-arabia-directory-01.csv
 
-Use the real directory ID. Add --commit only after reviewing the preview and authorising the import. Importing a pack does not apply to companies. Refreshing evidence must preserve existing tracking.
+Use the real directory ID returned by the tracker. Add --commit only after reviewing the preview and authorising the import. Importing a pack does not apply to companies. Refreshing evidence must preserve existing tracking.
 
 - Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested.
 - Research snapshot, not a current vacancy feed

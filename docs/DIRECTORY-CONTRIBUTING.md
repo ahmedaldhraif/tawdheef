@@ -4,6 +4,16 @@ Any country or industry is welcome. You can fix one entry or contribute a whole 
 
 The initial research is by Ahmed AlDhraif. Contributions are welcome from anyone; you do not need to write app code.
 
+Start on GitHub:
+
+- [Correct directory data](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml).
+- [Propose a new country or industry pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml).
+- [Browse the country packs](https://github.com/ahmedaldhraif/tawdheef/tree/main/directories).
+
+For CSV review material, download the actual pack ZIP from its folder's README
+release link and extract it first. Generated CSV files are release assets, not
+the files to edit in Git.
+
 ## Fix one entry
 
 Open a **Directory data** issue. Include the country, organisation, existing record ID if known, proposed change and a public source link. Add the date you checked it. No coding needed.
@@ -19,8 +29,8 @@ The original `directories/uae/` pack and `data/uae-directory.json` preserve the 
 Open a **New directory pack** issue or start with `directories/_template/` for a pull request. Fill in the public source data and definition under `directories/<pack-id>/`:
 
 - `pack.json` names the pack, country or region, snapshot date and reviewed `source.json` path. Use a unique lowercase pack ID.
-- `source.json` contains only public directory data: dated source notes and researched records. Each record needs its stable `id`, `name`, accurate `sourceRole` and original public evidence in `sourceFields`.
-- Import CSV, manifest, readme and ZIP are generated from that reviewed definition and source. They are not the editing source.
+- `source.json` contains only public directory data: dated source notes and researched records. Each record needs its stable `id`, `name`, accurate `sourceRole`, `routeStatus` and original public evidence in `sourceFields`.
+- `index.json`, import CSV, manifest, readme and ZIP are generated from that reviewed definition and source. They are not the editing source. The compact index retains all IDs and points to full provenance; it is not an import file.
 
 Retain:
 
@@ -37,7 +47,7 @@ Validate without generating files:
 node scripts/marketing/build-directory-pack.mjs --check
 ```
 
-Use `--pack PACK_ID --check` to validate one pack. The shared template is a starting point, not an available country pack. Generated CSVs, manifests, readmes and ZIPs are rebuilt from the definition and public source; do not edit them by hand. Keep generated ZIPs, builds and local verification output out of the pull request.
+Use `--pack PACK_ID --check` for a focused result; the shared catalog is still validated. The template is a starting point, not an available country pack. Generated indexes, CSVs, manifests, readmes and ZIPs are rebuilt from the definition and public source; do not edit them by hand. Keep generated ZIPs, builds and local verification output out of the pull request.
 
 ## Keep the evidence useful
 
@@ -50,5 +60,17 @@ Keep directory data separate from application statuses, notes, receipts and priv
 ## Review before importing
 
 In Tawdheef, add or choose a directory, then use **List options → Import list**. Review the preview before committing. Updating public evidence must not overwrite someone's tracking records.
+
+Read the extracted pack's `manifest.json` → `files.imports` and import every
+numbered CSV part into that same tab. For agents, `list_directories` returns the
+actual local ID; a pack slug is not that ID. CLI preview from the checkout:
+
+```sh
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_CSV
+```
+
+Use real values, then add `--commit` for the reviewed import. Importing does not
+start applications. See [the agent directory guide](AGENT-DIRECTORIES.md) for
+raw GitHub endpoints and the [first-run guide](FIRST-RUN.md) for CV/agent setup.
 
 Code changes still follow the checks in [CONTRIBUTING.md](../CONTRIBUTING.md).

@@ -1,7 +1,12 @@
 # Local setup
 
-Use this workflow when the person asks to set up Tawdheef. Ordinary application
+Use this workflow when the person asks to set up Tawdheef. Ordinary job-search
 runs do not authorize installation or client-setting changes.
+
+If the app is not downloaded, start at https://github.com/ahmedaldhraif/tawdheef.
+Use published release assets or clone the repository. Releases may be
+prereleases: inspect the releases list and actual asset names rather than
+guessing a `releases/latest` URL. The skill alone is not the app download.
 
 1. Work in the intended checkout. Read `AGENTS.md` and `docs/FIRST-RUN.md`.
    Inspect the existing Node version, data path, app and selected client. Reuse
@@ -21,6 +26,10 @@ runs do not authorize installation or client-setting changes.
    file. `--check` previews setup. The person accepts the client's trust
    prompt and may need to start a new chat for MCP to load.
 4. Guide the person to Connections for their CV and chosen optional mailbox.
+   If they have no CV, open https://app.tabbio.com so they can create their
+   account and digital CV, then return to Connections → Your CV → Tabbio CV.
+   Existing users connect their intended account directly. Discover the actual
+   CV read tool and map `readCV`; do not guess tool names or CV IDs.
    Its AI assistants section chooses the assistant for Run; Check connections
    verifies that selection and the CV. Set up with my agent contains the
    copyable instructions in a collapsed disclosure.
@@ -35,8 +44,13 @@ runs do not authorize installation or client-setting changes.
 The app's Run button needs the chosen assistant, a readable connected CV, a
 directory and browser tools or a configured email route. Email is optional
 for browser forms. Calendar and schedules can be added later. Setup never
-sends a test email, starts applications, writes calendar events or enables
+sends a test email, starts application/profile/CV-sharing runs, writes calendar events or enables
 startup/schedules. Those need a separate request.
+
+Tawdheef reads the authorised CV. Tabbio's separate MCP and CLI can expose CV
+editing and sharing tools; connecting the tracker does not configure those
+write operations or authorise CV edits. Keep any requested CV creation or
+editing grounded in the person's real information.
 
 The CLI entrypoint is `node bin/apply-tracker.mjs`; `help` lists the current
 contract. Use JSON input files for structured arguments. The stdio MCP entry
@@ -47,4 +61,4 @@ For custom client settings, export the actual local configuration and offer
 a specific merge. Do not guess paths or change home-directory configuration.
 ChatGPT web does not read local stdio settings. Never create a public tunnel
 for ordinary setup. A skill supplies guidance; it does not install the app,
-connect an account or authorize applications on its own.
+connect an account or authorize applications, career profiles or CV sharing on its own.

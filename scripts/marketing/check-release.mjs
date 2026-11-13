@@ -10,6 +10,8 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const base=process.env.TAWDHEEF_QA_URL||'http://127.0.0.1:4019';
 const routes=['/welcome/','/skills/','/skills/tawdheef/','/get-started/','/directories/','/directories/uae/','/policies/','/brand/'];
 const packCatalog=JSON.parse(await readFile(join(root,'directories/catalog.json'),'utf8'));
+const siteConfig=JSON.parse(await readFile(join(root,'website/config.json'),'utf8'));
+const githubAssets=new Set();
 routes.push(...packCatalog.packs.filter(pack=>pack.featured!==false&&!pack.historical).map(pack=>'/directories/'+pack.id+'/'));
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1440,height:1000}});
@@ -23,10 +25,25 @@ for(const route of routes){
  const broken=await page.locator('img').evaluateAll(images=>images.filter(image=>!image.complete||!image.naturalWidth).map(image=>image.src));assert.deepEqual(broken,[],route);
  const links=await page.locator('a[href],img[src],script[src],link[href]').evaluateAll(items=>items.map(item=>item.getAttribute('href')||item.getAttribute('src')).filter(value=>value?.startsWith('/')));
  links.forEach(link=>localLinks.add(link.split('#')[0]));
+ const downloads=await page.locator('a[href*="/releases/download/"]').evaluateAll(items=>items.map(item=>item.href));
+ for(const link of downloads){assert.ok(link.startsWith(siteConfig.intendedRepository+'/releases/download/'+siteConfig.releaseTag+'/'),`Wrong release: ${link}`);githubAssets.add(link);}
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,route);
  if(route!=='/brand/')for(const text of await page.locator('script[type="application/ld+json"]').allTextContents())assert.equal(JSON.parse(text)['@context'],'https://schema.org');
  if(route==='/welcome/')await page.screenshot({path:join(screenshots,'landing-preview.png'),fullPage:false});
 }
+await page.goto(base+'/get-started/');
+const setupPrompt=(await readFile(join(root,'docs/FIRST-RUN.md'),'utf8')).match(/^> (Set up Tawdheef[^\r\n]+)$/m)?.[1];
+assert.equal(await page.locator('#first-run-prompt').textContent(),setupPrompt,'Setup request must match the canonical guide');
+assert.ok((await page.getByRole('link',{name:'Download from GitHub',exact:true}).getAttribute('href')).endsWith('tawdheef-'+siteConfig.releaseTag.slice(1)+'-source.zip'));
+assert.ok((await page.getByRole('link',{name:'Create your free CV',exact:true}).getAttribute('href')).startsWith(siteConfig.tabbioSignupUrl));
+await page.goto(base+'/directories/');
+assert.equal(await page.locator('#how-packs-work').count(),1);
+assert.equal(await page.locator('a[href*="template=directory-data.yml"]').count(),1);
+assert.equal(await page.locator('a[href*="template=new-country-pack.yml"]').count(),1);
+for(const pack of packCatalog.packs.filter(pack=>pack.featured!==false&&!pack.historical))assert.ok(githubAssets.has(siteConfig.intendedRepository+'/releases/download/'+siteConfig.releaseTag+'/'+pack.download.split('/').at(-1)),`Pack has no GitHub download: ${pack.id}`);
+const agentIndex=await readFile(join(root,'site-dist/llms.txt'),'utf8');
+assert.ok(agentIndex.startsWith((await readFile(join(root,'llms.txt'),'utf8')).trimEnd()),'Site agent index must share the repository facts');
+if(process.env.TAWDHEEF_VERIFY_GITHUB_DOWNLOADS==='1')for(const url of githubAssets){const response=await context.request.head(url);assert.equal(response.status(),200,url);assert.ok(!response.headers()['content-type']?.includes('text/html'),url);}
 for(const link of localLinks){
  const response=await context.request.get(base+link);assert.equal(response.status(),200,link);
  if(/\.(png|svg|zip|ico|json|css|js|csv|txt)$/.test(link))assert.ok(!response.headers()['content-type']?.includes('text/html'),`App fallback masquerading as a file: ${link}`);

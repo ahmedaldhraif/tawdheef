@@ -127,10 +127,11 @@ en,enw=lettering(LATIN_LOGO,'latin',452,345,76,INK)
 if enw > 748:
     en,enw=lettering(LATIN_LOGO,'latin',452,345,76*748/enw,INK)
 social+=ar+en
-desc,_=lettering('Your job search, organised.','caption',452,464,22,'#62626B')
+desc,descw=lettering('Auto job apply & application tracker.','caption',452,464,22,'#62626B')
+assert descw <= 748, 'Social descriptor must fit the existing text column'
 url,_=lettering('tawdheef.com','caption',80,563,16,'#62626B')
 social+=desc+url+f'<rect x="80" y="529" width="1120" height="1" fill="#DEDEE3"/>'
-save('github-social.svg',svg(1280,640,social,'Tawdheef — your job search, organised.'))
+save('github-social.svg',svg(1280,640,social,'Tawdheef — Auto Job Apply & Application Tracker'))
 
 tokens={
  'name':{'display':LATIN_LOGO,'prose':'Tawdheef','arabic':'توظيف','domain':'www.tawdheef.com','repositorySlug':'tawdheef'},
@@ -141,7 +142,7 @@ tokens={
  'geometry':{'viewBox':[0,0,100,100],'bodyPath':BODY,'strokeModule':16,'dotSize':16,'visibleBounds':[10,24.4,90,75.6],'clearSpaceMinimum':'One dot (16 units) on every side of the visible artwork','smallMasters':[16,24,32]},
  'usage':{'minSymbolSize':16,'minLatinLockupWidth':180,'minArabicLockupWidth':140,'minBilingualLockupWidth':260,'minStackedLockupWidth':160,'minEndorsementHeight':12,'iconSafeArea':'At least 10% of the square canvas around visible artwork'},
  'motion':{'purpose':'Indicate actual loading; optionally demonstrate the mark on a brand surface','idle':'static','favicon':'static','busyDurationMs':1120,'dotStaggerMs':140,'movementIn100UnitViewBox':2,'lowestOpacity':0.48,'easing':'cubic-bezier(.45,0,.55,1)','reducedMotion':'Static mark; textual loading status remains','keyboardTriggers':'No decorative motion'},
- 'voice':{'englishDescriptor':'Job-hunt directory and application tracker','arabicDescriptor':'دليل جهات العمل ومتابعة طلبات التوظيف','englishLine':'Your job search, organised.','arabicLine':'رتّب رحلة بحثك عن عمل.','rules':['Plain, calm, practical language','Describe application outcomes only when confirmed','Keep source identities and evidence intact']},
+ 'voice':{'englishDescriptor':'Auto Job Apply & Application Tracker','arabicDescriptor':'التقديم الآلي للوظائف ومتابعة الطلبات','englishLine':'Auto-apply to jobs. Track your applications.','arabicLine':'رتّب رحلة بحثك عن عمل.','rules':['Plain, calm, practical language','Describe application outcomes only when confirmed','Keep source identities and evidence intact']},
  'fontSources':[
   {'family':'Manrope','url':'https://github.com/google/fonts/tree/main/ofl/manrope','license':'SIL Open Font License 1.1'},
   {'family':'Noto Kufi Arabic','url':'https://github.com/google/fonts/tree/main/ofl/notokufiarabic','license':'SIL Open Font License 1.1'}],

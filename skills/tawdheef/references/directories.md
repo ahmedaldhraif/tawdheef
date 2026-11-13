@@ -1,35 +1,54 @@
-# Directory packs
+# GitHub directory packs
 
-The original UAE starter pack is the 10 November 2026 research snapshot.
-A fresh Tawdheef install includes it. Additional country packs are listed in
-the checkout's `directories/catalog.json` and at https://www.tawdheef.com/directories/.
-Read each pack's manifest and source before importing. A pack never supplies
-application authority. The expanded UAE pack overlaps the original starter;
-do not sum their records as unique companies.
+Repository: https://github.com/ahmedaldhraif/tawdheef
+Catalog: https://raw.githubusercontent.com/ahmedaldhraif/tawdheef/main/directories/catalog.json
+Release list: https://api.github.com/repos/ahmedaldhraif/tawdheef/releases
 
-Use the app's Add directory and List options → Import list, or the current
-`import_directory` domain tool. CSV/TSV/XLSX imports are preview-only by default.
-Review warnings and original fields before a user-authorised commit.
+Read the catalog and choose by country/date/scope. Use the pack's `index.json`
+for compact discovery, then follow `canonicalSource` and match the same stable
+record `id` for full `sourceFields` evidence. Verify `sourceSha256` against the
+source file bytes. Historical and expanded UAE packs overlap. Counts describe
+research records, not current vacancies or independently verified employers.
 
-CLI preview example from the checkout:
+## Download and import when requested
+
+1. Follow the catalog's `downloadUrl`, the pack folder's README link, or inspect
+   the chosen GitHub release's actual assets for `<pack-id>-directory-pack.zip`.
+   A checkout's `website/config.json` names its release tag. Prereleases appear
+   in the releases API but may be omitted by `releases/latest`.
+2. Extract the ZIP locally. Read `manifest.json` → `files.imports`. Use these
+   CSV files, not `index.json` or a guessed GitHub CSV URL.
+3. Read `list_directories`. Reuse the person's chosen directory, or create the
+   requested tab with `create_directory` and an actual symbol from
+   `list_directory_symbols`. A public pack ID is not the local directory ID.
+4. Preview each CSV through `import_directory` with the local `filePath` and
+   chosen `directoryId`. Review counts, sample and warnings, then commit within
+   the requested import scope. Every numbered part goes into the same tab.
+
+CLI equivalents from the Tawdheef checkout:
 
 ```sh
-node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file directories/uae/uae-directory.csv
+node bin/apply-tracker.mjs directories
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_CSV
+node bin/apply-tracker.mjs import --directory DIRECTORY_ID --file PATH_TO_EXTRACTED_CSV --commit
 ```
 
-Use the real directory ID returned by `list_directories`. Add `--commit` only
-when the requested import is authorised and the reviewed preview is appropriate.
-Prefer structured JSON input files for writes through the generic `call` form.
+Replace placeholders with the returned ID and extracted file path. Public IDs
+become local `sourceId` values; use a returned local company `id` for tools such
+as `get_company`. Preserve application history, notes and next actions when
+refreshing public evidence. An import never authorises an application run.
 
-Keep full source JSON as the authoritative evidence snapshot. The CSV carries
-mapped fields plus Original evidence JSON. Published routes are untested unless
-the record explicitly says otherwise. Do not infer missing email addresses,
-ownership, nationality eligibility or shared recruitment accounts.
+Published routes remain untested unless evidence establishes otherwise. Do not
+infer missing emails, ownership, eligibility or shared recruitment accounts.
 
-Refreshing source evidence must preserve existing application history, notes
-and next actions. Use revision checks where supported.
+## Contribute a correction or another country
 
-Anyone can propose corrections or a pack for any country. Follow the checkout's
-`docs/DIRECTORY-CONTRIBUTING.md`: edit the reviewed `source.json`, preserve stable
-IDs, source roles and original evidence, and regenerate derived files. Do not
-submit private tracking exports, personal credentials or unlicensed bulk copies.
+Any country or industry is welcome. Submit a correction through
+https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml
+or a new pack through
+https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml.
+Include stable IDs, public sources, dates, contact purpose and reuse notes.
+Pull requests edit reviewed `directories/<pack-id>/source.json` and `pack.json`;
+generated indexes and downloads are rebuilt. The original 772-record UAE seed
+stays unchanged. Follow `docs/DIRECTORY-CONTRIBUTING.md` and its data policy.
+Never publish CVs, mailbox contents, credentials or private tracking exports.

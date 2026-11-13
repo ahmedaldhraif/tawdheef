@@ -1,9 +1,9 @@
 {
   "name": "apply-tracker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
-  "description": "A local, open-source company directory and job hunt tracker for people and their agents.",
+  "description": "Free, open-source auto job apply and application tracker for you and your agent. Local app, MCP, CLI and shared country directory packs.",
   "license": "MIT",
   "engines": {
     "node": ">=24"

@@ -3,6 +3,32 @@
 Tawdheef is a personal open-source project by Ahmed AlDhraif. A licence or
 policy file does not certify GitHub compliance or guarantee a search listing.
 
+## Positioning and first use
+
+Use the approved category **Tawdheef — Auto Job Apply & Application Tracker**
+in descriptive titles and repository context. The hero reads **Auto-apply to
+jobs. Track your applications.** Its supporting line is **Free, open-source
+software for you and your ChatGPT or Claude agent.** This is an owner-approved
+message, not evidence of higher conversion or search ranking.
+
+The path is GitHub release → local agent-assisted setup → free Tabbio CV or
+existing account → connect and verify → choose targets → explicitly start Run.
+The hero links to setup; actual downloads go directly to official GitHub
+Release assets, with a clone alternative. Use the current
+[v0.1.1 preview](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1)
+or `/releases`, not `/releases/latest` while the release is a prerelease.
+Coordinate future version links with the release owner.
+
+State the operational limits in setup and workflow help: local Codex or Claude
+Code is required, provider accounts have their own permissions and possible
+costs, and sign-ins, CAPTCHA, provider approval and LinkedIn steps may need
+the person. Directory browsing/manual tracking works without Tabbio; Run needs
+a connected Tabbio CV. Avoid guaranteed, unattended or all-sites claims.
+
+Country pages should point to their real public pack and its sources. Invite
+any country through GitHub issues and pull requests. Do not imply community
+contributions already exist or turn research records into vacancy counts.
+
 ## GitHub
 
 - Publish only the reviewed public source allowlist. Keep `.local`, raw working
