@@ -26,20 +26,20 @@ export default {
     }
   ],
   "workflow": {
-    "title": "Set up. Connect. Run.",
+    "title": "Get started with your agent.",
     "description": "Set up the app first, then connect your CV and add email if needed.",
     "steps": [
       {
-        "title": "Set up the app",
-        "body": "Open the downloaded folder in Codex or Claude Code and ask your agent to set it up."
+        "title": "Open the app",
+        "body": "Choose Codex or Claude Code in Connections."
       },
       {
         "title": "Create or connect your CV",
-        "body": "Give your agent your real experience through Tabbio."
+        "body": "Connect your Tabbio CV. Email is optional."
       },
       {
         "title": "Choose companies. Run.",
-        "body": "Choose companies, add your instructions, then press Run."
+        "body": "Choose companies, then press Run."
       }
     ],
     "download": "Download the app",
@@ -48,7 +48,7 @@ export default {
     "cvConnect": "Connect your CV",
     "cliTitle": "CLI quick start",
     "cliPrereq": "With Node.js 24+, run these in the downloaded app folder:",
-    "claudeAlternative": "For Claude Code, replace the second command with:",
+    "claudeAlternative": "Claude Code:",
     "cliNote": "Setup includes the app tools and skill.",
     "primary": "Set up with your agent",
     "allGuides": "All guides"

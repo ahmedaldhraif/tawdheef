@@ -26,9 +26,9 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   await expect(cards).toHaveCount(8);
   expect((await cards.evaluateAll(links => links.map(link => link.getAttribute('href')))).sort())
     .toEqual(guideSlugs.map(slug => `/guides/${slug}/`).sort());
-  await expect(page.locator('.skills-setup-steps>li>h3')).toHaveText(['Set up the app','Create or connect your CV','Choose companies. Run.']);
-  await expect(page.locator('.skills-skill-only')).not.toHaveAttribute('open');
-  await page.goto('/skills/#create-or-connect-cv');
+  const cvShortcut=page.locator('.skills-cv-shortcut');
+  await expect(cvShortcut.locator('img')).toHaveAttribute('src','/brands/tabbio-wordmark-violet-original.svg');
+  await cvShortcut.getByRole('link',{name:'Create or connect your CV',exact:true}).click();
   await expect(page.locator('#create-or-connect-cv')).toBeInViewport();
   await expect(page.locator('.skills-cv-brand img')).toHaveAttribute('src','/brands/tabbio-wordmark-violet-original.svg');
   expect(await page.locator('.skills-cv-brand img').evaluate(image=>image.getBoundingClientRect().top)).toBeGreaterThan(72);
@@ -66,7 +66,6 @@ test('homepage exposes the CLI and sends setup to the Skills quick start', async
 test('Skills copies the install command and all three setup commands exactly', async ({ page }) => {
   await captureClipboard(page);
   await page.goto('/skills/');
-  await page.locator('.skills-skill-only summary').click();
   await page.locator('[data-copy="skills-install"]').click();
   expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
   await expect(page.locator('[data-copy="skills-install"]')).toHaveText('Copied');
@@ -131,7 +130,6 @@ test('390px Skills navigation works and long commands scroll inside the page', a
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Set up Tawdheef with your agent');
   await page.goto('/skills/');
   await expect(page.locator('.skills-guide-card')).toHaveCount(8);
-  await page.locator('.skills-skill-only summary').click();
   for (const id of ['skills-install', 'skills-quick-cli']) {
     const code = page.locator('#' + id);
     const metrics = await code.evaluate(element => {
