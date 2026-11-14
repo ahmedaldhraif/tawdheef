@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
-const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
-const quickStart = 'npm start\nnpm run agent -- codex';
+const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef';
+const quickStart = 'npm run agent -- codex';
 const guideSlugs = ['use-the-skill', 'connect-your-agent', 'connect-your-cv', 'use-directory-packs', 'apply-to-jobs', 'replies-and-reports', 'troubleshoot', 'for-agents'];
 const publishedTools = JSON.parse(readFileSync(new URL('../docs/tools.json', import.meta.url), 'utf8')).tools;
 
@@ -49,7 +49,7 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   }
   await page.goto('/skills/');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://www.tawdheef.com/skills/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Find matching jobs\.\s*Build career profiles\./);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Find matching jobs. Build career profiles.');
   const cards = page.locator('.skills-guide-card');
   await expect(cards).toHaveCount(8);
   expect((await cards.evaluateAll(links => links.map(link => link.getAttribute('href')))).sort())
@@ -88,7 +88,7 @@ test('homepage copies the skill install command and links to actual app setup', 
   await page.getByRole('link', { name: 'Set up the app', exact: true }).click();
   await expect(page).toHaveURL(/\/skills\/#get-started$/);
   await expect(page.locator('#get-started')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Download the app', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef\/releases\/download\/v[\d.]+\/tawdheef-[\d.]+-source.zip$/);
+  await expect(page.getByRole('link', { name: 'Get current source', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef-auto-apply-jobs\/archive\/refs\/heads\/main.zip$/);
 });
 
 test('real agent GIF runs automatically onscreen and respects visibility and reduced motion', async ({ page }) => {
@@ -225,7 +225,7 @@ for (const width of [320, 390]) for (const [locale, path] of [['en', '/welcome/'
     const image = section.locator('.agent-demo-image');
     await image.scrollIntoViewIfNeeded();
     await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste-poster.png');
-    await expect(image).toHaveCSS('border-radius', '12px');
+    await expect(image).toHaveCSS('border-radius', '10px');
     await expect(section.locator('.agent-install-demo button, .agent-install-demo video')).toHaveCount(0);
     const box = await image.boundingBox();
     expect(box.width).toBeGreaterThan(0);
@@ -250,7 +250,7 @@ for (const width of [320, 390]) for (const [locale, path] of [['en', '/skills/']
     await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste-poster.png');
     await image.evaluate(element => element.decode());
     expect(await image.evaluate(element => [element.naturalWidth, element.naturalHeight])).toEqual([584, 210]);
-    await expect(image).toHaveCSS('border-radius', '12px');
+    await expect(image).toHaveCSS('border-radius', '10px');
 
     // The CV actions remain in their dedicated setup step, away from the skill command.
     await expect(page.locator('.skills-cv-brand img')).toHaveAttribute('src', '/brands/tabbio-wordmark-violet-original.svg');
@@ -295,7 +295,7 @@ for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) 
     await expect(field).toHaveCSS('pointer-events', 'none');
     await expect(field).toHaveCSS('animation-name', 'none');
     await expect(field.locator('a, button, input, select, textarea, [tabindex], [contenteditable]')).toHaveCount(0);
-    await expect(field.locator('.skills-command-row')).toHaveCount(8);
+    await expect(field.locator('.skills-command-row')).toHaveCount(16);
     const requests = await field.locator('.skills-command-request').allTextContents();
     expect(new Set(requests).size).toBe(8);
     expect(requests.every(text => locale === 'ar' ? /[\u0600-\u06ff]/.test(text) : /[a-z]/i.test(text))).toBe(true);
@@ -311,7 +311,7 @@ for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) 
     }
 
     const layering = await hero.evaluate(element => {
-      const field = element.querySelector('.skills-command-field'), heading = element.querySelector('h1');
+      const field = element.querySelector('.skills-command-field'), heading = element.querySelector('.agent-heading');
       const a = field.getBoundingClientRect(), b = element.getBoundingClientRect();
       return {
         isolation: getComputedStyle(element).isolation,
@@ -350,11 +350,11 @@ for (const locale of ['en', 'ar']) for (const scheme of ['light', 'dark']) {
     for (const [index, template] of ['directory-data.yml', 'add-company.yml', 'new-country-pack.yml'].entries()) {
       const target = new URL(urls[index]);
       expect(target.origin).toBe('https://github.com');
-      expect(target.pathname).toBe('/ahmedaldhraif/tawdheef/issues/new');
+      expect(target.pathname).toBe('/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new');
       expect(target.searchParams.get('template')).toBe(template);
       expect(readFileSync(new URL('../.github/ISSUE_TEMPLATE/' + template, import.meta.url), 'utf8')).toContain('checked-date');
     }
-    expect(urls[3]).toBe('https://github.com/ahmedaldhraif/tawdheef/blob/main/CONTRIBUTING.md#code-changes');
+    expect(urls[3]).toBe('https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/CONTRIBUTING.md#code-changes');
     for (const width of [320, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);

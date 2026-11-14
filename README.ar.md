@@ -1,6 +1,11 @@
-# توظيف · Tawdheef
+# توظيف - التقديم الآلي للوظائف
 
-<img src="public/brand/logo-arabic-purple.svg" alt="توظيف.كوم" width="320" />
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
+  <source media="(prefers-reduced-motion: reduce)" srcset="public/brand/github-hero/wordmark-light.png" />
+  <source media="(prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.gif" />
+  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
+</picture>
 
 **اعثر على وظائف تناسبك. أنشئ ملفاتك المهنية.**
 
@@ -8,6 +13,9 @@
 والوظائف، وافهم سبب ملاءمة الفرصة لسيرتك، وتابع النتائج على جهازك. أنت تختار
 الشركات والإجراءات قبل بدء Run. إنشاء حساب أو ملف مهني نتيجة مفيدة، ولا يعني
 أن طلب توظيف أُرسل.
+
+
+
 
 **الاتصالات في مساعدك الفعلي.** يملك Codex أو Claude أدوات السيرة الذاتية
 والبريد والتقويم والمتصفح واستخدام الكمبيوتر ومدير كلمات المرور. يحتفظ توظيف
@@ -44,3 +52,7 @@ Preferences للتفضيلات الشخصية، وMonitoring للمصادر وا
 
 أنشأه [أحمد الضريف](https://www.linkedin.com/in/ahmedaldhraif).
 [MIT](LICENSE) · [الخصوصية](docs/policies/PRIVACY.md) · [قواعد المجتمع](CODE_OF_CONDUCT.md)
+
+## البدء بالمصدر الحالي
+
+[نزّل المصدر الحالي](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip)، وفك ضغطه، ثم نفّذ `npm start` باستخدام Node.js 26 LTS. افتح الاتصالات ← المساعد وانسخ طلب الإعداد إلى تطبيق مساعدك. تنزيل v0.1.2 السابق يستخدم إعدادًا مختلفًا.

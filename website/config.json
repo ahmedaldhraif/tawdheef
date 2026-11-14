@@ -4,13 +4,14 @@
   "author": "Ahmed AlDhraif",
   "authorUrl": "https://ahmedaldhraif.com",
   "githubProfile": "https://github.com/ahmedaldhraif",
-  "intendedRepository": "https://github.com/ahmedaldhraif/tawdheef",
+  "intendedRepository": "https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs",
   "repositoryPublished": true,
   "releaseTag": "v0.1.2",
   "tabbioUrl": "https://www.tabbio.com/en",
   "tabbioSignupUrl": "https://app.tabbio.com",
   "tabbioDocsUrl": "https://docs.tabbio.com",
   "sourceDate": "2026-11-10",
-  "siteDate": "2026-11-14",
-  "authorLinkedInUrl": "https://www.linkedin.com/in/ahmedaldhraif"
+  "siteDate": "2026-11-15",
+  "authorLinkedInUrl": "https://www.linkedin.com/in/ahmedaldhraif",
+  "setupSource": "main"
 }

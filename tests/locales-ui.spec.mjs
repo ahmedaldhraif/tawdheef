@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-const quickStart = 'npm start\nnpm run agent -- codex';
-const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
+const quickStart = 'npm run agent -- codex';
+const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef';
 const anchors = {
   'use-the-skill': ['install', 'agent', 'if-you-prefer-the-terminal', 'cv', 'workflow', 'use', 'already-connected-install-just-the-skill', 'prompts', 'permissions', 'privacy'],
   'connect-your-agent': ['connect-this-project', 'manual-project-connection', 'add-browser-tools-when-needed', 'install-just-the-skill', 'expected-result'],
-  'connect-your-cv': ['if-you-do-not-have-a-tabbio-cv', 'connect-an-existing-cv', 'keep-the-current-version-available', 'expected-result'],
+  'connect-your-cv': ['start-with-your-existing-connections', 'if-you-do-not-have-a-tabbio-cv', 'connect-an-existing-cv', 'keep-the-current-version-available', 'expected-result'],
   'use-directory-packs': ['download-and-import-a-pack', 'ask-your-agent-to-handle-the-steps', 'improve-the-directory', 'expected-result'],
-  'apply-to-jobs': ['before-you-start', 'choose-the-work', 'when-a-site-needs-you', 'expected-result'],
-  'replies-and-reports': ['check-progress-now', 'add-a-schedule-when-you-want-one', 'expected-result'],
-  troubleshoot: ['find-the-blocker', 'the-app-will-not-start', 'the-assistant-is-installed-but-run-cannot-use-it', 'the-cv-is-connected-but-cannot-be-read', 'browser-forms-or-email-are-unavailable', 'a-pack-import-looks-incomplete', 'expected-result'],
-  'for-agents': ['establish-the-contract', 'discover-public-packs-first', 'act-within-the-requested-run', 'cv-and-reporting-tools', 'expected-result'],
+  'apply-to-jobs': ['before-you-start', 'choose-companies-and-actions', 'start-the-run', 'track-real-outcomes', 'stop-or-retry', 'monitor-new-jobs'],
+  'replies-and-reports': ['check-progress-now', 'add-a-schedule-when-you-want-one', 'monitor-new-jobs', 'expected-result'],
+  'troubleshoot': ['the-local-app-will-not-open', 'the-agent-cannot-see-tracker-tools', 'the-cv-is-unavailable', 'browser-forms-or-email-are-unavailable', 'run-says-waiting-for-assistant', 'monitoring-has-no-recent-check', 'a-pack-import-looks-incomplete', 'expected-result'],
+  'for-agents': ['connections-and-setup', 'research-before-acting', 'explicit-run-scope', 'monitoring', 'recovery-and-reference'],
 };
 
 async function captureClipboard(page) {
@@ -104,7 +104,7 @@ for (const [slug, ids] of Object.entries(anchors)) {
     for (const id of ids) await expect(page.locator(`.guide-body :is(h2,h3)#${id}`)).toHaveCount(1);
     await expect(page.locator('.guide-body')).not.toContainText(/\{#[a-z]/);
     const copies = page.locator('.guide-body [data-copy]');
-    if (['use-the-skill', 'connect-your-agent', 'replies-and-reports', 'troubleshoot', 'for-agents'].includes(slug)) {
+    if (['use-the-skill', 'connect-your-agent'].includes(slug)) {
       expect(await copies.count()).toBeGreaterThan(0);
     }
     for (const copy of await copies.all()) {

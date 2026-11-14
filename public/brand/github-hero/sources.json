@@ -1,0 +1,31 @@
+{
+  "generator": "public/brand/github-hero/render.html",
+  "launcher": "scripts/branding/export-github-hero.py",
+  "nativeRenderer": "public/brand/studio/timeline.mjs: paintTimeline",
+  "agentStates": [
+    "coding",
+    "speaking"
+  ],
+  "nativeArtwork": "Canonical state-*-animated.svg, original CSS/keyframes and native moving highlight. No hand-approximated motion.",
+  "wordmarks": [
+    "../wordmark-latin-purple.svg",
+    "../wordmark-arabic-purple.svg"
+  ],
+  "layout": {
+    "agentSize": 80,
+    "agentX": 128,
+    "wordmarkX": 224,
+    "visibleGapPixels": 24,
+    "arabicExtraOffset": 0
+  },
+  "fps": 24,
+  "textSheen": false,
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "purpose": "Decorative identity loop, not live progress.",
+  "frames": 165,
+  "durationMs": 6880,
+  "loop": 0
+}

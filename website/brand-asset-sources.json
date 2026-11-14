@@ -65,6 +65,16 @@
       "sha256": "5b2c34b3c4e8dd898b664dba6c3786e2ff9869eff55d673aa48361f11325ed07",
       "preservation": "Original bytes, unmodified.",
       "rights": "Respective brand owner retains rights; identifies the named search service, without endorsement."
+    },
+    {
+      "file": "public/brands/icloud-original.png",
+      "sourceUrl": "https://www.icloud.com/system/icloud.com/2642Build23/favicons/default-favicon-light-180x180.png",
+      "discoveredOn": "https://www.icloud.com/",
+      "downloadedAt": "2026-11-14",
+      "bytes": 16503,
+      "sha256": "75587923b33c96fd83dce9970412d620d69efb46ff77460c64bcc8a07b0349a2",
+      "preservation": "Original Apple iCloud artwork, unmodified.",
+      "rights": "Apple retains rights; identifies the iCloud Mail connection without endorsement."
     }
   ]
 }
