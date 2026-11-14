@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v12
+**Document version:** v13
 **Last updated:** 2026-11-14
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -84,11 +84,19 @@ recruiter attribution or analytics merely from Tabbio marketing.
 
 ## Funnel and conversion
 
-Search/repo/personal content → GitHub release → download and local agent-assisted
-setup → create a free Tabbio CV or use an existing one → connect it and check
-readiness → choose companies and explicitly start Run → review outcomes and replies.
-The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. The v0.1.1
-preview is live. Link to /releases or its explicit version while it is a prerelease,
+Offer two useful starting points. Public company research uses the country packs,
+their evidence and the [research example](../docs/examples/README.md), without
+installing the app or creating a CV account. A private
+[job-search brief](../docs/examples/job-search-brief.md) helps name role,
+location and sector preferences; it does not connect or update a CV.
+
+For personal matching and tracking: GitHub release → local agent-assisted setup →
+create a free Tabbio CV or use an existing one → connect it and check readiness →
+review a shortlist → choose companies and explicitly start Run → review outcomes.
+Introduce the CV at the matching step. Contributions and public data stay ungated.
+
+The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. Read
+`website/config.json` for the published download target. Link to /releases or its explicit version while it is a prerelease,
 not /releases/latest. The hero’s Get the free app action leads to the setup guide;
 the setup download links directly to the official release asset, with a clone
 alternative. Keep downloadable source, issues and pull requests easy to find.
@@ -98,11 +106,16 @@ Tabbio CV. Tabbio remains a separate CV service, not the operator or warranty
 provider of this personally maintained project. Paid Tabbio help is a secondary
 option only when useful; the free CV path stays clear.
 
-Primary conversion: downloaded source or completed local setup.
-Secondary: skill install, directory pack use and a Tabbio CV visit.
+Useful first result: sourced company leads or a reviewed, CV-informed shortlist.
+Local activation: the chosen assistant and connected CV pass readiness checks.
+Downloads, skill installs, directory use and Tabbio visits are separate signals;
+none proves a unique user, completed setup, signup or CV.
 No baseline, conversion rate, installs or live analytics is established.
 The website has no tracking pixels. Outbound Tabbio links carry explicit UTM
 parameters; they do not prove a resulting signup or upgrade.
+
+The [open-source growth plan](../docs/marketing/OPEN-SOURCE-GROWTH.md)
+records the reviewed repository patterns, priorities and measurement limits.
 
 ## Guides and public information
 
@@ -141,10 +154,10 @@ Use the approved Arabic Grid
 SVG at `/brand/mark.svg` beside the skill-guide heading; a typed ت is text,
 not the selected logo. Preserve the mark's proportions and two square dots.
 Skills are instructions, not new tools or proof of authentication. The homepage
-preview uses one real app image without tabs. Three homepage steps explain
-agent setup, CV connection and choosing companies for Run. An optional quick
-CLI recipe installs browser tools, configures the chosen client and starts
-the app. The preview does not invent activity, connected
+preview uses one real app image without tabs. The homepage uses the compact
+skill-install block, a real paste demonstration and a link to actual app setup.
+Keep the detailed CLI recipe in Skills and guides, with CV connection in its
+relevant step. The preview does not invent activity, connected
 accounts, submission receipts or testimonials. Guidance on setup, backups and
 updates should follow existing canonical docs. An update to the public website
 or GitHub source does not change an already published release asset.
@@ -173,6 +186,12 @@ No fabricated vacancy counts, placements, star counts, endorsements or
 route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
+
+- v13 (2026-11-14); Reviewed ten established developer-product repositories.
+  Added public research and a private job-search brief as useful first resources,
+  kept CV matching contextual, restored Skills/guide metadata to the actual
+  architecture, and separated downloads/visits from activation and outcomes.
+  No analytics, ranking or conversion result is claimed.
 
 - v11 (2026-11-13); Owner restored Skills as the main overview, with the real
   skill install command, a Get started app/CLI action and grouped task guides.

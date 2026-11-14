@@ -15,6 +15,9 @@ The original UAE pack overlaps the expanded UAE pack; do not add both counts.
 
 ## Download and use
 
+Want to explore companies before installing? [Try a public research request](../docs/examples/README.md).
+Use the optional [job-search brief](../docs/examples/job-search-brief.md) to name your role, location and sector preferences.
+
 Open a pack below and use its **Download ZIP** release link:
 
 | Country | Records | GitHub pack |
