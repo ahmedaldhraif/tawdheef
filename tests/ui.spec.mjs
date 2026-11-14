@@ -232,40 +232,37 @@ test('CSV preview leaves records unchanged until the import is committed', async
   expect(rows.every(item => item.status === 'not_started')).toBeTruthy();
 });
 
-test('schedule settings persist without starting application runs', async ({ page, request }) => {
+test('report settings stay in Monitoring without starting application runs', async ({ page, request }) => {
   await openTracker(page);
   const before = (await json(request, '/api/bootstrap')).runs;
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
-  await dialog.getByRole('combobox', { name: 'Check replies', exact: true }).selectOption('manual');
-  await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('custom');
-  await dialog.getByLabel('Every how many days?', { exact: true }).fill('3');
-  await dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true }).fill('09:15');
-  await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
-  await dialog.getByLabel('Time zone', { exact: true }).fill('Asia/Dubai');
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Monitoring', exact: true });
+  await dialog.locator('summary').filter({ hasText: /^Reports & replies$/ }).click();
+  await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('daily');
+  await dialog.locator('.reports-replies').getByLabel('Time', { exact: true }).fill('10:00');
   await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await page.reload();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
-  await expect(dialog.getByRole('combobox', { name: 'Check replies', exact: true })).toHaveValue('manual');
-  await expect(dialog.getByRole('combobox', { name: /^Frequency/ })).toHaveValue('custom');
-  await expect(dialog.getByLabel('Every how many days?', { exact: true })).toHaveValue('3');
-  await expect(dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true })).toHaveValue('09:15');
-  await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
-  await expect(dialog.getByLabel('Time zone', { exact: true })).toHaveValue('Asia/Dubai');
+  const saved = await json(request, '/api/settings');
+  expect(saved.reportFrequency).toBe('daily'); expect(saved.reportTime).toBe('10:00');
   expect((await json(request, '/api/bootstrap')).runs).toEqual(before);
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const preferences = page.getByRole('dialog', { name: 'Preferences', exact: true });
+  await expect(preferences.getByLabel('Time zone', { exact: true })).toHaveValue('Asia/Dubai');
+  await expect(preferences.locator('summary').filter({ hasText: /^Reports & replies$/ })).toHaveCount(0);
+  await preferences.getByRole('button', { name: 'Cancel', exact: true }).click();
 });
 
-test('Settings owns schedules and preserves a manual check when saving preferences', async ({ page, request }, testInfo) => {
+test('Monitoring owns reports and preserves a manual reply check while saving settings', async ({ page, request }, testInfo) => {
   await openTracker(page);
   await expect(page.locator('.heading-actions').getByRole('button', { name: 'Reports', exact: true })).toHaveCount(0);
   await expect(page.locator('.heading-actions').getByRole('button', { name: 'Check replies', exact: true })).toHaveCount(0);
   const before = await json(request, '/api/bootstrap');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const open = async () => {
+    await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Monitoring', exact: true });
+    await dialog.locator('summary').filter({ hasText: /^Reports & replies$/ }).click(); return dialog;
+  };
+  const dialog = await open();
   await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
   await expect(dialog.getByRole('button', { name: 'Check replies now', exact: true })).toBeVisible();
   await expect(dialog.locator('summary').filter({ hasText: /^Latest report$/ })).toBeVisible();
@@ -274,30 +271,20 @@ test('Settings owns schedules and preserves a manual check when saving preferenc
   await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('weekly');
   await dialog.getByRole('button', { name: 'Check replies now', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Check replies now', exact: true })).toBeEnabled();
-  const checked = await json(request, '/api/settings');
-  expect(checked.lastRefreshAt).toBeTruthy();
-  await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
-  await expect(dialog).not.toBeVisible();
-  const saved = await json(request, '/api/settings');
-  expect(saved.lastRefreshAt).toBe(checked.lastRefreshAt);
-  expect(saved.reportFrequency).toBe('weekly');
+  const checked = await json(request, '/api/settings'); expect(checked.lastRefreshAt).toBeTruthy();
+  await dialog.getByRole('button', { name: 'Save changes', exact: true }).click(); await expect(dialog).not.toBeVisible();
+  const saved = await json(request, '/api/settings'); expect(saved.lastRefreshAt).toBe(checked.lastRefreshAt); expect(saved.reportFrequency).toBe('weekly');
   expect((await json(request, '/api/bootstrap')).runs).toEqual(before.runs);
   await expect(page.locator('.workspace-footer .update-status')).not.toHaveRole('button');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const general = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const general = await open();
   await expect(general.getByRole('combobox', { name: /^Frequency/ })).toHaveValue('weekly');
   await expect(general.getByLabel('Daily application limit', { exact: true })).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath('simple-settings.png') });
+  await page.screenshot({ path: testInfo.outputPath('monitoring-reports.png') });
   await page.setViewportSize({ width: 390, height: 700 });
-  const saveButton = general.getByRole('button', { name: 'Save changes', exact: true });
-  await expect(saveButton).toBeInViewport();
-  await general.locator('.dialog-content').evaluate(element => { element.scrollTop = element.scrollHeight; });
-  await expect(saveButton).toBeInViewport();
+  const saveButton = general.getByRole('button', { name: 'Save changes', exact: true }); await expect(saveButton).toBeInViewport();
+  await general.locator('.dialog-content').evaluate(element => { element.scrollTop = element.scrollHeight; }); await expect(saveButton).toBeInViewport();
   await general.locator('.dialog-content').evaluate(element => { element.scrollTop = 0; });
-  await page.screenshot({ path: testInfo.outputPath('simple-settings-mobile.png') });
+  await page.screenshot({ path: testInfo.outputPath('monitoring-reports-mobile.png') });
 });
 
 test('a saved Last update date opens the matching company activity', async ({ page, request }) => {
@@ -310,7 +297,7 @@ test('a saved Last update date opens the matching company activity', async ({ pa
   const row = await searchFor(page, 'UI Activity Example');
   await row.getByRole('button', { name: 'View activity for UI Activity Example', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'UI Activity Example', exact: true });
-  await expect(dialog.getByRole('button', { name: 'Application history', exact: true })).toHaveClass(/active/);
+  await expect(dialog.getByRole('tab', { name: 'Application history', exact: true })).toHaveClass(/active/);
   await expect(dialog.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
   await expect(dialog.locator('.activity-list')).toContainText(detail.activity[0].detail);
   expect((await json(request, `/api/companies?directoryId=${directory.id}`)).total).toBe(1);
@@ -321,7 +308,7 @@ test('dialog focus stays inside, Escape closes it, and focus returns to the trig
   const trigger = page.getByRole('button', { name: 'Settings', exact: true });
   await trigger.focus();
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Preferences', exact: true });
   const close = dialog.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
   await dialog.getByRole('button', { name: 'Save changes', exact: true }).focus();
@@ -367,7 +354,7 @@ test('mobile keeps page width within the viewport while the table scrolls', asyn
   const addCompany = await page.getByRole('button', { name: 'Add company', exact: true }).boundingBox();
   expect(addCompany.x + addCompany.width).toBeLessThanOrEqual(390);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const bounds = await page.getByRole('dialog', { name: 'Settings', exact: true }).boundingBox();
+  const bounds = await page.getByRole('dialog', { name: 'Preferences', exact: true }).boundingBox();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
   await page.keyboard.press('Escape');
@@ -444,12 +431,14 @@ test('Contacts keeps website, careers, LinkedIn and email directly available in 
   await expect(contacts.locator('a[href="mailto:jobs@example.com"]')).toBeVisible();
   for (const link of await contacts.getByRole('link').all()) await expect(link).toHaveAccessibleName(/\S/);
   const linkedin = contacts.getByRole('link', { name: 'Open LinkedIn company page', exact: true });
-  const mark = linkedin.locator('img');
-  await expect(mark).toHaveAttribute('src', '/brands/linkedin-in-blue.png');
-  await expect.poll(() => mark.evaluate(image => image.complete && image.naturalWidth)).toBe(635);
+  const mark = linkedin.locator('svg.brand-mark-linkedin');
+  await expect(mark).toHaveAttribute('viewBox', '0 0 24 24');
+  await expect(mark).toHaveAttribute('aria-hidden', 'true');
+  await expect(linkedin.locator('img')).toHaveCount(0);
   const dimensions = await mark.boundingBox();
-  expect(dimensions.height).toBeGreaterThanOrEqual(21);
-  expect(await linkedin.locator('svg').count()).toBe(0);
+  expect(dimensions.width).toBe(14);
+  expect(dimensions.height).toBe(14);
+  await expect(linkedin.locator('svg')).toHaveCount(1);
 });
 
 
@@ -486,7 +475,7 @@ test('List options supports keyboard navigation, Escape focus return and an uncl
   await trigger.press('ArrowUp');
   await expect(page.getByRole('menuitem', { name: 'Manage directory packs', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowUp');
-  await expect(page.getByRole('menuitem', { name: 'Export CSV', exact: true })).toBeFocused();
+  await expect(page.getByRole('menuitem', { name: 'Export all companies (CSV)', exact: true })).toBeFocused();
   const exported = page.waitForEvent('download');
   await page.keyboard.press('Space');
   expect((await exported).suggestedFilename()).toMatch(/\.csv$/);

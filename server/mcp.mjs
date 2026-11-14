@@ -190,6 +190,10 @@ const compactCompany = (c) => ({
       "progress",
       "sourceRole",
       "routeStatus",
+      "careersPageStatus",
+      "profileSupport",
+      "routesCheckedAt",
+      "routeEvidence",
       "website",
       "careersUrl",
       "applyUrl",
@@ -205,6 +209,8 @@ const compactCompany = (c) => ({
   ),
   notes: String(c.notes || "").slice(0, 300),
   ...(String(c.notes || "").length > 300 ? { notesTruncated: true } : {}),
+  routeEvidence: String(c.routeEvidence || '').slice(0, 300),
+  ...(String(c.routeEvidence || '').length > 300 ? { routeEvidenceTruncated: true } : {}),
 });
 
 async function importFile({ filePath, content, filename }) {
@@ -437,6 +443,9 @@ function buildLegacyTools(store) {
     sector: string,
     location: string,
     archived: { type: "boolean" },
+    careersPageStatus: { type: 'string', enum: ['unknown', 'available', 'not_found', 'needs_check'] },
+    profileSupport: { type: 'string', enum: ['unknown', 'available', 'not_offered', 'needs_check'] },
+    routeEvidence: string,
     expectedRevision: { type: "integer", minimum: 1 },
   });
   const boundedReport = (report) => ({
@@ -646,7 +655,7 @@ function buildLegacyTools(store) {
     ],
     [
       "update_company",
-      "Edit contacts, notes, follow-up or status. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
+      "Edit contacts, notes, follow-up, status or verified career-route findings. careersPageStatus and profileSupport require routeEvidence for a new non-unknown finding; blocked sources are needs_check, never proof of absence. Keep route availability separate from actual account/profile/CV milestones. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
       schema({ id: string, patch: companyPatch }, ["id", "patch"]),
       ({ id, patch }) => store.updateCompany(id, patch),
     ],
@@ -1120,10 +1129,26 @@ export function createMcpServer(store) {
         throw new Error(
           "Unknown tool. Call tools/list to see the supported actions.",
         );
-      const input = request.params.arguments ?? {};
+      let input = request.params.arguments ?? {};
       const monitorConfig = monitor ? store.getMonitoring().config : null;
       if (monitor && !['get_agent_context', 'get_capabilities', 'get_monitoring', ...(native ? ['get_native_client_status', 'report_native_connection'] : [])].includes(tool.name) && (!monitorConfig.enabled || (monitorActor && monitorActor !== monitorConfig.assistant))) throw new Error('Monitoring is disabled or belongs to another selected assistant. Update its native task through the user’s setup request.');
       if (monitor && tool.name === 'get_cv' && !monitorConfig.channels.jobs) throw new Error('CV access is only needed for enabled matching-job monitoring.');
+      if (monitor && native && ['get_discovery_preferences', 'list_discovered_jobs', 'get_discovered_job', 'get_discovery_summary', 'record_job_match', 'record_job_discovery'].includes(tool.name)) {
+        validate(input, tool.inputSchema);
+        if (!monitorConfig.channels.jobs) throw new Error('Job discovery is outside the enabled monitoring channels.');
+        if (tool.name === 'record_job_discovery') {
+          const lease = store.getDiscoveryLeaseScope({ id: input.id, token: input.token, assistant: actor });
+          if (!lease.monitoringCheckId) throw new Error('Use the discovery lease returned by this saved monitoring check.');
+        } else if (tool.name !== 'get_discovery_preferences') {
+          const allowed = store.getMonitoringJobCompanyIds();
+          if (tool.name === 'record_job_match') {
+            store.getDiscoveredJob({ id: input.jobId, assistant: actor, companyIds: allowed });
+          } else {
+            const requested = input.companyIds === undefined ? null : new Set(input.companyIds);
+            input = { ...input, companyIds: requested ? allowed.filter(id => requested.has(id)) : allowed };
+          }
+        }
+      }
       let data;
       if (monitor && native && tool.name === 'get_agent_context') {
         await tool.handler(input);

@@ -14,6 +14,7 @@ import { createMonitoringStore } from './monitoring-store.mjs';
 import { createNativeStore } from './native-store.mjs';
 import { createPackStore } from './pack-store.mjs';
 import { createRecurringMonitoringStore } from './recurring-monitor-store.mjs';
+import { createJobDiscoveryStore } from './job-discovery-store.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -146,7 +147,8 @@ export function openStore({
     CREATE TABLE IF NOT EXISTS activity(id TEXT PRIMARY KEY, company_id TEXT, created_at TEXT NOT NULL, payload TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS activity_company ON activity(company_id);
     CREATE TABLE IF NOT EXISTS settings(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+    CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS app_migrations(id TEXT PRIMARY KEY);`);
   const companyQuery = createCompanyQuery(db, STATUSES);
   const tx = (fn) => {
     db.exec("BEGIN IMMEDIATE");
@@ -208,7 +210,7 @@ export function openStore({
     const ids = [...new Set([...relations.values()].flat())];
     const applications = db.prepare('SELECT payload FROM applications WHERE company_id IN (SELECT value FROM json_each(?))').all(JSON.stringify(ids)).map(parse);
     const progress = progressByCompany(applications, progressActivity(ids));
-    return companies.map(company => ({ ...company, progress: Object.fromEntries(Object.keys(emptyProgress()).map(event => [event, Math.max(0, ...relations.get(company.id).map(id => progress.get(id)?.[event] || 0))])) }));
+    return companies.map(company => ({ ...company, careersPageStatus: company.careersPageStatus || 'unknown', profileSupport: company.profileSupport || 'unknown', routeEvidence: company.routeEvidence || '', routesCheckedAt: company.routesCheckedAt || null, progress: Object.fromEntries(Object.keys(emptyProgress()).map(event => [event, Math.max(0, ...relations.get(company.id).map(id => progress.get(id)?.[event] || 0))])) }));
   }
   const defaults = {
     refreshFrequency: "manual",
@@ -309,7 +311,7 @@ export function openStore({
     const actions = runActions(inputActions);
     return rows.filter(company => !company.archived && company.status !== 'closed' && (
       (actions.applyMatchingJobs && ['not_started', 'ready'].includes(company.status) && !company.progress?.applied) ||
-      (actions.createProfiles && !company.progress?.profile_created) ||
+      (actions.createProfiles && company.profileSupport !== 'not_offered' && !company.progress?.profile_created) ||
       (actions.sendCvEmails && !company.progress?.cv_sent)
     ));
   }
@@ -355,6 +357,7 @@ export function openStore({
           input.columns || [
             "name",
             "status",
+            "progress",
             "nextAction",
             "lastUpdate",
             "careersUrl",
@@ -628,6 +631,9 @@ export function openStore({
         "linkedinUrl",
         "sector",
         "location",
+        "careersPageStatus",
+        "profileSupport",
+        "routeEvidence",
       ]);
       if ("archived" in patch)
         requireValue(
@@ -650,6 +656,9 @@ export function openStore({
           ["", "needs_you", "update_failed"].includes(patch.attention),
           "Choose a supported attention flag.",
         );
+      for (const key of ['careersPageStatus', 'profileSupport'])
+        if (key in patch)
+          requireValue(['unknown', 'available', key === 'careersPageStatus' ? 'not_found' : 'not_offered', 'needs_check'].includes(patch[key]), 'Choose a supported career route status.');
       return tx(() => {
         const c = store.getCompany(companyId);
         if (
@@ -675,11 +684,20 @@ export function openStore({
           "sector",
           "location",
           "archived",
+          "careersPageStatus",
+          "profileSupport",
+          "routeEvidence",
         ];
+        const routePatch = Object.fromEntries(['careersPageStatus', 'profileSupport', 'routeEvidence'].filter(key => key in patch).map(key => [key, key === 'routeEvidence' ? text(patch[key]).trim() : patch[key]]));
+        const routeChanged = Object.entries(routePatch).some(([key, value]) => value !== c[key]);
+        if (routeChanged && ['careersPageStatus', 'profileSupport'].some(key => (routePatch[key] ?? c[key]) !== 'unknown'))
+          requireValue(typeof routePatch.routeEvidence === 'string' && routePatch.routeEvidence.trim(), 'Add the source or reason for this route check.');
         for (const key of allowed)
           if (key in patch)
             c[key] =
-              typeof patch[key] === "string" ? text(patch[key]) : patch[key];
+              key in routePatch ? routePatch[key] : typeof patch[key] === "string" ? text(patch[key]) : patch[key];
+        if (routeChanged)
+          c.routesCheckedAt = [c.careersPageStatus, c.profileSupport].some(value => value !== 'unknown') ? now() : null;
         requireValue(text(c.name).trim(), "A company needs a name.");
         requireValue(STATUSES.includes(c.status), "Choose a supported status.");
         c.name = text(c.name, 500).trim();
@@ -1432,6 +1450,7 @@ export function openStore({
         "language",
         "preferredAssistant",
         "connectionMode",
+        "applicationEmail",
         "cvLink",
         "cvText",
       ]);
@@ -1466,6 +1485,12 @@ export function openStore({
             `${key} must be text or empty.`,
           );
       const s = store.getSettings();
+      if (Object.hasOwn(patch, 'applicationEmail')) {
+        const hint = patch.applicationEmail.trim();
+        requireValue(hint.length <= 254 && !/[\u0000-\u001f\u007f]/.test(hint) && (!hint || /^[^\s@<>"(),;:\\]+@[a-z0-9.-]+\.[a-z]{2,63}$/i.test(hint)), 'Enter a valid optional contact email.');
+        // A local contact hint only. Never infer a connected mailbox or sender.
+        s.applicationEmail = hint;
+      }
       if (patch.connectionMode !== undefined && patch.connectionMode !== s.connectionMode) requireValue(!store.listRuns().some(run => run.status === 'running' && (run.native || run.managed)), 'Stop the active Run before changing connection mode.');
       for (const key of Object.keys(defaults))
         if (key in patch) s[key] = patch[key];
@@ -1596,6 +1621,7 @@ export function openStore({
   };
   Object.assign(store, createPackStore({ db, store, tx, saveCompany, now, activity, AppError }));
   Object.assign(store, createRecurringMonitoringStore({ db, store, clock: () => new Date(clock()) }));
+  Object.assign(store, createJobDiscoveryStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError }));
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");
     if (existsSync(seedPath)) {
@@ -1609,5 +1635,18 @@ export function openStore({
       store.addCompanies("uae", source.records || source);
     }
   }
+  // Run once for existing installations. A later explicit column preference
+  // remains authoritative, including when the person hides Career profile.
+  if (!db.prepare('SELECT id FROM app_migrations WHERE id=?').get('career-profile-column-v1')) tx(() => {
+    if (db.prepare('SELECT id FROM app_migrations WHERE id=?').get('career-profile-column-v1')) return;
+    for (const directory of all('directories')) {
+      const fields = [...(directory.columns || ['name', 'status', 'nextAction', 'lastUpdate', 'careersUrl', 'notes'])];
+      if (!fields.includes('progress')) {
+        fields.splice(Math.max(1, fields.indexOf('status') + 1), 0, 'progress');
+        write('directories', directory.id, { ...directory, columns: columnList(fields) });
+      }
+    }
+    db.prepare('INSERT INTO app_migrations(id) VALUES(?)').run('career-profile-column-v1');
+  });
   return store;
 }

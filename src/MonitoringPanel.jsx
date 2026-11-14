@@ -6,6 +6,18 @@ import './monitoring-panel.css';
 const CHANNELS = [['jobs', 'Matching jobs'], ['profiles', 'Career profiles'], ['email', 'Application emails'], ['calendar', 'Calendar']];
 const timeLabel = value => value && Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString() : null;
 
+export function MonitoringSummary({ config, status, error, open, t = value => value }) {
+  const owner = config?.assistant === 'claude-code' ? 'Claude Code' : 'Codex';
+  const checked = timeLabel(status?.lastCheckAt);
+  return <div className="monitor-summary">
+    <button type="button" onClick={open}>{t('Monitoring')}</button>
+    <span>{error ? t('Monitoring unavailable') : !config ? t('Loading…') : !config.enabled ? t('Monitoring off') : checked ? `${t('Last check')}: ${checked}` : t('Awaiting first check')}</span>
+    {config?.enabled && <span className="field-hint">{owner}</span>}
+    {status?.needsYouCount > 0 && <span>{t('Needs you')}: {status.needsYouCount}</span>}
+    {status?.unreadCount > 0 && <span>{t('Updates')}: {status.unreadCount}</span>}
+  </div>;
+}
+
 export default function MonitoringPanel({ config, onChange, status, updates = [], onAcknowledge, onOpenCompany, safeHref, onCopyRequest, onUseCurrentScope, onChooseCalendar, onCopyCalendarRequest, onOpenConnections, scopeLabel, preferredAssistant, connectionMode = 'native', calendars = [], pending = false, t = value => value }) {
   const headingId = useId(), calendarHintId = useId();
   const [copying, setCopying] = useState(false), [copied, setCopied] = useState(false), [fallback, setFallback] = useState(''), [error, setError] = useState('');

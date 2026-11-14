@@ -4,6 +4,23 @@ There is one app and one local database. You and your agent use the same records
 
 Tawdheef is one product with three useful entry points: public directory packs for research, the skill and CLI/MCP workflow for an existing Codex or Claude user, and the local tracker for shared progress and evidence. The core user is a job seeker using one of those clients to work across employers. Tabbio is a separate connected CV service. A skill installation is not an app installation, a connected account or permission to act.
 
+## One product, clear entry points
+
+| Part | Purpose and source of truth |
+| --- | --- |
+| Landing page | Explain the product and lead to setup; `website/home.mjs` and its English/Arabic dictionaries. |
+| Skills / Get started | Teach setup and agent workflow; `website/skills.mjs`, `docs/FIRST-RUN.md` and `skills/tawdheef/`. |
+| Guides | Help with a task or recovery; `docs/guides/`, its Arabic counterparts and the guide catalogs. |
+| Local app | Shared directories, Jobs review, Connections, Monitoring and confirmed outcomes; `src/` and validated `server/` operations. |
+| CLI + MCP | Work on those same local records; `bin/`, `server/mcp.mjs` and generated `docs/tools.json`. External connections stay in the actual selected client. |
+| Directory packs | Public evidence, ownership and bounded recruitment guidance; `directories/` sources, pack templates and reviewed manifests. |
+| Tabbio | The person's separate CV service; its authorized connection and capabilities. |
+
+The normal path is landing page → Get started → Connections → review companies
+and jobs → explicitly choose Run actions. Preferences contains language, time
+zone and start-at-sign-in. Monitoring contains read-only schedules and reports.
+Installing a skill or pack never connects an account or starts a Run.
+
 Directory packs retain their version, bounded untrusted guidance and verified shared-company identity. Installing or updating a pack preserves private history and manual edits and never starts a run. Native profile work remains independent of applications, including after a confirmed application. Older app-owned vacancy rules and discoveries stay accessible through the compatibility APIs; Native mode never runs them. Restart revokes unfinished run authority and pauses recurring application rules without opening provider sessions. See [local upgrade checks](LOCAL-UPGRADE.md).
 
 ```text
@@ -25,6 +42,7 @@ local app ─ adapter/OAuth sessions ─ authorized providers
 | `CLAUDE.md` | Claude Code's entry point. Imports `AGENTS.md` so both clients follow the same rules. |
 | `docs/FIRST-RUN.md` | One user prompt and a rerunnable setup checklist, including when the user needs to sign in. |
 | `docs/MONITORING.md` | Selected read-only sources, local native-client schedules and the difference between reported task metadata and actual check evidence. |
+| `docs/JOB-DISCOVERY.md` | Client-owned public reads, update-only review, current CV/preference citations and actionable Needs you. |
 | `skills/tawdheef/SKILL.md` | Reusable job-search workflow: shortlist, explicitly apply, review replies. References expand only when needed. |
 | `DESIGN.md` | Rules for developers changing the interface. |
 | `.agents/skills/`, `.claude/skills/` | Emil Kowalski development skills, loaded on demand. The agent setup command also places the Tawdheef skill here for the chosen client. These Markdown files do not add browser runtime weight. |
@@ -40,6 +58,8 @@ You do not need another `agent.md`, a prompt for every company, or an embedded m
 | --- | --- |
 | `src/` | React screen, tables, panels, accessible controls. |
 | `server/store.mjs` | Shared SQLite records, validation and revisions. |
+| `server/ats-discovery.mjs`, `server/job-discovery-store.mjs` | Pure public-feed planning/normalization and additive local job/source/assessment records. No external reader or model. |
+| `server/job-discovery-tools.mjs`, `server/job-discovery-guidance.mjs` | Bounded Native discovery tools and read-only requests for the actual selected client. |
 | `server/index.mjs` | Loopback screen/API and single local authority coordinator. Native bootstrap does not instantiate or inspect external provider connections. Compatibility providers load only after explicit local-adapters selection. |
 | `server/mcp.mjs` | Shared tool definitions and stdio MCP transport, with separate operator, monitor and diagnostic catalogs. |
 | `server/snapshot.mjs` | Directory snapshot counts and paginated evidence, shared by the screen, CLI and MCP. |

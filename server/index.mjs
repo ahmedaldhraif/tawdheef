@@ -15,6 +15,7 @@ import { assertRunPurpose } from '../src/run-actions.js';
 import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus } from './native-guidance.mjs';
 import { createLocalAdapterOwner } from './local-adapter-owner.mjs';
 import { createDirectoryPacks } from './directory-packs.mjs';
+import { discoveryReviewRequest } from './job-discovery-guidance.mjs';
 
 const port = Number(process.env.APPLY_TRACKER_PORT || 4000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -71,6 +72,7 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) res.setHeader("Cache-Control", "no-store");
   next();
 });
+app.use('/api/discovery/record', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: "30mb" }));
 // Older setup and skill links lead directly to the shared setup guide.
 app.get(["/skills/tawdheef", "/skills/tawdheef/", "/get-started", "/get-started/", "/guides/get-started", "/guides/get-started/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
@@ -123,6 +125,24 @@ app.get('/api/registration-context', wrap(async req => {
     instructions: 'Reuse existing career accounts and their original login. For a new registration use only this fresh observed main email. If missing, check the actual client mailbox identity. Passwords stay in the browser/password manager; sign-in and identity prompts become Needs you.' };
 }));
 app.get('/api/monitoring', wrap(() => store.getMonitoring()));
+const discoveryOwner = input => ({ ...input, assistant: input.assistant || store.getSettings().preferredAssistant });
+const discoveryOnly = () => { if (!nativeMode()) throw new AppError('Use native connection mode to review jobs through your actual Codex or Claude client.'); };
+const discoveryQuery = req => {
+  const input = discoveryOwner(req.query);
+  if (input.limit !== undefined) input.limit = Number(input.limit);
+  for (const key of ['companyIds', 'companyTypes', 'locations']) if (input[key] !== undefined) { try { input[key] = JSON.parse(input[key]); } catch { throw new AppError('Use a JSON list of directory filter IDs.'); } }
+  return input;
+};
+app.get('/api/discovery/preferences', wrap(() => store.getDiscoveryPreferences()));
+app.patch('/api/discovery/preferences', wrap(req => { discoveryOnly(); return store.updateDiscoveryPreferences(req.body); }));
+app.get('/api/discovery/summary', wrap(req => store.getDiscoverySummary(discoveryQuery(req))));
+app.get('/api/discovery/jobs', wrap(req => store.listDiscoveredJobs(discoveryQuery(req))));
+app.get('/api/discovery/jobs/:id', wrap(req => store.getDiscoveredJob({ ...discoveryQuery(req), id: req.params.id })));
+app.get('/api/discovery/request', wrap(req => discoveryReviewRequest({ store, ...discoveryQuery(req) })));
+app.post('/api/discovery/request', wrap(req => discoveryReviewRequest({ store, ...req.body })));
+app.post('/api/discovery/prepare', wrap(req => { discoveryOnly(); return store.prepareJobDiscovery(discoveryOwner(req.body)); }));
+app.post('/api/discovery/record', wrap(req => { discoveryOnly(); return store.recordNativeJobDiscovery(discoveryOwner(req.body)); }));
+app.post('/api/discovery/match', wrap(req => { discoveryOnly(); return store.recordJobMatch(discoveryOwner(req.body)); }));
 app.get('/api/directory-packs', wrap(() => directoryPacks.list()));
 app.get('/api/directory-packs/:id', wrap(req => directoryPacks.get(req.params.id, { directoryId: req.query.directoryId })));
 app.post('/api/directory-packs/preview', wrap(req => directoryPacks.preview(req.body)));

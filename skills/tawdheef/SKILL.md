@@ -65,6 +65,21 @@ Create a requested local report; a follow-up date is a reminder, not permission
 to send. Monitoring and schedules never start applications, create accounts or
 profiles, share CVs, send messages or change calendars.
 
+## Review job updates with CV evidence
+
+Use the checkout's `docs/JOB-DISCOVERY.md`. Prepare one read-only discovery
+lease per selected company; the actual client reads its returned public feed
+or browser plan and records bounded evidence. Review compact pending jobs,
+loading full descriptions only when necessary. Read the real CV and report its
+source ID and SHA-256 versionHash, never raw contents. Record exact requirement
+quotes and CV fact locators with the current content hash and preference
+revision. Changed job/CV/preferences require reassessment; unchanged complete
+content can reuse it. Required unknown facts cannot become a suitable match.
+Give one clear Needs you next step. Source failures preserve prior jobs and
+never prove closure or absence. A discovery/match does not authorize a Run.
+For scheduled jobs, use the nested discovery lease from `check_updates`; the
+final `record_job_discovery` also finishes that saved monitoring check.
+
 ## Start or continue the explicitly selected native Run
 
 A user-started app Run saves the chosen scope/actions and copies a request for

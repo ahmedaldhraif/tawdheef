@@ -1,36 +1,12 @@
-import React from "react";
+import React from 'react';
 
-const BRANDS = {
-  linkedin: {
-    src: "/brands/linkedin-in-blue.png",
-    width: 635,
-    height: 540,
-  },
-};
-
-/** Original brand assets. The surrounding link supplies the accessible label. */
-export default function BrandIcon({ brand, size = 21, className = "" }) {
-  const asset = BRANDS[brand];
-  if (!asset) return null;
-  const height = Math.max(21, Number(size) || 21);
-  const width = (height * asset.width) / asset.height;
-  return (
-    <img
-      src={asset.src}
-      alt=""
-      aria-hidden="true"
-      className={`brand-mark brand-mark-${brand} ${className}`.trim()}
-      width={width}
-      height={height}
-      draggable="false"
-      style={{
-        display: "inline-block",
-        flexShrink: 0,
-        width,
-        height,
-        objectFit: "contain",
-        verticalAlign: "middle",
-      }}
-    />
-  );
+/** Filled LinkedIn brand glyph without the detached registration mark. */
+export default function BrandIcon({ brand, size = 14, className = '' }) {
+  if (brand !== 'linkedin') return null;
+  const dimension = Math.max(12, Number(size) || 14);
+  return <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"
+    className={`brand-mark brand-mark-linkedin ${className}`.trim()}
+    style={{ width: dimension, height: dimension, flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }}>
+    <path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286ZM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124Zm1.782 13.019H3.555V9h3.564v11.452ZM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003Z" />
+  </svg>;
 }

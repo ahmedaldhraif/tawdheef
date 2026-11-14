@@ -23,10 +23,14 @@ test.beforeEach(async ({ page, request }) => {
     return route.continue();
   });
   await page.route('**/api/bootstrap', async route => {
-    const response = await route.fetch(), boot = await response.json();
+    const response = await route.fetch();
+    const cleanup = page.__nativeBootstrapCleanup;
+    if (cleanup) { cleanup.entered(); await cleanup.gate; }
+    const boot = await response.json();
     boot.settings = { ...boot.settings, language: page.__nativeLanguage, connectionMode: page.__nativeMode, preferredAssistant: page.__nativeAssistant };
     boot.connections = []; boot.nativeClient = page.__nativeClient; boot.runs = page.__nativeRun ? [page.__nativeRun] : [];
-    return route.fulfill({ response, json: boot });
+    await route.fulfill({ response, json: boot });
+    if (cleanup) cleanup.completed = true;
   });
   await page.route('**/api/native/client?*', route => route.fulfill({ json: page.__nativeClient }));
   await page.route('**/api/native/connection-request?*', route => {
@@ -56,7 +60,13 @@ test.beforeEach(async ({ page, request }) => {
   await page.route('**/api/monitoring/updates?*', route => route.fulfill({ json: { items: [], total: 0, nextOffset: null } }));
 });
 
-test.afterEach(async ({ page }) => { expect(page.__nativeErrors).toEqual([]); expect(page.__nativeForbidden).toEqual([]); });
+test.afterEach(async ({ page }) => {
+  // Keep the request context alive until route.fetch/body readers finish.
+  // Waiting preserves handler errors rather than hiding them during disposal.
+  await page.unrouteAll({ behavior: 'wait' });
+  if (page.__nativeBootstrapCleanup) expect(page.__nativeBootstrapCleanup.completed).toBe(true);
+  expect(page.__nativeErrors).toEqual([]); expect(page.__nativeForbidden).toEqual([]);
+});
 async function openTracker(page) { await page.goto('/'); await expect(page.locator('.company-name').first()).toBeVisible(); }
 async function openConnections(page) { await openTracker(page); await page.getByRole('button', { name: 'Connections', exact: true }).click(); return page.getByRole('dialog'); }
 async function capture(page, name) {
@@ -144,6 +154,14 @@ test('native run needs no CLI and waits for the existing client with selected ac
   await dialog.getByRole('button', { name: 'Stop run', exact: true }).click();
   await expect(dialog).toContainText('Run stopped');
   expect(page.__nativeWrites.filter(item => item.path === 'stop')).toHaveLength(1);
+  // Leave one real response-body reader in flight at the end of the test,
+  // reproducing a slow bootstrap refresh during browser-context teardown.
+  let entered, release;
+  const started = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  page.__nativeBootstrapCleanup = { gate, completed: false, entered: () => { entered(); setTimeout(release, 150); } };
+  await page.evaluate(() => { window.__trailingNativeBootstrap = fetch('/api/bootstrap').then(response => response.json()); });
+  await started;
 });
 
 test('blocked clipboard preserves native setup request as selectable text', async ({ page }) => {
@@ -171,8 +189,8 @@ test('reopened native progress copies a handoff with fallback and Stop removes t
 });
 
 test('native monitoring requests calendar IDs from the client without loading local calendar adapters', async ({ page }) => {
-  await openTracker(page); await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await openTracker(page); await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
@@ -185,8 +203,8 @@ test('native monitoring requests calendar IDs from the client without loading lo
 test('a saved local calendar ID does not masquerade as a calendar reported by the native client', async ({ page }) => {
   const config = scheduleConfig(); config.scope.calendarIds = ['old-local-calendar'];
   await page.route('**/api/monitoring', route => route.fulfill({ json: { config, status: monitoringStatus } }));
-  await openTracker(page); await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await openTracker(page); await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
@@ -222,8 +240,8 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   await capture(page, `ar-provider-${width}`);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await dialog.getByRole('button', { name: 'تم', exact: true }).click();
-  await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'الإعدادات', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'المتابعة', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'المتابعة', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'المتابعة', exact: true });
   await expect(panel).toContainText('اطلب من مساعدك تسجيل تقويم تختاره.');

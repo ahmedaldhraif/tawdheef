@@ -6,6 +6,7 @@ import {
   Link2,
   Plug,
   Settings as SettingsIcon,
+  Github,
   RefreshCw,
   Plus,
   Search,
@@ -45,9 +46,10 @@ import useRunUpdates from './useRunUpdates.js';
 import CompanyFilters from './CompanyFilters.jsx';
 import CompanyProgress, { PROGRESS_LABELS } from './CompanyProgress.jsx';
 import DirectorySnapshot from './DirectorySnapshot.jsx';
+import DiscoveryPanel, { DISCOVERY_AR, discoveryApi } from './DiscoveryPanel.jsx';
 import DirectoryPacksDialog from './DirectoryPacksDialog.jsx';
 import ConnectionsHub from './ConnectionsHub.jsx';
-import MonitoringPanel from './MonitoringPanel.jsx';
+import MonitoringPanel, { MonitoringSummary } from './MonitoringPanel.jsx';
 import WorkspaceBackground from './WorkspaceBackground.jsx';
 import CalendarPanel from './CalendarPanel.jsx';
 import ProviderLogo from './ProviderLogo.jsx';
@@ -74,7 +76,7 @@ const savedView = (id) => {
 const FIELDS = {
   name: "Company",
   status: "Status",
-  progress: "Progress",
+  progress: "Career profile",
   nextAction: "Next action",
   lastUpdate: "Last update",
   careersUrl: "Contacts",
@@ -89,6 +91,39 @@ const FIELDS = {
   followUpAt: "Follow-up",
 };
 const AR = {
+  ...DISCOVERY_AR,
+  'Contact email (optional)': 'بريد التواصل (اختياري)',
+  'Add contact email': 'إضافة بريد للتواصل',
+  'Optional hint for your assistant. It confirms the account and sender.': 'اقتراح اختياري لمساعدك، وهو يتأكد من الحساب وعنوان الإرسال.',
+  'Export all companies (CSV)': 'تصدير كل الجهات (CSV)',
+  'Company list unavailable': 'قائمة الجهات غير متاحة',
+  'Progress and monitoring': 'التقدم والمتابعة',
+  'Open source': 'مفتوح المصدر',
+  'Open at sign-in': 'الفتح عند تسجيل الدخول',
+  'Monitoring off': 'المتابعة متوقفة',
+  'Awaiting first check': 'بانتظار أول تحقق',
+  'Updates': 'تحديثات',
+  'Monitoring unavailable': 'المتابعة غير متاحة',
+  'Reports & replies': 'التقارير والردود',
+  'Career profile': 'الملف المهني',
+  'Career routes': 'مسارات التوظيف',
+  'Careers page availability': 'صفحة الوظائف',
+  'Account / profile': 'الحساب / الملف المهني',
+  'No careers page found': 'لم يُعثر على صفحة وظائف',
+  'No account / profile offered': 'لا تتوفر خدمة حساب أو ملف مهني',
+  'Source or reason': 'المصدر أو السبب',
+  'Available': 'متاح',
+  'Not checked': 'لم يُفحص',
+  'Needs checking': 'يحتاج إلى فحص',
+  'Not offered': 'غير متاح',
+  'Preferences': 'التفضيلات',
+  'Reports & replies': 'التقارير والردود',
+  'by': 'بواسطة',
+  'Contribute': 'ساهم في التطوير',
+  'Suggest a correction': 'اقترح تصحيحاً',
+  'Company list unavailable': 'قائمة الجهات غير متاحة',
+  'Activity period': 'فترة النشاط',
+  'Follow-ups and Needs you show the current state.': 'المتابعات وما يحتاج تدخلك يعرضان الحالة الحالية.',
   'Directory packs': 'حزم الأدلة',
   'Browse community packs': 'تصفّح حزم المجتمع',
   'Manage directory packs': 'إدارة حزم الأدلة',
@@ -479,8 +514,10 @@ function App() {
     [toastScope, setToastScope] = useState(null),
     [busy, setBusy] = useState(""),
     [rowsLoading, setRowsLoading] = useState(true),
+    [rowsError, setRowsError] = useState(""),
     [error, setError] = useState(""),
     [undo, setUndo] = useState(null);
+  const actionsInFlight = useRef(new Map());
   const rowsRequest = useRef(0),
     detailRequest = useRef(0),
     toastTimer = useRef(null);
@@ -505,6 +542,7 @@ function App() {
     columns = directory?.columns || [
       "name",
       "status",
+      "progress",
       "nextAction",
       "lastUpdate",
       "careersUrl",
@@ -547,7 +585,8 @@ function App() {
     if (toastInteraction.current.focused && !focused) { toastInteraction.current.focused = false; resumeToast(); }
   }, [toast, undo, pauseToast, resumeToast]);
   const loadBoot = useCallback(async () => {
-    const b = await api("/bootstrap");
+    const [b, monitoring] = await Promise.all([api('/bootstrap'), api('/monitoring').catch(error => ({ error: error.message }))]);
+    b.monitoring = monitoring;
     setBoot(b);
     if (!b.directories.length) setActive("");
     if (b.directories.length && !b.directories.some((d) => d.id === active))
@@ -561,6 +600,7 @@ function App() {
       return;
     }
     const request = ++rowsRequest.current;
+    setRowsError("");
     const params = new URLSearchParams({
       directoryId: active,
       search: query,
@@ -582,6 +622,8 @@ function App() {
         setRowsRevision(revision => revision + 1);
         if (result.listScopeVersion !== 1) setError('Restart the local app to use the new list filters and Run choices.');
       }
+    } catch (error) {
+      if (request === rowsRequest.current) setRowsError(error.message);
     } finally {
       if (request === rowsRequest.current) setRowsLoading(false);
     }
@@ -669,17 +711,19 @@ function App() {
       JSON.stringify({ query, status, companyTypes, locations, sort, direction }),
     );
   }, [active, query, status, companyTypes, locations, sort, direction]);
-  async function action(key, fn) {
+  function action(key, fn) {
+    if (actionsInFlight.current.has(key)) return actionsInFlight.current.get(key);
     setBusy(key);
     setError("");
-    try {
-      return await fn();
-    } catch (e) {
+    const promise = Promise.resolve().then(fn).catch(e => {
       setError(e.message);
       throw e;
-    } finally {
-      setBusy("");
-    }
+    }).finally(() => {
+      actionsInFlight.current.delete(key);
+      setBusy(current => current === key ? "" : current);
+    });
+    actionsInFlight.current.set(key, promise);
+    return promise;
   }
   const perform = (key, fn) => action(key, fn).catch(() => {});
   async function updateCompany(c, patch) {
@@ -713,7 +757,7 @@ function App() {
       const previousValues = Object.fromEntries(
         Object.keys(patch)
           .filter((key) => key !== "expectedRevision")
-          .map((key) => [key, c[key] ?? null]),
+          .map((key) => [key, c[key] ?? (["careersPageStatus", "profileSupport"].includes(key) ? "unknown" : key === "routeEvidence" ? "" : null)]),
       );
       notify(
         t("Saved"),
@@ -760,6 +804,7 @@ function App() {
     cv = boot?.connections.find((c) => c.kind === "tabbio");
   const connected = (conn) => conn?.status === "connected";
   const count = Object.values(data.statusCounts).reduce((a, b) => a + b, 0);
+  const hasFilters = Boolean(query || status || companyTypes.length || locations.length);
   if (!boot)
     return (
       <div className="loading">
@@ -890,7 +935,7 @@ function App() {
           <div className="heading-actions">
             <button
               className="primary directory-run"
-              disabled={!directory || (!runningManagedRun && (filterPending || rowsLoading || !rowsCurrent || runCount == null || runCount === 0))}
+              disabled={!directory || (!runningManagedRun && (filterPending || rowsLoading || !!rowsError || !rowsCurrent || runCount == null || runCount === 0))}
               onClick={() => setModal({ type: "run", ...(runningManagedRun ? { run: runningManagedRun } : {}) })}
             >
               <Play size={15} />
@@ -915,7 +960,7 @@ function App() {
           const run = runningManagedRun || boot.runs.find(r => (r.managed || r.native === true) && r.directoryId === active);
           return <RunProgress run={run} open={() => setModal({ type: 'run', run })} stop={() => perform('stop-run', async () => { updateRun(await api(`/runs/${run.id}/stop`, 'POST')); await refresh(); })} />;
         })()}
-        {directory && <DirectorySnapshot
+        {directory && <section className="directory-overview" aria-label={t('Progress and monitoring')}><DirectorySnapshot
           directoryId={active}
           directoryName={directory.name}
           revision={`${rowsRevision}:${runningManagedRun?.id || ''}:${runningManagedRun?.completed ?? ''}`}
@@ -925,7 +970,8 @@ function App() {
           Dialog={Modal}
           t={t}
           onOpenCompany={companyId => openDetail({ id: companyId }, null, 'applications')}
-        />}
+        /><MonitoringSummary config={boot.monitoring?.config} status={boot.monitoring?.status} error={boot.monitoring?.error} t={t} open={() => setModal({ type: 'monitoring' })} /></section>}
+        {directory && boot.settings.connectionMode !== 'local-adapters' && <DiscoveryPanel directoryId={active} directoryName={directory.name} revision={rowsRevision} assistant={boot.settings.preferredAssistant} t={t} />}
         <div
           className="table-surface"
           id={"directory-" + active}
@@ -1257,20 +1303,21 @@ function App() {
                 {t("Loading companies…")}
               </span>
             )}
-            {!rowsLoading && !data.items.length && (
+            {!rowsLoading && rowsError && <div className="empty" role="alert"><AlertCircle size={28}/><h3>{t('Company list unavailable')}</h3><p>{rowsError}</p><button onClick={() => { setRowsLoading(true); loadRows(); }}>{t('Try again')}</button></div>}
+            {!rowsLoading && !rowsError && !data.items.length && (
               <div className="empty">
                 {directory ? <Search size={28} /> : <FolderOpen size={28} />}
                 <h3>
                   {!directory
                     ? "Add your first directory"
-                    : count === 0 && !query && !status
+                    : count === 0 && !hasFilters
                       ? "This directory is empty"
                       : t("No companies found")}
                 </h3>
                 <p>
                   {!directory
                     ? "Create a tab for your company list."
-                    : count === 0 && !query && !status
+                    : count === 0 && !hasFilters
                       ? "Add a company or import a list to get started."
                       : t("Try another search or add a company.")}
                 </p>
@@ -1279,7 +1326,7 @@ function App() {
                     <Plus />
                     {t("Add directory")}
                   </button>
-                ) : count === 0 && !query && !status ? (
+                ) : count === 0 && !hasFilters ? (
                   <button onClick={() => setModal({ type: "import" })}>
                     <Upload />
                     {t("Import list")}
@@ -1287,8 +1334,7 @@ function App() {
                 ) : (
                   <button
                     onClick={() => {
-                      setQuery("");
-                      setStatus("");
+                      setQuery(""); setStatus(""); setCompanyTypes([]); setLocations([]); setSelected(new Set()); setPage(0);
                     }}
                   >
                     Clear filters
@@ -1299,7 +1345,7 @@ function App() {
           </div>
           <footer className="table-footer">
             <span>
-              {rowsLoading && !data.items.length ? 'Loading…' : data.total
+              {rowsError ? t('Company list unavailable') : rowsLoading && !data.items.length ? 'Loading…' : data.total
                 ? `${page * 100 + 1}–${Math.min((page + 1) * 100, data.total)} of ${data.total.toLocaleString()}`
                 : "0 results"}
             </span>
@@ -1327,6 +1373,7 @@ function App() {
           </footer>
         </div>
         <footer className="workspace-footer">
+          <span className="community-credit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20C8 17 2 12 3 7c1-5 7-4 9 0 3-5 9-5 9 1 0 4-5 9-9 12Z"/><path d="M5 7c0-1 1-2 2-2"/></svg><a href="https://github.com/ahmedaldhraif/tawdheef" target="_blank" rel="noreferrer"><Github size={13} aria-hidden="true"/>{t('Open source')}</a><span>{t('by')} <a href="https://github.com/ahmedaldhraif" target="_blank" rel="noreferrer" title="Ahmed AlDhraif">@ahmedaldhraif</a></span><a href="https://github.com/ahmedaldhraif/tawdheef/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">{t('Contribute')}</a></span>
           <span>
             <ShieldCheck size={14} />
             {t("Saved on this computer")}
@@ -1446,8 +1493,9 @@ function App() {
           }}
         />
       )}
-      {modal?.type === "settings" && (
+      {(modal?.type === 'settings' || modal?.type === 'monitoring') && (
         <SettingsDialog
+          section={modal.type === 'monitoring' ? 'monitoring' : 'preferences'}
           clientStatus={boot.nativeClient}
           draftRef={settingsDraft}
           monitoringScope={runScope}
@@ -1489,6 +1537,7 @@ function App() {
             settingsDraft.current = null;
             setModal(null);
             notify(t("Saved"));
+            await loadRows();
           }}
         />
       )}
@@ -1502,6 +1551,7 @@ function App() {
       {modal?.type === 'connection' && modal.kind === 'calendar' && boot.settings.connectionMode === 'local-adapters' && <CalendarPanel conn={boot.connections.find(c => c.kind === 'calendar')} provider={modal.provider} api={api} updated={loadBoot} close={() => setModal(null)} back={() => setModal({ type: 'connections', restoreNavigation: true })} notify={notify} Modal={Modal} t={t} safeHref={safeHref} />}
       {modal?.type === "connection" && (modal.kind !== 'calendar' || boot.settings.connectionMode !== 'local-adapters') && (
         <ConnectionPanel
+          onSettingsChange={async patch => { const saved = await api('/settings', 'PATCH', patch); await loadBoot(); return saved; }}
           settings={boot.settings}
           clientStatus={boot.nativeClient}
           onCopyConnectionRequest={(kind, options = {}) => api(`/native/connection-request?${new URLSearchParams({ kind, assistant: options.assistant || boot.settings.preferredAssistant || 'codex', ...(options.provider ? { provider: options.provider } : {}) })}`)}
@@ -1565,7 +1615,9 @@ function App() {
       {detail && (
         <DetailPanel
           key={detail.company.id}
+          pending={busy === 'undo'}
           detail={detail}
+          discovery={{ directoryId: active, directoryName: directory?.name, revision: rowsRevision, assistant: boot.settings.preferredAssistant, enabled: boot.settings.connectionMode !== 'local-adapters' }}
           t={t}
           close={() => {
             detailRequest.current++;
@@ -1598,15 +1650,19 @@ function DirectoryDialog({ edit, t, close, save, onArchive, browse }) {
     country: edit?.country || "",
     ...(edit ? { order: edit.order } : {}),
   });
+  const originalDirectory = useRef(JSON.stringify(v));
   return (
     <Modal
       title={t(edit ? "Customize directory" : "Add directory")}
       close={close}
       t={t}
       narrow
+      dirty={JSON.stringify(v) !== originalDirectory.current}
     >
+      {!edit && browse && <button type="button" className="directory-pack-shortcut" onClick={browse}><Download size={16}/>{t('Browse community packs')}</button>}
       <Form
         t={t}
+        trackDirty={false}
         close={close}
         save={() => save(v)}
         label={edit ? "Save changes" : "Create directory"}
@@ -1663,7 +1719,6 @@ function DirectoryDialog({ edit, t, close, save, onArchive, browse }) {
           </label>
         )}
       </Form>
-      {!edit && browse && <button type="button" className="directory-pack-shortcut" onClick={browse}><Download size={16}/>{t('Browse community packs')}</button>}
     </Modal>
   );
 }
@@ -1743,6 +1798,7 @@ function ImportDialog({ t, directory, close, save }) {
       close={close}
       t={t}
       pending={busy}
+      dirty={Boolean(file || csv)}
     >
       <p className="dialog-intro">
         Add a CSV or Excel list. Existing source records are updated without
@@ -1781,7 +1837,7 @@ function ImportDialog({ t, directory, close, save }) {
             />
           </label>
           <div className="form-actions">
-            <button onClick={close}>{t("Cancel")}</button>
+            <button type="button" data-modal-close disabled={busy}>{t("Cancel")}</button>
             <button
               className="primary"
               disabled={(!file && !csv) || busy}
@@ -1839,6 +1895,7 @@ function SettingsDialog({
   draftRef,
   onOpenConnections,
   onOpenCompany,
+  section = 'preferences',
 }) {
   const [actionBusy, setActionBusy] = useState(""),
     [actionError, setActionError] = useState(""),
@@ -1862,19 +1919,47 @@ function SettingsDialog({
   }
 
   const [v, setV] = useState(draftRef?.current?.values || { ...settings });
+  const originalSettings = useRef(settings);
   const nativeMode = settings.connectionMode !== 'local-adapters';
   const [monitor, setMonitor] = useState(draftRef?.current?.monitor || null), [monitorStatus, setMonitorStatus] = useState(null), [monitorError, setMonitorError] = useState(''), [monitorUpdates, setMonitorUpdates] = useState([]), [calendars, setCalendars] = useState([]);
   const savedMonitor = useRef(null);
+  const [monitorRetry, setMonitorRetry] = useState(0);
+  const [jobPreferences, setJobPreferences] = useState(draftRef?.current?.jobPreferences || null), [preferencesError, setPreferencesError] = useState('');
   useEffect(() => {
     let active = true;
+    discoveryApi('/preferences').then(value => {
+      if (!active) return;
+      const preferences = value.preferences || value;
+      setJobPreferences(previous => previous || { revision: preferences.revision, rolesText: (preferences.roles || []).join(', '), locationsText: (preferences.locations || []).join(', '), notes: preferences.notes || '', base: preferences });
+    }).catch(error => { if (active) setPreferencesError(error.message); });
+    return () => { active = false; };
+  }, []);
+  async function saveJobPreferences() {
+    if (!jobPreferences) return;
+    const split = text => [...new Set(text.split(/[,\n،]/).map(value => value.trim()).filter(Boolean))];
+    const patch = { roles: split(jobPreferences.rolesText), locations: split(jobPreferences.locationsText), notes: jobPreferences.notes };
+    const base = jobPreferences.base;
+    if (JSON.stringify(patch) === JSON.stringify({ roles: base.roles || [], locations: base.locations || [], notes: base.notes || '' })) return;
+    try {
+      const value = await discoveryApi('/preferences', 'PATCH', { expectedRevision: jobPreferences.revision, explicit: true, patch });
+      const saved = value.preferences || value;
+      setJobPreferences(previous => ({ ...previous, revision: saved.revision, base: saved }));
+    } catch (error) {
+      if (error.status === 409) throw new Error(t('Preferences changed elsewhere. Your draft is kept. Reopen Settings to compare before saving.'));
+      throw error;
+    }
+  }
+  useEffect(() => {
+    let active = true;
+    setMonitorError('');
     Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]).then(([value, updates]) => {
       if (!active) return;
       savedMonitor.current = value.config;
       setMonitor(previous => previous || value.config); setMonitorStatus(value.status); setMonitorUpdates(updates.items || []);
     }).catch(error => { if (active) setMonitorError(error.message); });
     return () => { active = false; };
-  }, []);
-  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor }; }, [v, monitor]);
+  }, [monitorRetry]);
+  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor, jobPreferences }; }, [v, monitor, jobPreferences]);
   async function saveMonitor() {
     if (!monitor || !savedMonitor.current) return monitor;
     const prepared = { ...monitor, timezone: v.timezone };
@@ -1910,16 +1995,21 @@ function SettingsDialog({
   }
   const field = (key, value) => setV((s) => ({ ...s, [key]: value }));
   const pending = startupBusy || !!actionBusy || saveBusy;
+  const editablePreferences = ['language', 'timezone', 'refreshFrequency', 'reportFrequency', 'reportTime', 'reportDay', 'reportEveryDays', 'emailReports', 'reportEmail'];
+  const dirtyPreferences = editablePreferences.some(key => (v[key] ?? '') !== (originalSettings.current[key] ?? ''));
+  const dirtyMonitoring = Boolean(monitor && savedMonitor.current && JSON.stringify(monitor) !== JSON.stringify(savedMonitor.current));
+  const dirtyJobs = Boolean(jobPreferences && (jobPreferences.rolesText !== (jobPreferences.base.roles || []).join(', ') || jobPreferences.locationsText !== (jobPreferences.base.locations || []).join(', ') || jobPreferences.notes !== (jobPreferences.base.notes || '')));
   return (
     <Modal
-      title={t("Settings")}
+      title={t(section === 'monitoring' ? 'Monitoring' : 'Preferences')}
+      dirty={dirtyPreferences || dirtyMonitoring || dirtyJobs}
       close={close}
       t={t}
       pending={pending}
       footer={<div className="settings-dialog-footer">
         {saveError && <p className="form-error" role="alert">{saveError}</p>}
         <div className="form-actions">
-          <button type="button" onClick={close} disabled={pending}>{t('Cancel')}</button>
+          <button type="button" data-modal-close disabled={pending}>{t('Cancel')}</button>
           <button type="submit" form="settings-form" className="primary" disabled={pending}>{saveBusy ? 'Saving…' : t('Save changes')}</button>
         </div>
       </div>}
@@ -1930,20 +2020,31 @@ function SettingsDialog({
           event.preventDefault();
           if (pending) return;
           setSaveBusy(true); setSaveError('');
-          try { await saveMonitor(); await save({ ...v, ...(monitor?.enabled && monitor.channels.email ? { refreshFrequency: 'manual' } : {}) }); } catch (error) { setSaveError(error.message); }
+          try { await saveJobPreferences(); await saveMonitor(); await save({ ...v, ...(monitor?.enabled && monitor.channels.email ? { refreshFrequency: 'manual' } : {}) }); } catch (error) { setSaveError(error.message); }
           finally { setSaveBusy(false); }
         }}
       >
         <>
-            <MonitoringPanel connectionMode={settings.connectionMode} config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
+            {section === 'preferences' && <details className="advanced discovery-preferences"><summary>{t('Job preferences')}</summary>
+              <p className="field-hint">{t('Your assistant uses these preferences with your actual CV.')}</p>
+              {preferencesError ? <p role="alert" className="form-error">{t(preferencesError)}</p> : !jobPreferences ? <p role="status" className="field-hint">{t('Loading job preferences…')}</p> : <>
+                <label>{t('Roles')}<textarea value={jobPreferences.rolesText} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, rolesText: event.target.value }))} /></label>
+                <label>{t('Job locations')}<textarea value={jobPreferences.locationsText} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, locationsText: event.target.value }))} /></label>
+                <p className="field-hint">{t('Separate roles or locations with commas or new lines.')}</p>
+                <label>{t('Job notes')}<textarea value={jobPreferences.notes} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, notes: event.target.value }))} /></label>
+              </>}
+            </details>}
+            {section === 'monitoring' && <>
+            {!monitorError && <MonitoringPanel connectionMode={settings.connectionMode} config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
               onChange={value => { setMonitor(value); if (value.enabled && value.channels.email) setV(previous => ({ ...previous, refreshFrequency: 'manual' })); }}
               onUseCurrentScope={async () => { setActionBusy('scope'); setMonitorError(''); try { const value = await api('/monitoring/scope', 'POST', monitoringScope); setMonitor(previous => ({ ...previous, scope: { ...value.scope, calendarIds: previous.scope.calendarIds } })); } catch (error) { setMonitorError(error.message); } finally { setActionBusy(''); } }}
               onChooseCalendar={async () => { if (nativeMode) return; setActionBusy('calendars'); try { const result = await api('/calendar/calendars'); const items = result.calendars || result.items || result.data?.calendars; if (!Array.isArray(items)) throw new Error('Open Calendar in Connections and check its access.'); setCalendars(items); } finally { setActionBusy(''); } }}
               onCopyCalendarRequest={() => api(`/native/connection-request?kind=calendar&assistant=${encodeURIComponent(monitor?.assistant || settings.preferredAssistant)}`)}
               calendars={nativeMode ? clientStatus?.assistant === monitor?.assistant && clientStatus?.capabilities?.calendar?.status === 'reported' ? (clientStatus.capabilities.calendar.calendarIds || []).map(id => ({ id, name: id })) : [] : calendars} onOpenConnections={onOpenConnections} onOpenCompany={onOpenCompany}
               onAcknowledge={async update => { await api(`/monitoring/updates/${encodeURIComponent(update.id)}/ack`, 'POST', { expectedRevision: update.revision }); const [value, updates] = await Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]); setMonitorStatus(value.status); setMonitorUpdates(updates.items || []); }}
-              onCopyRequest={async () => { const config = await saveMonitor(); return api('/monitoring/recipe', 'POST', { configurationRevision: config.revision, assistant: config.assistant }); }} />
-            {monitorError && <p className="form-error" role="alert">{monitorError}</p>}
+              onCopyRequest={async () => { const config = await saveMonitor(); return api('/monitoring/recipe', 'POST', { configurationRevision: config.revision, assistant: config.assistant }); }} />}
+            {monitorError && <div role="alert"><p className="form-error">{t('Monitoring unavailable')}: {monitorError}</p><button type="button" onClick={() => setMonitorRetry(value => value + 1)}>{t('Try again')}</button></div>}
+            <details className="advanced reports-replies"><summary>{t('Reports & replies')}</summary>
             {!nativeMode && <><details className="advanced"><summary>{t('Local reply checks')}</summary>
             <p className="field-hint">{t('For all directories.')}</p>
             <section className="settings-section">
@@ -2059,6 +2160,8 @@ function SettingsDialog({
                   <p className="field-hint">
                     {new Date(latestReport.generatedAt).toLocaleString()}
                   </p>
+                  {latestReport.since && <p className="field-hint">{t('Activity period')}: {new Date(latestReport.since).toLocaleString()} – {new Date(latestReport.generatedAt).toLocaleString()}</p>}
+                  <p className="field-hint">{t('Follow-ups and Needs you show the current state.')}</p>
                   <dl>
                     {[
                       ['accountsCreated', 'Accounts created'],
@@ -2107,8 +2210,8 @@ function SettingsDialog({
                     : t("Generate report")}
               </button>
             </details>
-            <details className="advanced settings-preferences">
-              <summary>{t('Preferences')}</summary>
+            </details></>}
+            {section === 'preferences' && <section className="settings-preferences">
               <div className="form-row">
                 <label>
                   {t("Language")}
@@ -2134,7 +2237,7 @@ function SettingsDialog({
                       checked={background.startupInstalled}
                       onChange={changeStartup}
                     />
-                    Open at Windows sign-in
+                    {t('Open at sign-in')}
                   </label>
                 </>
               ) : (
@@ -2147,18 +2250,18 @@ function SettingsDialog({
                   {startupError}
                 </p>
               )}
-            </details>
-            <p className="field-hint">{t('Scheduled updates need this computer awake and online.')}</p>
+            </section>}
+            {section === 'monitoring' && <p className="field-hint">{t('Scheduled updates need this computer awake and online.')}</p>}
         </>
         {actionError && (
           <p className="form-error" role="alert">
             {actionError}
           </p>
         )}
-        {settings.lastRefreshError && (
+        {section === 'monitoring' && settings.lastRefreshError && (
           <p className="notice">Reply check: {settings.lastRefreshError}</p>
         )}
-        {settings.lastReportError && (
+        {section === 'monitoring' && settings.lastReportError && (
           <p className="notice">Report: {settings.lastReportError}</p>
         )}
       </form>
@@ -2192,20 +2295,44 @@ function AIDialog({ t, close, back, initialClient, backLabel = 'Back to connecti
   </Modal>;
 }
 
-function DetailPanel({ detail, t, close, save, archive }) {
+function DetailPanel({ detail, discovery, t, close, save, archive, pending = false }) {
   const c = detail.company;
   useEffect(() => {
     if (detail.focusField)
       document.getElementById("contact-" + detail.focusField)?.focus();
   }, [detail.focusField]);
   const [v, setV] = useState({ ...c }),
-    [tab, setTab] = useState(detail.initialTab || "details");
+    [tab, setTab] = useState(detail.initialTab || "details"),
+    [detailBusy, setDetailBusy] = useState(false);
+  const detailTabs = ["details", "applications", "source"];
+  const editableFields = ["careersPageStatus", "profileSupport", "routeEvidence", "status", "nextAction", "notes", "email", "website", "careersUrl", "linkedinUrl", "followUpAt", "attention"];
+  const editValue = (record, key) => record[key] || (['careersPageStatus','profileSupport'].includes(key) ? 'unknown' : '');
+  const previousCompany = useRef(c);
+  useEffect(() => {
+    const old = previousCompany.current;
+    setV(current => editableFields.some(key => editValue(current,key) !== editValue(old,key)) ? current : { ...c });
+    previousCompany.current = c;
+  }, [c]);
+  const dirty = editableFields.some(key => editValue(v,key) !== editValue(c,key));
+  const detailPending = detailBusy || pending;
   return (
-    <Modal title={c.name} close={close} t={t} wide>
-      <div className="detail-tabs">
-        {["details", "applications", "source"].map((key) => (
+    <Modal title={c.name} close={close} t={t} wide dirty={dirty} pending={detailPending}>
+      <div className="detail-tabs" role="tablist" aria-label={t("Company details")}>
+        {detailTabs.map((key) => (
           <button
             className={tab === key ? "active" : ""}
+            role="tab" id={'detail-tab-' + key} aria-selected={tab === key}
+            aria-controls="company-detail-panel" tabIndex={tab === key ? 0 : -1}
+            disabled={detailPending} data-detail-tab={key}
+            onKeyDown={event => {
+              const index = detailTabs.indexOf(key), rtl = document.documentElement.dir === 'rtl';
+              let next;
+              if (event.key === 'Home') next = 0;
+              else if (event.key === 'End') next = detailTabs.length - 1;
+              else if (event.key === 'ArrowRight') next = (index + (rtl ? -1 : 1) + detailTabs.length) % detailTabs.length;
+              else if (event.key === 'ArrowLeft') next = (index + (rtl ? 1 : -1) + detailTabs.length) % detailTabs.length;
+              if (next != null) { event.preventDefault(); setTab(detailTabs[next]); event.currentTarget.parentElement.querySelector('[data-detail-tab="' + detailTabs[next] + '"]')?.focus(); }
+            }}
             onClick={() => setTab(key)}
             key={key}
           >
@@ -2219,9 +2346,15 @@ function DetailPanel({ detail, t, close, save, archive }) {
           </button>
         ))}
       </div>
+      <div id="company-detail-panel" role="tabpanel" aria-labelledby={"detail-tab-" + tab} tabIndex={0}>
       {tab === "details" ? (
+        <>
+        {discovery?.enabled && <DiscoveryPanel {...discovery} inline companyId={c.id} t={t} />}
         <Form
           t={t}
+          onBusyChange={setDetailBusy}
+          pending={pending}
+          trackDirty={false}
           close={close}
           save={() =>
             save({
@@ -2231,6 +2364,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
               email: v.email,
               website: v.website,
               careersUrl: v.careersUrl,
+              careersPageStatus: v.careersPageStatus || "unknown", profileSupport: v.profileSupport || "unknown", routeEvidence: v.routeEvidence || "",
               linkedinUrl: v.linkedinUrl,
               followUpAt: v.followUpAt || null,
               attention: v.attention,
@@ -2277,6 +2411,10 @@ function DetailPanel({ detail, t, close, save, archive }) {
               onChange={(e) => setV({ ...v, nextAction: e.target.value })}
             />
           </label>
+          <h3>{t("Career routes")}</h3>
+          <div className="form-row">{[["careersPageStatus","Careers page availability"],["profileSupport","Account / profile"]].map(([key,label]) => <label key={key}>{t(label)}<select aria-label={t(label)} value={v[key] || "unknown"} onChange={event => setV({...v,[key]:event.target.value})}>{[["unknown","Not checked"],["available","Available"],[key === "careersPageStatus" ? "not_found" : "not_offered",key === "careersPageStatus" ? "No careers page found" : "No account / profile offered"],["needs_check","Needs checking"]].map(([value,label])=><option key={value} value={value}>{t(label)}</option>)}</select></label>)}</div>
+          <label>{t("Source or reason")}<input aria-label={t("Source or reason")} maxLength={2000} value={v.routeEvidence || ""} onChange={event=>setV({...v,routeEvidence:event.target.value})}/></label>
+          {c.routesCheckedAt && <p className="field-hint">{t("Last checked")}: {formatDate(c.routesCheckedAt)}</p>}
           <h3 className="contacts-heading">{t("Contacts")}</h3>
           <div className="form-row">
             <label>
@@ -2322,7 +2460,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
             {t("Notes")}
             <textarea
               rows={4}
-              aria-label={t('Notes')}
+              aria-label={t("Notes")}
               value={v.notes || ""}
               onChange={(e) => setV({ ...v, notes: e.target.value })}
             />
@@ -2340,6 +2478,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
             </label>
           )}
         </Form>
+        </>
       ) : tab === "applications" ? (
         <>
           <p className="dialog-intro">
@@ -2364,6 +2503,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
                 <p>
                   {a.method} · {formatDate(a.updatedAt)}
                 </p>
+                {a.originalCompanyId && a.originalCompanyId !== c.id && <p className="field-hint">{a.originalCompanyName} · {a.originalDirectoryName}</p>}
                 {a.notes && <p>{a.notes}</p>}
                 {a.milestones?.length > 0 && (a.milestones.length > 1 || !PROGRESS_LABELS[a.status]) && <ul className="progress-history" aria-label="Recorded progress">
                   {a.milestones.map((milestone, index) => <li key={`${milestone.event}-${milestone.at}-${index}`}>
@@ -2395,6 +2535,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
             Imported source information is preserved separately from your
             tracking.
           </p>
+          <p><a href="https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml" target="_blank" rel="noreferrer">{t("Suggest a correction")}</a></p>
           <dl className="source-fields">
             <dt>Record ID</dt>
             <dd>{c.sourceId || c.id}</dd>
@@ -2413,6 +2554,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
           </dl>
         </>
       )}
+      </div>
     </Modal>
   );
 }
@@ -2455,7 +2597,7 @@ function Contacts({ company: c, t, edit }) {
   return (
     <div className="contacts-cell" aria-label={"Contacts for " + c.name}>
       {channels.map(({ key, label, title, url, Icon, brand }) =>
-        url ? (
+        key === "careers" && c.careersPageStatus === "not_found" ? <button key={key} className="contact-link missing" onClick={() => edit("careersUrl")} aria-label={t("No careers page found") + ": " + c.name}>{t("No careers page found")}</button> : url ? (
           <a
             key={key}
             href={url}

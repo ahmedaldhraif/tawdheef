@@ -17,11 +17,13 @@ from fontTools.varLib.instancer import instantiateVariableFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.recordingPen import RecordingPen
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'public' / 'brand'
 PURPLE, INK, WHITE = '#5A2AFF', '#18181B', '#FFFFFF'
 LATIN_LOGO = 'tawdheef.com'
+ARABIC_LOGO = 'توظيف.كوم'
 OUT.mkdir(exist_ok=True)
 
 # 16-unit stroke; a 5-module-wide body. Both dots are true squares.
@@ -36,7 +38,7 @@ MOTION = '''.dot{transform-box:fill-box;transform-origin:center}
 @media(prefers-reduced-motion:reduce){.dot-a,.dot-b{animation:none}}
 '''
 
-def svg(w, h, content, title='Tawdheef — توظيف', extra=''):
+def svg(w, h, content, title='Tawdheef — توظيف.كوم', extra=''):
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" aria-label="{escape(title, quote=True)}" {extra}><title>{escape(title)}</title>{content}</svg>\n'
 
 def save(name, content):
@@ -68,15 +70,54 @@ for key, (file, weight) in font_specs.items():
 for name in ['Manrope', 'NotoKufiArabic']:
     font=TTFont(OUT/'fonts'/f'{name}-variable.ttf'); font.flavor='woff2'; font.save(OUT/'fonts'/f'{name}-variable.woff2')
 
+# HarfBuzz emits separate named dot glyphs. Rework only these marks, never
+# letter contours or counters. Match the original dot's narrower axis.
+ARABIC_DOT_GLYPHS = {'dotabovear':1, 'twodotshorizontalabovear':2,
+                     'twodotshorizontalbelowar':2, 'period':1}
+arabic_glyphset = fonts['arabic'][0].getGlyphSet()
+dot_bounds = BoundsPen(arabic_glyphset)
+arabic_glyphset['dotabovear'].draw(dot_bounds)
+ARABIC_DOT_SIDE = min(dot_bounds.bounds[2]-dot_bounds.bounds[0],
+                      dot_bounds.bounds[3]-dot_bounds.bounds[1])
+
+def square_dot_outline(glyphset, glyph_name, pen):
+    recorded = RecordingPen(); glyphset[glyph_name].draw(recorded)
+    contours = []; contour = None
+    for operation, args in recorded.value:
+        if operation == 'moveTo':
+            if contour is not None: raise ValueError(f'Unclosed dot contour: {glyph_name}')
+            contour = RecordingPen()
+        if contour is None or operation == 'addComponent':
+            raise ValueError(f'Unexpected dot glyph structure: {glyph_name}')
+        getattr(contour, operation)(*args)
+        if operation == 'closePath':
+            contours.append(contour); contour = None
+    if contour is not None or len(contours) != ARABIC_DOT_GLYPHS[glyph_name]:
+        raise ValueError(f'Dot glyph changed; review its source: {glyph_name}')
+    half = ARABIC_DOT_SIDE / 2
+    for contour in contours:
+        bounds = BoundsPen(glyphset); contour.replay(bounds)
+        x0,y0,x1,y1 = bounds.bounds; cx,cy = (x0+x1)/2,(y0+y1)/2
+        # Preserve each original dot centre and clockwise contour direction.
+        pen.moveTo((cx-half,cy-half)); pen.lineTo((cx-half,cy+half))
+        pen.lineTo((cx+half,cy+half)); pen.lineTo((cx+half,cy-half)); pen.closePath()
+
 def outline(text, family='latin'):
     font, hbfont=fonts[family]
     buf=hb.Buffer(); buf.add_str(text); buf.guess_segment_properties(); hb.shape(hbfont,buf)
     glyphset=font.getGlyphSet(); pen=SVGPathPen(glyphset); bounds=BoundsPen(glyphset)
     x=y=0
     for info,pos in zip(buf.glyph_infos,buf.glyph_positions):
-        glyph=glyphset[font.getGlyphName(info.codepoint)]
+        glyph_name=font.getGlyphName(info.codepoint); glyph=glyphset[glyph_name]
         transform=(1,0,0,1,x+pos.x_offset,y+pos.y_offset)
-        glyph.draw(TransformPen(pen,transform)); glyph.draw(TransformPen(bounds,transform))
+        target=TransformPen(pen,transform)
+        if family=='arabic' and glyph_name in ARABIC_DOT_GLYPHS:
+            square_dot_outline(glyphset,glyph_name,target)
+        else:
+            glyph.draw(target)
+        # Retain original font bounds so letter scale, spacing and baseline
+        # remain exact when the round dots become squares.
+        glyph.draw(TransformPen(bounds,transform))
         x+=pos.x_advance; y+=pos.y_advance
     return pen.getCommands(),bounds.bounds
 
@@ -88,20 +129,22 @@ def mark_at(x,y,size,color):
     return f'<g fill="{color}" transform="translate({x} {y}) scale({size/100})">{MARK}</g>'
 
 for variant, color in [('purple',PURPLE),('ink',INK),('white',WHITE)]:
-    for family,text in [('latin',LATIN_LOGO),('arabic','توظيف')]:
+    for family,text in [('latin',LATIN_LOGO),('arabic',ARABIC_LOGO)]:
         word,width=lettering(text,family,0,0,64,color)
         save(f'wordmark-{family}-{variant}.svg', svg(round(width,4),64,word))
         # Optical alignment uses visible mark bounds (24.4–75.6), not its box.
-        word,width=lettering(text,family,148,32,64, WHITE if variant=='white' else INK)
-        content=mark_at(0,0,128,color)+word
+        word,width=lettering(text,family,0 if family=='arabic' else 148,32,64, WHITE if variant=='white' else INK)
+        # Arabic lockups read right to left: the mark sits on the right.
+        # Keep the original symbol geometry; never mirror the artwork.
+        content=mark_at(width+36 if family=='arabic' else 0,0,128,color)+word
         save(f'logo-{family}-{variant}.svg',svg(round(width+164,4),128,content))
     # Arabic above Latin, same visible width, natural joining preserved.
-    ar,arw=lettering('توظيف','arabic',176,26,54, WHITE if variant=='white' else INK)
+    ar,arw=lettering(ARABIC_LOGO,'arabic',176,26,54, WHITE if variant=='white' else INK)
     en,enw=lettering(LATIN_LOGO,'latin',176,103,46, WHITE if variant=='white' else INK)
     scale=arw/enw
     en=f'<g transform="translate({176*(1-scale):.6f} {103*(1-scale):.6f}) scale({scale:.8f})">{en}</g>'
     save(f'logo-bilingual-{variant}.svg',svg(round(arw+192,4),180,mark_at(0,0,180,color)+ar+en))
-    ar,arw=lettering('توظيف','arabic',0,174,62,color)
+    ar,arw=lettering(ARABIC_LOGO,'arabic',0,174,62,color)
     en,enw=lettering(LATIN_LOGO,'latin',0,269,42, WHITE if variant=='white' else INK)
     width=max(arw,enw)+64
     body=mark_at((width-224)/2,-8,224,color)+f'<g transform="translate({(width-arw)/2:.5f} 0)">{ar}</g>'+f'<g transform="translate({(width-enw)/2:.5f} 0)">{en}</g>'
@@ -120,29 +163,31 @@ for name,bg,fg in [('app-icon',PURPLE,WHITE),('app-icon-light',WHITE,PURPLE),('a
 # A self-contained GitHub social preview with outlined bilingual typography.
 social=f'<rect width="1280" height="640" fill="{WHITE}"/>'
 social+=mark_at(64,144,320,PURPLE)
-ar,arw=lettering('توظيف','arabic',452,204,105,INK)
+ar,arw=lettering(ARABIC_LOGO,'arabic',452,204,105,INK)
+if arw > 748:
+    ar,arw=lettering(ARABIC_LOGO,'arabic',452,204,105*748/arw,INK)
 en,enw=lettering(LATIN_LOGO,'latin',452,345,76,INK)
 # Preserve the social canvas and symbol; fit the longer domain wordmark inside
 # the existing text column, leaving the same 80-pixel right-hand margin.
 if enw > 748:
     en,enw=lettering(LATIN_LOGO,'latin',452,345,76*748/enw,INK)
 social+=ar+en
-desc,descw=lettering('Auto job apply & application tracker.','caption',452,464,22,'#62626B')
+desc,descw=lettering('Find matching jobs and build career profiles.','caption',452,464,22,'#62626B')
 assert descw <= 748, 'Social descriptor must fit the existing text column'
 url,_=lettering('tawdheef.com','caption',80,563,16,'#62626B')
 social+=desc+url+f'<rect x="80" y="529" width="1120" height="1" fill="#DEDEE3"/>'
-save('github-social.svg',svg(1280,640,social,'Tawdheef — Auto Job Apply & Application Tracker'))
+save('github-social.svg',svg(1280,640,social,'Tawdheef - Find matching jobs and build career profiles'))
 
 tokens={
- 'name':{'display':LATIN_LOGO,'prose':'Tawdheef','arabic':'توظيف','domain':'www.tawdheef.com','repositorySlug':'tawdheef'},
- 'selectedConcept':'04 — Arabic Grid','version':'1.0.0','date':'2026-11-13',
- 'parent':{'name':'Tabbio','relationship':'optional CV integration','endorsement':'Powered by Tabbio','optional':True,'coreLogoIncludesEndorsement':False},
+ 'name':{'display':LATIN_LOGO,'prose':'Tawdheef','arabic':'توظيف','arabicWordmark':ARABIC_LOGO,'domain':'www.tawdheef.com','repositorySlug':'tawdheef'},
+ 'selectedConcept':'04 — Arabic Grid','version':'1.3.0','date':'2026-11-14',
+ 'parent':{'name':'Tabbio','relationship':'optional CV integration','endorsement':None,'optional':True,'coreLogoIncludesEndorsement':False},
  'color':{'purple':PURPLE,'ink':INK,'white':WHITE,'canvas':'#F5F5F7','lavender':'#EEE8FF','muted':'#62626B','border':'#DEDEE3','success':'#23734B'},
- 'type':{'latinBrand':'Manrope 750','arabicBrand':'Noto Kufi Arabic 750','ui':'Installed platform system font','code':'ui-monospace, Consolas, monospace','logoTextIsOutlined':True},
- 'geometry':{'viewBox':[0,0,100,100],'bodyPath':BODY,'strokeModule':16,'dotSize':16,'visibleBounds':[10,24.4,90,75.6],'clearSpaceMinimum':'One dot (16 units) on every side of the visible artwork','smallMasters':[16,24,32]},
+ 'type':{'latinBrand':'Manrope 750','arabicBrand':'Noto Kufi Arabic 750 with custom square dot outlines','ui':'Installed platform system font','code':'ui-monospace, Consolas, monospace','logoTextIsOutlined':True,'arabicDots':'Square letter dots and separator; naturally shaped letter bodies are unchanged'},
+ 'geometry':{'viewBox':[0,0,100,100],'bodyPath':BODY,'strokeModule':16,'dotSize':16,'visibleBounds':[10,24.4,90,75.6],'clearSpaceMinimum':'One dot (16 units) on every side of the visible artwork','smallMasters':[16,24,32],'arabicDots':{'shape':'square','sideInFontUnits':round(ARABIC_DOT_SIDE,6),'sourceGlyphs':list(ARABIC_DOT_GLYPHS),'placement':'Original dot centres and HarfBuzz offsets and advances','separator':'Same square dot module','scope':'Outlined Arabic brand lettering only; original font files remain unchanged','normalization':'Original font bounds preserve the letter scale, spacing and baseline'}},
  'usage':{'minSymbolSize':16,'minLatinLockupWidth':180,'minArabicLockupWidth':140,'minBilingualLockupWidth':260,'minStackedLockupWidth':160,'minEndorsementHeight':12,'iconSafeArea':'At least 10% of the square canvas around visible artwork'},
  'motion':{'purpose':'Indicate actual loading; optionally demonstrate the mark on a brand surface','idle':'static','favicon':'static','busyDurationMs':1120,'dotStaggerMs':140,'movementIn100UnitViewBox':2,'lowestOpacity':0.48,'easing':'cubic-bezier(.45,0,.55,1)','reducedMotion':'Static mark; textual loading status remains','keyboardTriggers':'No decorative motion'},
- 'voice':{'englishDescriptor':'Auto Job Apply & Application Tracker','arabicDescriptor':'التقديم الآلي للوظائف ومتابعة الطلبات','englishLine':'Automate your job search.','arabicLine':'أتمت رحلة بحثك عن عمل.','rules':['Plain, calm, practical language','Describe application outcomes only when confirmed','Keep source identities and evidence intact']},
+ 'voice':{'englishDescriptor':'Auto Job Apply & Application Tracker','arabicDescriptor':'التقديم الآلي للوظائف ومتابعة الطلبات','englishLine':'Find matching jobs. Build career profiles.','arabicLine':'ابحث عن وظائف مناسبة. أنشئ ملفاتك المهنية.','rules':['Plain, calm, practical language','Describe application outcomes only when confirmed','Keep source identities and evidence intact']},
  'fontSources':[
   {'family':'Manrope','url':'https://github.com/google/fonts/tree/main/ofl/manrope','license':'SIL Open Font License 1.1'},
   {'family':'Noto Kufi Arabic','url':'https://github.com/google/fonts/tree/main/ofl/notokufiarabic','license':'SIL Open Font License 1.1'}],

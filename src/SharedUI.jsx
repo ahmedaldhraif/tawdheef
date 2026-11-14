@@ -65,6 +65,9 @@ export function Modal({ title, close, children, t, narrow = false, wide = false,
       }
     }
     const handle = e => {
+      // The inline editor owns Escape; React handles it after this native
+      // listener. Let it cancel the edit without closing the containing dialog.
+      if (e.key === 'Escape' && e.target.closest?.('.inline-editor')) return;
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!state.current.pending) closeRef.current(); }
       if (e.key === 'Tab') {
         const list = items(), active = document.activeElement;

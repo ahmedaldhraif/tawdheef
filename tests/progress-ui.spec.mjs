@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { connectionMode: 'native', language: 'en' } })).ok()).toBeTruthy();
   page.__progressErrors = [];
   page.on('pageerror', error => page.__progressErrors.push(error.message));
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
@@ -30,18 +31,22 @@ async function fixture(request, suffix) {
   return { directory, company };
 }
 
-test('optional Progress column retains career steps without marking an application', async ({ page, request }, testInfo) => {
+test('default Career profile column retains career steps without marking an application', async ({ page, request }, testInfo) => {
   const { directory, company } = await fixture(request, 'column');
   await page.addInitScript(id => localStorage.setItem('apply-directory', id), directory.id);
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(directory.name);
-  await expect(page.getByRole('columnheader', { name: 'Progress', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('columnheader', { name: 'Career profile', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'List options', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Choose columns', exact: true }).click();
   const columns = page.getByRole('dialog', { name: 'Columns', exact: true });
-  await columns.getByRole('checkbox', { name: 'Progress', exact: true }).click();
-  await expect(columns.getByRole('checkbox', { name: 'Progress', exact: true })).toBeChecked();
-  await expect(page.getByRole('columnheader', { name: 'Progress', exact: true })).toHaveCount(1);
+  await expect(columns.getByRole('checkbox', { name: 'Career profile', exact: true })).toBeChecked();
+  await columns.getByRole('checkbox', { name: 'Career profile', exact: true }).click();
+  await expect(columns.getByRole('checkbox', { name: 'Career profile', exact: true })).not.toBeChecked();
+  await expect(page.getByRole('columnheader', { name: 'Career profile', exact: true })).toHaveCount(0);
+  await columns.getByRole('checkbox', { name: 'Career profile', exact: true }).click();
+  await expect(columns.getByRole('checkbox', { name: 'Career profile', exact: true })).toBeChecked();
+  await expect(page.getByRole('columnheader', { name: 'Career profile', exact: true })).toHaveCount(1);
   await columns.getByRole('checkbox', { name: 'Company type', exact: true }).click();
   await expect(columns.getByRole('checkbox', { name: 'Company type', exact: true })).toBeChecked();
   await expect(page.getByRole('columnheader', { name: 'Company type', exact: true })).toHaveCount(1);
@@ -74,8 +79,9 @@ test('reports show account and CV milestones separately from sent applications',
   expect(report.cvsUploaded).toBeGreaterThan(0);
   await page.addInitScript(id => localStorage.setItem('apply-directory', id), directory.id);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Monitoring', exact: true });
+  await dialog.locator('.reports-replies > summary').click();
   await dialog.locator('summary').filter({ hasText: /^Latest report$/ }).click();
   for (const [label, key] of [['Accounts created', 'accountsCreated'], ['Profiles created', 'profilesCreated'], ['CVs uploaded', 'cvsUploaded'], ['CVs sent', 'cvsSent'], ['Applications sent', 'applied']]) {
     await expect(dialog.locator('dl > div').filter({ has: page.locator('dt').filter({ hasText: new RegExp(`^${label}$`) }) }).locator('dd')).toHaveText(String(report[key]));

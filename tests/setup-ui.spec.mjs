@@ -410,10 +410,10 @@ for (const width of [320, 1440]) test(`Arabic tracker connections, CV upload and
   await expect(dialog.locator('.cv-original-file')).toContainText('ملف السيرة الذاتية الأصلي للرفع');
   await expect(dialog.getByLabel('ملف السيرة الذاتية', { exact: true })).toBeVisible();
   await dialog.locator('.dialog-header button').first().click();
-  await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'الإعدادات', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'المتابعة', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'المتابعة', exact: true });
   await expect(settings.locator('.monitoring-disclosure > summary')).toContainText('يحتاج تدخلك');
-  await page.screenshot({ path: testInfo.outputPath(`settings-collapsed-ar-${width}.png`) });
+  await page.screenshot({ path: testInfo.outputPath(`monitoring-collapsed-ar-${width}.png`) });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'المتابعة', exact: true });
   for (const name of ['الوظائف المناسبة', 'الملفات المهنية', 'رسائل طلبات التوظيف', 'التقويم']) await expect(panel.getByRole('checkbox', { name, exact: true })).toBeChecked();
