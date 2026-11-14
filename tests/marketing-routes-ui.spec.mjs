@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
@@ -277,4 +278,77 @@ test('website, Skills, brand guide and app footers omit the Tabbio endorsement',
     await expect(footer).not.toContainText(/Powered by|بدعم من|Tabbio/i);
     await expect(footer.locator('a[href*="tabbio.com"], img[src*="tabbio"]')).toHaveCount(0);
   }
+});
+
+// Community contribution journeys: public suggestions do not write local tracking.
+for (const locale of ['en', 'ar']) for (const scheme of ['light', 'dark']) {
+  test('community contribution choices fit mobile and desktop in ' + locale + ' ' + scheme, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+    await page.goto(locale === 'ar' ? '/welcome/ar/#contribute' : '/welcome/#contribute');
+    const section = page.locator('#contribute');
+    await expect(section.getByRole('heading', { level: 2 })).toHaveText(locale === 'ar' ? 'ساهم في تطوير Tawdheef.' : 'Help build Tawdheef.');
+    const paths = section.locator('.contribution-grid article');
+    await expect(paths).toHaveCount(4);
+    const urls = await paths.locator('a').evaluateAll(links => links.map(link => link.href));
+    for (const [index, template] of ['directory-data.yml', 'add-company.yml', 'new-country-pack.yml'].entries()) {
+      const target = new URL(urls[index]);
+      expect(target.origin).toBe('https://github.com');
+      expect(target.pathname).toBe('/ahmedaldhraif/tawdheef/issues/new');
+      expect(target.searchParams.get('template')).toBe(template);
+      expect(readFileSync(new URL('../.github/ISSUE_TEMPLATE/' + template, import.meta.url), 'utf8')).toContain('checked-date');
+    }
+    expect(urls[3]).toBe('https://github.com/ahmedaldhraif/tawdheef/blob/main/CONTRIBUTING.md#code-changes');
+    for (const width of [320, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      const grid = await section.locator('.contribution-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+      expect(grid).toBe(width === 320 ? 1 : 2);
+      for (const link of await paths.locator('a').all()) expect((await link.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    }
+    const first = paths.first().getByRole('link');
+    await first.focus(); await page.keyboard.press('Tab');
+    await expect(paths.nth(1).getByRole('link')).toBeFocused();
+    await expect(page.locator('.site-footer a[href="/directories/#contribute"]')).toHaveCount(1);
+    expect(await paths.locator('button,input,textarea,select').count()).toBe(0);
+  });
+}
+
+test('country corrections and missing-company reports retain their country context', async ({ page }) => {
+  const packs = JSON.parse(readFileSync(new URL('../directories/catalog.json', import.meta.url), 'utf8')).packs.filter(pack => pack.featured !== false && !pack.historical);
+  expect(packs).toHaveLength(6);
+  await page.setViewportSize({ width: 320, height: 844 });
+  for (const pack of packs) {
+    await page.goto('/directories/' + pack.id + '/#contribute');
+    const section = page.locator('#contribute');
+    await expect(section.getByRole('heading')).toContainText(pack.name);
+    const urls = await section.locator('.actions a').evaluateAll(links => links.map(link => link.href));
+    expect(urls).toHaveLength(2);
+    for (const [index, template] of ['directory-data.yml', 'add-company.yml'].entries()) {
+      const target = new URL(urls[index]);
+      expect(target.searchParams.get('template')).toBe(template);
+      expect(target.searchParams.get('title')).toContain(pack.name);
+    }
+    await expect(section).toContainText('reviewed before merging');
+    await expect(section).toContainText('download and import');
+    const index = JSON.parse(readFileSync(new URL('../directories/' + pack.id + '/index.json', import.meta.url), 'utf8'));
+    const edit = page.locator('.data-preview tbody tr').first().getByRole('link', { name: 'Suggest edit for ' + index.records[0].name, exact: true });
+    const recordTarget = new URL(await edit.getAttribute('href'));
+    expect(recordTarget.searchParams.get('template')).toBe('directory-data.yml');
+    expect(recordTarget.searchParams.get('title')).toContain(index.records[0].id);
+    expect(recordTarget.searchParams.get('title')).toContain(pack.name);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  }
+});
+
+test('directory hub offers code, data and feature paths with maintained contribution guides', async ({ page }) => {
+  await page.goto('/directories/#contribute');
+  const section = page.locator('#contribute');
+  await expect(section.locator('.contribution-grid article')).toHaveCount(4);
+  await expect(section.getByRole('link', { name: 'Report a bug', exact: true })).toHaveAttribute('href', /template=bug.yml$/);
+  await expect(section.getByRole('link', { name: 'Suggest a feature', exact: true })).toHaveAttribute('href', /template=feature.yml$/);
+  await expect(section).toContainText('No coding needed');
+  for (const name of ['bug.yml', 'feature.yml']) expect(readFileSync(new URL('../.github/ISSUE_TEMPLATE/' + name, import.meta.url), 'utf8')).toContain('name:');
+  const guide = readFileSync(new URL('../CONTRIBUTING.md', import.meta.url), 'utf8');
+  expect(guide).toContain('## Code changes');
+  expect(guide).toContain('add-company.yml');
 });
