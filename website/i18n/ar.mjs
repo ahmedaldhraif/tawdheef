@@ -52,8 +52,9 @@ export default {
     "cliNote": "الإعداد يضيف الأدوات والمهارة تلقائيًا.",
     "primary": "جهّز التطبيق مع مساعدك",
     "allGuides": "جميع الأدلة",
-    "installIntro": "أضف المهارة إلى Codex أو Claude Code.",
-    "installNote": "هذه تعليمات سير العمل لمساعدك. جهّز التطبيق لتبدأ.",
+    "installIntro": "انسخ هذا الأمر إلى Codex أو Claude Code واطلب منه تثبيت المهارة.",
+    "installNote": "يضيف هذا تعليمات سير العمل لمساعدك.",
+    "pasteCaption": "الصق الأمر في مساعدك.",
     "appSetup": "جهّز التطبيق",
     "cvShortcut": "أنشئ سيرتك أو اربطها"
   },

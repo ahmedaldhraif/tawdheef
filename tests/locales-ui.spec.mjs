@@ -38,17 +38,23 @@ test('landing language switch preserves the current section in both directions',
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
-test('Arabic landing uses the compact skill install and original Tabbio CV shortcut', async ({ page }) => {
+test('Arabic landing keeps copyable skill instructions and a paste-only recording', async ({ page }) => {
   await captureClipboard(page);
   await page.goto('/welcome/ar/');
   const section = page.locator('#how-it-works');
   await expect(section.locator('.workflow')).toHaveCount(0);
-  const logo=section.locator('.skills-cv-shortcut img');
-  await expect(logo).toHaveAttribute('src','/brands/tabbio-wordmark-violet-original.svg');
-  await expect(logo).toHaveAttribute('width','100');
-  await expect(logo).toHaveAttribute('height','24');
-  expect(await logo.evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
-  await expect(section.locator('.skills-cv-shortcut a')).toHaveAttribute('href','/ar/guides/use-the-skill/#cv');
+  await expect(section.locator('.skills-cv-shortcut')).toHaveCount(0);
+  const demo = section.locator('.agent-install-demo');
+  const image = demo.locator('[data-demo-gif]');
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste.gif');
+  await image.evaluate(element => element.decode());
+  expect(await image.evaluate(element => [element.naturalWidth, element.naturalHeight])).toEqual([584, 210]);
+  await expect(demo.locator('button, video')).toHaveCount(0);
+  await expect(demo.locator('figcaption')).toHaveText('الصق الأمر في مساعدك.');
+  const cv = page.locator('#tabbio .tabbio-actions');
+  await expect(cv.getByRole('link', { name: 'أنشئ سيرتك مجانًا', exact: true })).toHaveAttribute('href', /^https:\/\/app\.tabbio\.com/);
+  await expect(cv.getByRole('link', { name: 'اربط سيرتك الذاتية', exact: true })).toHaveAttribute('href', '/ar/guides/use-the-skill/#cv');
   await expect(section.getByRole('link',{name:'جهّز التطبيق',exact:true})).toHaveAttribute('href','/ar/skills/#get-started');
   await expect(page.locator('#quick-cli')).toHaveCSS('direction','ltr');
   await section.locator('[data-copy="quick-cli"]').click();

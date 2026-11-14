@@ -57,7 +57,7 @@ Use `tawdheef.com` in the English wordmark, Tawdheef in prose, توظيف in Ara
 Calm, useful and concrete. Arabic identity; developer-friendly distribution.
 Ahmed AlDhraif is the named author and Tabbio founder. Link to his real profile;
 avoid unsupported rankings, audience sizes or testimonials.
-Powered by Tabbio is an optional separate endorsement.
+Tabbio appears in the CV integration section. Omit Powered by Tabbio from the website, brand guide and app footers.
 Use Ahmed's supplied official portrait, Built by Ahmed AlDhraif and a small
 original LinkedIn favicon in one quiet link to his verified profile URL.
 Omit Founder of Tabbio from this byline. Keep the ت mark in the header and
@@ -216,6 +216,6 @@ route is not necessarily tested. Only real submission evidence means applied.
 
 ## Current setup and language navigation
 
-The Skills overview leads with its compact skill install command and brief workflow-guidance note. Get started, the actual app CLI setup and the Tabbio CV step follow it. The homepage uses the same compact skill install block, with direct app setup and Tabbio CV links. Detailed CLI setup stays on Skills and guides. The shared English/Arabic header uses native links in a segmented control, preserving the current section. Production has canonical localized URLs, reciprocal language alternates, sitemap.xml and public llms.txt navigation. The local preview stays noindex. Deployment and real indexing are separate checks.
+The Skills overview leads with its compact skill install command and brief workflow-guidance note. Get started, the actual app CLI setup and the Tabbio CV step follow it. The homepage uses the same compact skill install block, with a direct app setup link and a small paste demonstration from genuine Claude Code captures. CV actions stay in the dedicated Tabbio section. Detailed CLI setup stays on Skills and guides. The shared English/Arabic header uses native links in a segmented control, preserving the current section. Production has canonical localized URLs, reciprocal language alternates, sitemap.xml and public llms.txt navigation. The local preview stays noindex. Deployment and real indexing are separate checks.
 
 The public website follows the device color scheme by default, preserves a manual color choice and offers a reset to the device theme. Current preview assets use an isolated public GCC dataset with no submitted applications or connected personal accounts.

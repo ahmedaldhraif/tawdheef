@@ -14,6 +14,16 @@
     copyTimers.set(button,setTimeout(()=>{button.textContent=word('copy','Copy');},2200));
     statusTimer=setTimeout(()=>{if(status)status.textContent='';},2200);
   }));
+  for(const image of document.querySelectorAll('.agent-install-demo img[data-demo-gif]')){
+    const motion=matchMedia('(prefers-reduced-motion: reduce)');let visible=false;
+    const sync=()=>{const src=visible&&!document.hidden&&!motion.matches?image.dataset.demoGif:image.dataset.demoPoster;if(image.getAttribute('src')!==src)image.src=src;};
+    document.addEventListener('visibilitychange',sync);
+    addEventListener('pagehide',()=>{image.src=image.dataset.demoPoster;});
+    addEventListener('pageshow',sync);
+    motion.addEventListener('change',sync);
+    if('IntersectionObserver' in window)new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;sync();},{threshold:0.1}).observe(image);
+    else{visible=true;sync();}
+  }
   const header=document.querySelector('.site-header');
   function updateHeader(){header?.classList.toggle('scrolled',scrollY>8);}
   addEventListener('scroll',updateHeader,{passive:true});updateHeader();
