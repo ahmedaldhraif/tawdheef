@@ -55,9 +55,6 @@ export default {
     "installIntro": "Copy this command into Codex or Claude Code and ask it to install the skill.",
     "installNote": "This adds workflow instructions for your agent.",
     "pasteCaption": "Paste the command into your agent.",
-    "playTip": "Play preview",
-    "pauseTip": "Pause",
-    "replayTip": "Replay",
     "appSetup": "Set up the app",
     "cvShortcut": "Create or connect your CV"
   },

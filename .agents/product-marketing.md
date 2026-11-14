@@ -57,7 +57,7 @@ Use `tawdheef.com` in the English wordmark, Tawdheef in prose, توظيف in Ara
 Calm, useful and concrete. Arabic identity; developer-friendly distribution.
 Ahmed AlDhraif is the named author and Tabbio founder. Link to his real profile;
 avoid unsupported rankings, audience sizes or testimonials.
-Powered by Tabbio is an optional separate endorsement.
+Tabbio appears in the CV integration section. Omit Powered by Tabbio from the website, brand guide and app footers.
 Use Ahmed's supplied official portrait, Built by Ahmed AlDhraif and a small
 original LinkedIn favicon in one quiet link to his verified profile URL.
 Omit Founder of Tabbio from this byline. Keep the ت mark in the header and

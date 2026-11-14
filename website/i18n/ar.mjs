@@ -55,9 +55,6 @@ export default {
     "installIntro": "انسخ هذا الأمر إلى Codex أو Claude Code واطلب منه تثبيت المهارة.",
     "installNote": "يضيف هذا تعليمات سير العمل لمساعدك.",
     "pasteCaption": "الصق الأمر في مساعدك.",
-    "playTip": "عرض المثال",
-    "pauseTip": "إيقاف مؤقت",
-    "replayTip": "إعادة التشغيل",
     "appSetup": "جهّز التطبيق",
     "cvShortcut": "أنشئ سيرتك أو اربطها"
   },

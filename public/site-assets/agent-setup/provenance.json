@@ -13,7 +13,7 @@
   "encoding": "Animated GIF, 584 by 210, six seconds, plus a static PNG poster. The optional H.264 MP4 uses 15fps, yuv420p and fast start.",
   "notes": [
     "Only the composer is included. Sidebar, conversations, account and environment names are excluded.",
-    "The website uses a rounded GIF with an explicit pause/replay control. Reduced-motion readers and readers without JavaScript get the still image.",
+    "The website uses a rounded GIF that loops automatically when visible, without playback controls. Reduced-motion readers and readers without JavaScript get the still image.",
     "Visible copyable text provides the same instruction without playback."
   ],
   "assets": [

@@ -1,10 +1,11 @@
 {
-  "capturedAt": "2026-11-14T00:12:23.477Z",
+  "capturedAt": "2026-11-14T00:44:32.372Z",
   "appVersion": "0.1.2",
-  "appBuildSha256": "0e61f30c8a10e1855cc1a3be24c2fe4bd1f883607c54dfb701c5c4c3b099e0d3",
+  "versionMeaning": "Package version only. The supplied local build may contain newer development UI than the public release with that version.",
+  "appBuildSha256": "2a6425508973d5416b229361cde40a5799721bdb3f641d3c289b7a65a5261305",
   "temporaryFixture": true,
   "port": 4031,
-  "description": "Actual current local development React interface with complete public research packs imported through the validated domain store. Directory counts are real. All tracking starts empty; no fictional applications, profiles, emails or provider states were added. The unchanged package version does not identify the released interface.",
+  "description": "Actual supplied built React interface with complete public research packs imported through the validated domain store. Directory counts are real. All tracking starts empty; no fictional applications, profiles, emails or provider states were added. Legacy builds retain their actual UI without fabricated snapshot controls.",
   "caption": "Public research data in an isolated preview. No applications sent.",
   "recordCount": 13714,
   "sources": [
@@ -63,6 +64,7 @@
       "sourceSha256": "325538befa3c963bff8e791491d33a2fef21f3ab752b8fd0482d9cd805d45fe9"
     }
   ],
+  "snapshotApiAvailable": true,
   "snapshots": [
     {
       "directoryId": "uae-expanded",
@@ -124,7 +126,7 @@
   "providerConnections": 0,
   "externalRequestCount": 0,
   "limitations": [
-    "These screenshots reflect newer local development UI than the current public v0.1.2 release; they do not demonstrate that those UI changes are released.",
+    "The screenshot reflects the supplied local build and may show newer development UI than the current public release.",
     "Mobile country tabs scroll horizontally; the screenshot shows the initial viewport.",
     "Emulated mobile viewport, not a physical-device test.",
     "Public research dates do not establish current vacancies or tested recruitment routes."
@@ -132,11 +134,12 @@
   "shots": [
     {
       "file": "directory.png",
-      "bytes": 87897,
-      "sha256": "ac76bb7d46e48970a1b446ec90206d536f15acd645e5d710d0f3d70949c39ab4",
+      "bytes": 86833,
+      "sha256": "9034f7c6831ffe925472f068fe157459bdd08c5d57e6d3fe9fcedc21078d3246",
       "width": 1100,
       "height": 760,
       "state": "Real public research records; no selections, runs or submission activity.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -172,11 +175,12 @@
     },
     {
       "file": "targets.png",
-      "bytes": 86550,
-      "sha256": "8dbe6a34cbb2b4e27d27ede0e0b5e50381b35f0776bdd38454ab5331fe960951",
+      "bytes": 85481,
+      "sha256": "4d53b15aa7f4345eebf5de671c354f8a226881797d89c106f52129bf43270870",
       "width": 1100,
       "height": 760,
       "state": "Two public source rows selected locally; Run was not opened or started.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -212,11 +216,12 @@
     },
     {
       "file": "tracking.png",
-      "bytes": 97339,
-      "sha256": "b504d6bcb90b07b7c9429831aeb0ecc2976b5fcb10370a60b5a73126bbba366a",
+      "bytes": 96564,
+      "sha256": "9595021176865aa8f63e6c7243fb81427a3055ea73f35e9337d0a63b7af4c64a",
       "width": 1100,
       "height": 760,
       "state": "Actual public company detail opened read-only; no status, note or progress edits.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -257,6 +262,7 @@
       "width": 390,
       "height": 820,
       "state": "Real public research records; no selections, runs or submission activity.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -297,6 +303,7 @@
       "width": 390,
       "height": 820,
       "state": "Two public source rows selected locally; Run was not opened or started.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -337,6 +344,7 @@
       "width": 390,
       "height": 820,
       "state": "Actual public company detail opened read-only; no status, note or progress edits.",
+      "snapshotVisible": true,
       "tabs": [
         {
           "text": "UAE3583",
@@ -370,6 +378,5 @@
         }
       ]
     }
-  ],
-  "versionMeaning": "Package version only. These screenshots show the current local development UI, which is newer than the public v0.1.2 interface."
+  ]
 }

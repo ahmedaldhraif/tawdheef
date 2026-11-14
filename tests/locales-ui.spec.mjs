@@ -50,8 +50,8 @@ test('Arabic landing keeps copyable skill instructions and a paste-only recordin
   await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste.gif');
   await image.evaluate(element => element.decode());
   expect(await image.evaluate(element => [element.naturalWidth, element.naturalHeight])).toEqual([584, 210]);
-  await expect(demo.getByRole('button', { name: 'إيقاف مؤقت', exact: true })).toBeVisible();
-  await expect(demo.locator('figcaption span')).toHaveText('الصق الأمر في مساعدك.');
+  await expect(demo.locator('button, video')).toHaveCount(0);
+  await expect(demo.locator('figcaption')).toHaveText('الصق الأمر في مساعدك.');
   const cv = page.locator('#tabbio .tabbio-actions');
   await expect(cv.getByRole('link', { name: 'أنشئ سيرتك مجانًا', exact: true })).toHaveAttribute('href', /^https:\/\/app\.tabbio\.com/);
   await expect(cv.getByRole('link', { name: 'اربط سيرتك الذاتية', exact: true })).toHaveAttribute('href', '/ar/guides/use-the-skill/#cv');

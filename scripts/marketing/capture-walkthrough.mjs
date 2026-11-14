@@ -138,7 +138,9 @@ try {
     const selections = page.locator('tbody input[type="checkbox"]');
     await selections.nth(0).check();
     await selections.nth(1).check();
-    if ((await runButton.textContent()).trim().startsWith('Run on')) {
+    // Modern scope recounting temporarily changes the label, so use its stable
+    // UI class rather than racing that asynchronous text against selection.
+    if (await runButton.evaluate(button => button.classList.contains('directory-run'))) {
       await page.getByRole('button', { name: 'Run on 2 selected', exact: true }).waitFor();
     } else {
       await page.waitForFunction(() => document.querySelector('.heading-actions .button-count')?.textContent.trim() === '2');

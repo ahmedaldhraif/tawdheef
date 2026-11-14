@@ -1057,9 +1057,6 @@ function App() {
           <span>
             <ShieldCheck size={14} />
             {t("Saved on this computer")}
-            <a className="tabbio-endorsement" href="https://www.tabbio.com/" target="_blank" rel="noreferrer">
-              <span>Powered by</span><img src="/brands/tabbio.svg" alt="" width="14" height="14" /><span>Tabbio</span>
-            </a>
           </span>
           <span>
             {active === "uae" && (
