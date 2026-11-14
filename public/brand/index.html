@@ -7,13 +7,16 @@
   <meta name="description" content="Tawdheef identity: Arabic Grid logo, bilingual wordmarks, icons, colour and motion." />
   <title>Tawdheef · Brand system</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <script src="/site-assets/docs-theme.js"></script>
   <link rel="stylesheet" href="guide.css" />
+  <style>.brand-guide-dark,.docs-theme-toggle,.brand-device-theme{display:none}</style>
+  <link rel="stylesheet" href="/site-assets/brand-site-theme.css" />
 </head>
 <body>
   <a class="skip" href="#main">Skip to brand guide</a>
   <header class="site-header">
-    <a href="#" aria-label="Tawdheef brand guide"><img src="logo-latin-purple.svg" alt="tawdheef.com" width="192" height="48" /></a>
-    <nav aria-label="Brand guide"><a href="#logos">Logo</a><a href="#icons">Icons</a><a href="#type">Type & colour</a><a href="#motion">Motion</a><a class="download" href="tawdheef-brand-kit.zip" download>Download kit <span aria-hidden="true">↓</span></a></nav>
+    <a class="brand-guide-home" href="#" aria-label="Tawdheef brand guide"><img class="brand-guide-light" src="logo-latin-purple.svg" alt="tawdheef.com" width="192" height="48" /><img class="brand-guide-dark" src="logo-latin-white.svg" alt="tawdheef.com" width="192" height="48" /></a>
+    <nav aria-label="Brand guide"><a href="#logos">Logo</a><a href="#icons">Icons</a><a href="#type">Type & colour</a><a href="#motion">Motion</a><a class="download" href="tawdheef-brand-kit.zip" download>Download kit <span aria-hidden="true">↓</span></a><button type="button" class="docs-theme-toggle" aria-label="Color theme"><svg class="theme-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="theme-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20.5 14.5A9 9 0 0 1 9.5 3.5a9 9 0 1 0 11 11Z"/></svg></button></nav>
   </header>
   <main id="main">
     <section class="hero" aria-labelledby="intro-title">
@@ -72,8 +75,9 @@
       <div class="final-download"><a class="download" href="tawdheef-brand-kit.zip" download>Download the complete kit <span aria-hidden="true">↓</span></a><p>SVG, PNG, ICO, local fonts, licences, motion source and brand tokens.</p></div>
     </section>
   </main>
-  <footer class="guide-footer"><span>Tawdheef · توظيف</span><span>Powered by <img src="tabbio-original.svg" alt="" width="18" height="18" /> Tabbio</span><span>Brand system v1.0 · 13 November 2026</span></footer>
+  <footer class="guide-footer"><span>Tawdheef · توظيف</span><span>Powered by <img src="tabbio-original.svg" alt="" width="18" height="18" /> Tabbio</span><span>Brand system v1.0 · 13 November 2026</span><button type="button" class="brand-device-theme" data-theme-system>Use device theme</button></footer>
   <p class="copy-status" id="copy-status" role="status" aria-live="polite"></p>
   <script src="guide.js"></script>
+  <script src="/site-assets/site.js"></script>
 </body>
 </html>

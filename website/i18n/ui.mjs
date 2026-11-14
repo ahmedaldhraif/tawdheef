@@ -23,6 +23,7 @@ export const ui = {
     switchLight: "Switch to light theme",
     switchDark: "Switch to dark theme",
     theme: "Color theme",
+    useDeviceTheme: "Use device theme",
     overview: "Overview",
     quickStart: "Quick start",
     groups: {
@@ -91,6 +92,7 @@ export const ui = {
     switchLight: "استخدم المظهر الفاتح",
     switchDark: "استخدم المظهر الداكن",
     theme: "المظهر",
+    useDeviceTheme: "استخدم مظهر الجهاز",
     overview: "نظرة عامة على المهارة",
     quickStart: "البدء السريع",
     groups: {

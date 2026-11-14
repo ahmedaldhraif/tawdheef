@@ -1,0 +1,57 @@
+/* Page chrome follows the public-site preference. Artwork preview surfaces do not. */
+html[data-docs-theme] { color-scheme: light; }
+html[data-docs-theme=dark] {
+  color-scheme: dark;
+  background: #111110;
+  color: #f4f4f0;
+  --muted: #aaa9a3;
+  --border: #30302d;
+}
+[data-docs-theme=dark] body { background: #111110; color: #f4f4f0; }
+.brand-guide-dark { display: none; }
+[data-docs-theme=dark] .brand-guide-light { display: none; }
+[data-docs-theme=dark] .brand-guide-dark { display: block; }
+.docs-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  flex: none;
+}
+.docs-theme-toggle .theme-sun { display: none; }
+[data-docs-theme=dark] .docs-theme-toggle .theme-sun { display: block; }
+[data-docs-theme=dark] .docs-theme-toggle .theme-moon { display: none; }
+.brand-device-theme { display: inline-flex; align-items: center; min-height: 44px; padding: 4px 0; border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
+[data-docs-theme=dark] :is(button:not(.swatch), .preview-controls select, .skip) { background: #191918; color: #f4f4f0; border-color: #3b3b37; }
+[data-docs-theme=dark] .brand-device-theme { background: transparent; }
+[data-docs-theme=dark] .surface-controls { background: #191918; }
+[data-docs-theme=dark] .surface-controls button { background: transparent; }
+[data-docs-theme=dark] .surface-controls button[aria-pressed=true] { background: #353531; color: #f4f4f0; box-shadow: none; }
+[data-docs-theme=dark] .motion-buttons #busy[aria-pressed=true] { background: #5a2aff; color: #fff; border-color: #5a2aff; }
+[data-docs-theme=dark] :is(.hero-links a:first-child, .asset-caption a, .downloads a, .motion-copy>a) { color: #bda8ff; }
+[data-docs-theme=dark] :is(a, button, select, input):focus-visible { outline-color: #bda8ff; }
+
+/* Keep Light/Dark/Purple examples, swatches and downloaded artwork exact. */
+[data-docs-theme=dark] .logo-stage[data-surface=light] { color: #18181b; }
+[data-docs-theme=dark] .size-family span { color: #62626b; }
+[data-docs-theme=dark] .latin-specimen { background: #fff; border-radius: 3px; padding: 12px; }
+[data-docs-theme=dark] .parent-line img, [data-docs-theme=dark] .guide-footer img { background: #fff; border-radius: 3px; box-shadow: 0 0 0 3px #fff; }
+[data-docs-theme=dark] .space { color: #bda8ff; }
+
+@media (max-width: 680px) {
+  .site-header { flex-wrap: wrap; gap: 12px; }
+  .site-header nav { width: 100%; justify-content: space-between; }
+}
+@media (pointer: coarse) {
+  .surface-controls button { min-height: 44px; }
+  .preview-controls select { font-size: 16px; }
+  .check, .hero-links a, .asset-caption>a, .downloads a, .motion-copy>a { display: inline-flex; align-items: center; min-height: 44px; }
+}
+@media print {
+  html[data-docs-theme=dark], [data-docs-theme=dark] body { background: #fff; color: #18181b; --muted: #62626b; --border: #dedee3; }
+  .docs-theme-toggle, .brand-device-theme { display: none; }
+  [data-docs-theme=dark] .brand-guide-light { display: block; }
+  [data-docs-theme=dark] .brand-guide-dark { display: none; }
+}

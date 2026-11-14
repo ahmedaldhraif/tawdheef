@@ -47,7 +47,7 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   await expect(page).toHaveURL(/\/guides\/use-the-skill\/#cv$/);
 });
 
-test('homepage exposes the CLI and sends setup to the Skills quick start', async ({ page }) => {
+test('homepage copies the skill install command and links to actual app setup', async ({ page }) => {
   await captureClipboard(page);
   await page.goto('/welcome/');
   await expect(page.locator('#walkthrough [role=tablist]')).toHaveCount(0);
@@ -56,8 +56,8 @@ test('homepage exposes the CLI and sends setup to the Skills quick start', async
   await expect(page.locator('#quick-cli')).toBeVisible();
   await expect(page.locator('#quick-cli').locator('xpath=ancestor::details')).toHaveCount(0);
   await page.locator('#quick-setup [data-copy]').click();
-  expect(await page.evaluate(() => window.__copied)).toBe(quickStart);
-  await page.getByRole('link', { name: 'Set up with your agent', exact: true }).click();
+  expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+  await page.getByRole('link', { name: 'Set up the app', exact: true }).click();
   await expect(page).toHaveURL(/\/skills\/#get-started$/);
   await expect(page.locator('#get-started')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Download the app', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef\/releases\/download\/v[\d.]+\/tawdheef-[\d.]+-source.zip$/);

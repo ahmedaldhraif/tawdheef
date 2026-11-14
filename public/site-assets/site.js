@@ -19,9 +19,11 @@
   addEventListener('scroll',updateHeader,{passive:true});updateHeader();
   const themeToggles=[...document.querySelectorAll('.docs-theme-toggle')];
   if(themeToggles.length){
-    function syncTheme(){const dark=document.documentElement.dataset.docsTheme==='dark';themeToggles.forEach(toggle=>toggle.setAttribute('aria-label',dark?word('switchLight','Switch to light theme'):word('switchDark','Switch to dark theme')));document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#111110':'#ffffff');}
-    themeToggles.forEach(themeToggle=>themeToggle.addEventListener('click',()=>{const theme=document.documentElement.dataset.docsTheme==='dark'?'light':'dark';document.documentElement.dataset.docsTheme=theme;try{localStorage.setItem('tawdheef-docs-theme',theme);}catch{}syncTheme();}));syncTheme();
+    function syncTheme(){const dark=document.documentElement.dataset.docsTheme==='dark';themeToggles.forEach(toggle=>{const label=dark?word('switchLight','Switch to light theme'):word('switchDark','Switch to dark theme');toggle.setAttribute('aria-label',label);toggle.setAttribute('title',label);});}
+    themeToggles.forEach(themeToggle=>themeToggle.addEventListener('click',()=>window.tawdheefTheme?.setPreference(document.documentElement.dataset.docsTheme==='dark'?'light':'dark')));
+    window.addEventListener('tawdheef:themechange',syncTheme);syncTheme();
   }
+  document.querySelectorAll('[data-theme-system]').forEach(button=>button.addEventListener('click',()=>window.tawdheefTheme?.setPreference('system')));
   const docsSearch=document.getElementById('docs-search'),docsInput=document.getElementById('docs-search-input');
   if(docsSearch&&docsInput){
     const triggers=[...document.querySelectorAll('.docs-search-trigger')],results=[...docsSearch.querySelectorAll('[data-docs-search]')];let returnFocus;

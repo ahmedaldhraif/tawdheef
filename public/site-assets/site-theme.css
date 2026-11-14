@@ -1,0 +1,218 @@
+/* Shared public-site palette. Brand artwork and product screenshots stay original. */
+:root {
+  --site-bg: #fff;
+  --site-surface: #f7f7f6;
+  --site-hover: #f0f0ee;
+  --site-ink: #222225;
+  --site-muted: #6c6c74;
+  --site-line: #e9e9ed;
+  --site-link: #542dff;
+  --site-header: #ffffffed;
+  color-scheme: light;
+}
+:root[data-docs-theme=dark] {
+  --site-bg: #111110;
+  --site-surface: #191918;
+  --site-hover: #292928;
+  --site-ink: #f4f4f0;
+  --site-muted: #aaa9a3;
+  --site-line: #30302d;
+  --site-link: #bda8ff;
+  --site-header: #111110ed;
+  --muted: var(--site-muted);
+  --line: var(--site-line);
+  --soft: var(--site-surface);
+  color-scheme: dark;
+}
+html[data-docs-theme], html[data-docs-theme] body {
+  background: var(--site-bg);
+  color: var(--site-ink);
+}
+html[data-docs-theme] .site-header {
+  background: var(--site-header);
+}
+
+/* One native action for the other theme, and a separate device-theme reset. */
+.docs-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--site-line);
+  border-radius: 24px;
+  background: transparent;
+  color: var(--site-ink);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.docs-theme-toggle .theme-sun { display: none; }
+[data-docs-theme=dark] .docs-theme-toggle .theme-sun { display: block; }
+[data-docs-theme=dark] .docs-theme-toggle .theme-moon { display: none; }
+.docs-theme-toggle svg { flex: none; }
+.site-theme-menu {
+  border-top: 1px solid var(--site-line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.site-theme-menu .docs-theme-toggle {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 8px 14px;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+}
+.site-theme-system {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.site-theme-menu .site-theme-system {
+  width: 100%;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.site-footer .links { align-items: center; flex-wrap: wrap; row-gap: 4px; }
+.site-footer .site-theme-system { text-decoration: underline; text-underline-offset: 3px; }
+.docs-theme-toggle:focus-visible, .site-theme-system:focus-visible {
+  outline: 2px solid var(--site-link);
+  outline-offset: 3px;
+}
+.docs-theme-toggle:active, .site-theme-system:active { background: var(--site-hover); }
+
+/* Use the supplied white lockup in dark mode, including compact mobile headers. */
+.site-header .home .brand-dark, .site-header .home .brand-compact { display: none; }
+html[data-docs-theme=dark] .site-header .home .brand-light { display: none; }
+html[data-docs-theme=dark] .site-header .home .brand-dark { display: block; }
+
+/* The compact homepage install section does not load the docs stylesheet. */
+.landing-install .quick-setup { margin-block: 22px 0; }
+.landing-install .install-note { color: var(--site-muted); font-size: 13px; line-height: 1.8; }
+.landing-install .skills-cv-shortcut {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 20px;
+}
+.landing-install .skills-cv-shortcut img { display: block; width: 100px; height: 24px; object-fit: contain; }
+.landing-install .skills-cv-shortcut a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+
+/* Replace fixed light surfaces; original logos never receive invert filters. */
+[data-docs-theme=dark] :is(.skip, .mobile-menu-button, .mobile-navigation, .prompt, .copy, .directory-tools input, .directory-tools select, .guide-search input) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+}
+[data-docs-theme=dark] :is(.hero .fine, .hero .arabic-line, .preview figcaption, .product-tour figcaption, .product-tour figcaption span:first-child, .free-label, .cv-benefits p, .connect-existing, .tabbio-section .tabbio-detail, .identity-option p, .hero-access, .hero-explainer, .creator-credit, .creator-handle, .site-footer, .update-label, .source-status, .pack-coverage li, .guide-search p, .guide-link p, .guide-support p, .guide-nav-group a, .breadcrumbs, .breadcrumbs a, .guide-head>p, .guide-body>p, .guide-body ul, .guide-body ol, .guide-body blockquote, .guide-page-contents a, .guide-next>span, .guide-related>span, .guide-source, .guide-all, .about-author-link>span>span) {
+  color: var(--site-muted);
+}
+[data-docs-theme=dark] :is(.agent-name, .creator-handle strong, .benefit-brands, .pack-meta strong, .guide-nav-group>span, .guide-body strong, .guide-code pre, .guide-next, .about-author-link>span>strong) {
+  color: var(--site-ink);
+}
+[data-docs-theme=dark] :is(.step, .free-label, .identity-option, .pack-coverage, .quick-setup, .guide-category, .guide-link, .guide-support, .guide-next, .guide-mobile-contents, .guide-mobile-nav, .guide-mobile-nav>nav, .guide-body blockquote, .guide-body img, .preview>a, .tour-frame) {
+  border-color: var(--site-line);
+}
+[data-docs-theme=dark] :is(.tabbio-detail a, .pack-actions a, .data-preview td a, .guide-body a:not(.button)) { color: var(--site-link); }
+[data-docs-theme=dark] :is(.hero-access a, .hero-explainer, .cv-benefits p a) { text-decoration-color: #77776f; }
+[data-docs-theme=dark] :is(.button.secondary, .guide-body a.button.secondary) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+  box-shadow: none;
+}
+[data-docs-theme=dark] .hero .button {
+  background: #f4f4f0;
+  border-color: #f4f4f0;
+  color: #191918;
+  box-shadow: none;
+}
+[data-docs-theme=dark] :is(.badge, .notice) {
+  background: #242030;
+  color: #d0c6ec;
+  border-color: #3c354e;
+}
+[data-docs-theme=dark] :is(.tabset button[aria-selected=true], .guide-nav-group a[aria-current=page]) {
+  background: var(--site-hover);
+  color: var(--site-ink);
+  box-shadow: none;
+}
+[data-docs-theme=dark] :is(.guide-code, .guide-body :not(pre)>code, .data-preview th) {
+  background: var(--site-surface);
+  color: var(--site-ink);
+  border-color: var(--site-line);
+}
+[data-docs-theme=dark] .guide-code .copy { background: var(--site-hover); border-color: var(--site-line); color: var(--site-ink); }
+[data-docs-theme=dark] .data-preview th { color: var(--site-muted); }
+[data-docs-theme=dark] .tour-frame { background: var(--site-surface); box-shadow: 0 12px 36px -24px #0008; }
+[data-docs-theme=dark] .toast { background: #eeeeea; color: #191918; }
+[data-docs-theme=dark] .site-header .language-switch { background: var(--site-surface); border-color: var(--site-line); }
+[data-docs-theme=dark] .site-header .language-switch a { color: var(--site-muted); }
+[data-docs-theme=dark] .site-header .language-switch a[aria-current=page] { background: var(--site-hover); color: var(--site-ink); border-color: #454542; box-shadow: none; }
+[data-docs-theme=dark] :is(.directory-tools input, .guide-search input)::placeholder { color: var(--site-muted); opacity: 1; }
+
+/* A light backing keeps black/original violet brand art legible, without recoloring it. */
+[data-docs-theme=dark] img:is([src="/brands/chatgpt.svg"], [src="/brands/mcp-original.svg"]) {
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 0 4px #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .docs-theme-toggle:hover, .site-theme-system:hover { background: var(--site-hover); }
+  [data-docs-theme=dark] a:not(.button):hover { color: var(--site-link); }
+  [data-docs-theme=dark] :is(.copy:hover, .button.secondary:hover, .directory-row:hover, .mobile-navigation a:hover, .guide-nav-group a:hover) { background: var(--site-hover); color: var(--site-ink); }
+  [data-docs-theme=dark] :is(.creator-handle:hover strong, .hero-explainer:hover, .guide-page-contents a:hover, .about-author-link:hover strong) { color: var(--site-ink); }
+  [data-docs-theme=dark] .hero .button:hover { background: #dddcd6; border-color: #dddcd6; color: #191918; }
+  [data-docs-theme=dark] .site-header .language-switch a:not([aria-current]):hover { background: var(--site-hover); color: var(--site-ink); }
+}
+@media (max-width: 900px) {
+  .site-header:not(.docs-header) .header-controls>.docs-theme-toggle { display: none; }
+}
+@media (max-width: 600px) {
+  .docs-header .docs-header-actions>.docs-theme-toggle { display: none; }
+}
+@media (max-width: 480px) {
+  html[data-docs-theme] .docs-header .home :is(.brand-light, .brand-dark) { display: none; }
+  html[data-docs-theme] .docs-header .home .brand-compact-light { display: block; width: 32px; height: 24px; }
+  html[data-docs-theme] .docs-header .home .brand-compact-dark { display: none; }
+  html[data-docs-theme=dark] .docs-header .home .brand-compact-light { display: none; }
+  html[data-docs-theme=dark] .docs-header .home .brand-compact-dark { display: block; width: 32px; height: 24px; }
+}
+@media (max-width: 380px) {
+  html[data-docs-theme] .site-header:not(.docs-header) .home :is(.brand-light, .brand-dark) { display: none; }
+  html[data-docs-theme] .site-header:not(.docs-header) .home .brand-compact-light { display: block; width: 32px; height: 24px; }
+  html[data-docs-theme] .site-header:not(.docs-header) .home .brand-compact-dark { display: none; }
+  html[data-docs-theme=dark] .site-header:not(.docs-header) .home .brand-compact-light { display: none; }
+  html[data-docs-theme=dark] .site-header:not(.docs-header) .home .brand-compact-dark { display: block; width: 32px; height: 24px; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html[data-docs-theme] .site-header { background: var(--site-bg); backdrop-filter: none; }
+}
+@media (forced-colors: active) {
+  html[data-docs-theme], html[data-docs-theme] body, html[data-docs-theme] .site-header { background: Canvas; color: CanvasText; }
+  .docs-theme-toggle, .site-theme-system { color: ButtonText; border-color: ButtonText; }
+  .docs-theme-toggle:focus-visible, .site-theme-system:focus-visible { outline-color: Highlight; }
+}
+
+/* Coarse-pointer directory controls keep native zoom and generous tap targets. */
+@media(pointer:coarse){
+ .directory-tools input,.directory-tools select,.guide-search input{font-size:16px;min-height:44px}
+ .data-preview td a,.pack-actions a,.toc a{display:inline-flex;align-items:center;min-height:44px}
+}

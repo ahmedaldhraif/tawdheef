@@ -26,7 +26,7 @@ export default {
     }
   ],
   "workflow": {
-    "title": "Get started with your agent.",
+    "title": "Use Tawdheef with your agent.",
     "description": "Set up the app first, then connect your CV and add email if needed.",
     "steps": [
       {
@@ -51,7 +51,11 @@ export default {
     "claudeAlternative": "Claude Code:",
     "cliNote": "Setup includes the app tools and skill.",
     "primary": "Set up with your agent",
-    "allGuides": "All guides"
+    "allGuides": "All guides",
+    "installIntro": "Add the skill to Codex or Claude Code.",
+    "installNote": "This adds workflow instructions for your agent. Set up the app to get started.",
+    "appSetup": "Set up the app",
+    "cvShortcut": "Create or connect your CV"
   },
   "cv": {
     "freeLabel": "Free digital CV",
@@ -134,7 +138,7 @@ export default {
     "cta": "Get Tawdheef"
   },
   "tour": {
-    "alt": "Tawdheef's company directory with careers links, application statuses and next actions. Example data.",
-    "caption": "Illustrated with example data. No applications sent."
+    "alt": "Current Tawdheef interface with all six GCC country flags, application totals and the Run button. Public directory data with no application activity.",
+    "caption": "Current local preview using public directory data. No applications sent."
   }
 };
