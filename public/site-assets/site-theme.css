@@ -159,11 +159,22 @@ html[data-docs-theme=dark] .site-header .home .brand-dark { display: block; }
 [data-docs-theme=dark] :is(.directory-tools input, .guide-search input)::placeholder { color: var(--site-muted); opacity: 1; }
 
 /* A light backing keeps original black brand art legible, without recoloring it. */
-[data-docs-theme=dark] img:is([src="/brands/chatgpt.svg"], [src="/brands/mcp-original.svg"]) {
+[data-docs-theme=dark] img[src="/brands/mcp-original.svg"] {
   background: #fff;
   border-radius: 3px;
   box-shadow: 0 0 0 4px #fff;
 }
+
+/* The original OpenAI SVG supplies its own light and dark artwork. */
+html[data-docs-theme=light] img[src="/brands/chatgpt.svg"] { color-scheme: light; }
+html[data-docs-theme=dark] img[src="/brands/chatgpt.svg"] { color-scheme: dark; }
+.hero .agent-options { display: inline; white-space: nowrap; }
+.hero .agent-name { display: inline; vertical-align: baseline; white-space: nowrap; }
+.hero .agent-name img { display: inline-block; margin-inline-end: 6px; }
+.hero .agent-name img[src="/brands/chatgpt.svg"] { width: 22px; height: 22px; vertical-align: -5px; }
+.hero .agent-name img[src="/brands/claude.svg"] { width: 19px; height: 19px; vertical-align: -3px; }
+/* Monochrome UAE PASS is explicitly requested for dark backgrounds. */
+[data-docs-theme=dark] .identity-option img[src="/brands/uae-pass-original.png"] { filter: brightness(0) invert(1); }
 
 @media (hover: hover) and (pointer: fine) {
   .docs-theme-toggle:hover, .site-theme-system:hover { background: var(--site-hover); }

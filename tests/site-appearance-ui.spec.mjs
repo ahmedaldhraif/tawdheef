@@ -228,3 +228,32 @@ for (const width of [320, 390]) for (const colorScheme of ['light', 'dark']) {
     expect(errors, 'Canonical page runtime or console errors').toEqual([]);
   });
 }
+
+for (const scheme of ['light', 'dark']) {
+  test('assistant marks align and UAE PASS stays visible in ' + scheme, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const width of [390, 1440]) for (const path of ['/welcome/', '/welcome/ar/']) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      const marks = await page.locator('.hero .agent-name').evaluateAll(items => items.map(item => {
+        const img = item.querySelector('img'), box = img.getBoundingClientRect();
+        const text = [...item.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+        const range = document.createRange(); range.selectNodeContents(text);
+        const label = range.getBoundingClientRect(), style = getComputedStyle(img);
+        return { labelY: label.y, centerY: box.y + box.height / 2, loaded: img.complete && img.naturalWidth > 0, scheme: style.colorScheme, background: style.backgroundColor, shadow: style.boxShadow };
+      }));
+      expect(marks).toHaveLength(2);
+      expect(marks.every(mark => mark.loaded)).toBe(true);
+      expect(Math.abs(marks[0].labelY - marks[1].labelY)).toBeLessThan(1);
+      expect(Math.abs(marks[0].centerY - marks[1].centerY)).toBeLessThan(1.5);
+      expect(marks[0].scheme).toBe(scheme);
+      expect(marks[0].background).toBe('rgba(0, 0, 0, 0)');
+      expect(marks[0].shadow).toBe('none');
+      const uaePass = page.locator('.identity-option img');
+      await uaePass.scrollIntoViewIfNeeded();
+      expect(await uaePass.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+      await expect(uaePass).toHaveCSS('filter', scheme === 'dark' ? 'brightness(0) invert(1)' : 'none');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
+  });
+}
