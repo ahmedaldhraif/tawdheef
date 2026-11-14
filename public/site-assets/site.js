@@ -14,6 +14,33 @@
     copyTimers.set(button,setTimeout(()=>{button.textContent=word('copy','Copy');},2200));
     statusTimer=setTimeout(()=>{if(status)status.textContent='';},2200);
   }));
+  const agentDemos=[...document.querySelectorAll('.agent-install-demo img[data-demo-gif]')];
+  for(const image of agentDemos){
+    const toggle=image.closest('.agent-install-demo')?.querySelector('[data-agent-playback]');
+    if(!toggle)continue;
+    const motion=matchMedia('(prefers-reduced-motion: reduce)');
+    let visible=false,playing=false,userPaused=false,manualMotion=false,hasPlayed=false;
+    const render=play=>{
+      playing=play;if(play)hasPlayed=true;
+      const src=play?image.dataset.demoGif:image.dataset.demoPoster;
+      if(image.getAttribute('src')!==src)image.src=src;
+      toggle.textContent=play?toggle.dataset.pauseLabel:hasPlayed?toggle.dataset.replayLabel:toggle.dataset.playLabel;
+      toggle.setAttribute('aria-pressed',String(play));
+    };
+    const sync=()=>render(visible&&!document.hidden&&!userPaused&&(!motion.matches||manualMotion));
+    toggle.addEventListener('click',()=>{
+      if(playing){userPaused=true;manualMotion=false;render(false);}
+      else{userPaused=false;manualMotion=true;render(true);}
+    });
+    image.addEventListener('error',()=>{if(playing){userPaused=true;render(false);toggle.hidden=true;}});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)manualMotion=false;sync();});
+    addEventListener('pagehide',()=>{manualMotion=false;render(false);});
+    motion.addEventListener('change',()=>{manualMotion=false;sync();});
+    render(false);toggle.hidden=false;
+    if('IntersectionObserver' in window)new IntersectionObserver(entries=>{
+      visible=entries[0].isIntersecting;if(!visible)manualMotion=false;sync();
+    },{threshold:0.1}).observe(image);
+  }
   const header=document.querySelector('.site-header');
   function updateHeader(){header?.classList.toggle('scrolled',scrollY>8);}
   addEventListener('scroll',updateHeader,{passive:true});updateHeader();

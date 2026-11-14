@@ -104,15 +104,6 @@ html[data-docs-theme=dark] .site-header .home .brand-dark { display: block; }
 /* The compact homepage install section does not load the docs stylesheet. */
 .landing-install .quick-setup { margin-block: 22px 0; }
 .landing-install .install-note { color: var(--site-muted); font-size: 13px; line-height: 1.8; }
-.landing-install .skills-cv-shortcut {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-top: 20px;
-}
-.landing-install .skills-cv-shortcut img { display: block; width: 100px; height: 24px; object-fit: contain; }
-.landing-install .skills-cv-shortcut a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
 
 /* Replace fixed light surfaces; original logos never receive invert filters. */
 [data-docs-theme=dark] :is(.skip, .mobile-menu-button, .mobile-navigation, .prompt, .copy, .directory-tools input, .directory-tools select, .guide-search input) {
@@ -167,7 +158,7 @@ html[data-docs-theme=dark] .site-header .home .brand-dark { display: block; }
 [data-docs-theme=dark] .site-header .language-switch a[aria-current=page] { background: var(--site-hover); color: var(--site-ink); border-color: #454542; box-shadow: none; }
 [data-docs-theme=dark] :is(.directory-tools input, .guide-search input)::placeholder { color: var(--site-muted); opacity: 1; }
 
-/* A light backing keeps black/original violet brand art legible, without recoloring it. */
+/* A light backing keeps original black brand art legible, without recoloring it. */
 [data-docs-theme=dark] img:is([src="/brands/chatgpt.svg"], [src="/brands/mcp-original.svg"]) {
   background: #fff;
   border-radius: 3px;
@@ -216,3 +207,11 @@ html[data-docs-theme=dark] .site-header .home .brand-dark { display: block; }
  .directory-tools input,.directory-tools select,.guide-search input{font-size:16px;min-height:44px}
  .data-preview td a,.pack-actions a,.toc a{display:inline-flex;align-items:center;min-height:44px}
 }
+
+/* Real paste-only recording, with rounded artwork and an accessible motion control. */
+.landing-install .agent-install-demo{width:100%;max-width:600px;margin:20px 0 0}
+.landing-install .agent-demo-frame{overflow:hidden;border-radius:12px;background:var(--site-surface,var(--soft))}
+.landing-install .agent-demo-image{display:block;width:100%;max-width:100%;height:auto;border-radius:12px}
+.landing-install .agent-install-demo figcaption{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:8px;font-size:13px;line-height:1.6;color:var(--site-muted,var(--muted))}
+.landing-install .agent-demo-toggle{min-width:44px;min-height:44px;flex:0 0 auto;padding:8px 12px;border:1px solid var(--site-line,var(--line));border-radius:6px;background:var(--site-surface,var(--soft));color:var(--site-ink,inherit);font:inherit}
+.landing-install .agent-demo-toggle:disabled{cursor:wait}

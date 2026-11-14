@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-14",
+  "app": "Claude Code desktop",
+  "width": 584,
+  "height": 210,
+  "durationSeconds": 6,
+  "method": "Two genuine native-window captures showing the empty composer and the exact pasted command. Frames are held for 1.2 and 4.8 seconds. This is a paste demonstration, not an installation recording.",
+  "command": "npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef",
+  "submitted": false,
+  "installationClaimed": false,
+  "privateContentIncluded": false,
+  "audio": false,
+  "encoding": "Animated GIF, 584 by 210, six seconds, plus a static PNG poster. The optional H.264 MP4 uses 15fps, yuv420p and fast start.",
+  "notes": [
+    "Only the composer is included. Sidebar, conversations, account and environment names are excluded.",
+    "The website uses a rounded GIF with an explicit pause/replay control. Reduced-motion readers and readers without JavaScript get the still image.",
+    "Visible copyable text provides the same instruction without playback."
+  ],
+  "assets": [
+    {
+      "file": "claude-paste.mp4",
+      "bytes": 19502,
+      "sha256": "d46d802fc4dd76f949c9b914b31bca07227c14a2c87161367d7910cc255f18b1"
+    },
+    {
+      "file": "claude-paste-poster.png",
+      "bytes": 40712,
+      "sha256": "069c6951afbbeebe75f6476c7c278d37c228fba01e99e57c78d793cb1b909a74"
+    },
+    {
+      "file": "claude-paste.gif",
+      "bytes": 55721,
+      "sha256": "dc8d1f57adfd1cedb20924a7081fad88194774287399941981433ab7dd133cc0"
+    }
+  ]
+}

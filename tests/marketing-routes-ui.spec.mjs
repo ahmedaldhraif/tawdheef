@@ -10,6 +10,32 @@ async function captureClipboard(page) {
   }));
 }
 
+
+async function expectPasteDemo(page, request) {
+  const section = page.locator('#how-it-works');
+  await expect(section.locator('.skills-cv-shortcut')).toHaveCount(0);
+  const demo = section.locator('.agent-install-demo');
+  const image = demo.locator('[data-demo-gif]');
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste.gif');
+  await image.evaluate(element => element.decode());
+  expect(await image.evaluate(element => ({ width: element.naturalWidth, height: element.naturalHeight }))).toEqual({ width: 584, height: 210 });
+  await expect(demo.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
+  await expect(demo.locator('figcaption span')).toHaveText('Paste the command into your agent.');
+  await expect(image).toHaveCSS('border-radius', '12px');
+
+  const cv = page.locator('#tabbio .tabbio-actions');
+  await expect(cv.getByRole('link', { name: 'Create your free CV', exact: true })).toHaveAttribute('href', /^https:\/\/app\.tabbio\.com/);
+  await expect(cv.getByRole('link', { name: 'Connect your CV', exact: true })).toHaveAttribute('href', '/guides/use-the-skill/#cv');
+  const poster = await request.get('/site-assets/agent-setup/claude-paste-poster.png');
+  expect(poster.status()).toBe(200);
+  expect(poster.headers()['content-type']).toMatch(/^image\/png/);
+  const media = await request.get('/site-assets/agent-setup/claude-paste.gif');
+  expect(media.status()).toBe(200);
+  expect(media.headers()['content-type']).toMatch(/^image\/gif/);
+  expect((await media.body()).subarray(0, 3).toString()).toBe('GIF');
+}
+
 test('Skills is a canonical overview while six legacy setup aliases retain anchors', async ({ page, request }) => {
   const overview = await request.get('/skills/', { maxRedirects: 0 });
   expect(overview.status()).toBe(200);
@@ -47,7 +73,7 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   await expect(page).toHaveURL(/\/guides\/use-the-skill\/#cv$/);
 });
 
-test('homepage copies the skill install command and links to actual app setup', async ({ page }) => {
+test('homepage copies the skill install command and links to actual app setup', async ({ page, request }) => {
   await captureClipboard(page);
   await page.goto('/welcome/');
   await expect(page.locator('#walkthrough [role=tablist]')).toHaveCount(0);
@@ -55,12 +81,60 @@ test('homepage copies the skill install command and links to actual app setup', 
   await expect(page.locator('.desktop-navigation').getByRole('link', { name: 'Skills', exact: true })).toHaveAttribute('href', '/skills/');
   await expect(page.locator('#quick-cli')).toBeVisible();
   await expect(page.locator('#quick-cli').locator('xpath=ancestor::details')).toHaveCount(0);
+  await expectPasteDemo(page, request);
   await page.locator('#quick-setup [data-copy]').click();
   expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
   await page.getByRole('link', { name: 'Set up the app', exact: true }).click();
   await expect(page).toHaveURL(/\/skills\/#get-started$/);
   await expect(page.locator('#get-started')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Download the app', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef\/releases\/download\/v[\d.]+\/tawdheef-[\d.]+-source.zip$/);
+});
+
+test('real agent GIF decodes and respects pause, visibility and reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/welcome/');
+  const demo = page.locator('.agent-install-demo');
+  const image = demo.locator('[data-demo-gif]');
+  const gif = '/site-assets/agent-setup/claude-paste.gif';
+  const poster = '/site-assets/agent-setup/claude-paste-poster.png';
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', gif);
+  await image.evaluate(element => element.decode());
+  expect(await image.evaluate(element => [element.naturalWidth, element.naturalHeight])).toEqual([584, 210]);
+  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(image).toHaveAttribute('src', poster);
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', gif);
+  await demo.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(image).toHaveAttribute('src', poster);
+  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', poster); // A manual pause survives re-entry.
+  await demo.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(image).toHaveAttribute('src', gif);
+  await page.evaluate(() => {
+    const original = Object.getOwnPropertyDescriptor(document, 'hidden');
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    try { document.dispatchEvent(new Event('visibilitychange')); }
+    finally {
+      if (original) Object.defineProperty(document, 'hidden', original);
+      else delete document.hidden;
+    }
+  });
+  await expect(image).toHaveAttribute('src', poster);
+  await demo.getByRole('button', { name: 'Replay', exact: true }).click();
+  await expect(image).toHaveAttribute('src', gif);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+  await expect(image).toHaveAttribute('src', poster);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await image.scrollIntoViewIfNeeded();
+  await expect(image).toHaveAttribute('src', poster);
+  await demo.getByRole('button', { name: 'Play preview', exact: true }).click();
+  await expect(image).toHaveAttribute('src', gif); // Explicit playback remains available.
+  await demo.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(image).toHaveAttribute('src', poster);
 });
 
 test('Skills copies the install command and all three setup commands exactly', async ({ page }) => {
@@ -144,3 +218,35 @@ test('390px Skills navigation works and long commands scroll inside the page', a
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
 });
+
+for (const width of [320, 390]) for (const [locale, path] of [['en', '/welcome/'], ['ar', '/welcome/ar/']]) {
+  test('landing GIF fits ' + width + 'px in ' + locale + ' and defaults still with reduced motion', async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(path);
+    const section = page.locator('#how-it-works');
+    await expect(section.locator('.skills-cv-shortcut')).toHaveCount(0);
+    const image = section.locator('.agent-demo-image');
+    await image.scrollIntoViewIfNeeded();
+    await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste-poster.png');
+    await expect(image).toHaveCSS('border-radius', '12px');
+    const toggle = section.getByRole('button', { name: locale === 'ar' ? 'عرض المثال' : 'Play preview', exact: true });
+    await toggle.scrollIntoViewIfNeeded();
+    const button = await toggle.boundingBox();
+    expect(button.width).toBeGreaterThanOrEqual(44);
+    expect(button.height).toBeGreaterThanOrEqual(44);
+    expect(button.x).toBeGreaterThanOrEqual(0);
+    expect(button.x + button.width).toBeLessThanOrEqual(width);
+    expect(button.y + button.height).toBeLessThanOrEqual(844);
+    expect(await toggle.evaluate(element => {
+      const r = element.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return hit === element || element.contains(hit);
+    })).toBe(true);
+    const box = await image.boundingBox();
+    expect(box.width).toBeGreaterThan(0);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    await expect(page.locator('#tabbio .tabbio-actions a')).toHaveCount(2);
+  });
+}
