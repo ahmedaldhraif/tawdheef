@@ -43,7 +43,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
   Object.assign(env, { APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: String(port), TAWDHEEF_WORKSPACE: workspace });
   const base = `http://127.0.0.1:${port}`;
   const http = async path => {
-    try { return await fetch(base + path, { signal: AbortSignal.timeout(10_000) }); }
+    try { return await fetch(base + path, { redirect: 'manual', signal: AbortSignal.timeout(10_000) }); }
     catch (error) { throw new Error(`Exact package HTTP GET ${path} failed after launcher startup${error.cause?.code ? ` (${error.cause.code})` : ''}.`, { cause: error }); }
   };
   async function run(args, { launcher = false } = {}) {
@@ -67,6 +67,10 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     const boot = await (await http('/api/bootstrap')).json(); assert.equal(boot.directories.find(item => item.id === 'uae').count, 772);
     assert.equal(boot.settings.connectionMode, 'native'); assert.deepEqual(boot.connections, []);
     assert.equal(boot.nativeClient.capabilities.email.status, 'unknown');
+    for (const path of ['/examples/', '/ar/examples/job-search-brief/']) {
+      const response = await http(path);
+      assert.equal(response.status, 302); assert.equal(response.headers.get('location'), `https://www.tawdheef.com${path}`);
+    }
     for (const optional of ['@azure/msal-node', '@googleapis/gmail', '@googleapis/calendar', '@microsoft/microsoft-graph-client', 'imapflow', 'nodemailer', 'tsdav']) await assert.rejects(access(join(root, 'node_modules', optional)), { code: 'ENOENT' }, `${optional} must remain outside the ordinary runtime`);
     const before = await (await http('/api/background')).json();
     await run([], { launcher: true }); const after = await (await http('/api/background')).json(); assert.equal(before.pid, after.pid);

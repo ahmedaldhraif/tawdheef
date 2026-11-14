@@ -23,6 +23,8 @@ export default {
   start: {
     title: "Get started",
     body: "Download the app, connect your existing client, then use its CV and account tools. The native workflow describes the 0.2 preview; check the selected release version.",
+    requirement: "Run hands work to your existing Codex or Claude Code client. It reads the real authorized Tabbio CV before matching or submitting.",
+    researchAlternative: "Explore company data first",
     download: "Download the app",
     repository: "View or clone on GitHub",
     steps: [

@@ -1,6 +1,6 @@
 # Tawdheef product marketing context
 
-**Document version:** v13
+**Document version:** v14
 **Last updated:** 2026-11-14
 **Status:** Initial source-backed implementation; owner can revise wording.
 
@@ -51,6 +51,14 @@ MCP supplies actual tools. Avoid implying that installing a skill installs or
 authenticates the tracker.
 
 ## Brand voice and architecture
+
+Tawdheef.com is the canonical product home, including Skills, guides, research,
+directories and contribution routes. Ahmed's personal channels introduce the
+project. Tabbio is the connected CV service; its own supporting integration
+page should link back to Tawdheef and explain the CV step with distinct copy.
+Infrastructure hosting does not change the public product identity. The owner
+deferred domain connection on 14 November 2026; prepared deployment files and
+local verification do not mean the domain is live.
 
 Keep the centered hero and approved words. Add a useful Skills overview,
 an authored About page and a short product walkthrough. The marketing site
@@ -128,6 +136,13 @@ records the reviewed repository patterns, priorities and measurement limits.
 
 ## Guides and public information
 
+- `/examples/` and `/ar/examples/`: the public company research request, rendered
+  from the same English/Arabic Markdown used on GitHub. It needs public JSON
+  and website access, with clear source and assistant-access limits.
+- `/examples/job-search-brief/` and its Arabic counterpart: an optional copyable
+  preference brief, with completed copies kept private. These two resources are
+  separate from the eight task guides and the one installable skill.
+
 - `/skills/`: the main Skills overview, inspired by the reference’s direct
   presentation. Lead with the real `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef`
   command and a prominent Get started action for app and CLI setup. Group the
@@ -179,7 +194,8 @@ they do not establish better conversion, ranking or agent citations.
 
 - Free? Yes for the tracker; provider and AI costs remain separate.
 - Technical? No coding is needed. Open the folder in Codex or Claude Code and
-  copy the agent setup request. Node.js 24+ is required; the guide helps with it.
+  copy the agent setup request. Source checkouts need Node.js 24+; prebuilt app
+  packages include their runtime. Native handoffs need no separate assistant CLI.
 - Applications automatic? Only an explicit named run authorises supported
   agent actions. Sign-ins, CAPTCHAs and provider approvals may need the person.
 - Phone? Responsive site and UI; the default app runs on the user's computer,
@@ -196,6 +212,13 @@ No fabricated vacancy counts, placements, star counts, endorsements or
 route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
+
+- v14 (2026-11-14); Owner approved the independent Tawdheef.com product home,
+  Ahmed-led launch and contextual Tabbio CV route. Brought public research
+  before app/CV setup, rendered the shared resources in English/Arabic, made
+  Run's CV requirement explicit before download, and prepared launch/update
+  materials and static hosting configuration. Domain connection is deferred;
+  personal posts and the Tabbio integration page remain drafts.
 
 - v13 (2026-11-14); Reviewed ten established developer-product repositories.
   Added public research and a private job-search brief as useful first resources,

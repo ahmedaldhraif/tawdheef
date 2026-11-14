@@ -386,7 +386,7 @@ if (process.argv.includes("--dev")) {
   // Source checkouts can preview the separately built website. It is not copied
   // into the working app or its desktop package.
   if (existsSync(resolve(ROOT, 'public/welcome/index.html'))) app.use(express.static(resolve(ROOT, 'public'), { dotfiles: 'deny' }));
-  else app.get(['/welcome', '/welcome/*path', '/guides/*path', '/skills', '/skills/*path'], (req, res) => res.redirect(302, `https://www.tawdheef.com${req.path.replace(/^\/welcome(?=\/|$)/, '') || '/'}`));
+  else app.get(['/welcome', '/welcome/*path', '/guides/*path', '/skills', '/skills/*path', '/examples', '/examples/*path', '/ar/guides/*path', '/ar/skills', '/ar/skills/*path', '/ar/examples', '/ar/examples/*path'], (req, res) => res.redirect(302, `https://www.tawdheef.com${req.path.replace(/^\/welcome(?=\/|$)/, '') || '/'}`));
   app.get(/^(?!\/api\/).*/, (_, res) =>
     res.sendFile(resolve(ROOT, "dist/index.html")),
   );

@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import JSZip from 'jszip';
 
 export const publicRoots = ['src', 'server', 'bin', 'scripts', 'data', 'docs', 'skills', 'directories', 'website', 'public', 'tests', '.github', '.agents/skills', '.claude/skills'];
-export const publicFiles = ['package.json', 'package-lock.json', 'index.html', 'vite.config.mjs', 'playwright.config.mjs', 'skills-lock.json', 'AGENTS.md', 'CLAUDE.md', 'DESIGN.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'Start Apply Tracker.cmd', 'Start Tawdheef.cmd', 'Start Tawdheef.command', 'start-tawdheef.sh', '.gitignore', '.gitattributes', '.nvmrc', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'llms.txt', 'SECURITY.md', 'CHANGELOG.md', '.agents/product-marketing.md'];
+export const publicFiles = ['package.json', 'package-lock.json', 'index.html', 'vite.config.mjs', 'vercel.json', 'playwright.config.mjs', 'skills-lock.json', 'AGENTS.md', 'CLAUDE.md', 'DESIGN.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'Start Apply Tracker.cmd', 'Start Tawdheef.cmd', 'Start Tawdheef.command', 'start-tawdheef.sh', '.gitignore', '.gitattributes', '.nvmrc', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'llms.txt', 'SECURITY.md', 'CHANGELOG.md', '.agents/product-marketing.md'];
 const privatePath = /(^|\/)(?:\.local|\.git|\.tawdheef-setup|node_modules|outputs|release|agent-config|dist|site-dist|test-results|playwright-report|__pycache__)(\/|$)|(^|\/)\.env|(^|\/)(?:credentials[^/]*|client_secret[^/]*|connections\.private|token-cache|selected-account)\.json$|\.(?:sqlite[^/]*|db(?:3|-wal|-shm)?|log|pem|key|zip)$/i;
 // Country sources are versioned once. Download packs regenerate these copies.
 const generatedDirectoryFile = /^directories\/[^/]+\/[^/]+-directory(?:-\d+)?\.(?:json|csv)$/i;

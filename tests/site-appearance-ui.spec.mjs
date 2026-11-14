@@ -7,7 +7,7 @@ const guides = JSON.parse(readFileSync(new URL('../website/guides.json', import.
 const catalog = JSON.parse(readFileSync(new URL('../directories/catalog.json', import.meta.url), 'utf8'));
 // Match the SEO check's route formula without requiring an untracked site-dist
 // build during collection. The browser CI job only builds the local app.
-const expectedPaths = new Set(['/', '/skills/', '/guides/', '/about/', '/directories/', '/policies/', '/directories/uae/', '/ar/', '/ar/skills/', '/ar/guides/']);
+const expectedPaths = new Set(['/', '/skills/', '/guides/', '/about/', '/directories/', '/policies/', '/directories/uae/', '/ar/', '/ar/skills/', '/ar/guides/', '/examples/', '/examples/job-search-brief/', '/ar/examples/', '/ar/examples/job-search-brief/']);
 for (const guide of guides) for (const prefix of ['', '/ar']) expectedPaths.add(`${prefix}/guides/${guide.slug}/`);
 for (const pack of catalog.packs.filter(pack => pack.featured !== false && !pack.historical)) expectedPaths.add(`/directories/${pack.id}/`);
 const canonicalPaths = [...expectedPaths];
@@ -15,7 +15,7 @@ const localPath = path => path === '/' ? '/welcome/' : path === '/ar/' ? '/welco
 const themeKey = 'tawdheef-docs-theme';
 
 test.beforeAll(() => {
-  expect(canonicalPaths).toHaveLength(32);
+  expect(canonicalPaths).toHaveLength(36);
   const sitemapPath = new URL('../site-dist/sitemap.xml', import.meta.url);
   if (!existsSync(sitemapPath)) return;
   const sitemap = readFileSync(sitemapPath, 'utf8');
@@ -209,7 +209,7 @@ test('standalone brand page follows device appearance at 320px without changing 
 for (const width of [320, 390]) for (const colorScheme of ['light', 'dark']) {
   test(`all canonical pages fit ${width}px and remain readable in ${colorScheme}`, async ({ page }) => {
     test.setTimeout(180_000);
-    expect(canonicalPaths).toHaveLength(32);
+    expect(canonicalPaths).toHaveLength(36);
     expect(new Set(canonicalPaths).size).toBe(canonicalPaths.length);
     await page.setViewportSize({ width, height: 844 });
     await page.emulateMedia({ colorScheme });

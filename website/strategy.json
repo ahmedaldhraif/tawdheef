@@ -71,7 +71,7 @@
       "Choose a starting point: public country research without an app/CV account, a practical example, or local app setup followed by CV connection and a chosen Run",
       "Concise Guides, agent reference and About navigation",
       "Current country packs with source dates and contribution links",
-      "Canonical first-run request and optional manual/client setup",
+      "One short agent-led setup request near the start, with optional manual/client setup",
       "Account requirements, provider limits and agent documentation",
       "Operational, policy, security and contribution docs"
     ],
@@ -135,7 +135,7 @@
   },
   "informationArchitecture": {
     "decision": "Skills is the main overview for one installable skill and eight task guides. Keep detailed setup in /guides/use-the-skill/. Preserve the approved hero and GitHub-first downloads.",
-    "home": "Keep the approved simple promise, real product preview, compact agent-install demonstration, contextual Tabbio CV step, public country packs and contribution routes. No invented account or application state.",
+    "home": "Approved centered hero and real product preview; public country packs/research before the agent-install demonstration and contextual Tabbio CV section, followed by contributions and FAQs.",
     "routes": [
       {
         "path": "/skills/",
@@ -208,6 +208,14 @@
       "artwork": "Use the original approved /brand/mark.svg beside the guide heading, preserving the Arabic Grid proportions and two square dots. Never substitute a typed ta glyph.",
       "behaviorBoundary": "This changes marketing navigation and documentation, not tracker application-run behavior or provider permissions.",
       "overview": "/skills/"
+    },
+    "resources": {
+      "research": "/examples/",
+      "brief": "/examples/job-search-brief/",
+      "arabicResearch": "/ar/examples/",
+      "arabicBrief": "/ar/examples/job-search-brief/",
+      "source": "docs/examples/ and docs/i18n/ar/examples/",
+      "guideCountImpact": "Two resources per language, separate from eight task guides and one installable skill."
     }
   },
   "entryJourneys": {
@@ -238,5 +246,20 @@
     "strategy": "docs/marketing/OPEN-SOURCE-GROWTH.md",
     "firstResult": "docs/examples/README.md",
     "principle": "Public useful data first; personal CV matching and optional separate services when relevant. Reuse canonical instructions rather than add duplicate agent files."
+  },
+  "brandArchitecture": {
+    "productHome": "https://www.tawdheef.com",
+    "owner": "Ahmed AlDhraif",
+    "repository": "https://github.com/ahmedaldhraif/tawdheef",
+    "cvIntegration": "Tabbio",
+    "hosting": "Infrastructure may be supplied separately; public product identity remains Tawdheef.",
+    "tabbioPage": "Supporting integration copy only, distinct from the canonical product landing page.",
+    "domainStatus": "Owner deferred connection on 14 November 2026; local checks and configuration do not establish live deployment."
+  },
+  "launchAssets": {
+    "drafts": "docs/marketing/LAUNCH-KIT.md",
+    "packUpdates": "directories/PACK-UPDATES.md",
+    "tabbioIntegration": "docs/marketing/TABBIO-INTEGRATION-PAGE.md",
+    "publication": "Ready-to-review copy is not a personal post, published Tabbio page or new pack release."
   }
 }

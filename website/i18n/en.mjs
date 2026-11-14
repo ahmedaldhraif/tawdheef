@@ -86,12 +86,13 @@ export default {
   },
   "directories": {
     "title": "Country packs. Shared on GitHub.",
-    "body": "Use a pack, fix a link or contribute a directory for any country.",
+    "body": "Explore company data before installing. Use a pack or contribute a directory for any country.",
     "download": "Download",
     "source": "GitHub",
     "countLabel": "companies and sources",
     "how": "How packs work",
-    "contribute": "Contribute on GitHub"
+    "contribute": "Contribute on GitHub",
+    "research": "Research companies with your agent",
   },
   "faq": {
     "title": "Questions before you start?",

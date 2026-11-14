@@ -13,7 +13,7 @@ if (!['chromium', 'webkit'].includes(browserName)) throw new Error('Use the Chro
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['marketing-routes-ui.spec.mjs', 'locales-ui.spec.mjs', 'site-appearance-ui.spec.mjs', 'ui.spec.mjs', 'setup-ui.spec.mjs', 'run-filters-ui.spec.mjs', 'progress-ui.spec.mjs', 'snapshot-ui.spec.mjs', 'run-motion-ui.spec.mjs', 'run-polling-ui.spec.mjs', 'agent-monitoring-ui.spec.mjs', 'native-client-ui.spec.mjs'],
+  testMatch: ['value-first-resources-ui.spec.mjs', 'marketing-routes-ui.spec.mjs', 'locales-ui.spec.mjs', 'site-appearance-ui.spec.mjs', 'ui.spec.mjs', 'setup-ui.spec.mjs', 'run-filters-ui.spec.mjs', 'progress-ui.spec.mjs', 'snapshot-ui.spec.mjs', 'run-motion-ui.spec.mjs', 'run-polling-ui.spec.mjs', 'agent-monitoring-ui.spec.mjs', 'native-client-ui.spec.mjs'],
   fullyParallel: false,
   workers: 1,
   retries: 0,

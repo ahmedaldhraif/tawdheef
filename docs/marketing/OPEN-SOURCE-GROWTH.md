@@ -44,6 +44,14 @@ The direct app-setup path stays available for people already ready to use it. In
 
 ## Implemented in this pass
 
+The approved follow-up also brings these resources into native English/Arabic
+website pages, places public packs before setup and the CV section, and states
+the actual client's real-CV requirement before matching or acting. [Launch drafts](LAUNCH-KIT.md),
+[pack update notes](../../directories/PACK-UPDATES.md) and a distinct
+[Tabbio integration-page draft](TABBIO-INTEGRATION-PAGE.md) are prepared.
+The owner deferred domain connection on 14 November 2026; no personal post or
+Tabbio page is published by preparing these files.
+
 - README starting-point choices for public research, app setup and contribution.
 - One copyable public-data research task and a private, fillable job-search brief in English and Arabic.
 - Links from the directory and guide indexes and the existing `llms.txt` navigation aid.
@@ -60,6 +68,17 @@ The direct app-setup path stays available for people already ready to use it. In
 6. **Test one conversion change at a time.** Start with whether people can find a useful pack and understand setup. Introduce Tabbio when they want to compare companies with their actual CV. Keep the free CV path and separate provider costs clear. Only add an optional update email if someone owns the consent, delivery and publishing process; keep downloads usable without it.
 
 GitHub's [README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) favors explaining usefulness, getting started, help and maintenance. [Topics](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics) help people discover relevant repositories. Keep topics accurate and the social preview current, rather than adding keyword lists to prose.
+
+## CV sources and Native ownership
+
+The actual client must read the real authorized CV before matching jobs or
+acting on a Run. Tabbio is the contextual CV route described here; its connection
+belongs to that client. Native handoffs are not gated on a separate tracker CLI/CV
+probe, and client reports are not independent verification. An optional original
+PDF/DOCX can already be selected for exact-byte local staging; that does not
+verify its facts, invent a CV or authorize sharing. Broader CV-source workflows
+remain a product decision to evaluate against the same truthful career-data and
+action-scope contract. Public research and manual tracking remain ungated.
 
 ## Measure useful progress
 

@@ -17,6 +17,9 @@ A maintainer reviews the evidence and may ask a question or request changes. Acc
 
 Keep private CVs, tracking, account details and credentials out of public issues. For a sensitive concern, follow [SECURITY.md](SECURITY.md) instead of posting the material.
 
+Published directory changes and actual contribution credit belong in the
+[pack update notes](directories/PACK-UPDATES.md). Merging a change does not replace a released ZIP.
+
 ## Code changes
 
 Read `AGENTS.md` for operation boundaries and `docs/REPOSITORY.md` for the code map. Read `DESIGN.md` before interface changes. Use the relevant installed development skills on demand.
