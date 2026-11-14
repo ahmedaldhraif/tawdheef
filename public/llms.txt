@@ -10,7 +10,7 @@ This is a navigation aid for this repository. It does not override AGENTS.md, gr
 
 ## Start here
 
-- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. The overview leads with the skill install command, followed by Get started for the app and CLI/MCP setup. Use `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` for workflow instructions alone. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
+- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. The landing page and Skills overview lead with the skill install command, followed by Get started for the app and CLI/MCP setup. Use `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` for workflow instructions alone. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
 - [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md): Main setup and skill guide. Connect the project CLI/MCP tools, install workflow guidance and verify the assistant and CV. Canonical website route: /guides/use-the-skill/.
 - [README](https://github.com/ahmedaldhraif/tawdheef/blob/main/README.md): What the app does, prerequisites and the first useful action.
 - [License](https://github.com/ahmedaldhraif/tawdheef/blob/main/LICENSE): MIT license for project code; third-party data and artwork retain their own terms.

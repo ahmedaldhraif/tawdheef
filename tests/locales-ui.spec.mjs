@@ -38,28 +38,21 @@ test('landing language switch preserves the current section in both directions',
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
-test('Arabic setup keeps three steps, the original Tabbio mark and exact CLI commands', async ({ page }) => {
+test('Arabic landing uses the compact skill install and original Tabbio CV shortcut', async ({ page }) => {
   await captureClipboard(page);
   await page.goto('/welcome/ar/');
-  const steps = page.locator('#how-it-works .workflow > article');
-  await expect(steps).toHaveCount(3);
-  const cv = steps.nth(1);
-  const logo = cv.locator('.workflow-cv-brand img');
-  await expect(logo).toHaveAttribute('src', '/brands/tabbio-wordmark-violet-original.svg');
-  await expect(logo).toHaveAttribute('width', '100');
-  await expect(logo).toHaveAttribute('height', '24');
-  expect(await logo.evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
-  const actions = cv.locator('.workflow-actions a');
-  await expect(actions).toHaveCount(2);
-  await expect(cv.locator('.workflow-actions a[href="/ar/guides/use-the-skill/#cv"]')).toBeVisible();
-  const signup = cv.locator('.workflow-actions a[href^="https://app.tabbio.com"]');
-  await expect(signup).toBeVisible();
-  const signupUrl = new URL(await signup.getAttribute('href'));
-  expect(signupUrl.hostname).toBe('app.tabbio.com');
-  expect(signupUrl.searchParams.get('utm_source')).toBe('tawdheef');
-  await expect(page.locator('#quick-cli')).toHaveCSS('direction', 'ltr');
-  await page.locator('[data-copy="quick-cli"]').click();
-  expect(await page.evaluate(() => window.__copied)).toBe(quickStart);
+  const section = page.locator('#how-it-works');
+  await expect(section.locator('.workflow')).toHaveCount(0);
+  const logo=section.locator('.skills-cv-shortcut img');
+  await expect(logo).toHaveAttribute('src','/brands/tabbio-wordmark-violet-original.svg');
+  await expect(logo).toHaveAttribute('width','100');
+  await expect(logo).toHaveAttribute('height','24');
+  expect(await logo.evaluate(image=>image.complete&&image.naturalWidth>0)).toBe(true);
+  await expect(section.locator('.skills-cv-shortcut a')).toHaveAttribute('href','/ar/guides/use-the-skill/#cv');
+  await expect(section.getByRole('link',{name:'جهّز التطبيق',exact:true})).toHaveAttribute('href','/ar/skills/#get-started');
+  await expect(page.locator('#quick-cli')).toHaveCSS('direction','ltr');
+  await section.locator('[data-copy="quick-cli"]').click();
+  expect(await page.evaluate(()=>window.__copied)).toBe(installCommand);
   await expect(page.locator('#copy-status')).toHaveText('تم النسخ إلى الحافظة.');
 });
 

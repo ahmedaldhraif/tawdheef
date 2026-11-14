@@ -11,7 +11,7 @@ if (testAddress.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(tes
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['locales-ui.spec.mjs', 'marketing-routes-ui.spec.mjs', 'ui.spec.mjs', 'setup-ui.spec.mjs', 'run-filters-ui.spec.mjs', 'progress-ui.spec.mjs'],
+  testMatch: ['site-appearance-ui.spec.mjs', 'locales-ui.spec.mjs', 'marketing-routes-ui.spec.mjs', 'ui.spec.mjs', 'setup-ui.spec.mjs', 'run-filters-ui.spec.mjs', 'progress-ui.spec.mjs'],
   fullyParallel: false,
   workers: 1,
   retries: 0,

@@ -1,0 +1,375 @@
+{
+  "capturedAt": "2026-11-14T00:12:23.477Z",
+  "appVersion": "0.1.2",
+  "appBuildSha256": "0e61f30c8a10e1855cc1a3be24c2fe4bd1f883607c54dfb701c5c4c3b099e0d3",
+  "temporaryFixture": true,
+  "port": 4031,
+  "description": "Actual current local development React interface with complete public research packs imported through the validated domain store. Directory counts are real. All tracking starts empty; no fictional applications, profiles, emails or provider states were added. The unchanged package version does not identify the released interface.",
+  "caption": "Public research data in an isolated preview. No applications sent.",
+  "recordCount": 13714,
+  "sources": [
+    {
+      "id": "uae-expanded",
+      "name": "UAE",
+      "country": "AE",
+      "recordCount": 3583,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/uae-expanded/source.json",
+      "sourceSha256": "8aa9c30e3c147924d7820e09eecbd8272f5cf36e57ffb53cbb4b01d21be0ef66"
+    },
+    {
+      "id": "saudi-arabia",
+      "name": "Saudi Arabia",
+      "country": "SA",
+      "recordCount": 4256,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/saudi-arabia/source.json",
+      "sourceSha256": "0dd1aaa4c7af38cd9b3febb76534194292480df02ba92b083dcc05a9776650f6"
+    },
+    {
+      "id": "qatar",
+      "name": "Qatar",
+      "country": "QA",
+      "recordCount": 671,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/qatar/source.json",
+      "sourceSha256": "dda16ab7cf2b948ccfa996793899690e4ceef091a1a79786f7e3524b11299f55"
+    },
+    {
+      "id": "oman",
+      "name": "Oman",
+      "country": "OM",
+      "recordCount": 2587,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/oman/source.json",
+      "sourceSha256": "d156881e583fdada9ebc325db1dc35962b2e39d142320f66d799dd9d76100661"
+    },
+    {
+      "id": "kuwait",
+      "name": "Kuwait",
+      "country": "KW",
+      "recordCount": 1806,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/kuwait/source.json",
+      "sourceSha256": "74ee1b0ff9142532da58daea3a8597ef12a4f01dc4c742d6525f0662fc60e077"
+    },
+    {
+      "id": "bahrain",
+      "name": "Bahrain",
+      "country": "BH",
+      "recordCount": 811,
+      "snapshotDate": "2026-11-13",
+      "source": "directories/bahrain/source.json",
+      "sourceSha256": "325538befa3c963bff8e791491d33a2fef21f3ab752b8fd0482d9cd805d45fe9"
+    }
+  ],
+  "snapshots": [
+    {
+      "directoryId": "uae-expanded",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    },
+    {
+      "directoryId": "saudi-arabia",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    },
+    {
+      "directoryId": "qatar",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    },
+    {
+      "directoryId": "oman",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    },
+    {
+      "directoryId": "kuwait",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    },
+    {
+      "directoryId": "bahrain",
+      "period": "all_time",
+      "counts": {
+        "applications": 0,
+        "profiles": 0,
+        "emails": 0
+      }
+    }
+  ],
+  "runCount": 0,
+  "applicationEventCount": 0,
+  "providerConnections": 0,
+  "externalRequestCount": 0,
+  "limitations": [
+    "These screenshots reflect newer local development UI than the current public v0.1.2 release; they do not demonstrate that those UI changes are released.",
+    "Mobile country tabs scroll horizontally; the screenshot shows the initial viewport.",
+    "Emulated mobile viewport, not a physical-device test.",
+    "Public research dates do not establish current vacancies or tested recruitment routes."
+  ],
+  "shots": [
+    {
+      "file": "directory.png",
+      "bytes": 87897,
+      "sha256": "ac76bb7d46e48970a1b446ec90206d536f15acd645e5d710d0f3d70949c39ab4",
+      "width": 1100,
+      "height": 760,
+      "state": "Real public research records; no selections, runs or submission activity.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": true
+        }
+      ]
+    },
+    {
+      "file": "targets.png",
+      "bytes": 86550,
+      "sha256": "8dbe6a34cbb2b4e27d27ede0e0b5e50381b35f0776bdd38454ab5331fe960951",
+      "width": 1100,
+      "height": 760,
+      "state": "Two public source rows selected locally; Run was not opened or started.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": true
+        }
+      ]
+    },
+    {
+      "file": "tracking.png",
+      "bytes": 97339,
+      "sha256": "b504d6bcb90b07b7c9429831aeb0ecc2976b5fcb10370a60b5a73126bbba366a",
+      "width": 1100,
+      "height": 760,
+      "state": "Actual public company detail opened read-only; no status, note or progress edits.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": true
+        }
+      ]
+    },
+    {
+      "file": "directory-mobile.png",
+      "bytes": 50254,
+      "sha256": "f85a11b52ce95bcf24b4dfe44c14792036f72eac3d716bece32fc6f335ce99f4",
+      "width": 390,
+      "height": 820,
+      "state": "Real public research records; no selections, runs or submission activity.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": false
+        }
+      ]
+    },
+    {
+      "file": "targets-mobile.png",
+      "bytes": 47956,
+      "sha256": "c1bedebe5a9397590281e6065eec930e7d0dd48f904dfa320a72bf7cbf8214fd",
+      "width": 390,
+      "height": 820,
+      "state": "Two public source rows selected locally; Run was not opened or started.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": false
+        }
+      ]
+    },
+    {
+      "file": "tracking-mobile.png",
+      "bytes": 33915,
+      "sha256": "7a9aa66e2cf42f626a47525efe3490786f62714b6934afe0f3e10735180ee0c4",
+      "width": 390,
+      "height": 820,
+      "state": "Actual public company detail opened read-only; no status, note or progress edits.",
+      "tabs": [
+        {
+          "text": "UAE3583",
+          "flag": "/flags/AE.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Saudi Arabia4256",
+          "flag": "/flags/SA.svg",
+          "fullyVisible": true
+        },
+        {
+          "text": "Qatar671",
+          "flag": "/flags/QA.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Oman2587",
+          "flag": "/flags/OM.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Kuwait1806",
+          "flag": "/flags/KW.svg",
+          "fullyVisible": false
+        },
+        {
+          "text": "Bahrain811",
+          "flag": "/flags/BH.svg",
+          "fullyVisible": false
+        }
+      ]
+    }
+  ],
+  "versionMeaning": "Package version only. These screenshots show the current local development UI, which is newer than the public v0.1.2 interface."
+}
