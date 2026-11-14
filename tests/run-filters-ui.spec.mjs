@@ -15,9 +15,8 @@ async function openFixture(page, request, name, input = records) {
   const added = await request.post(`/api/directories/${directory.id}/companies`, { data: { records: input } });
   expect(added.ok()).toBeTruthy();
   await page.addInitScript(id => localStorage.setItem('apply-directory', id), directory.id);
-  await page.route('**/api/assistants', route => route.fulfill({ json: [{ id: 'codex', name: 'Codex', installed: true }, { id: 'claude-code', name: 'Claude Code', installed: true }] }));
   // The only sending endpoint is trapped: these tests never launch an assistant.
-  await page.route('**/api/run', route => route.fulfill({ status: 409, json: { error: 'A fixture run must be mocked.' } }));
+  await page.route('**/api/native/runs', route => route.fulfill({ status: 409, json: { error: 'A fixture run must be mocked.' } }));
   await page.goto('/');
   await expect(page.locator('h1')).toContainText(name);
   await expect(page.locator('tbody tr')).toHaveCount(Math.min(input.length, 100));
@@ -41,21 +40,20 @@ async function typePanel(page) {
 }
 async function fakeRun(page, directory) {
   let submitted;
-  const run = { id: 'guided-fixture-run', directoryId: directory.id, assistant: 'codex', status: 'completed', completed: 0, companyIds: [], targets: [] };
-  await page.route('**/api/run', async route => {
+  const run = { id: 'guided-fixture-run', directoryId: directory.id, native: true, assistant: 'codex', status: 'completed', completed: 0, companyIds: [], targets: [] };
+  await page.route('**/api/native/runs', async route => {
     submitted = route.request().postDataJSON();
     Object.assign(run, { actions: submitted.actions, companyTypes: submitted.companyTypes, locations: submitted.locations, companyIds: submitted.companyIds || [] });
-    await route.fulfill({ json: run });
+    await route.fulfill({ json: { run } });
   });
   await page.route('**/api/runs/guided-fixture-run', route => route.fulfill({ json: run }));
   await page.route('**/api/runs/guided-fixture-run/targets?*', route => route.fulfill({json:{id:run.id,offset:0,limit:50,total:0,items:[]}}));
   return () => submitted;
 }
 test.beforeEach(async ({ page, request }) => {
-  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__filterErrors = [];
   page.on('pageerror', error => page.__filterErrors.push(error.message));
-  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'native'; return route.fulfill({ response, json: boot }); });
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
 test.afterEach(async ({ page }) => expect(page.__filterErrors).toEqual([]));
@@ -169,7 +167,7 @@ test('Run includes every filtered company across pages and applies search and st
 test('future-only actions are explicit, all off disables Run, and the assistant is remembered', async ({ page, request }) => {
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = 'claude-code'; boot.settings.connectionMode = 'local-adapters';
+    boot.settings.preferredAssistant = 'claude-code'; boot.settings.connectionMode = 'native';
     return route.fulfill({ response, json: boot });
   });
   const directory = await openFixture(page, request, 'Guided future only');

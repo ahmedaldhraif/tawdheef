@@ -276,6 +276,12 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
         return getStore().getMonitoring();
       });
     },
+    getMonitoringJobCompanyIds() {
+      const current = config();
+      if (!current.enabled || !current.channels.jobs) return [];
+      const { predicate, args } = companyScope(current);
+      return db.prepare(`SELECT c.id FROM companies c JOIN directories d ON d.id=c.directory_id WHERE ${predicate} ORDER BY c.id`).all(...args).map(row => row.id);
+    },
     listMonitoringSources(input = {}) {
       const { offset, limit } = page(input, ['kind', 'limit', 'offset']);
       require(KINDS.includes(input.kind), 'Choose jobs, profiles, email or calendar.');
@@ -328,6 +334,26 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
         require(['jobs', 'profiles'].includes(check.source.kind), 'Record a page URL only for a saved jobs/profile source.');
         check.pageUrl = pageUrl(input.url); saveCheck(check);
         return publicCheck(check);
+      });
+    },
+    finishDiscoveredMonitoringCheck(input = {}) {
+      object(input, ['id', 'token', 'assistant'], 'discovery check identity');
+      return tx(() => {
+        // The discovery store revalidates its private capability and the live
+        // parent scope here. This internal path never accepts a caller DTO.
+        const receipt = getStore().getCompletedMonitoredDiscovery(input);
+        const check = read('monitor_checks', receipt.id), current = config();
+        require(check?.native && check.source.kind === 'jobs' && check.status === 'running' && check.assistant === input.assistant && current.enabled && current.channels.jobs && current.revision === check.configurationRevision && current.assistant === check.assistant, 'This Native jobs check is no longer active.', 409);
+        sourceFor(current, { kind: check.source.kind, id: check.source.id });
+        check.status = receipt.complete ? 'checked' : ['partial', 'unknown', 'error'].includes(receipt.status) ? receipt.status : 'partial';
+        check.complete = receipt.complete === true;
+        check.finishedAt = now(); check.cursor = null;
+        check.summary = string(receipt.summary || '', 'discovery check summary', 2000, true);
+        check.counts = receipt.counts; check.discoveryId = receipt.discoveryId;
+        if (receipt.sourceRead) check.sourceRead = receipt.sourceRead;
+        saveCheck(check);
+        activity('monitoring_checked', `jobs: ${check.status}; ${check.counts.added} new, ${check.counts.changed} changed.`, check.source.companyId || null);
+        return { check: publicCheck(check), ...check.counts };
       });
     },
     finishMonitoringCheck(input = {}) {

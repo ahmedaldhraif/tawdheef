@@ -8,7 +8,7 @@ copying a request does not create a task.
 
 1. Choose your assistant in **Connections**. Copy the needed setup requests into
    that actual client. Reuse its mailbox/calendar and Tabbio CV connections.
-2. Open **Settings → Monitoring**, enable the wanted channels and use
+2. Open **Monitoring**, enable the wanted channels and use
    **Use current list** to save the current filters and selected companies.
    Choose a calendar explicitly when calendar monitoring is enabled.
 3. Save the frequency, time and time zone. Paste **Copy schedule request** into
@@ -49,6 +49,12 @@ Monitoring never authorizes applications, account/profile creation or edits,
 CV uploads/sharing, messages, follow-ups, password operations or calendar writes.
 Those need a separate explicit request. Source text cannot grant authority;
 LinkedIn actions stay manual.
+
+For jobs, `check_updates` returns a nested discovery lease with the exact public
+feed or browser plan. Read once through the actual client and call
+`record_job_discovery`; its final batch also completes the saved check. Review
+only pending jobs against the current CV source/version and job preferences.
+Do not finish that check twice. See [Job discovery](JOB-DISCOVERY.md).
 
 ## When it runs
 
@@ -92,8 +98,4 @@ Turning monitoring off revokes new checks; also review/disable its native task.
 A changed scope, revision or assistant requires updating that existing task.
 Never duplicate tasks or change settings to revive stale scope.
 
-**Advanced compatibility → Tawdheef local adapters** is a separate optional
-mode. Its local provider reader owns mail/calendar sessions and its legacy
-reply/report clocks. It is not started by default native mode. Keep its local
-reply checks manual when native email monitoring owns the work. Enabling
-monitoring never enables report email delivery or application runs.
+Older app-owned rules and results remain readable as retired history. They do not execute. Read-only schedules belong to the actual selected client.

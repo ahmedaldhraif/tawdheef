@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import './shared-ui.css';
 
@@ -51,7 +51,7 @@ export function Modal({ title, close, children, t, narrow = false, wide = false,
     else state.current.close();
   };
   const closeRef = useRef(requestClose); closeRef.current = requestClose;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previous = document.activeElement, node = ref.current;
     const items = () => [...node.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')]
       .filter(e => e.getClientRects().length && !e.closest('[hidden],[inert]'));
@@ -65,6 +65,9 @@ export function Modal({ title, close, children, t, narrow = false, wide = false,
       }
     }
     const handle = e => {
+      // The inline editor owns Escape; React handles it after this native
+      // listener. Let it cancel the edit without closing the containing dialog.
+      if (e.key === 'Escape' && e.target.closest?.('.inline-editor')) return;
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!state.current.pending) closeRef.current(); }
       if (e.key === 'Tab') {
         const list = items(), active = document.activeElement;
@@ -89,7 +92,7 @@ export function Modal({ title, close, children, t, narrow = false, wide = false,
       else document.querySelector('[data-connections-trigger]')?.focus();
     };
   }, []);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (discard) ref.current?.querySelector('[data-keep-editing]')?.focus();
     else if (previousEditing.current?.isConnected) { previousEditing.current.focus(); previousEditing.current = null; }
   }, [discard]);
@@ -127,7 +130,7 @@ function formSnapshot(node) {
 export function Form({ children, save, label = 'Save changes', close, t, extra, pending = false, onBusyChange, trackDirty = true }) {
   const [error, setError] = useState(''), [busy, setBusy] = useState(false);
   const context = React.useContext(ModalState), ref = useRef(null), baseline = useRef(''), inFlight = useRef(false);
-  useEffect(() => { baseline.current = formSnapshot(ref.current); }, []);
+  useLayoutEffect(() => { baseline.current = formSnapshot(ref.current); }, []);
   async function perform(action) {
     if (inFlight.current || pending) return;
     inFlight.current = true;

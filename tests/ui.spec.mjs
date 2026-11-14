@@ -63,11 +63,10 @@ async function createDirectory(page, name, flag = null) {
 }
 
 test.beforeEach(async ({ page, request }) => {
-  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.__runtimeErrors = errors;
-  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'native'; return route.fulfill({ response, json: boot }); });
   await page.route('**/*', route => {
     const url = new URL(route.request().url());
     return ['127.0.0.1', 'localhost'].includes(url.hostname) ? route.continue() : route.abort();
@@ -75,6 +74,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'wait' });
   expect(page.__runtimeErrors).toEqual([]);
 });
 
@@ -232,72 +232,28 @@ test('CSV preview leaves records unchanged until the import is committed', async
   expect(rows.every(item => item.status === 'not_started')).toBeTruthy();
 });
 
-test('schedule settings persist without starting application runs', async ({ page, request }) => {
+test('Monitoring keeps local report generation and never rewrites saved adapter preferences', async ({ page, request }, testInfo) => {
   await openTracker(page);
-  const before = (await json(request, '/api/bootstrap')).runs;
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
-  await dialog.getByRole('combobox', { name: 'Check replies', exact: true }).selectOption('manual');
-  await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('custom');
-  await dialog.getByLabel('Every how many days?', { exact: true }).fill('3');
-  await dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true }).fill('09:15');
-  await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
-  await dialog.getByLabel('Time zone', { exact: true }).fill('Asia/Dubai');
+  const before = await json(request, '/api/settings');
+  const runsBefore = (await json(request, '/api/bootstrap')).runs;
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Monitoring', exact: true });
+  await dialog.locator('summary').filter({ hasText: /^Reports & replies$/ }).click();
+  await expect(dialog.locator('summary').filter({ hasText: /^Local reply checks$/ })).toHaveCount(0);
+  await expect(dialog.getByRole('checkbox', { name: 'Email reports to me', exact: true })).toHaveCount(0);
+  await dialog.locator('summary').filter({ hasText: /^Latest report$/ }).click();
+  await dialog.getByRole('button', { name: 'Generate report', exact: true }).click();
+  await expect(dialog).not.toContainText('No reports yet.');
   await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await page.reload();
+  const after = await json(request, '/api/settings');
+  for (const key of ['reportFrequency', 'reportTime', 'reportEmail', 'emailReports', 'refreshFrequency', 'lastRefreshAt']) expect(after[key]).toBe(before[key]);
+  expect((await json(request, '/api/bootstrap')).runs).toEqual(runsBefore);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
-  await expect(dialog.getByRole('combobox', { name: 'Check replies', exact: true })).toHaveValue('manual');
-  await expect(dialog.getByRole('combobox', { name: /^Frequency/ })).toHaveValue('custom');
-  await expect(dialog.getByLabel('Every how many days?', { exact: true })).toHaveValue('3');
-  await expect(dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true })).toHaveValue('09:15');
-  await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
-  await expect(dialog.getByLabel('Time zone', { exact: true })).toHaveValue('Asia/Dubai');
-  expect((await json(request, '/api/bootstrap')).runs).toEqual(before);
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-});
-
-test('Settings owns schedules and preserves a manual check when saving preferences', async ({ page, request }, testInfo) => {
-  await openTracker(page);
-  await expect(page.locator('.heading-actions').getByRole('button', { name: 'Reports', exact: true })).toHaveCount(0);
-  await expect(page.locator('.heading-actions').getByRole('button', { name: 'Check replies', exact: true })).toHaveCount(0);
-  const before = await json(request, '/api/bootstrap');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
-  await expect(dialog.getByRole('button', { name: 'Check replies now', exact: true })).toBeVisible();
-  await expect(dialog.locator('summary').filter({ hasText: /^Latest report$/ })).toBeVisible();
-  await expect(page.locator('thead').getByRole('button', { name: 'Update schedule', exact: true })).toHaveCount(0);
-  await expect(page.locator('.header-actions').getByRole('button', { name: 'Settings', exact: true }).locator('svg')).toHaveClass(/lucide-settings/);
-  await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('weekly');
-  await dialog.getByRole('button', { name: 'Check replies now', exact: true }).click();
-  await expect(dialog.getByRole('button', { name: 'Check replies now', exact: true })).toBeEnabled();
-  const checked = await json(request, '/api/settings');
-  expect(checked.lastRefreshAt).toBeTruthy();
-  await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
-  await expect(dialog).not.toBeVisible();
-  const saved = await json(request, '/api/settings');
-  expect(saved.lastRefreshAt).toBe(checked.lastRefreshAt);
-  expect(saved.reportFrequency).toBe('weekly');
-  expect((await json(request, '/api/bootstrap')).runs).toEqual(before.runs);
-  await expect(page.locator('.workspace-footer .update-status')).not.toHaveRole('button');
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const general = page.getByRole('dialog', { name: 'Settings', exact: true });
-  await expect(general.getByRole('combobox', { name: /^Frequency/ })).toHaveValue('weekly');
-  await expect(general.getByLabel('Daily application limit', { exact: true })).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath('simple-settings.png') });
-  await page.setViewportSize({ width: 390, height: 700 });
-  const saveButton = general.getByRole('button', { name: 'Save changes', exact: true });
-  await expect(saveButton).toBeInViewport();
-  await general.locator('.dialog-content').evaluate(element => { element.scrollTop = element.scrollHeight; });
-  await expect(saveButton).toBeInViewport();
-  await general.locator('.dialog-content').evaluate(element => { element.scrollTop = 0; });
-  await page.screenshot({ path: testInfo.outputPath('simple-settings-mobile.png') });
+  const preferences = page.getByRole('dialog', { name: 'Preferences', exact: true });
+  await expect(preferences.getByLabel('Time zone', { exact: true })).toHaveValue('Asia/Dubai');
+  await expect(preferences.locator('summary').filter({ hasText: /^Reports & replies$/ })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('native-preferences.png') });
 });
 
 test('a saved Last update date opens the matching company activity', async ({ page, request }) => {
@@ -310,7 +266,7 @@ test('a saved Last update date opens the matching company activity', async ({ pa
   const row = await searchFor(page, 'UI Activity Example');
   await row.getByRole('button', { name: 'View activity for UI Activity Example', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'UI Activity Example', exact: true });
-  await expect(dialog.getByRole('button', { name: 'Application history', exact: true })).toHaveClass(/active/);
+  await expect(dialog.getByRole('tab', { name: 'Application history', exact: true })).toHaveClass(/active/);
   await expect(dialog.getByRole('heading', { name: 'Activity', exact: true })).toBeVisible();
   await expect(dialog.locator('.activity-list')).toContainText(detail.activity[0].detail);
   expect((await json(request, `/api/companies?directoryId=${directory.id}`)).total).toBe(1);
@@ -321,7 +277,7 @@ test('dialog focus stays inside, Escape closes it, and focus returns to the trig
   const trigger = page.getByRole('button', { name: 'Settings', exact: true });
   await trigger.focus();
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const dialog = page.getByRole('dialog', { name: 'Preferences', exact: true });
   const close = dialog.getByRole('button', { name: 'Close', exact: true });
   await expect(close).toBeFocused();
   await dialog.getByRole('button', { name: 'Save changes', exact: true }).focus();
@@ -332,30 +288,23 @@ test('dialog focus stays inside, Escape closes it, and focus returns to the trig
   await expect(trigger).toBeFocused();
 });
 
-test('agent setup stays concise while machine configuration remains available', async ({ page, request, baseURL }, testInfo) => {
+test('agent setup stays in the actual client while machine configuration remains available', async ({ page, request, baseURL }, testInfo) => {
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__setupClipboard = text; } } }));
   await openTracker(page);
   const config = await json(request, '/api/agent-config');
   const server = config.mcpServers['apply-tracker'];
-  expect(isAbsolute(server.command)).toBeTruthy();
-  expect(existsSync(server.command)).toBeTruthy();
-  expect(isAbsolute(server.args[0])).toBeTruthy();
-  expect(existsSync(server.args[0])).toBeTruthy();
-  expect(server.args[0].replaceAll('\\', '/')).toMatch(/\/server\/mcp\.mjs$/);
+  expect(isAbsolute(server.command)).toBeTruthy(); expect(existsSync(server.command)).toBeTruthy();
+  expect(isAbsolute(server.args[0])).toBeTruthy(); expect(existsSync(server.args[0])).toBeTruthy();
   expect(server.env.APPLY_TRACKER_DATA).toContain('apply-tracker-ui-');
   expect(server.env.APPLY_TRACKER_PORT).toBe(new URL(baseURL).port);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: /^Assistant —/ }).click();
-  await page.getByRole('button', { name: 'Codex — View setup', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Codex setup', exact: true });
-  await expect(dialog.getByRole('link', { name: 'Install Codex', exact: true })).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: 'Assistant', exact: true });
   await expect(dialog.locator('pre, code, textarea')).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
-  expect(await page.evaluate(() => window.__setupClipboard)).toContain('AGENTS.md');
-  expect(await page.evaluate(() => window.__setupClipboard)).toContain('Codex');
-  await expect(dialog.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('compact-assistant.png') });
-  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__setupClipboard)).toContain('Codex');
+  await expect(dialog.getByRole('button', { name: 'Setup request copied', exact: true })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('compact-native-assistant.png') });
 });
 
 test('mobile keeps page width within the viewport while the table scrolls', async ({ page }, testInfo) => {
@@ -367,7 +316,7 @@ test('mobile keeps page width within the viewport while the table scrolls', asyn
   const addCompany = await page.getByRole('button', { name: 'Add company', exact: true }).boundingBox();
   expect(addCompany.x + addCompany.width).toBeLessThanOrEqual(390);
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const bounds = await page.getByRole('dialog', { name: 'Settings', exact: true }).boundingBox();
+  const bounds = await page.getByRole('dialog', { name: 'Preferences', exact: true }).boundingBox();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
   await page.keyboard.press('Escape');
@@ -375,7 +324,7 @@ test('mobile keeps page width within the viewport while the table scrolls', asyn
   await page.screenshot({ path: testInfo.outputPath('mobile.png'), fullPage: true });
 });
 
-test('Run chooses an installed assistant, shows real queue state and stops without test submissions', async ({ page, request }, testInfo) => {
+test('Native Run uses the existing assistant, shows real queue state and stops without test submissions', async ({ page, request }, testInfo) => {
   await openTracker(page);
   // Wait for the filtered response before selecting; the existing ABB row is
   // already visible in the unfiltered page while the search is debouncing.
@@ -388,9 +337,8 @@ test('Run chooses an installed assistant, shows real queue state and stops witho
   await expect(page.locator('.heading-actions').getByRole('button', { name: /^Run on/ })).toBeEnabled();
   await row.getByRole('checkbox', { name: 'Select ABB', exact: true }).check();
   const company = (await json(request, '/api/companies?directoryId=uae&search=ABB')).items.find(c => c.name === 'ABB');
-  let run = { id: 'fixture-run', managed: true, assistant: 'codex', companyIds: [company.id], completed: 0, status: 'running', activeCompanyId: company.id, targets: [{ companyId: company.id, name: 'ABB', status: 'working' }] };
-  await page.route('**/api/assistants', route => route.fulfill({ json: [{ id: 'codex', name: 'Codex', installed: true }, { id: 'claude-code', name: 'Claude Code', installed: false }] }));
-  await page.route('**/api/run', route => { const input = route.request().postDataJSON(); expect(input.explicit).toBe(true); expect(input.assistant).toBe('codex'); expect(input.companyIds).toEqual([company.id]); expect(input.limit).toBeUndefined(); return route.fulfill({ json: run }); });
+  let run = { id: 'fixture-run', native: true, assistant: 'codex', companyIds: [company.id], completed: 0, status: 'running', activeCompanyId: company.id, targets: [{ companyId: company.id, name: 'ABB', status: 'working' }] };
+  await page.route('**/api/native/runs', route => { const input = route.request().postDataJSON(); expect(input.explicit).toBe(true); expect(input.assistant).toBe('codex'); expect(input.companyIds).toEqual([company.id]); expect(input.limit).toBeUndefined(); return route.fulfill({ json: { run } }); });
   await page.route('**/api/runs/fixture-run', route => route.fulfill({ json: run }));
   await page.route('**/api/runs/fixture-run/targets?*', route => route.fulfill({json:{runId:run.id,offset:0,limit:50,total:run.companyIds.length,items:run.targets}}));
   await page.route('**/api/runs/fixture-run/stop', route => { run = { ...run, status: 'cancelled', activeCompanyId: null }; return route.fulfill({ json: run }); });
@@ -411,8 +359,8 @@ test('Run chooses an installed assistant, shows real queue state and stops witho
 
 test('active run stays visible across directories and summary keeps confirmed count while details load', async ({ page, request }) => {
   const created = await request.post('/api/directories', { data: { name: 'Other run tab' } }); expect(created.ok()).toBeTruthy();
-  const summary = { id: 'progress-fixture', directoryId: 'uae', directoryName: 'UAE', managed: true, assistant: 'codex', total: 40, completed: 30, appliedCount: 3, activeCompanyId: 'company-30', currentName: 'Current company', status: 'running' };
-  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(); const body = await response.json(); body.settings.connectionMode = 'local-adapters'; body.runs = [summary]; await route.fulfill({ json: body }); });
+  const summary = { id: 'progress-fixture', directoryId: 'uae', directoryName: 'UAE', native: true, assistant: 'codex', total: 40, completed: 30, appliedCount: 3, activeCompanyId: 'company-30', currentName: 'Current company', status: 'running' };
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(); const body = await response.json(); body.settings.connectionMode = 'native'; body.runs = [summary]; await route.fulfill({ json: body }); });
   await page.route('**/api/runs/progress-fixture', route => route.fulfill({ status: 503, json: { error: 'Fixture details unavailable' } }));
   await page.route('**/api/runs/progress-fixture/targets?*', route => route.fulfill({status:503,json:{error:'Fixture target history unavailable'}}));
   await openTracker(page); await page.getByRole('tab', { name: /Other run tab/ }).click();
@@ -444,12 +392,14 @@ test('Contacts keeps website, careers, LinkedIn and email directly available in 
   await expect(contacts.locator('a[href="mailto:jobs@example.com"]')).toBeVisible();
   for (const link of await contacts.getByRole('link').all()) await expect(link).toHaveAccessibleName(/\S/);
   const linkedin = contacts.getByRole('link', { name: 'Open LinkedIn company page', exact: true });
-  const mark = linkedin.locator('img');
-  await expect(mark).toHaveAttribute('src', '/brands/linkedin-in-blue.png');
-  await expect.poll(() => mark.evaluate(image => image.complete && image.naturalWidth)).toBe(635);
+  const mark = linkedin.locator('svg.brand-mark-linkedin');
+  await expect(mark).toHaveAttribute('viewBox', '0 0 24 24');
+  await expect(mark).toHaveAttribute('aria-hidden', 'true');
+  await expect(linkedin.locator('img')).toHaveCount(0);
   const dimensions = await mark.boundingBox();
-  expect(dimensions.height).toBeGreaterThanOrEqual(21);
-  expect(await linkedin.locator('svg').count()).toBe(0);
+  expect(dimensions.width).toBe(14);
+  expect(dimensions.height).toBe(14);
+  await expect(linkedin.locator('svg')).toHaveCount(1);
 });
 
 
@@ -486,7 +436,7 @@ test('List options supports keyboard navigation, Escape focus return and an uncl
   await trigger.press('ArrowUp');
   await expect(page.getByRole('menuitem', { name: 'Manage directory packs', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowUp');
-  await expect(page.getByRole('menuitem', { name: 'Export CSV', exact: true })).toBeFocused();
+  await expect(page.getByRole('menuitem', { name: 'Export all companies (CSV)', exact: true })).toBeFocused();
   const exported = page.waitForEvent('download');
   await page.keyboard.press('Space');
   expect((await exported).suggestedFilename()).toMatch(/\.csv$/);
@@ -566,51 +516,6 @@ test('Add email opens the matching contact field and saves its real local value'
   await expect(row.getByRole('link', { name: 'Email UI Missing Email', exact: true })).toHaveAttribute('href', 'mailto:jobs@example.com');
 });
 
-test('email setup leads with sign-in and copies instructions without displaying them', async ({ page }, testInfo) => {
-  await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__setupClipboard = text; } } }));
-  await openTracker(page);
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
-  await page.getByRole('button', { name: /^Email —/ }).click();
-  await page.getByRole('button', { name: 'Gmail — Connect', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Connect email', exact: true });
-  await expect(dialog.getByRole('button', { name: 'Sign in to Gmail', exact: true })).toBeVisible();
-  await expect(dialog.getByLabel('Server address', { exact: true })).not.toBeVisible();
-  await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
-  const instructions = await page.evaluate(() => window.__setupClipboard);
-  expect(instructions).toContain('configure_connection');
-  expect(instructions).toContain('Do not send any email');
-  expect(instructions).toContain('Do not invent a server address');
-  await expect(dialog.locator('.setup-instructions, pre')).toHaveCount(0);
-  await page.screenshot({ path: testInfo.outputPath('compact-email.png') });
-  await dialog.getByRole('button', { name: 'Close', exact: true }).first().click();
-});
-
-test('Connections groups real provider logos and calendar setup without claiming accounts are connected', async ({ page }) => {
-  await openTracker(page);
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
-  const hub = page.getByRole('dialog', { name: 'Connections', exact: true });
-  await expect(hub.locator('.connection-category-row')).toHaveCount(6);
-  await expect(hub.getByText('Connected', { exact: true })).toHaveCount(0);
-  await expect.poll(() => hub.locator('img.provider-logo').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
-  await hub.getByRole('button', { name: /^Calendar —/ }).click();
-  await expect.poll(() => page.getByRole('dialog').locator('img.provider-logo').evaluateAll(images => images.length === 3 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
-  await page.getByRole('button', { name: 'Google Calendar — Connect', exact: true }).click();
-  const calendar = page.getByRole('dialog', { name: 'Connect Google Calendar', exact: true });
-  await expect(calendar.getByRole('button', { name: 'Sign in to Google Calendar', exact: true })).toBeVisible();
-  await expect(calendar.locator('.dialog-intro')).toHaveCount(0);
-  await calendar.getByRole('button', { name: 'Back to connections', exact: true }).click();
-  await page.getByRole('button', { name: 'iCloud Calendar — Connect', exact: true }).click();
-  await expect(page.getByLabel('App-specific password', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Back to connections', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'ChatGPT — View setup', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Back to connections', exact: true }).click();
-  await page.getByRole('button', { name: /^Email —/ }).click();
-  await page.getByRole('button', { name: 'iCloud Mail — Connect', exact: true }).click();
-  await expect(page.getByLabel('iCloud Mail address', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('App-specific password', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Close', exact: true }).first().click();
-});
-
 test('Undo remains available while its notification is hovered or keyboard focused', async ({ page, request }) => {
   const { companies } = await createFixture(request, 'Notification timing verification', [{ name: 'UI Timed Undo' }]);
   const saved = await request.patch('/api/companies/' + companies[0].id, { data: { notes: 'Original note', expectedRevision: companies[0].revision } });
@@ -630,66 +535,4 @@ test('Undo remains available while its notification is hovered or keyboard focus
   await expect(undo).toBeVisible();
   await undo.press('Enter');
   await expect(row.getByRole('button', { name: 'Edit Notes for UI Timed Undo', exact: true })).toHaveText('Original note');
-});
-
-test('mobile Connections keeps touch controls and OAuth fields readable without page overflow', async ({ browser, baseURL }) => {
-  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
-  try {
-    const page = await context.newPage();
-    await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
-    await openTracker(page);
-    const trigger = page.getByRole('button', { name: 'Connections', exact: true });
-    expect((await trigger.boundingBox()).height).toBeGreaterThanOrEqual(44);
-    await trigger.click();
-    await page.getByRole('button', { name: /^Calendar —/ }).click();
-    const row = page.getByRole('button', { name: 'Google Calendar — Connect', exact: true });
-    expect((await row.boundingBox()).height).toBeGreaterThanOrEqual(44);
-    await row.click();
-    const dialog = page.getByRole('dialog', { name: 'Connect Google Calendar', exact: true });
-    await dialog.locator('summary').filter({ hasText: 'One-time setup' }).click();
-    const clientId = dialog.getByRole('textbox', { name: 'OAuth client ID', exact: true });
-    expect(await clientId.evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
-    await dialog.getByRole('button', { name: 'Back to connections', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Google Calendar — Connect', exact: true })).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(trigger).toBeFocused();
-  } finally { await context.close(); }
-});
-
-test('changing calendars ignores an older pending event response', async ({ page }) => {
-  await page.route('**/api/bootstrap', async route => {
-    const response = await route.fetch(); const boot = await response.json();
-    boot.settings.connectionMode = 'local-adapters';
-    boot.connections = [...boot.connections.filter(item => item.kind !== 'calendar'), { kind: 'calendar', adapter: 'google-calendar', provider: 'google-calendar', configured: true, status: 'connected', account: 'fixture-calendar@example.test' }];
-    await route.fulfill({ response, json: boot });
-  });
-  await page.route('**/api/calendar/calendars', route => route.fulfill({ json: { calendars: [{ id: 'fixture-a', title: 'Fixture Personal', primary: true }, { id: 'fixture-b', title: 'Fixture Work' }] } }));
-  let releaseOld;
-  const held = new Promise(resolve => { releaseOld = resolve; });
-  let finishOld;
-  const oldFinished = new Promise(resolve => { finishOld = resolve; });
-  await page.route('**/api/calendar/events', async route => {
-    const id = route.request().postDataJSON().calendarId;
-    if (id === 'fixture-a') await held;
-    await route.fulfill({ json: { events: [{ id, title: id === 'fixture-a' ? 'Stale fixture event' : 'Current fixture event', start: { date: '2026-11-15' } }] } });
-    if (id === 'fixture-a') finishOld();
-  });
-  try {
-    await openTracker(page);
-    await page.getByRole('button', { name: 'Connections', exact: true }).click();
-    await page.getByRole('button', { name: /^Calendar —/ }).click();
-    await page.getByRole('button', { name: 'Google Calendar — Connected', exact: true }).click();
-    const calendar = page.getByRole('combobox', { name: 'Calendar', exact: true });
-    await expect(calendar).toHaveValue('fixture-a');
-    await page.getByRole('button', { name: 'Show next 30 days', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Loading events…', exact: true })).toBeVisible();
-    await calendar.selectOption('fixture-b');
-    await page.getByRole('button', { name: 'Show next 30 days', exact: true }).click();
-    await expect(page.getByText('Current fixture event', { exact: true })).toBeVisible();
-    releaseOld(); await oldFinished;
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-    await expect(page.getByText('Stale fixture event', { exact: true })).toHaveCount(0);
-    await expect(page.getByText(/all day/)).toBeVisible();
-  } finally { releaseOld(); }
 });

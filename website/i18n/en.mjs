@@ -2,6 +2,7 @@ export default {
   "hero": {
     "line1": "Find matching jobs.",
     "line2": "Build career profiles.",
+    "community": "One open-source project. Community directories, skills and guides.",
     "subtitleBefore": "A free, open-source job-search app for you and your",
     "subtitleAfter": "agent.",
     "or": "or",
@@ -11,10 +12,20 @@ export default {
     "explainer": "See how it works",
     "builtBy": "Built by"
   },
+  "mascot": {
+    "label": "With your agent",
+    "jobs": "Find jobs",
+    "profile": "Create a profile",
+    "createCv": "Create a CV",
+    "tailorCv": "Tailor your CV",
+    "cvNote": "Create and tailor your CV with Tabbio or your connected CV tool.",
+    "pause": "Pause animation",
+    "play": "Play animation"
+  },
   "facts": [
     {
       "title": "Matching jobs",
-      "body": "Apply to roles that fit your CV and preferences."
+      "body": "Ask your agent to search with your CV and preferences, then review jobs before applying."
     },
     {
       "title": "Career profiles",
@@ -22,13 +33,13 @@ export default {
     },
     {
       "id": "email",
-      "title": "Your email",
-      "body": "Connect Gmail, Outlook or iCloud Mail to send applications and track their replies."
+      "title": "Track and monitor",
+      "body": "Track applications, replies and new openings. Your agent uses its own connections; Tawdheef keeps the record."
     }
   ],
   "workflow": {
     "title": "Use Tawdheef with your agent.",
-    "description": "Set up the app first, then connect your CV and add email if needed.",
+    "description": "Start the app, then copy the setup request from Connections into your agent.",
     "steps": [
       {
         "title": "Open the app",
@@ -48,13 +59,13 @@ export default {
     "cvCreate": "Create a free CV",
     "cvConnect": "Connect your CV",
     "cliTitle": "CLI quick start",
-    "cliPrereq": "With Node.js 24+, run these in the downloaded app folder:",
+    "cliPrereq": "For current source, use Node.js 26 LTS and run in the app folder:",
     "claudeAlternative": "Claude Code:",
     "cliNote": "Setup includes the app tools and skill.",
     "primary": "Set up with your agent",
     "allGuides": "All guides",
     "installIntro": "Copy this command into Codex or Claude Code and ask it to install the skill.",
-    "installNote": "This adds workflow instructions for your agent.",
+    "installNote": "This installs workflow instructions only. It does not install the app or connect accounts.",
     "pasteCaption": "Paste the command into your agent.",
     "appSetup": "Set up the app",
     "cvShortcut": "Create or connect your CV"
@@ -87,12 +98,12 @@ export default {
   "directories": {
     "title": "Country packs. Shared on GitHub.",
     "body": "Explore company data before installing. Use a pack or contribute a directory for any country.",
+    "research": "Research companies with your agent",
     "download": "Download",
     "source": "GitHub",
     "countLabel": "companies and sources",
     "how": "How packs work",
-    "contribute": "Contribute on GitHub",
-    "research": "Research companies with your agent",
+    "contribute": "Contribute on GitHub"
   },
   "faq": {
     "title": "Questions before you start?",
@@ -103,11 +114,11 @@ export default {
       },
       {
         "q": "Do I need to know how to code?",
-        "a": "No coding needed. Open the app folder in Codex or Claude Code and ask your agent to set it up. Node.js 24+ is required."
+        "a": "No coding needed. Start the source with Node.js 26 LTS, then open Connections and copy the setup request into your agent. It guides sign-in in its own client."
       },
       {
         "q": "What happens when I press Run?",
-        "a": "Your agent works through the chosen companies using your CV and the actions you request. It records confirmations and anything that needs you. Sign-ins, CAPTCHAs and provider approvals may need your help; LinkedIn application steps stay manual."
+        "a": "Run saves your selected companies and actions and copies a request. Paste it into Codex or Claude Code. Your agent uses its own tools and connections and records outcomes in Tawdheef. Sign-in, CAPTCHA and provider approvals may need you."
       },
       {
         "q": "What if a company has no matching job?",
@@ -115,7 +126,7 @@ export default {
       },
       {
         "q": "Do I need Tabbio?",
-        "a": "Run requires a connected Tabbio CV. You can browse directories and track applications without it. Tawdheef reads your CV; editing it uses a separate Tabbio connection."
+        "a": "The current workflow uses a Tabbio CV through your agent’s own connection. You can browse companies and track records without it. Creating, editing and publishing a CV use the client’s Tabbio tools."
       },
       {
         "q": "What does Tawdheef mean?",
@@ -127,7 +138,7 @@ export default {
       },
       {
         "q": "Where does my data go?",
-        "a": "The tracker runs on your computer, where your records and connection settings are stored. Your chosen AI, CV and email services work online. When you start a run, the actions you select determine which applications, profiles or CVs your agent sends to employers."
+        "a": "Tracking records stay on your computer. Your actual agent client manages CV, email, calendar and browser access. Tawdheef stores references and dated capability reports, not copies of your client’s sign-in sessions."
       },
       {
         "q": "Can I add a country or fix a company?",

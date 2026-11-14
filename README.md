@@ -1,6 +1,13 @@
-# Tawdheef · توظيف
+# Tawdheef - Auto Apply for Jobs
 
-<img src="public/brand/logo-latin-purple.svg" alt="tawdheef.com" width="320" />
+[العربية](README.ar.md)
+
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
+  <source media="(prefers-reduced-motion: reduce)" srcset="public/brand/github-hero/wordmark-light.png" />
+  <source media="(prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.gif" />
+  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
+</picture>
 
 **Find matching jobs. Build career profiles.**
 
@@ -8,17 +15,17 @@ A free, open-source job-search app for you and your AI assistant. Find jobs that
 
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
-**Your actual AI client owns the connections.** Native mode is the default: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in Native mode.
+**Your actual AI client owns the connections.** Native connections: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in the app.
 
-The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the public source-download links below remain unchanged. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
+The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the v0.1.2 release remains an older preview; the setup below uses current source. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
 
-The production core has six direct dependencies for the local server, MCP, validation and file formats. Mail/calendar SDKs are developer dependencies and optional private add-ons for explicit `local-adapters` compatibility. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
+The production core has six direct dependencies for the local server, MCP, validation and file formats. App-managed mail/calendar SDKs and adapter execution code have been removed. External connections belong to your actual client. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
-Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldhraif), founder of [Tabbio](https://www.tabbio.com/en).
+Created by [Ahmed AlDhraif](https://github.com/ahmedaldhraif). The app, community directories, skill and guides grow together. [Help improve the project](CONTRIBUTING.md).
 
-[Download the app](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/tawdheef-0.1.2-source.zip) · [Release notes](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
+[Download current source](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip) · [Previous preview release](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
 
 <img src="public/site-assets/tracker-desktop.png" alt="Tawdheef's local directory and application tracker, showing the public UAE research snapshot" width="100%" />
 
@@ -36,8 +43,8 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 
 ## Start here
 
-1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.
-2. Open the folder in your installed, signed-in **Codex or Claude Code** and paste the setup request below. You only need one assistant, plus [Node.js 24+](https://nodejs.org/en/download).
+1. Download the [current Native source](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip), extract it and run `npm start` in its folder. The older v0.1.2 download uses a different setup.
+2. Use [Node.js 26 LTS](https://nodejs.org/en/download) for source. Open **Connections → Assistant**, choose your client, then paste **Copy setup request** into that Codex or Claude Code client.
 3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or connect the actual CV in your chosen client's supported tools. Connections shows dated client reports and setup requests; sign-in and credentials stay in that client.
 4. Filter/select companies, choose actions and press **Run**. Continue its handoff in your actual client. Matching jobs and profiles start selected; CV-only emails stay off unless selected. The client claims one company at a time and records real outcomes.
 
@@ -72,25 +79,30 @@ Start with the GCC. Any country is welcome.
 
 | Country | Records | Download | Public source |
 | --- | ---: | --- | --- |
-| United Arab Emirates | 3,583 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/uae-expanded-directory-pack.zip) | [UAE data](directories/uae-expanded/) |
-| Saudi Arabia | 4,256 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/saudi-arabia-directory-pack.zip) | [Saudi data](directories/saudi-arabia/) |
-| Qatar | 671 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/qatar-directory-pack.zip) | [Qatar data](directories/qatar/) |
-| Oman | 2,587 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/oman-directory-pack.zip) | [Oman data](directories/oman/) |
-| Kuwait | 1,806 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/kuwait-directory-pack.zip) | [Kuwait data](directories/kuwait/) |
-| Bahrain | 811 | [ZIP](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/bahrain-directory-pack.zip) | [Bahrain data](directories/bahrain/) |
+| United Arab Emirates | 3,583 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/uae-expanded-directory-pack.zip) | [UAE data](directories/uae-expanded/) |
+| Saudi Arabia | 4,256 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/saudi-arabia-directory-pack.zip) | [Saudi data](directories/saudi-arabia/) |
+| Qatar | 671 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/qatar-directory-pack.zip) | [Qatar data](directories/qatar/) |
+| Oman | 2,587 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/oman-directory-pack.zip) | [Oman data](directories/oman/) |
+| Kuwait | 1,806 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/kuwait-directory-pack.zip) | [Kuwait data](directories/kuwait/) |
+| Bahrain | 811 | [ZIP](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/bahrain-directory-pack.zip) | [Bahrain data](directories/bahrain/) |
 
 **13,714 organisation/source records, dated 13 November 2026.** These include campuses, agencies, portals, programmes and unresolved leads, not just independent employers. They are not live job offers or tested application routes. The original [772-record UAE starter snapshot](directories/uae/) stays available separately and overlaps expanded UAE; it is not 772 additional unique organisations.
 
 Download a pack, choose a directory in the app, then use **List options → Import list** and review the preview. Saudi Arabia and expanded UAE have two numbered CSV parts: import both into the same directory. A fresh app starts with the original UAE snapshot; the other packs are add-ons. [Pack guide](directories/README.md).
 
-**Add a company. Fix a link. Contribute a country.** [Suggest a correction](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml), [propose a new pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml), or open a pull request. No coding is needed to suggest data. Include a public source link, record ID if known and date checked. [Contribution guide](docs/DIRECTORY-CONTRIBUTING.md).
+**Add a company. Fix a link. Contribute a country.** [Suggest a correction](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new?template=directory-data.yml), [propose a new pack](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new?template=new-country-pack.yml), or open a pull request. No coding is needed to suggest data. Include a public source link, record ID if known and date checked. [Contribution guide](docs/DIRECTORY-CONTRIBUTING.md).
 
 ## Manual setup
 
-Prefer commands? With Node.js 24+, run these in the downloaded folder:
+Prefer commands? With Node.js 26 LTS, start the app in the downloaded folder:
 
 ```sh
 npm start
+```
+
+In a second terminal in that folder, optionally connect the project manually:
+
+```sh
 npm run agent -- codex
 ```
 
@@ -104,7 +116,7 @@ To open the app again, use `npm start` or double-click **Start Tawdheef.cmd** on
 To install the [skill](skills/tawdheef/SKILL.md) separately:
 
 ```sh
-npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef
+npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef
 ```
 
 A skill alone does not install the app, connect MCP tools, authenticate accounts or authorize applications. A browser-only ChatGPT or Claude conversation does not automatically access local stdio tools.
@@ -123,7 +135,7 @@ Connect accounts in your actual Codex/Claude client. **Connections** in Tawdheef
 | Password manager | Your client's supported workflow; Tawdheef never reads its vault or stores career passwords. |
 | Codex / Claude Code | The client you actually use, connected to Tawdheef's local MCP tools. |
 
-Default Native mode needs no app-owned OAuth registration or separate model API key. Existing app adapters/CLI workers remain available only after explicitly choosing advanced `local-adapters` compatibility mode. Their credentials/data are preserved and are not inspected by Native bootstrap. [Account setup](docs/CONNECTIONS.md) · [Optional compatibility integrations](docs/INTEGRATIONS.md).
+Native connections need no app-owned OAuth registration or separate model API key. App-managed adapters and assistant workers have been retired. Their historical credentials/data remain preserved and unused. [Account setup](docs/CONNECTIONS.md) · [Client integrations](docs/INTEGRATIONS.md).
 
 ## What the agent reads
 
@@ -164,3 +176,5 @@ Tawdheef is maintained personally by Ahmed AlDhraif. Tabbio operates its own CV 
 Keep CVs, mailbox contents, credentials and private tracking out of contributions. Read [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and [the release guide](docs/RELEASE.md). Development checks are `npm test`, `npm run build` and `npm run release:check`, using isolated data.
 
 Version **0.1.2** is a public preview. Builds and fixture tests do not establish live provider access or successful applications. Release downloads include checksums. Provider artwork, fonts and source evidence retain their own rights; see [third-party notices](THIRD-PARTY-NOTICES.md).
+
+[Native job discovery and CV-backed review](docs/JOB-DISCOVERY.md) · [Product strategy](docs/PRODUCT-STRATEGY.md)

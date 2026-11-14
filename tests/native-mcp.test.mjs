@@ -36,8 +36,13 @@ async function fixture(t) {
       if (stop) return response(store.stopNativeRun({ runId: decodeURIComponent(stop[1]) }));
       if (url.pathname === '/api/native/email/prepare') return response(store.prepareNativeEmail(body));
       if (url.pathname === '/api/native/email/resolve') return response(store.resolveNativeEmail(body));
+      if (url.pathname === '/api/history/reconcile') return response(store.reconcileHistoricalSubmission(body));
       if (url.pathname === '/api/monitoring/check') return response(store.beginNativeMonitoringCheck(body));
       if (url.pathname === '/api/monitoring/observations') return response(store.recordNativeMonitoringCheck(body));
+      if (url.pathname === '/api/discovery/prepare') return response(store.prepareJobDiscovery(body));
+      if (url.pathname === '/api/discovery/record') return response(store.recordNativeJobDiscovery(body));
+      if (url.pathname === '/api/discovery/match') return response(store.recordJobMatch(body));
+      if (url.pathname === '/api/discovery/preferences') return response(store.updateDiscoveryPreferences(body));
       throw new Error(`Unexpected coordinator request: ${url.pathname}`);
     } catch (error) { return { ok: false, status: error.status || 400, json: async () => ({ error: error.message }) }; }
   };
@@ -54,12 +59,39 @@ async function fixture(t) {
 const startInput = { directoryId: 'fixture', companyIds: ['alpha'], explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: true, createProfiles: true, sendCvEmails: false } };
 const ownership = lease => ({ runId: lease.run.id, companyId: lease.target.companyId, claimToken: lease.claimToken });
 
+test('Native SDK exposes normalized evidenced route findings and profile-only eligibility through the shared domain', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const tools = (await client.listTools()).tools;
+  const fields = tools.find(tool => tool.name === 'update_company').inputSchema.properties.patch.properties;
+  assert.deepEqual(fields.profileSupport.enum, ['unknown', 'available', 'not_offered', 'needs_check']);
+  assert.deepEqual(fields.careersPageStatus.enum, ['unknown', 'available', 'not_found', 'needs_check']);
+  const initial = await call(client, 'get_company', { id: 'alpha' });
+  assert.equal(initial.profileSupport, 'unknown'); assert.equal(initial.routesCheckedAt, null);
+  store.updateSettings({ applicationEmail: 'local-contact-hint@example.test' });
+  assert.equal((await call(client, 'get_registration_context', { companyId: 'alpha' })).primaryEmail, null);
+  const missing = await client.callTool({ name: 'update_company', arguments: { id: 'alpha', patch: { expectedRevision: initial.revision, profileSupport: 'not_offered' } } });
+  assert.equal(missing.isError, true);
+  const updated = await call(client, 'update_company', { id: 'alpha', patch: { expectedRevision: initial.revision, careersPageStatus: 'available', profileSupport: 'not_offered', routeEvidence: 'Synthetic official route offers applications only.' } });
+  const page = await call(client, 'list_companies', { directoryId: 'fixture', search: 'Alpha' });
+  assert.equal(page.items[0].profileSupport, 'not_offered'); assert.equal(page.items[0].routeEvidence, updated.routeEvidence);
+  assert.equal(page.items[0].routesCheckedAt, updated.routesCheckedAt); assert.equal(page.items[0].progress.profile_created, 0);
+  const preview = await call(client, 'preview_run', { directoryId: 'fixture', companyIds: ['alpha'], actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } });
+  assert.equal(preview.count, 0);
+  assert.equal(store.getCompany('alpha').careersUrl, initial.careersUrl);
+  const fullEvidence = 'Synthetic route evidence. '.repeat(50);
+  await call(client, 'update_company', { id: 'alpha', patch: { expectedRevision: updated.revision, routeEvidence: fullEvidence } });
+  const compact = await call(client, 'list_companies', { directoryId: 'fixture', search: 'Alpha' });
+  assert.equal(compact.items[0].routeEvidence.length, 300); assert.equal(compact.items[0].routeEvidenceTruncated, true);
+  assert.equal((await call(client, 'get_company', { id: 'alpha' })).routeEvidence, fullEvidence.trim());
+  assert.equal(requests.length, 0, 'route tracking and preview need no provider or coordinator action');
+});
+
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 62); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
-  for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'save_monitor', 'set_monitor_status', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
-  for (const name of ['check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
+  assert.equal(names.length, 69); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
+  for (const name of ['save_monitor', 'set_monitor_status', 'check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
   for (const name of ['get_cv', 'configure_connection', 'connect_connection', 'get_connection_tools', 'refresh_replies', 'send_application_email', 'list_calendars', 'create_calendar_event']) assert.ok(!names.includes(name), name);
   const context = await call(client, 'get_agent_context'), capabilities = await call(client, 'get_capabilities');
   assert.equal(context.connectionOwner, 'native-client'); assert.equal(capabilities.mode, 'native');
@@ -113,9 +145,9 @@ test('Native MCP email never sends, preserves one exact plan and records a same-
   assert.ok(requests.filter(request => !['/api/health', '/api/agent-config'].includes(request.path)).every(request => /^\/api\/(?:native\/(?:runs|email)|runs\/)/.test(request.path)), 'No provider send endpoint may be called.');
 });
 
-test('Native monitor has nine tools, returns client-owned reads and cannot write external state or another actor evidence', async t => {
+test('Native monitor has fifteen tools, returns client-owned reads and cannot write external state or another actor evidence', async t => {
   const { store, connect, requests } = await fixture(t), monitor = await connect('codex', true);
-  const names = (await monitor.listTools()).tools.map(tool => tool.name); assert.equal(names.length, 9); assert.deepEqual([...names].sort(), [...NATIVE_MONITOR_TOOLS].sort());
+  const names = (await monitor.listTools()).tools.map(tool => tool.name); assert.equal(names.length, 15); assert.deepEqual([...names].sort(), [...NATIVE_MONITOR_TOOLS].sort());
   for (const name of ['start_native_run', 'start_run', 'prepare_native_email', 'resolve_native_email', 'prepare_form_submission', 'prepare_cv_attachment', 'configure_monitoring', 'get_cv', 'create_calendar_event']) assert.equal((await monitor.callTool({ name, arguments: {} })).isError, true);
   await call(monitor, 'report_native_connection', { kind: 'browser', status: 'available', observedAt: new Date().toISOString(), provider: 'actual-client-browser' });
   const config = store.configureMonitoring({ expectedRevision: 1, explicit: true, patch: { enabled: true, channels: { jobs: true }, scope: { companyIds: ['alpha'] } } }).config;
@@ -126,4 +158,110 @@ test('Native monitor has nine tools, returns client-owned reads and cannot write
   const result = await call(monitor, 'record_monitoring_observations', proof); assert.equal(result.check.status, 'checked'); assert.equal(result.check.cursor, null);
   assert.equal((await call(monitor, 'list_updates')).total, 1); assert.equal(store.listRuns().length, 0); assert.equal(store.listApplications().length, 0);
   assert.ok(requests.every(request => ['/api/health', '/api/agent-config', '/api/monitoring/check', '/api/monitoring/observations'].includes(request.path)));
+});
+
+test('Native discovery uses one local coordinator, current CV citations and saved preferences without creating action authority', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const lease = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  assert.equal(lease.readRequest.executionOwner, 'native-client');
+  await call(client, 'record_job_discovery', { id: lease.id, token: lease.token, complete: true, sourceRead: { method: 'native_browser', url: lease.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic complete public posting read.' }, observations: [{ title: 'Engineer', url: 'https://careers.example.com/job/1', description: 'JavaScript experience required.', evidence: 'Synthetic posting content inspected.', status: 'open', contentComplete: true }] });
+  const jobs = await call(client, 'list_discovered_jobs', { review: 'pending' }); assert.equal(jobs.total, 1);
+  const detail = await call(client, 'get_discovered_job', { id: jobs.items[0].id });
+  assert.equal(detail.matchState, 'cv_unknown');
+  const versionHash = 'a'.repeat(64);
+  await call(client, 'report_native_connection', { kind: 'cv', status: 'available', observedAt: new Date().toISOString(), cv: { id: 'synthetic-cv', versionHash } });
+  const match = { jobId: detail.job.id, expectedContentHash: detail.job.contentHash, expectedPreferencesRevision: detail.preferences.revision, cvReference: { sourceId: 'synthetic-cv', versionHash }, decision: 'suitable', requirements: [{ kind: 'required', jobQuote: 'JavaScript experience required.', cvFactRef: 'experience/fixture-role', relation: 'supports' }], reason: 'The client compared the actual cited requirement with the synthetic CV fact.' };
+  const assessed = await call(client, 'record_job_match', match); assert.equal(assessed.matchState, 'current');
+  assert.equal((await call(client, 'list_discovered_jobs', { review: 'pending' })).total, 0);
+  const prefs = await call(client, 'get_discovery_preferences');
+  await call(client, 'update_discovery_preferences', { expectedRevision: prefs.revision, explicit: true, patch: { roles: ['Engineering'], locations: ['Dubai'] } });
+  assert.equal((await call(client, 'get_discovered_job', { id: detail.job.id })).matchState, 'stale');
+  assert.equal((await client.callTool({ name: 'record_job_match', arguments: match })).isError, true);
+  assert.equal(store.listRuns().length, 0); assert.equal(store.listApplications().length, 0);
+  assert.ok(requests.every(request => request.path.startsWith('/api/discovery/') || ['/api/health', '/api/agent-config'].includes(request.path)));
+});
+
+test('Native scheduled discovery cannot borrow manual leases, widen saved sources or change preferences', async t => {
+  const { store, connect } = await fixture(t), full = await connect();
+  store.addCompanies('fixture', [{ id: 'outside', name: 'Outside', careersUrl: 'https://outside.example.com/jobs' }]);
+  const saveJob = companyId => {
+    const lease = store.prepareJobDiscovery({ companyId, assistant: 'codex' });
+    store.recordJobDiscovery({ id: lease.id, token: lease.token, assistant: 'codex', complete: true, sourceRead: { method: 'native_browser', url: lease.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic complete public listing.' }, observations: [{ title: 'Engineer', url: `${new URL(lease.readRequest.url).origin}/job/1`, description: 'JavaScript experience required.', evidence: 'Synthetic posting content inspected.', contentComplete: true, status: 'open' }] });
+    return store.listDiscoveredJobs({ assistant: 'codex', companyIds: [companyId] }).items[0];
+  };
+  const inside = saveJob('alpha'), outside = saveJob('outside');
+  const manual = await call(full, 'prepare_job_discovery', { companyId: 'alpha' });
+  const config = store.configureMonitoring({ expectedRevision: 1, explicit: true, patch: { enabled: true, channels: { jobs: true }, scope: { companyIds: ['alpha'] } } }).config;
+  const monitor = await connect('codex', true);
+  const items = await call(monitor, 'list_discovered_jobs'); assert.deepEqual(items.items.map(item => item.id), [inside.id]);
+  assert.deepEqual((await call(monitor, 'list_discovered_jobs', { companyIds: ['outside'] })).items, []);
+  assert.equal((await monitor.callTool({ name: 'get_discovered_job', arguments: { id: outside.id } })).isError, true);
+  for (const name of ['prepare_job_discovery', 'update_discovery_preferences', 'start_native_run']) assert.equal((await monitor.callTool({ name, arguments: {} })).isError, true);
+  const sourceRead = { method: 'native_browser', url: manual.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic manual check.' };
+  assert.equal((await monitor.callTool({ name: 'record_job_discovery', arguments: { id: manual.id, token: manual.token, sourceRead, complete: true, observations: [] } })).isError, true);
+  const pending = await call(monitor, 'check_updates', { configurationRevision: config.revision, assistant: 'codex', source: { kind: 'jobs', id: 'alpha' } });
+  const nested = pending.readRequest.discovery; assert.ok(nested.token);
+  const completed = await call(monitor, 'record_job_discovery', { id: nested.id, token: nested.token, sourceRead: { ...sourceRead, url: nested.readRequest.url }, complete: true, observations: [] });
+  assert.equal(completed.monitoring.check.status, 'checked');
+  assert.equal(store.listRuns().length, 0);
+  store.configureMonitoring({ expectedRevision: config.revision, patch: { enabled: false } });
+  assert.equal((await monitor.callTool({ name: 'get_discovery_summary', arguments: {} })).isError, true);
+});
+
+test('Native discovery records unavailable tools as a source blocker without inventing a successful read', async t => {
+  const { connect, store } = await fixture(t), client = await connect();
+  const lease = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  const blocked = await call(client, 'record_job_discovery', { id: lease.id, token: lease.token, status: 'unknown', nextStep: 'Enable the browser in your selected client, then check this careers source.' });
+  assert.equal(blocked.complete, false); assert.equal(blocked.leaseActive, false);
+  const summary = await call(client, 'get_discovery_summary'); assert.equal(summary.sourceProblemCount, 1); assert.match(summary.nextStep, /Enable the browser/);
+  assert.equal((await call(client, 'list_discovered_jobs')).total, 0);
+  const missingProof = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  const falseSuccess = await client.callTool({ name: 'record_job_discovery', arguments: { id: missingProof.id, token: missingProof.token, status: 'checked', complete: true, observations: [] } });
+  assert.equal(falseSuccess.isError, true); assert.equal(store.listRuns().length, 0);
+});
+
+test('retired managed roles fail closed instead of inheriting the Native action catalog', async t => {
+  const { store } = await fixture(t);
+  for (const role of [{ APPLY_TRACKER_OPERATOR_RUN: 'old-run', APPLY_TRACKER_OPERATOR_COMPANY: 'alpha' }, { APPLY_TRACKER_OPERATOR_COMPANY: 'alpha' }, { APPLY_TRACKER_DIAGNOSTIC: '1' }]) {
+    Object.assign(process.env, role);
+    assert.throws(() => createMcpServer(store), /retired.*Native project settings/);
+    for (const key of Object.keys(role)) delete process.env[key];
+  }
+});
+
+test('historical schedules and results remain readable without schedule execution tools', async t => {
+  const { store, connect } = await fixture(t);
+  const rule = store.saveMonitoringRule({ directoryId: 'fixture', companyIds: ['alpha'], assistant: 'codex', name: 'Historical fixture', enabled: false });
+  const client = await connect(), names = (await client.listTools()).tools.map(tool => tool.name);
+  assert.ok(!names.includes('save_monitor')); assert.ok(!names.includes('set_monitor_status')); assert.ok(!names.includes('check_monitor'));
+  const rules = await call(client, 'list_monitors', { directoryId: 'fixture' });
+  assert.equal(rules.find(item => item.id === rule.id).name, 'Historical fixture');
+  assert.deepEqual(await call(client, 'get_monitor_results', { ruleId: rule.id }), store.getMonitoringResults({ ruleId: rule.id }));
+  assert.equal(store.listMonitoringRules({ directoryId: 'fixture' }).length, 1);
+});
+
+test('Native reports and preferences remain local and cannot reactivate provider ownership', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const report = await call(client, 'generate_report');
+  assert.equal(report.delivery.status, 'local'); assert.equal(requests.length, 0);
+  assert.equal((await client.callTool({ name: 'generate_report', arguments: { sendEmail: true } })).isError, true);
+  assert.equal((await client.callTool({ name: 'update_settings', arguments: { patch: { connectionMode: 'local-adapters' } } })).isError, true);
+  assert.equal(requests.length, 0, 'No external action or provider proxy is attempted.');
+  await call(client, 'update_settings', { patch: { timezone: 'Asia/Dubai' } });
+  assert.equal(store.getSettings().timezone, 'Asia/Dubai');
+});
+
+test('ordinary Native SDK can record explicitly inspected historical form outcomes without reviving sending authority', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const run = store.startRun({ directoryId: 'fixture', companyIds: ['alpha'], explicit: true, mode: 'send_and_submit' });
+  const form = store.prepareFormSubmission({ runId: run.id, companyId: 'alpha', role: 'Engineer', url: 'https://careers.example.com/original' }).application;
+  store.updateRun(run.id, { status: 'cancelled' });
+  const identity = Object.fromEntries(['companyId', 'runId', 'idempotencyKey', 'method', 'purpose', 'role', 'url', 'createdAt'].map(key => [key, form[key]]));
+  const input = { id: form.id, explicit: true, identity, outcome: 'confirmed', evidence: 'Synthetic original confirmation inspected.', sourceRead: { method: 'native_browser', url: form.url, observedAt: new Date().toISOString(), evidence: 'Synthetic exact original form outcome inspected.' } };
+  assert.equal((await client.callTool({ name: 'reconcile_historical_submission', arguments: { ...input, explicit: false } })).isError, true);
+  const saved = await call(client, 'reconcile_historical_submission', input);
+  assert.equal(saved.application.deliveryStatus, 'confirmed'); assert.equal(saved.maySend, false); assert.equal(store.getRun(run.id).status, 'cancelled');
+  assert.equal(requests.at(-1).path, '/api/history/reconcile'); assert.equal(requests.at(-1).body.assistant, 'codex');
+  const monitor = await connect('codex', true);
+  assert.ok(!(await monitor.listTools()).tools.some(tool => tool.name === 'reconcile_historical_submission'));
 });

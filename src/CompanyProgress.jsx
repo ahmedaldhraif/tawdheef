@@ -12,8 +12,8 @@ export const PROGRESS_LABELS = {
 };
 
 export default function CompanyProgress({ company, open, t = value => value }) {
-  const achieved = Object.entries(PROGRESS_LABELS).filter(([event]) => company.progress?.[event] > 0);
-  if (!achieved.length) return <span className="muted" title={t('No recorded progress yet')}>—</span>;
+  const achieved = Object.entries(PROGRESS_LABELS).filter(([event]) => ['account_created', 'profile_created', 'cv_uploaded', 'talent_pool_joined'].includes(event) && company.progress?.[event] > 0);
+  if (!achieved.length) return <button className="company-progress" onClick={open} aria-label={`${t('View progress for')} ${company.name}`}><span className="muted">{t(company.profileSupport === 'not_offered' ? 'Not offered' : 'Not started')}</span></button>;
   return <button className="company-progress" onClick={open} aria-label={`${t('View progress for')} ${company.name}`} aria-description={achieved.map(([event, label]) => `${t(label)}${company.progress[event] > 1 ? `: ${company.progress[event]}` : ''}`).join(', ')}>
     {achieved.map(([event, label]) => <span key={event}><Check size={12} aria-hidden="true" />{t(label)}{company.progress[event] > 1 && <span className="progress-count">{company.progress[event]}</span>}</span>)}
   </button>;

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function openRunFixture(page, overrides = {}) {
   let run = {
-    id: 'motion-fixture', directoryId: 'uae', directoryName: 'UAE', managed: true,
+    id: 'motion-fixture', directoryId: 'uae', directoryName: 'UAE', native: true,
     assistant: 'codex', total: 42, completed: 7, appliedCount: 3,
     activeCompanyId: 'motion-company', currentName: 'Example company', status: 'running',
     ...overrides,

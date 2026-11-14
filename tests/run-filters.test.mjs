@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openStore } from '../server/store.mjs';
 import { buildTools, closeToolConnections } from '../server/mcp.mjs';
-import { createAgentRunner } from '../server/agent-runner.mjs';
 import { COMPANY_TYPES, classifyCompanyType } from '../src/company-types.js';
 import { companyLocations } from '../src/company-locations.js';
 
@@ -90,7 +89,7 @@ test('start rechecks current records after preview, snapshots type scope, and ne
 
 test('invalid type filters fail closed through store and machine tools', async t => {
   const { store } = await fixture(t);
-  const tools = buildTools(store, { mode: 'local-adapters' });
+  const tools = buildTools(store);
   const preview = tools.find(tool => tool.name === 'preview_run');
   const start = tools.find(tool => tool.name === 'start_run');
   assert.deepEqual(preview.inputSchema.properties.companyTypes.items.enum, COMPANY_TYPES.map(type => type.id));
@@ -104,14 +103,12 @@ test('invalid type filters fail closed through store and machine tools', async t
   assert.equal(store.listRuns().length, 0);
 });
 
-test('MCP and runner previews agree; unassisted runs apply filters without changing deliberate target authority', async t => {
+test('MCP preview matches local scope and historical run filters retain deliberate target authority', async t => {
   const { store } = await fixture(t);
-  const runner = createAgentRunner({ store, port: 4000 });
-  t.after(() => runner.close());
-  const tools = buildTools(store, { mode: 'local-adapters' }), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
+  const tools = buildTools(store), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
   const input = { directoryId: 'test', companyTypes: ['local_government', 'government_linked'] };
-  assert.deepEqual(await call('preview_run', input), runner.preview(input));
-  const run = await call('start_run', { ...input, companyIds: ['local', 'linked', 'private'], mode: 'send_and_submit', explicit: true });
+  assert.deepEqual(await call('preview_run', input), store.previewRun(input));
+  const run = store.startRun({ ...input, companyIds: ['local', 'linked', 'private'], mode: 'send_and_submit', explicit: true });
   assert.deepEqual(run.companyIds, ['local', 'linked']);
   assert.deepEqual(run.companyTypes, input.companyTypes);
   store.logApplication({ companyId: 'local', runId: run.id, status: 'applied', role: 'Fixture role', evidence: 'Fixture receipt' });

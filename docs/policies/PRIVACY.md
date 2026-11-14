@@ -10,7 +10,7 @@ Tawdheef keeps local tracking records, dated connection metadata, selected sourc
 
 You may optionally select an original PDF or DOCX. Tawdheef then stores the exact file privately and stages a separate local browser-upload copy for an authorized Run. This is optional local storage, not a provider connection, a generated CV, content verification or a malware-disarming service. The actual client performs any authorized upload or sharing; selecting the file alone does not share it.
 
-Explicit `local-adapters` compatibility mode can instead keep provider credentials, OAuth sessions and cached CV/message responses in the private data directory. Those preserved legacy files are not inspected by Native bootstrap. Project-only assistant setup can also create private configuration backups under `.tawdheef-setup/`; keep these, client settings and all private data out of Git and public downloads.
+Older installations may retain provider credentials, OAuth sessions and cached responses in the private data directory. These files are preserved and never read by the app. Project-only assistant setup can also create private configuration backups under `.tawdheef-setup/`; keep these, client settings and all private data out of Git and public downloads.
 
 The browser can store local display preferences such as the chosen directory, filters and columns. The server is intended for one user on loopback, not a publicly exposed multi-user service.
 
@@ -18,7 +18,7 @@ You control local retention through the app's available record controls and your
 
 ## Connected services
 
-Your authorised AI client, its model service, Tabbio, email/calendar providers and careers websites may be online services. Tool results, prompts, CV facts, message contents or uploaded files can leave your computer through the client or provider when you use their features. They handle that data under their own terms, account settings and privacy policies; this repository does not control their hosting, retention or model processing. Native mode does not route these external connections through a second Tawdheef provider client. Explicit compatibility adapters make their own authorized provider requests.
+Your authorised AI client, its model service, Tabbio, email/calendar providers and careers websites may be online services. Tool results, prompts, CV facts, message contents or uploaded files can leave your computer through the client or provider when you use their features. They handle that data under their own terms, account settings and privacy policies; this repository does not control their hosting, retention or model processing. Native mode does not route these external connections through a second Tawdheef provider client. App-managed adapters are retired.
 
 Keep provider consent and approval requirements intact. Read the account and scope shown before connecting. The app's local storage does not mean that connected AI or provider processing stays on your device.
 

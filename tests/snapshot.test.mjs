@@ -6,7 +6,6 @@ import { join, resolve } from 'node:path';
 import { directorySnapshot, snapshotWeekStart } from '../server/snapshot.mjs';
 import { openStore } from '../server/store.mjs';
 import { buildTools } from '../server/mcp.mjs';
-import { OPERATOR_TOOLS } from '../server/operator-contract.mjs';
 
 const current = '2026-11-13T12:00:00.000Z';
 const companies = [
@@ -160,8 +159,47 @@ test('snapshot scope and pagination validation fail closed through store and rea
   const tools = buildTools(store);
   const tool = tools.find(item => item.name === 'get_snapshot');
   assert.deepEqual(tool.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
-  assert.equal(OPERATOR_TOOLS.includes('get_snapshot'), false);
   assert.deepEqual(await tool.handler({ directoryId: 'fixture' }), store.snapshot({ directoryId: 'fixture' }));
   await assert.rejects(tool.handler({ directoryId: 'fixture', limit: '20' }));
   assert.equal(store.snapshot({ directoryId: 'fixture', offset: '0', limit: '20' }).limit, 20);
+});
+
+test('snapshot counts and pages include archived outcomes without decoding large company research payloads', async t => {
+  const { store, companyId, otherId } = await fixture(t);
+  const marker = 'oversizedSnapshotSource';
+  const [largeId] = store.addCompanies('fixture', [{ name: 'Large archived source', sourceFields: { [marker]: 'Synthetic public evidence '.repeat(50000) } }]).ids;
+  const originalLarge = store.getCompany(largeId);
+  store.logApplication({ companyId, event: 'profile_created', evidence: 'Synthetic saved profile' });
+  store.logApplication({ companyId: largeId, event: 'profile_created', evidence: 'Synthetic archived profile' });
+  const run = store.startRun({ directoryId: 'fixture', companyIds: [companyId, otherId], explicit: true, mode: 'send_and_submit' });
+  const email = store.beginEmailSend({ companyId, runId: run.id, role: 'Engineer', to: 'jobs@example.test', subject: 'Synthetic subject', body: 'Synthetic body' });
+  store.finishEmailSend(email.application.id, { deliveryStatus: 'confirmed', receipt: { providerMessageId: 'large-source-receipt' } });
+  store.logApplication({ companyId: otherId, runId: run.id, role: 'Designer', event: 'applied', evidence: 'Synthetic form receipt' });
+  store.updateCompany(otherId, { archived: true });
+  store.updateCompany(largeId, { archived: true });
+  const archivedLarge = store.getCompany(largeId);
+  const parseJson = JSON.parse;
+  let decodedBytes = 0;
+  JSON.parse = function (source, ...args) {
+    if (typeof source === 'string') {
+      assert.equal(source.includes(marker), false, 'a dashboard snapshot must not decode full sourceFields');
+      decodedBytes += Buffer.byteLength(source);
+    }
+    return parseJson.call(this, source, ...args);
+  };
+  try {
+    const summary = store.snapshot({ directoryId: 'fixture' });
+    assert.deepEqual(summary.counts, { applications: 2, profiles: 2, emails: 1 });
+    const first = store.snapshot({ directoryId: 'fixture', metric: 'applications', limit: 1 });
+    const second = store.snapshot({ directoryId: 'fixture', metric: 'applications', limit: 1, offset: 1 });
+    assert.equal(first.total, 2); assert.equal(second.total, 2);
+    assert.deepEqual([first.items[0].companyName, second.items[0].companyName], ['One', 'Two']);
+    const profiles = store.snapshot({ directoryId: 'fixture', metric: 'profiles' });
+    assert.equal(profiles.total, 2); assert.ok(profiles.items.some(item => item.companyId === largeId));
+    assert.deepEqual(store.snapshot({ directoryId: 'fixture', period: 'this_week' }).counts, summary.counts);
+  } finally { JSON.parse = parseJson; }
+  assert.ok(decodedBytes < 50000, 'decoding stays bounded by outcome/settings records rather than megabytes of company sources');
+  const retained = store.getCompany(largeId);
+  assert.equal(retained.revision, archivedLarge.revision);
+  assert.deepEqual(retained.sourceFields, originalLarge.sourceFields);
 });

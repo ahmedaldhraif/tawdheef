@@ -1,5 +1,11 @@
 # Practical interface and agent review
 
+The current Native interface keeps Connections, Preferences, Monitoring and
+Jobs review distinct. External sign-in, browser/computer use, CV access and the
+local schedule belong to the actual selected Codex or Claude client. Historical
+rows below describe earlier interface passes; they do not authorize app-owned
+provider access or imply a native schedule was created.
+
 The complete 19-skill [Emil Kowalski collection](https://github.com/emilkowalski/skills) is installed as project development resources for Codex and Claude Code. Source paths and content hashes are in `skills-lock.json`; the upstream MIT license is in `.agents/skills/UPSTREAM-LICENSE`. These files do not add runtime dependencies or browser code. Agents load the applicable guidance only when changing the corresponding part of the product.
 
 The web design, mobile, animation review/removal/performance, worst-case data and library-selection guidance informed this pass. The interface keeps its current one-screen layout and original provider marks. Swift and Expo guidance is available for work in those frameworks. Prototype comparisons, gestures, choreographed entrances and new animation libraries were unnecessary for this table-based application. Existing user decisions remain in `DESIGN.md`; this pass does not invent new user taste rules.
@@ -31,8 +37,25 @@ The web design, mobile, animation review/removal/performance, worst-case data an
 | Loading or a stale request could show another directory's totals | Keep requests tied to directory and period, show unavailable/loading states, and preserve keyboard focus | Make directory switches and failure recovery predictable |
 | Working state needed a clear visual cue | A graphite ت with a small code chevron and CSS sheen only during an owned company attempt; static for hidden tabs and reduced motion | Make real activity visible without distracting from progress |
 
-The standard agent catalog has 44 tools (run `npm run tools:catalog` for the current schemas), including the connection readiness check and directory snapshot shared with the screen. Compact company pages retain source type, location and recorded progress; full source evidence is read on demand. Provider libraries are imported on provider use, not during ordinary record-tool startup. Run filters, progress display and the directory snapshot add no runtime dependencies.
+The Native agent catalog has 70 tools; role-restricted catalogs are smaller. Run `npm run tools:catalog` for generated schemas and `get_capabilities` for the actual current role. Compact company and job pages retain source identity, recorded progress and current assessment references; full evidence loads on demand. Native startup creates no app-owned provider sessions. Discovery, filters, progress and snapshots add no runtime libraries.
 
 Validation uses real local HTTP/stdio servers, isolated databases, mocked provider transports, browser checks and a fresh copy installed from the lockfile. It does not establish live OAuth permissions, successful email delivery or calendar writes, physical iOS behavior, or universal AI-client compatibility. Each user signs in to their own services locally.
 
 Snapshot implementation verification: 244 automated tests and 80 browser checks passed, including directory scope, archived history, receipt deduplication, calendar-week/DST boundaries, stale requests, retry, pagination, keyboard focus, and narrow English/Arabic layouts. A real CLI command and stdio MCP call returned the same isolated fixture totals and records as the screen. Build and release checks passed with 44 published tool schemas. Provider sends were mocked; no real application or email was sent. Older email receipts without mailbox provenance remain conservatively unnamespaced; missing message receipts are disclosed rather than invented.
+
+## Combined contribution and Native UX
+
+The combined interface puts personal preferences behind the gear and
+read-only schedules/reports behind Monitoring. Jobs stays beside confirmed
+outcomes. Career-route findings require evidence and remain separate from
+application/profile milestones; the default Career profile column is added
+once, preserving subsequent user choices. Connection ownership, permissions
+and current sender identity still belong to the actual client. The local
+optional contact-address hint is not an account or sender override.
+
+The approved Arabic domain wordmark and static contribution footer are retained.
+A vector LinkedIn mark stays within its existing14px contact control. Long
+unbroken titles wrap in the directory and shared modal header without widening
+the page or moving Close offscreen. Keyboard tabs, dirty forms, Undo, loading,
+failed reads, empty states and hidden-tab polling require browser verification
+against the combined tree.

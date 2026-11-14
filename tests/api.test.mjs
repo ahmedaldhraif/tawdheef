@@ -52,9 +52,6 @@ before(async () => {
     try {
       const { response, result } = await json('/api/health');
       if (response.ok && result.instanceId === 'http-fixture-instance') {
-        // These fixtures exercise the explicitly selected compatibility contracts.
-        // Default native ownership is covered separately in native-api.test.mjs.
-        await json('/api/settings', { method: 'PATCH', body: { connectionMode: 'local-adapters' } });
         return;
       }
     } catch { /* Wait until the isolated local server is listening. */ }
@@ -107,9 +104,20 @@ test('HTTP directory snapshot counts confirmed work and opens compact paginated 
   const [companyId, formId] = imported.ids;
   await json('/api/applications', { method: 'POST', body: { companyId, event: 'profile_created', url: 'https://careers.example.test/profile?session=private-session' } });
   const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [companyId, formId], explicit: true, mode: 'send_and_submit' } });
-  for (const [id, method] of [[companyId, 'email'], [formId, 'career_page']]) {
-    const { response } = await json('/api/applications', { method: 'POST', body: { companyId: id, runId: run.id, event: 'applied', method, role: 'Snapshot role', evidence: method === 'email' ? { providerMessageId: 'snapshot-http-message' } : 'Fixture form receipt', notes: 'private note', url: 'https://careers.example.test/apply?session=private-session' } });
-    assert.equal(response.status, 200);
+  for (let index = 0; index < 2; index++) {
+    const claim = (await json(`/api/native/runs/${run.id}/claim`, { method: 'POST', body: { assistant: 'codex' } })).result;
+    const id = claim.target.companyId, method = id === companyId ? 'email' : 'career_page';
+    assert.ok([companyId, formId].includes(id));
+    if (method === 'email') {
+      await json('/api/native/client/report', { method: 'POST', body: { assistant: 'codex', kind: 'email', status: 'available', provider: 'gmail', accountEmail: 'snapshot@example.test', observedAt: new Date().toISOString() } });
+      const prepared = (await json('/api/native/email/prepare', { method: 'POST', body: { assistant: 'codex', companyId: id, runId: run.id, claimToken: claim.claimToken, role: 'Snapshot role', to: 'careers@example.test', subject: 'Synthetic snapshot', body: 'Synthetic body' } })).result;
+      const resolved = await json('/api/native/email/resolve', { method: 'POST', body: { assistant: 'codex', id: prepared.application.id, outcome: 'confirmed', receipt: { provider: prepared.sendPlan.provider, accountId: prepared.sendPlan.accountId, accountEmail: 'snapshot@example.test', providerMessageId: 'snapshot-http-message', to: 'careers@example.test', subject: 'Synthetic snapshot', sentAt: new Date().toISOString() } } });
+      assert.equal(resolved.response.status, 200);
+    } else {
+      const { response } = await json('/api/applications', { method: 'POST', body: { companyId: id, runId: run.id, event: 'applied', method, role: 'Snapshot role', evidence: 'Fixture form receipt', notes: 'private note', url: 'https://careers.example.test/apply?session=private-session' } });
+      assert.equal(response.status, 200);
+    }
+    assert.equal((await json(`/api/native/runs/${run.id}/finish`, { method: 'POST', body: { assistant: 'codex', companyId: id, claimToken: claim.claimToken, status: 'checked' } })).response.status, 200);
   }
   await json(`/api/companies/${companyId}`, { method: 'PATCH', body: { archived: true } });
   const { response, result } = await json(`/api/snapshot?directoryId=${directory.id}`);
@@ -208,8 +216,8 @@ test('HTTP run filters preview and snapshot the same selected type and location 
   assert.equal(preview.result.companyTypes.find(type => type.id === 'private').count, 2);
   assert.equal(preview.result.locations.find(place => place.id === 'location:dubai').count, 2);
   const started = await json('/api/runs', { method: 'POST', body: { ...input, mode: 'send_and_submit', explicit: true } });
-  assert.equal(started.response.status, 200); assert.deepEqual(started.result.companyIds, [added.ids[0]]);
-  assert.deepEqual(started.result.companyTypes, input.companyTypes); assert.deepEqual(started.result.locations, input.locations);
+  assert.equal(started.response.status, 200); assert.deepEqual((await json(`/api/runs/${started.result.id}/targets`)).result.items.map(item => item.companyId), [added.ids[0]]);
+  assert.deepEqual(started.result.filters.companyTypes, input.companyTypes); assert.deepEqual(started.result.filters.locations, input.locations);
   const invalid = await json('/api/run-preview', { method: 'POST', body: { ...input, companyTypes: ['not-a-type'] } });
   assert.equal(invalid.response.status, 400);
   const empty = await json('/api/run-preview', { method: 'POST', body: { ...input, locations: ['location:absent'] } });
@@ -240,7 +248,7 @@ test('HTTP list filters return full-list facets and match preview without silent
   }
   const started = await json('/api/runs', { method: 'POST', body: { ...input, actions: { applyMatchingJobs: false, createProfiles: true }, mode: 'send_and_submit', explicit: true } });
   assert.equal(started.response.status, 200);
-  assert.deepEqual(started.result.companyIds, [added.ids[0]]);
+  assert.deepEqual((await json(`/api/runs/${started.result.id}/targets`)).result.items.map(item => item.companyId), [added.ids[0]]);
   assert.equal(started.result.filters.search, 'target'); assert.equal(started.result.filters.attention, 'needs_you');
   assert.equal(started.result.actions.applyMatchingJobs, false);
   await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
@@ -274,14 +282,15 @@ test('HTTP original CV staging preserves bytes and requires an active authorized
   const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'CV staging HTTP fixture' } });
   const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Authorized upload target' }, { name: 'Unrelated target' }] } });
   const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [added.ids[0]], explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } } });
-  const prepare = body => json('/api/cv/file/prepare', { method: 'POST', body: { runId: run.id, companyId: added.ids[0], purpose: 'cv_upload', ...body } });
+  const claim = (await json(`/api/native/runs/${run.id}/claim`, { method: 'POST', body: { assistant: 'codex' } })).result;
+  const prepare = body => json('/api/cv/file/prepare', { method: 'POST', body: { runId: run.id, companyId: added.ids[0], assistant: 'codex', claimToken: claim.claimToken, purpose: 'cv_upload', ...body } });
   assert.equal((await prepare({ purpose: 'application' })).response.status, 400);
-  assert.equal((await prepare({ companyId: added.ids[1] })).response.status, 400);
+  assert.equal((await prepare({ companyId: added.ids[1] })).response.status, 409);
   const staged = await prepare({}); assert.equal(staged.response.status, 200); assert.deepEqual(await readFile(staged.result.path), original);
   const stagedRelative = relative(await realpath(dataDir), staged.result.path);
   assert.ok(!isAbsolute(stagedRelative) && !stagedRelative.startsWith('..'));
   await json(`/api/runs/${run.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
-  assert.equal((await prepare({})).response.status, 400);
+  assert.equal((await prepare({})).response.status, 409);
 });
 
 test('HTTP capability requests report guidance only and never imply access or model verification', async () => {
@@ -291,9 +300,8 @@ test('HTTP capability requests report guidance only and never imply access or mo
     assert.equal(result.result.connected, undefined);
   }
   const registration = (await json('/api/registration-context')).result;
-  assert.equal(registration.primaryEmail, null); assert.equal(registration.credentials.storedByTracker, false);
-  const passive = await json('/api/assistant-check?assistant=codex'); assert.equal(passive.result.modelAccessVerified, false);
+  assert.equal(registration.primaryEmail, 'snapshot@example.test'); assert.equal(registration.emailSource, 'native_client_report'); assert.equal(registration.credentials.storedByTracker, false);
+  const passive = await json('/api/assistant-check?assistant=codex'); assert.equal(passive.response.status, 404);
   const implicit = await json('/api/assistant-check', { method: 'POST', body: { assistant: 'codex' } });
-  assert.equal(implicit.response.status, 400); assert.match(implicit.result.error, /explicitly/);
-  assert.equal((await json('/api/assistant-check?assistant=codex')).result.status, passive.result.status);
+  assert.equal(implicit.response.status, 404);
 });

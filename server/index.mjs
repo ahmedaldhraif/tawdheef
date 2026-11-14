@@ -1,6 +1,6 @@
 import express from "express";
 import { resolve } from "node:path";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { openStore, ROOT, STATUSES, AppError } from "./store.mjs";
 import { parseDirectory } from "./import.mjs";
 import {
@@ -8,13 +8,13 @@ import {
   installBackground,
   uninstallBackground,
 } from "../scripts/background.mjs";
-import { createClientConfig, integrationStatus, integrationPresets } from './integrations.mjs';
+import { createClientConfig, integrationStatus } from './integrations.mjs';
 import { monitoringRecipe, capabilityRecipe, registrationContext } from './client-guidance.mjs';
 import { saveCvArtifact, getCvArtifactStatus, stageCvArtifact, MAX_CV_ARTIFACT_BYTES } from './cv-artifacts.mjs';
 import { assertRunPurpose } from '../src/run-actions.js';
 import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus } from './native-guidance.mjs';
-import { createLocalAdapterOwner } from './local-adapter-owner.mjs';
 import { createDirectoryPacks } from './directory-packs.mjs';
+import { discoveryReviewRequest } from './job-discovery-guidance.mjs';
 
 const port = Number(process.env.APPLY_TRACKER_PORT || 4000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -22,22 +22,16 @@ if (!Number.isInteger(port) || port < 1024 || port > 65535)
 const baseUrl = `http://127.0.0.1:${port}`;
 const store = openStore();
 const directoryPacks = createDirectoryPacks({ store, root: ROOT });
-const nativeMode = () => store.getSettings().connectionMode !== 'local-adapters';
-const adapterOwner = createLocalAdapterOwner({ isNative: nativeMode, ErrorType: AppError, loadFactory: async () => {
-  const { createLocalAdapterServices } = await import('./local-adapter-services.mjs');
-  return () => createLocalAdapterServices({ store, port, baseUrl });
-} });
-const localAdapters = () => adapterOwner.get();
-const deferred = key => new Proxy({}, { get: (_target, method) => (...args) => localAdapters().then(services => services[key][method](...args)) });
-const connections = deferred('connections'), agentRunner = deferred('agentRunner'), agentCheck = deferred('agentCheck'), scheduler = deferred('scheduler'), monitoring = deferred('monitoring'), recurringMonitoring = deferred('recurringMonitoring');
-const setupStatus = input => nativeMode() ? nativeSetupStatus({ store, ...input }) : localAdapters().then(services => services.setupStatus(input));
-const nativeRun = input => { const result = store.startNativeRun(input); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; };
-const runView = id => { const run = store.getRun(id); return run.native ? { ...store.getNativeRun({ runId: id }), targets: store.listNativeTargets({ runId: id, limit: 20 }).items } : run; };
+const setupStatus = input => nativeSetupStatus({ store, ...input });
+const nativeRun = input => { const result = store.startNativeRun({ assistant: store.getSettings().preferredAssistant, ...input }); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; };
+const historicalRun = run => run.native ? run : { ...run, retired: true, runnable: false };
+const runView = id => { const run = store.getRun(id); return run.native ? { ...store.getNativeRun({ runId: id }), targets: store.listNativeTargets({ runId: id, limit: 20 }).items } : historicalRun(run); };
 const stopRun = id => {
   const run = store.getRun(id);
   if (run.native) return store.stopNativeRun({ runId: id });
-  if (!run.managed) return run.status === 'running' ? store.updateRun(id, { status: 'cancelled' }) : run;
-  return agentRunner.stop(id);
+  // Historical app-managed runs have no executor in this version. Stop only
+  // revokes their local authority; their records and uncertain intents remain.
+  return run.status === 'running' ? store.updateRun(id, { status: 'cancelled' }) : run;
 };
 const app = express();
 app.disable("x-powered-by");
@@ -56,8 +50,7 @@ app.use((req, res, next) => {
       .json({ error: "Open the tracker directly to make changes." });
   if (
     req.headers["sec-fetch-site"] === "cross-site" &&
-    req.path.startsWith("/api/") &&
-    !req.path.includes("/oauth/callback")
+    req.path.startsWith("/api/")
   )
     return res
       .status(403)
@@ -71,6 +64,7 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) res.setHeader("Cache-Control", "no-store");
   next();
 });
+app.use('/api/discovery/record', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: "30mb" }));
 // Older setup and skill links lead directly to the shared setup guide.
 app.get(["/skills/tawdheef", "/skills/tawdheef/", "/get-started", "/get-started/", "/guides/get-started", "/guides/get-started/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
@@ -94,12 +88,11 @@ app.get(
   "/api/agent-config",
   wrap(async req => {
     const include = req.query.include ? String(req.query.include).split(',') : [];
-    const config = await createClientConfig({ dataDir: store.dataDir, port, include, mode: nativeMode() ? 'native' : 'local-adapters', assistant: req.query.assistant || store.getSettings().preferredAssistant });
+    const config = await createClientConfig({ dataDir: store.dataDir, port, include, mode: 'native', assistant: req.query.assistant || store.getSettings().preferredAssistant });
     return { mcpServers: config.mcpServers };
   }),
 );
-app.get('/api/integrations', wrap(() => integrationStatus({ dataDir: store.dataDir, port, mode: nativeMode() ? 'native' : 'local-adapters' })));
-app.get('/api/integrations/presets', wrap(() => nativeMode() ? [] : integrationPresets({ dataDir: store.dataDir, port })));
+app.get('/api/integrations', wrap(() => integrationStatus({ dataDir: store.dataDir, port, mode: 'native' })));
 app.get('/api/setup-status', wrap(req => setupStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
 app.post('/api/setup-status/check', wrap(req => setupStatus({ ...req.body, verify: true })));
 app.get('/api/native/client', wrap(req => store.getNativeClientStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
@@ -112,56 +105,50 @@ app.post('/api/native/runs/:id/finish', wrap(req => store.finishNativeTarget({ .
 app.post('/api/native/runs/:id/claim/check', wrap(req => store.getNativeClaim({ ...req.body, runId: req.params.id })));
 app.post('/api/native/email/prepare', wrap(req => store.prepareNativeEmail(req.body)));
 app.post('/api/native/email/resolve', wrap(req => store.resolveNativeEmail(req.body)));
-app.get('/api/assistant-check', wrap(req => agentCheck.get({ assistant: req.query.assistant || store.getSettings().preferredAssistant })));
-app.post('/api/assistant-check', wrap(req => agentCheck.verify(req.body)));
+app.post('/api/history/reconcile', wrap(req => store.reconcileHistoricalSubmission(req.body)));
 app.get('/api/agent-capabilities/recipe', wrap(req => capabilityRecipe({ assistant: req.query.assistant || store.getSettings().preferredAssistant, kind: req.query.kind })));
-app.get('/api/registration-context', wrap(async req => {
-  if (!nativeMode()) return registrationContext({ store, connections: (await localAdapters()).connections, companyId: req.query.companyId });
-  const client = store.getNativeClientStatus({ assistant: req.query.assistant || store.getSettings().preferredAssistant });
-  return { primaryEmail: client.primaryEmail, emailSource: client.primaryEmail ? 'native_client_report' : null, clientReported: true, independentlyVerified: false,
-    company: req.query.companyId ? store.getCompany(req.query.companyId) : null,
-    instructions: 'Reuse existing career accounts and their original login. For a new registration use only this fresh observed main email. If missing, check the actual client mailbox identity. Passwords stay in the browser/password manager; sign-in and identity prompts become Needs you.' };
-}));
+app.get('/api/registration-context', wrap(req => registrationContext({ store, assistant: req.query.assistant, companyId: req.query.companyId })));
 app.get('/api/monitoring', wrap(() => store.getMonitoring()));
+const discoveryOwner = input => ({ ...input, assistant: input.assistant || store.getSettings().preferredAssistant });
+const discoveryQuery = req => {
+  const input = discoveryOwner(req.query);
+  if (input.limit !== undefined) input.limit = Number(input.limit);
+  for (const key of ['companyIds', 'companyTypes', 'locations']) if (input[key] !== undefined) { try { input[key] = JSON.parse(input[key]); } catch { throw new AppError('Use a JSON list of directory filter IDs.'); } }
+  return input;
+};
+app.get('/api/discovery/preferences', wrap(() => store.getDiscoveryPreferences()));
+app.patch('/api/discovery/preferences', wrap(req => store.updateDiscoveryPreferences(req.body)));
+app.get('/api/discovery/summary', wrap(req => store.getDiscoverySummary(discoveryQuery(req))));
+app.get('/api/discovery/jobs', wrap(req => store.listDiscoveredJobs(discoveryQuery(req))));
+app.get('/api/discovery/jobs/:id', wrap(req => store.getDiscoveredJob({ ...discoveryQuery(req), id: req.params.id })));
+app.get('/api/discovery/request', wrap(req => discoveryReviewRequest({ store, ...discoveryQuery(req) })));
+app.post('/api/discovery/request', wrap(req => discoveryReviewRequest({ store, ...req.body })));
+app.post('/api/discovery/prepare', wrap(req => store.prepareJobDiscovery(discoveryOwner(req.body))));
+app.post('/api/discovery/record', wrap(req => store.recordNativeJobDiscovery(discoveryOwner(req.body))));
+app.post('/api/discovery/match', wrap(req => store.recordJobMatch(discoveryOwner(req.body))));
 app.get('/api/directory-packs', wrap(() => directoryPacks.list()));
 app.get('/api/directory-packs/:id', wrap(req => directoryPacks.get(req.params.id, { directoryId: req.query.directoryId })));
 app.post('/api/directory-packs/preview', wrap(req => directoryPacks.preview(req.body)));
 app.post('/api/directory-packs/install', wrap(req => directoryPacks.install(req.body)));
 app.post('/api/directory-packs/remove', wrap(req => directoryPacks.remove(req.body)));
-const recurringMode = () => {
-  if (nativeMode()) throw new AppError('This saved rule uses the optional local-adapters runner. Use Updates with your actual Codex or Claude client for native checks. Saved rules and results are preserved.');
-};
-app.get('/api/monitoring/rules', wrap(req => store.listMonitoringRules(req.query).map(rule => ({ ...rule,
-  executionOwner: 'local-adapters', runnable: !nativeMode(), ...(nativeMode() ? { nextCheckAt: null } : {}) }))));
-app.get('/api/monitoring/rules/:id', wrap(req => ({ ...store.getMonitoringRule(req.params.id), executionOwner: 'local-adapters', runnable: !nativeMode() })));
+// Older rules/results remain readable history. There is no app-owned clock or
+// executor, and no route in this version can create, enable or check those rules.
+const historicalRule = rule => ({ ...rule, executionOwner: 'retired', retired: true, runnable: false, nextCheckAt: null });
+app.get('/api/monitoring/rules', wrap(req => store.listMonitoringRules(req.query).map(historicalRule)));
+app.get('/api/monitoring/rules/:id', wrap(req => historicalRule(store.getMonitoringRule(req.params.id))));
 app.get('/api/monitoring/rules/:id/companies', wrap(req => {
   const rule = store.getMonitoringRule(req.params.id), offset = Number(req.query.offset || 0), limit = Number(req.query.limit || 50);
   if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new AppError('Choose a company page of 1 to 100 records.');
   return { id: rule.id, total: rule.companyIds.length, offset, limit, items: rule.companyIds.slice(offset,offset + limit).map(id => { const company = store.getCompany(id); return { id, name: company.name, archived: company.archived }; }) };
 }));
-app.post('/api/monitoring/rules', wrap(req => {
-  if (nativeMode()) { if (req.body.enabled === true) recurringMode(); return store.saveMonitoringRule(req.body); }
-  return recurringMonitoring.save(req.body);
-}));
-app.post('/api/monitoring/rules/:id/status', wrap(req => {
-  const input = { ...req.body, id: req.params.id };
-  if (nativeMode()) { if (input.enabled === true) recurringMode(); return store.setMonitoringRuleStatus(input); }
-  return recurringMonitoring.setStatus(input);
-}));
-app.post('/api/monitoring/rules/:id/check', wrap(req => { recurringMode(); return recurringMonitoring.check(req.params.id, req.body); }));
 app.get('/api/monitoring/results', wrap(req => store.getMonitoringResults({ ...req.query,
   offset: Number(req.query.offset || 0), limit: Number(req.query.limit || 20), matchedOnly: req.query.matchedOnly !== 'false' })));
-app.get('/api/monitoring/summary', wrap(req => store.monitoringSummary(req.query)));
+app.get('/api/monitoring/summary', wrap(req => ({ ...store.monitoringSummary(req.query), enabled: 0, enabledCount: 0, nextCheckAt: null, retired: true })));
 app.patch('/api/monitoring', wrap(req => store.configureMonitoring(req.body)));
 app.post('/api/monitoring/scope', wrap(req => store.snapshotMonitoringScope(req.body)));
 app.post('/api/monitoring/recipe', wrap(req => monitoringRecipe({ store, ...req.body })));
-app.post('/api/monitoring/check', wrap(req => nativeMode() ? store.beginNativeMonitoringCheck(req.body) : monitoring.check(req.body)));
-app.post('/api/monitoring/observations', wrap(req => {
-  if (nativeMode()) return store.recordNativeMonitoringCheck(req.body);
-  const check = store.getMonitoringCheck({ id: req.body.id, token: req.body.token });
-  if (!['jobs', 'profiles'].includes(check.source.kind)) throw new AppError('Connected mail/calendar observations are recorded by the local provider reader.');
-  return monitoring.record(req.body);
-}));
+app.post('/api/monitoring/check', wrap(req => store.beginNativeMonitoringCheck(req.body)));
+app.post('/api/monitoring/observations', wrap(req => store.recordNativeMonitoringCheck(req.body)));
 app.get('/api/monitoring/updates', wrap(req => store.listMonitoringUpdates({ ...req.query,
   ...(req.query.limit ? { limit: Number(req.query.limit) } : {}), ...(req.query.offset ? { offset: Number(req.query.offset) } : {}),
   ...(req.query.unread !== undefined ? { unread: req.query.unread === 'true' } : {}), ...(req.query.compact !== undefined ? { compact: req.query.compact !== 'false' } : {}) })));
@@ -175,23 +162,21 @@ app.post('/api/cv/file/prepare', wrap(req => {
   const { runId, companyId, purpose } = req.body || {};
   if (purpose !== 'cv_upload') throw new AppError('Prepare a CV file only for an authorized CV-upload step.');
   const run = store.getRun(runId);
-  if (run.native) store.getNativeClaim({ runId, companyId, assistant: req.body.assistant, claimToken: req.body.claimToken });
+  if (!run.native) throw new AppError('Use a claimed Native Run for a CV-upload step. Historical runs are read-only.');
+  store.getNativeClaim({ runId, companyId, assistant: req.body.assistant, claimToken: req.body.claimToken });
   if (run.explicit !== true || run.mode !== 'send_and_submit' || run.status !== 'running' || Date.parse(run.expiresAt) <= Date.now() || !run.companyIds.includes(companyId) || (run.managed && run.activeCompanyId !== companyId)) throw new AppError('Use the current company in an active explicitly authorized run.');
   assertRunPurpose(run, purpose);
   return stageCvArtifact({ dataDir: store.dataDir, runId, companyId });
 }));
-app.get('/api/calendar/calendars', wrap(async () => (await localAdapters()).calendar('listCalendars')));
-app.post('/api/calendar/events', wrap(async req => (await localAdapters()).calendar('listEvents', req.body)));
-app.post('/api/calendar/event', wrap(async req => (await localAdapters()).calendar('createEvent', req.body)));
 app.get(
   "/api/bootstrap",
   wrap(async () => ({
     directories: store.listDirectories(),
     settings: store.getSettings(),
-    connections: nativeMode() ? [] : (await localAdapters()).connections.list(),
-    nativeClient: nativeMode() ? store.getNativeClientStatus() : null,
+    connections: [],
+    nativeClient: store.getNativeClientStatus(),
     statuses: STATUSES,
-    runs: store.runSummaries(),
+    runs: store.runSummaries().map(historicalRun),
     reports: store.listReports().slice(0, 5),
   })),
 );
@@ -263,16 +248,15 @@ app.post(
 );
 app.post(
   "/api/runs",
-  wrap((req) => nativeMode() ? nativeRun(req.body).run : store.startRun(req.body)),
+  wrap((req) => nativeRun(req.body).run),
 );
-app.get('/api/assistants', wrap(() => agentRunner.assistants()));
 app.get('/api/run-preview', wrap(req => {
   if (typeof req.query.scope !== 'string' || req.query.scope.length > 6000) throw new AppError('Supply a compact run scope.');
   let input; try { input = JSON.parse(req.query.scope); } catch { throw new AppError('Supply a valid run scope.'); }
   return store.previewRun(input);
 }));
 app.post('/api/run-preview', wrap(req => store.previewRun(req.body)));
-app.post('/api/run', wrap(req => nativeMode() ? nativeRun(req.body) : agentRunner.start(req.body)));
+app.post('/api/run', wrap(req => nativeRun(req.body)));
 app.post('/api/runs/:id/stop', wrap(req => stopRun(req.params.id)));
 app.get('/api/runs/:id/targets', wrap(req => store.getRunTargets(req.params.id, { offset: Number(req.query.offset || 0), limit: Number(req.query.limit || 50) })));
 app.get(
@@ -281,7 +265,7 @@ app.get(
 );
 app.patch(
   "/api/runs/:id",
-  wrap((req) => req.body.status === 'cancelled' ? stopRun(req.params.id) : (store.getRun(req.params.id).managed || store.getRun(req.params.id).native) ? Promise.reject(new AppError('The queue owns progress. Use Stop to stop it.')) : store.updateRun(req.params.id, req.body)),
+  wrap((req) => req.body.status === 'cancelled' ? stopRun(req.params.id) : Promise.reject(new AppError('The queue owns progress. Historical runs are read-only. Use Stop to stop active authority.'))),
 );
 app.get(
   "/api/settings",
@@ -289,11 +273,7 @@ app.get(
 );
 app.patch(
   "/api/settings",
-  wrap(async req => {
-    const before = nativeMode(), settings = store.updateSettings(req.body);
-    await adapterOwner.modeChanged(before);
-    return settings;
-  }),
+  wrap(req => store.updateSettings(req.body)),
 );
 app.get(
   "/api/activity",
@@ -306,66 +286,7 @@ app.get(
 app.get('/api/snapshot', wrap(req => store.snapshot(req.query)));
 app.post(
   "/api/reports",
-  wrap(() => nativeMode() ? store.saveReport(store.report()) : scheduler.generateReport()),
-);
-app.post(
-  "/api/refresh",
-  wrap(() => scheduler.refresh()),
-);
-app.get(
-  "/api/connections",
-  wrap(() => nativeMode() ? [] : connections.list()),
-);
-app.put(
-  "/api/connections/:kind",
-  wrap((req) => connections.save(req.params.kind, req.body)),
-);
-app.post(
-  "/api/connections/:kind/connect",
-  wrap((req) => connections.connect(req.params.kind)),
-);
-app.delete(
-  "/api/connections/:kind",
-  wrap((req) => connections.disconnect(req.params.kind)),
-);
-app.get(
-  "/api/connections/:kind/tools",
-  wrap((req) => connections.tools(req.params.kind)),
-);
-app.get("/api/connections/:kind/oauth/callback", async (req, res) => {
-  try {
-    await connections.oauthCallback(req.params.kind, req.query);
-    res.redirect("/?connected=" + encodeURIComponent(req.params.kind));
-  } catch (error) {
-    res
-      .status(400)
-      .type("text")
-      .send(
-        `Connection could not finish: ${error.message}. Return to the tracker and try connecting again.`,
-      );
-  }
-});
-app.post(
-  "/api/cv/read",
-  wrap(async () => (await localAdapters()).readCv()),
-);
-app.post('/api/applications/:id/reconcile-email', wrap(async req => (await localAdapters()).reconcileEmail(req.params.id)));
-app.get(
-  "/api/cv",
-  wrap(() => {
-    if (nativeMode()) throw new AppError('Read the actual CV through your Codex or Claude Code connection. Tawdheef does not cache the native CV.');
-    const p = resolve(store.dataDir, "cv-cache.json");
-    return existsSync(p)
-      ? JSON.parse(readFileSync(p, "utf8"))
-      : { fetchedAt: null, result: null };
-  }),
-);
-// A mapped outbound call is tied to one explicit run and one recorded target.
-app.post(
-  "/api/runs/:id/send-email",
-  wrap(async (req) => {
-    return (await localAdapters()).sendEmail(req.params.id, req.body);
-  }),
+  wrap(() => store.saveReport(store.report())),
 );
 app.get(
   "/api/export/:id",
@@ -439,7 +360,6 @@ app.use((error, req, res, next) => {
   });
 });
 store.recoverInterruptedRuns();
-if (!nativeMode()) await localAdapters();
 const server = app.listen(port, "127.0.0.1", () => {
   console.log(`Apply Tracker is running locally at ${baseUrl}`);
 });
@@ -448,7 +368,6 @@ async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
   store.recoverInterruptedRuns();
-  await adapterOwner.close();
   await new Promise((resolve) => server.close(resolve));
   store.close();
   process.exit(0);

@@ -3,16 +3,19 @@ import assert from 'node:assert/strict';
 import { registrationContext, capabilityRecipe, monitoringRecipe } from '../server/client-guidance.mjs';
 import { nativeConnectionRequest } from '../server/native-guidance.mjs';
 
-test('new registrations use only the observed connected mailbox, never a configured or CV email guess', () => {
-  const store = { getCompany: id => ({ id, name: 'Fixture employer', progress: { accountCreated: true } }) };
-  for (const account of ['Main@Example.test', { email: 'Main@Example.test', id: 'verified-account' }]) {
-    const context = registrationContext({ store, companyId: 'fixture', connections: { list: () => [{ kind: 'email', status: 'connected', provider: 'outlook', account }] } });
-    assert.equal(context.primaryEmail, 'main@example.test'); assert.equal(context.emailSource, 'observed_connected_mailbox');
+test('new registrations use only the selected client mailbox report, never old adapters or a contact hint', () => {
+  let primaryEmail = 'main@example.test';
+  const store = { getSettings: () => ({ preferredAssistant: 'codex', applicationEmail: 'hint@example.test' }), getNativeClientStatus: ({ assistant }) => { assert.equal(assistant, 'codex'); return { primaryEmail }; }, getCompany: id => ({ id, name: 'Fixture employer', progress: { accountCreated: true } }) };
+  {
+    const context = registrationContext({ store, companyId: 'fixture' });
+    assert.equal(context.primaryEmail, 'main@example.test'); assert.equal(context.emailSource, 'native_client_report');
+    assert.equal(context.clientReported, true); assert.equal(context.independentlyVerified, false);
     assert.match(context.instructions, /Reuse an existing career account and its original sign-in/);
     assert.equal(context.credentials.storedByTracker, false); assert.equal(context.credentials.availability, 'not_verified_by_tracker');
     assert.equal(context.company.id, 'fixture');
   }
-  for (const mailbox of [undefined, { status: 'disconnected', account: 'stale@example.test' }, { status: 'connected', credentialUsername: 'configured@example.test' }, { status: 'connected', account: { email: 'not-an-address' } }]) {
+  primaryEmail = null;
+  for (const mailbox of [undefined, { status: 'connected', account: 'old-adapter@example.test' }]) {
     const context = registrationContext({ store, connections: { list: () => mailbox ? [{ kind: 'email', ...mailbox }] : [] } });
     assert.equal(context.primaryEmail, null); assert.equal(context.emailSource, null); assert.equal(context.company, null);
   }
@@ -37,7 +40,7 @@ test('native assistant setup observes tracker tool use without reporting an assi
   assert.match(nativeConnectionRequest({ store, kind: 'browser' }).prompt, /Report browser and computer access separately/);
 });
 
-test('monitoring recipes use actual client read requests by default and preserve explicit local-adapter compatibility', () => {
+test('monitoring recipes always use the actual client even with an obsolete adapter preference', () => {
   const config = { revision: 7, enabled: true, assistant: 'codex', frequency: 'daily', time: '09:00', timezone: 'Asia/Dubai', channels: { jobs: true, profiles: true, email: true, calendar: true } };
   const store = { dataDir: '/fixture/private', getSettings: () => ({ connectionMode: 'native' }), getMonitoring: () => ({ config, status: { externalScheduleStatus: 'unknown' } }) };
   const recipe = monitoringRecipe({ store, assistant: 'codex', configurationRevision: 7 });
@@ -48,5 +51,5 @@ test('monitoring recipes use actual client read requests by default and preserve
   assert.doesNotMatch(recipe.taskPrompt, /Email\/calendar are read by the local app|bypass the local provider reader/);
   assert.equal(recipe.creation, 'requested_only'); assert.equal(recipe.nextRunAt, null);
   store.getSettings = () => ({ connectionMode: 'local-adapters' });
-  assert.match(monitoringRecipe({ store, assistant: 'codex', configurationRevision: 7 }).taskPrompt, /Email\/calendar are read by the local app/);
+  assert.equal(monitoringRecipe({ store, assistant: 'codex', configurationRevision: 7 }).taskPrompt, recipe.taskPrompt);
 });

@@ -5,7 +5,6 @@ const initialStatus = () => ({ lastCheckAt: null, lastSuccessAt: null, unreadCou
 const prompt = 'Create a local daily fixture monitoring schedule. Read only the selected companies and tracked email threads. Never apply, send messages or create calendar events.';
 
 test.beforeEach(async ({ page, request }) => {
-  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__monitorConfig = initialConfig(); page.__monitorStatus = initialStatus();
   page.__monitorUpdates = [];
   page.__monitorWrites = []; page.__monitorErrors = []; page.__unexpectedMonitorWrites = [];
@@ -20,7 +19,7 @@ test.beforeEach(async ({ page, request }) => {
   });
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'local-adapters'; boot.runs = [];
+    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'native'; boot.runs = [];
     return route.fulfill({ response, json: boot });
   });
   await page.route('**/api/monitoring', route => {
@@ -55,8 +54,8 @@ test.afterEach(async ({ page }) => {
 
 async function openSettings(page) {
   await page.goto('/'); await expect(page.locator('.company-name').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   await expect(settings.getByRole('region', { name: 'Monitoring', exact: true })).toBeVisible();
   return { settings, panel: settings.getByRole('region', { name: 'Monitoring', exact: true }) };
@@ -73,7 +72,7 @@ test('monitoring is opt-in and copying prepares a native request without claimin
   await panel.getByRole('checkbox', { name: 'Career profiles', exact: true }).check();
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
   await expect(panel.getByRole('button', { name: 'Schedule request copied', exact: true })).toBeVisible();
-  expect(await page.evaluate(() => window.__monitorClipboard)).toBe(prompt);
+  await expect.poll(() => page.evaluate(() => window.__monitorClipboard)).toBe(prompt);
   expect(page.__monitorWrites.map(item => item.path)).toEqual(['config', 'recipe']);
   expect(page.__monitorConfig.channels).toEqual({ jobs: true, profiles: true, email: false, calendar: false });
   await expect(panel).not.toContainText('Schedule active');
@@ -119,20 +118,20 @@ test('calendar monitoring requires an explicitly selected calendar and stays blo
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: false, profiles: false, email: false, calendar: true } };
   const { panel } = await openSettings(page);
   await expect(panel).toContainText('Needs you');
-  await expect(panel).toContainText('Choose a calendar to monitor.');
+  await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
   await expect(panel.getByRole('button', { name: 'Copy schedule request', exact: true })).toBeDisabled();
   expect(page.__monitorWrites).toEqual([]);
 });
 
-test('calendar discovery runs only after Choose a calendar and records its selected ID', async ({ page }) => {
+test('calendar monitoring uses only IDs reported by the selected actual client', async ({ page }) => {
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: false, profiles: false, email: false, calendar: true } };
-  let calendarReads = 0;
-  await page.route('**/api/calendar/calendars', route => { calendarReads++; return route.fulfill({ json: { calendars: [{ id: 'fixture-calendar', name: 'Fixture interviews' }] } }); });
+  await page.route('**/api/bootstrap', async route => {
+    const response = await route.fetch(), boot = await response.json();
+    boot.nativeClient = { assistant: 'codex', capabilities: { calendar: { status: 'reported', calendarIds: ['fixture-calendar'] } } };
+    return route.fulfill({ response, json: boot });
+  });
   const { panel } = await openSettings(page);
-  expect(calendarReads).toBe(0);
-  await panel.getByRole('button', { name: 'Choose a calendar', exact: true }).click();
   await expect(panel.getByRole('combobox', { name: 'Calendar', exact: true })).toBeVisible();
-  expect(calendarReads).toBe(1);
   await panel.getByRole('combobox', { name: 'Calendar', exact: true }).selectOption('fixture-calendar');
   await expect(panel).toContainText('Calendar events in the next 14 days.');
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
@@ -164,9 +163,9 @@ test('only recorded check results show update counts and reported schedules awai
   await expect(panel).not.toContainText('0 unread updates');
   await settings.getByRole('button', { name: 'Cancel', exact: true }).click();
   page.__monitorStatus = { ...initialStatus(), externalScheduleStatus: 'reported', lastCheckAt: '2026-11-14T05:00:00Z', lastSuccessAt: '2026-11-14T05:00:00Z', unreadCount: 2 };
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Settings', exact: true }).locator('.monitoring-disclosure > summary')).toContainText('2 unread updates');
-  await page.getByRole('dialog', { name: 'Settings', exact: true }).locator('.monitoring-disclosure > summary').click();
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Monitoring', exact: true }).locator('.monitoring-disclosure > summary')).toContainText('2 unread updates');
+  await page.getByRole('dialog', { name: 'Monitoring', exact: true }).locator('.monitoring-disclosure > summary').click();
   panel = page.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Last check:'); await expect(panel).toContainText('2 unread updates');
 });
@@ -223,7 +222,7 @@ test('recent updates show real evidence and Needs you while marking read changes
   expect(page.__monitorWrites.map(item => item.path)).toEqual(['ack']);
 });
 
-test('narrow monitoring controls remain readable with the Settings save action available', async ({ page }, testInfo) => {
+test('narrow monitoring controls remain readable with the Monitoring save action available', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 });
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: true, profiles: true, email: true, calendar: false } };
   const { panel, settings } = await openSettings(page);

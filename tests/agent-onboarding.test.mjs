@@ -4,7 +4,6 @@ import { mkdtemp, mkdir, readFile, writeFile, rm, chmod, realpath } from 'node:f
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { discoverAssistants, checkAssistantCompatibility } from '../server/agent-runner.mjs';
 import { configureAgent } from '../scripts/agent-setup.mjs';
 import { createClientConfig } from '../server/integrations.mjs';
 
@@ -90,19 +89,6 @@ test('legacy exact generated TOML can be adopted, while stale paths and malforme
   }
 });
 
-test('assistant discovery uses explicit native/script paths and rejects shell wrappers', async t => {
-  const { root } = await project(t), script = join(root, 'codex.mjs');
-  await writeFile(script, '// metadata fixture; never executed');
-  const found = await discoverAssistants({ env: { TAWDHEEF_CODEX_PATH: script, TAWDHEEF_CLAUDE_PATH: join(root, 'missing.exe') }, home: root });
-  assert.equal(found[0].installed, true); assert.equal(found[0].command, process.execPath); assert.deepEqual(found[0].args, [script]);
-  const blocked = await discoverAssistants({ env: { TAWDHEEF_CODEX_PATH: join(root, 'codex.cmd'), TAWDHEEF_CLAUDE_PATH: 'relative-command' }, home: root });
-  assert.ok(blocked.every(item => !item.installed));
-  const nvm = join(root, '.nvm/versions/node/v26.1.0/bin');
-  await mkdir(nvm, { recursive: true }); await writeFile(join(nvm, 'codex'), '#!/bin/sh\nexit 0\n'); await chmod(join(nvm, 'codex'), 0o755);
-  const gui = await discoverAssistants({ env: { PATH: '', TAWDHEEF_CLAUDE_PATH: join(root, 'missing') }, platform: 'darwin', home: root });
-  assert.equal(gui[0].command, join(nvm, 'codex'));
-});
-
 test('an external workspace gets owned settings and guidance while server paths stay inside the installed app', async t => {
   const options = await project(t), { root } = options, workspace = join(root, 'writable workspace');
   await mkdir(join(root, 'docs'), { recursive: true });
@@ -163,19 +149,4 @@ test('the setup CLI honors external workspace environment without placing config
   assert.equal(config.mcpServers['apply-tracker'].args.length, 1);
   assert.equal(await realpath(config.mcpServers['apply-tracker'].args[0]), await realpath(join(root, 'server/mcp.mjs')));
   await assert.rejects(readFile(join(root, '.mcp.json')), { code: 'ENOENT' });
-});
-
-test('assistant compatibility uses only version/help and requires the actual safe run flags', async () => {
-  const calls = [];
-  const executable = { id: 'codex', command: 'fixture', args: [] };
-  const run = async ({ args }) => { calls.push(args); return args[0] === '--version' ? 'codex-cli 1.2.3' : '--json --sandbox --skip-git-repo-check --cd'; };
-  assert.deepEqual(await checkAssistantCompatibility(executable, { run }), { version: '1.2.3', capabilitiesChecked: true });
-  assert.deepEqual(calls[0], ['--version']); assert.ok(calls[1].includes('--help')); assert.ok(calls[1].includes('read-only'));
-  assert.ok(calls.every(args => !args.includes('login') && !args.includes('-p')));
-  await assert.rejects(checkAssistantCompatibility(executable, { run: async ({ args }) => args[0] === '--version' ? '1.2.3' : '--json' }), /missing required/);
-  const claudeCalls = [];
-  const claude = await checkAssistantCompatibility({ id: 'claude-code', command: 'fixture', args: [] }, { run: async ({ args }) => { claudeCalls.push(args); return args[0] === '--version' ? '2.1.4 (Claude Code)' : '--mcp-config --output-format --permission-mode'; } });
-  assert.ok(claudeCalls[1].includes('--strict-mcp-config')); assert.ok(claudeCalls[1].includes('default')); assert.ok(!claudeCalls[1].includes('-p'));
-  assert.equal(claudeCalls[1][claudeCalls[1].indexOf('--tools') + 1], 'Read,WebFetch,WebSearch,ToolSearch');
-  assert.deepEqual(claude.toolSearch, { requested: true, modelSupportVerified: false });
 });

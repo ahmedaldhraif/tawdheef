@@ -1,0 +1,16 @@
+{
+  "component": "Sun Moon Theme Toggle",
+  "creator": "dhxwhy",
+  "platform": "21st.dev",
+  "sourceUrl": "https://21st.dev/@dhxwhy/components/sun-moon-theme-toggle",
+  "input": "User-supplied React component attachment, Pasted text.txt",
+  "reviewedAt": "2026-11-14",
+  "licenseStatus": "The supplied attachment does not specify a component license. No MIT license claim is made.",
+  "adaptation": [
+    "Plain JavaScript and CSS progressive enhancement of existing native website buttons.",
+    "Shared-circle sun/moon arc and day/night gradients retained; stars are static.",
+    "260 ms interruptible swap; immediate document theme and instant reduced-motion/forced-colors fallback.",
+    "Existing system appearance, saved preference, localized labels and device-theme reset preserved.",
+    "No React, Tailwind, icon package, autoplay demo, stock images or global page-color transition added."
+  ]
+}

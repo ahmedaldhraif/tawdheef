@@ -1,7 +1,7 @@
 # Tawdheef product marketing context
 
-**Document version:** v14
-**Last updated:** 2026-11-14
+**Document version:** v16
+**Last updated:** 2026-11-15
 **Status:** Initial source-backed implementation; owner can revise wording.
 
 ## Product overview
@@ -49,6 +49,20 @@ The core value is a shared working record for the person and their agent.
 Country packs make starting easier. The skill teaches the workflow; the local
 MCP supplies actual tools. Avoid implying that installing a skill installs or
 authenticates the tracker.
+
+The discovery workflow gives that promise a concrete first result: see current
+public postings, review what changed, understand the actual client's CV-backed
+reasoning, and resolve one clear Needs you item. Keep source coverage and dated
+client assessments visible. A match is neither a verified eligibility decision
+nor an application. A blocked source never becomes an empty successful search.
+The tracker saves no raw CV for this workflow and adds no model/browser engine.
+
+For product strategy, improve this complete loop before adding more connections
+or navigation: discover → review fit → choose actions → record receipts → track
+updates. The existing public research, agent workflow and local tracker remain
+three entry points into one product. Tabbio remains a separate CV service.
+The [21-project review and prioritised experiments](../docs/PRODUCT-STRATEGY.md)
+distinguish implemented behaviour from future marketing proposals.
 
 ## Brand voice and architecture
 
@@ -212,6 +226,23 @@ No fabricated vacancy counts, placements, star counts, endorsements or
 route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
+
+- v16 (2026-11-15); Owner explicitly coordinated the concurrent contribution
+  and Native-product work into one app. Preserved evidenced career-route
+  findings, profile visibility, contribution links, the approved bilingual
+  wordmarks and LinkedIn vector, while keeping Native connection ownership and
+  Jobs review. Preferences and Monitoring separate personal preferences from
+  read-only schedules/reports. A contact-address hint is not a sender override
+  or proof of connection. Source and installed build must be reconciled before
+  a combined-install claim; no new analytics or growth result is implied.
+
+- v15 (2026-11-14); Owner requested the strongest patterns from 21 adjacent
+  repositories. Added local source discovery, meaningful-change reuse,
+  client-assessed requirement/CV citations, saved job preferences and a small
+  Jobs review panel with actionable Needs you. Retained the approved hero,
+  category, Native client ownership and evidence boundaries. Broader marketing
+  experiments remain proposals; no comparative performance, adoption, hiring
+  or token-saving result is claimed.
 
 - v14 (2026-11-14); Owner approved the independent Tawdheef.com product home,
   Ahmed-led launch and contextual Tabbio CV route. Brought public research

@@ -14,6 +14,8 @@ import { createMonitoringStore } from './monitoring-store.mjs';
 import { createNativeStore } from './native-store.mjs';
 import { createPackStore } from './pack-store.mjs';
 import { createRecurringMonitoringStore } from './recurring-monitor-store.mjs';
+import { createJobDiscoveryStore } from './job-discovery-store.mjs';
+import { createHistoricalReconciliation } from './historical-reconciliation.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -28,8 +30,6 @@ export const STATUSES = [
   "closed",
 ];
 const now = () => new Date().toISOString();
-const ASSISTANT_CHECK_TTL_MS = 24 * 60 * 60_000;
-const ASSISTANT_CHECK_CATEGORIES = ['assistant_missing', 'configuration', 'reasoning_setting', 'model_access', 'tool_proof_missing', 'probe_failed', 'probe_interrupted'];
 const calendarDay = (value, timeZone) => {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone,
@@ -146,7 +146,8 @@ export function openStore({
     CREATE TABLE IF NOT EXISTS activity(id TEXT PRIMARY KEY, company_id TEXT, created_at TEXT NOT NULL, payload TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS activity_company ON activity(company_id);
     CREATE TABLE IF NOT EXISTS settings(id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);`);
+    CREATE TABLE IF NOT EXISTS reports(id TEXT PRIMARY KEY, created_at TEXT NOT NULL, payload TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS app_migrations(id TEXT PRIMARY KEY);`);
   const companyQuery = createCompanyQuery(db, STATUSES);
   const tx = (fn) => {
     db.exec("BEGIN IMMEDIATE");
@@ -208,7 +209,7 @@ export function openStore({
     const ids = [...new Set([...relations.values()].flat())];
     const applications = db.prepare('SELECT payload FROM applications WHERE company_id IN (SELECT value FROM json_each(?))').all(JSON.stringify(ids)).map(parse);
     const progress = progressByCompany(applications, progressActivity(ids));
-    return companies.map(company => ({ ...company, progress: Object.fromEntries(Object.keys(emptyProgress()).map(event => [event, Math.max(0, ...relations.get(company.id).map(id => progress.get(id)?.[event] || 0))])) }));
+    return companies.map(company => ({ ...company, careersPageStatus: company.careersPageStatus || 'unknown', profileSupport: company.profileSupport || 'unknown', routeEvidence: company.routeEvidence || '', routesCheckedAt: company.routesCheckedAt || null, progress: Object.fromEntries(Object.keys(emptyProgress()).map(event => [event, Math.max(0, ...relations.get(company.id).map(id => progress.get(id)?.[event] || 0))])) }));
   }
   const defaults = {
     refreshFrequency: "manual",
@@ -309,7 +310,7 @@ export function openStore({
     const actions = runActions(inputActions);
     return rows.filter(company => !company.archived && company.status !== 'closed' && (
       (actions.applyMatchingJobs && ['not_started', 'ready'].includes(company.status) && !company.progress?.applied) ||
-      (actions.createProfiles && !company.progress?.profile_created) ||
+      (actions.createProfiles && company.profileSupport !== 'not_offered' && !company.progress?.profile_created) ||
       (actions.sendCvEmails && !company.progress?.cv_sent)
     ));
   }
@@ -355,6 +356,7 @@ export function openStore({
           input.columns || [
             "name",
             "status",
+            "progress",
             "nextAction",
             "lastUpdate",
             "careersUrl",
@@ -628,6 +630,9 @@ export function openStore({
         "linkedinUrl",
         "sector",
         "location",
+        "careersPageStatus",
+        "profileSupport",
+        "routeEvidence",
       ]);
       if ("archived" in patch)
         requireValue(
@@ -650,6 +655,9 @@ export function openStore({
           ["", "needs_you", "update_failed"].includes(patch.attention),
           "Choose a supported attention flag.",
         );
+      for (const key of ['careersPageStatus', 'profileSupport'])
+        if (key in patch)
+          requireValue(['unknown', 'available', key === 'careersPageStatus' ? 'not_found' : 'not_offered', 'needs_check'].includes(patch[key]), 'Choose a supported career route status.');
       return tx(() => {
         const c = store.getCompany(companyId);
         if (
@@ -675,11 +683,20 @@ export function openStore({
           "sector",
           "location",
           "archived",
+          "careersPageStatus",
+          "profileSupport",
+          "routeEvidence",
         ];
+        const routePatch = Object.fromEntries(['careersPageStatus', 'profileSupport', 'routeEvidence'].filter(key => key in patch).map(key => [key, key === 'routeEvidence' ? text(patch[key]).trim() : patch[key]]));
+        const routeChanged = Object.entries(routePatch).some(([key, value]) => value !== c[key]);
+        if (routeChanged && ['careersPageStatus', 'profileSupport'].some(key => (routePatch[key] ?? c[key]) !== 'unknown'))
+          requireValue(typeof routePatch.routeEvidence === 'string' && routePatch.routeEvidence.trim(), 'Add the source or reason for this route check.');
         for (const key of allowed)
           if (key in patch)
             c[key] =
-              typeof patch[key] === "string" ? text(patch[key]) : patch[key];
+              key in routePatch ? routePatch[key] : typeof patch[key] === "string" ? text(patch[key]) : patch[key];
+        if (routeChanged)
+          c.routesCheckedAt = [c.careersPageStatus, c.profileSupport].some(value => value !== 'unknown') ? now() : null;
         requireValue(text(c.name).trim(), "A company needs a name.");
         requireValue(STATUSES.includes(c.status), "Choose a supported status.");
         c.name = text(c.name, 500).trim();
@@ -740,8 +757,8 @@ export function openStore({
         return { application: a, reused: false, nextStep: 'Submit this form once, then resolve the intent with its actual receipt.' };
       });
     },
-    resolveFormSubmission({ id: applicationId, outcome, evidence, explicit = false } = {}) {
-      return tx(() => {
+    resolveFormSubmission({ id: applicationId, outcome, evidence, explicit = false } = {}, { transaction = true } = {}) {
+      const finish = () => {
         const a = read('applications', applicationId);
         requireValue(a?.method === 'form' && a.idempotencyKey, 'Choose a recorded form submission intent.');
         requireValue(['confirmed', 'not_submitted'].includes(outcome), 'Inspect the form, then choose confirmed or not_submitted.');
@@ -770,7 +787,8 @@ export function openStore({
         }
         c.lastUpdate = now(); c.revision++; saveCompany(c);
         activity(outcome === 'confirmed' ? event : 'needs_user', a.notes, c.id, { applicationId: a.id }); return a;
-      });
+      };
+      return transaction ? tx(finish) : finish();
     },
     checkSubmission(input = {}) {
       record(input);
@@ -1381,48 +1399,13 @@ export function openStore({
     getSettings() {
       const settings = { ...defaults, ...read("settings", "main") };
       delete settings.dailyCap; // Earlier versions imposed a daily count; runs now have no app count limit.
-      return settings;
-    },
-    getAssistantCheck({ assistant = store.getSettings().preferredAssistant } = {}) {
-      requireValue(['codex', 'claude-code'].includes(assistant), 'Choose Codex or Claude Code for the agent check.');
-      const saved = read('settings', `assistant_check:${assistant}`);
-      const age = saved?.checkedAt ? currentMs() - Date.parse(saved.checkedAt) : Infinity;
-      const interrupted = saved?.status === 'checking' && currentMs() - Date.parse(saved.startedAt) > 150_000;
-      const expired = saved?.status === 'ready' && (age < 0 || age > ASSISTANT_CHECK_TTL_MS);
-      const status = interrupted || expired ? 'needs_you' : saved?.status || 'not_checked';
-      const category = interrupted ? 'probe_interrupted' : expired ? 'check_expired' : saved?.category || null;
-      return {
-        assistant, status, modelAccessVerified: status === 'ready',
-        checkedAt: saved?.checkedAt || null, startedAt: saved?.startedAt || null,
-        lastSuccessAt: saved?.lastSuccessAt || null,
-        expiresAt: saved?.status === 'ready' && saved.checkedAt ? new Date(Date.parse(saved.checkedAt) + ASSISTANT_CHECK_TTL_MS).toISOString() : null,
-        clientVersion: saved?.clientVersion || null, category,
-        usage: saved?.usage || null, durationMs: saved?.durationMs ?? null,
-        scope: 'isolated_fixture',
-      };
-    },
-    recordAssistantCheck(input) {
-      record(input);
-      requireValue(Object.keys(input).every(key => ['assistant', 'status', 'category', 'clientVersion', 'usage', 'durationMs'].includes(key)), 'Save only numeric agent-check metadata and supported status fields.');
-      const { assistant, status, category = null, clientVersion = null, usage = null, durationMs = null } = input;
-      requireValue(['codex', 'claude-code'].includes(assistant), 'Choose Codex or Claude Code for the agent check.');
-      requireValue(['checking', 'ready', 'needs_you'].includes(status), 'Choose a supported agent-check status.');
-      requireValue(category === null || ASSISTANT_CHECK_CATEGORIES.includes(category), 'Use a supported agent-check error category.');
-      requireValue(status === 'needs_you' || category === null, 'Only an unsuccessful check has an error category.');
-      requireValue(clientVersion === null || (typeof clientVersion === 'string' && clientVersion.length <= 100 && /^\d+\.\d+\.\d+(?:[-+][\w.-]{1,64})?$/.test(clientVersion)), 'Save an observed client version or null.');
-      requireValue(durationMs === null || (typeof durationMs === 'number' && Number.isFinite(durationMs) && durationMs >= 0), 'Agent-check duration must be a finite nonnegative number or null.');
-      const safeUsage = usage === null ? null : attemptUsage(usage);
-      const previous = read('settings', `assistant_check:${assistant}`), at = now();
-      write('settings', `assistant_check:${assistant}`, {
-        assistant, status, category, clientVersion, usage: safeUsage, durationMs,
-        startedAt: status === 'checking' ? at : previous?.startedAt || at,
-        checkedAt: status === 'checking' ? previous?.checkedAt || null : at,
-        lastSuccessAt: status === 'ready' ? at : previous?.lastSuccessAt || null,
-      });
-      return store.getAssistantCheck({ assistant });
+      // Older adapter preferences remain stored verbatim for recovery. They no
+      // longer select an executor: the actual AI client always owns services.
+      return { ...settings, connectionMode: 'native' };
     },
     updateSettings(patch) {
       record(patch);
+      requireValue(patch.connectionMode === undefined || patch.connectionMode === 'native', 'Tawdheef uses your actual Codex or Claude Code client. App-managed adapters have been retired.');
       stringFields(patch, [
         "refreshFrequency",
         "reportFrequency",
@@ -1432,6 +1415,7 @@ export function openStore({
         "language",
         "preferredAssistant",
         "connectionMode",
+        "applicationEmail",
         "cvLink",
         "cvText",
       ]);
@@ -1465,8 +1449,16 @@ export function openStore({
             typeof patch[key] === "string",
             `${key} must be text or empty.`,
           );
-      const s = store.getSettings();
-      if (patch.connectionMode !== undefined && patch.connectionMode !== s.connectionMode) requireValue(!store.listRuns().some(run => run.status === 'running' && (run.native || run.managed)), 'Stop the active Run before changing connection mode.');
+      // Start with the stored values so an unrelated preference edit does not
+      // rewrite an obsolete adapter setting or discard historical preferences.
+      const s = { ...defaults, ...read('settings', 'main') };
+      delete s.dailyCap;
+      if (Object.hasOwn(patch, 'applicationEmail')) {
+        const hint = patch.applicationEmail.trim();
+        requireValue(hint.length <= 254 && !/[\u0000-\u001f\u007f]/.test(hint) && (!hint || /^[^\s@<>"(),;:\\]+@[a-z0-9.-]+\.[a-z]{2,63}$/i.test(hint)), 'Enter a valid optional contact email.');
+        // A local contact hint only. Never infer a connected mailbox or sender.
+        s.applicationEmail = hint;
+      }
       for (const key of Object.keys(defaults))
         if (key in patch) s[key] = patch[key];
       requireValue(
@@ -1500,7 +1492,6 @@ export function openStore({
         "Choose English or Arabic.",
       );
       requireValue(['codex', 'claude-code'].includes(s.preferredAssistant), 'Choose Codex or Claude Code as the preferred assistant.');
-      requireValue(['native', 'local-adapters'].includes(s.connectionMode), 'Choose native or local-adapters connection mode.');
       try {
         new Intl.DateTimeFormat("en", { timeZone: s.timezone }).format();
       } catch {
@@ -1512,7 +1503,7 @@ export function openStore({
       s.reportDay = Number(s.reportDay);
       s.reportEveryDays = Number(s.reportEveryDays);
       write("settings", "main", s);
-      return s;
+      return store.getSettings();
     },
     snapshot(input = {}) {
       record(input);
@@ -1532,7 +1523,9 @@ export function openStore({
       const offset = pageNumber('offset', 0, 0, Number.MAX_SAFE_INTEGER);
       const limit = pageNumber('limit', 20, 1, 100);
       return directorySnapshot({
-        directory, companies: db.prepare('SELECT payload FROM companies WHERE directory_id=?').all(directory.id).map(parse),
+        // Outcomes need company identity/name only. Keep large research source
+        // payloads in SQLite rather than decoding the full directory per refresh.
+        directory, companies: db.prepare('SELECT id,name,directory_id AS directoryId FROM companies WHERE directory_id=?').all(directory.id),
         applications: db.prepare('SELECT a.payload FROM applications a JOIN companies c ON c.id=a.company_id WHERE c.directory_id=?').all(directory.id).map(parse),
         activity: db.prepare('SELECT a.payload FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.directory_id=?').all(directory.id).map(parse).filter(item => !item.applicationId),
         timeZone: store.getSettings().timezone,
@@ -1596,6 +1589,8 @@ export function openStore({
   };
   Object.assign(store, createPackStore({ db, store, tx, saveCompany, now, activity, AppError }));
   Object.assign(store, createRecurringMonitoringStore({ db, store, clock: () => new Date(clock()) }));
+  Object.assign(store, createJobDiscoveryStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError }));
+  store.reconcileHistoricalSubmission = createHistoricalReconciliation({ store, tx, now, ErrorType: AppError });
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");
     if (existsSync(seedPath)) {
@@ -1609,5 +1604,18 @@ export function openStore({
       store.addCompanies("uae", source.records || source);
     }
   }
+  // Run once for existing installations. A later explicit column preference
+  // remains authoritative, including when the person hides Career profile.
+  if (!db.prepare('SELECT id FROM app_migrations WHERE id=?').get('career-profile-column-v1')) tx(() => {
+    if (db.prepare('SELECT id FROM app_migrations WHERE id=?').get('career-profile-column-v1')) return;
+    for (const directory of all('directories')) {
+      const fields = [...(directory.columns || ['name', 'status', 'nextAction', 'lastUpdate', 'careersUrl', 'notes'])];
+      if (!fields.includes('progress')) {
+        fields.splice(Math.max(1, fields.indexOf('status') + 1), 0, 'progress');
+        write('directories', directory.id, { ...directory, columns: columnList(fields) });
+      }
+    }
+    db.prepare('INSERT INTO app_migrations(id) VALUES(?)').run('career-profile-column-v1');
+  });
   return store;
 }

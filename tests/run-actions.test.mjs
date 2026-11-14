@@ -4,7 +4,6 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openStore } from '../server/store.mjs';
-import { sendEmailForRun, reconcileApplicationEmail } from '../server/email-send.mjs';
 import { normalizeRunActions, DEFAULT_RUN_ACTIONS } from '../src/run-actions.js';
 import { buildTools, closeToolConnections } from '../server/mcp.mjs';
 
@@ -19,25 +18,6 @@ async function fixture(t) {
   return { store, companyId, start, setTime(value) { time = new Date(value); } };
 }
 const future = { applyMatchingJobs: false, createProfiles: true, sendCvEmails: true };
-function mailbox(result) {
-  const writes = [], reads = [];
-  const mappings = {
-    sendEmail: { tool: 'fixture.send', arguments: { to: '{{to}}', body: '{{body}}', idempotencyKey: '{{idempotencyKey}}' } },
-    reconcileSend: { tool: 'fixture.inspect', arguments: { idempotencyKey: '{{idempotencyKey}}' } },
-  };
-  const connections = {
-    getMappings: () => mappings,
-    tools: async () => [{ name: 'fixture.send' }, { name: 'fixture.inspect', annotations: { readOnlyHint: true } }],
-    async call(kind, name, args) {
-      if (name === 'fixture.inspect') { reads.push(args); return { structuredContent: { sent: true, messageId: 'inspected-cv', threadId: 'cv-thread' } }; }
-      writes.push(args);
-      return result || { structuredContent: { sent: true, messageId: 'sent-cv', threadId: 'cv-thread' } };
-    },
-  };
-  return { connections, writes, reads };
-}
-const email = companyId => ({ companyId, role: 'General CV', purpose: 'cv_share', to: 'careers@example.test', subject: 'Future opportunities', body: 'My authorized CV: https://cv.example.test/person' });
-
 test('Run defaults and strict action validation are saved with labels and the actual brief', async t => {
   const { store, start } = await fixture(t);
   assert.deepEqual(normalizeRunActions(), DEFAULT_RUN_ACTIONS);
@@ -50,41 +30,6 @@ test('Run defaults and strict action validation are saved with labels and the ac
   assert.match(run.brief, /Do not apply to advertised jobs/);
   assert.match(run.brief, /Dubai/); assert.match(run.brief, /Prefer remote roles/);
   assert.deepEqual(store.getRun(run.id).actions, future);
-});
-
-test('CV-only provider send needs opt-in, records CV sent once and leaves the company eligible for a job', async t => {
-  const { store, companyId, start } = await fixture(t);
-  const provider = mailbox(), input = email(companyId), defaultRun = start();
-  await assert.rejects(sendEmailForRun({ store, ...provider, runId: defaultRun.id, input }), /does not allow CV emails/);
-  assert.equal(provider.writes.length, 0);
-  const run = start(future);
-  const send = extra => sendEmailForRun({ store, ...provider, runId: run.id, input: { ...input, ...extra } });
-  const sent = await send();
-  assert.equal(sent.application.status, 'cv_sent'); assert.ok(sent.application.cvSentAt);
-  assert.equal(sent.application.appliedAt, undefined); assert.equal(sent.application.purpose, 'cv_share');
-  assert.equal(store.report().applied, 0); assert.equal(store.report().cvsSent, 1);
-  assert.equal(store.remainingCompanies({ directoryId: 'test' }).length, 1);
-  assert.equal((await send({ role: 'A differently worded future role' })).reused, true);
-  assert.equal(provider.writes.length, 1);
-  const next = start(future);
-  await assert.rejects(sendEmailForRun({ store, ...provider, runId: next.id, input: { ...input, role: 'New title' } }), /submission or an unresolved/);
-  await assert.rejects(send({ purpose: 'application', role: 'Actual job' }), /does not allow job applications/);
-  assert.equal(provider.writes.length, 1);
-});
-
-test('uncertain CV emails block changed-purpose retries and reconcile to CV sent after the run stops', async t => {
-  const { store, companyId, start } = await fixture(t);
-  const provider = mailbox({ structuredContent: { status: 'pending', id: 'approval-only' } });
-  const run = start({ createProfiles: true, sendCvEmails: true });
-  const sent = await sendEmailForRun({ store, ...provider, runId: run.id, input: email(companyId) });
-  assert.equal(sent.application.deliveryStatus, 'unknown'); assert.equal(store.report().cvsSent, 0);
-  await assert.rejects(sendEmailForRun({ store, ...provider, runId: run.id, input: { ...email(companyId), purpose: 'application', role: 'Different job' } }), /unresolved/);
-  assert.throws(() => store.prepareFormSubmission({ runId: run.id, companyId, role: 'Account', purpose: 'account', url: 'https://careers.example.test/register' }), /unresolved/);
-  store.updateRun(run.id, { status: 'cancelled' });
-  const recovered = await reconcileApplicationEmail({ store, ...provider, applicationId: sent.application.id });
-  assert.equal(recovered.application.status, 'cv_sent'); assert.equal(recovered.application.appliedAt, undefined);
-  assert.equal(provider.writes.length, 1); assert.equal(provider.reads.length, 1);
-  assert.equal(store.report().cvsSent, 1); assert.equal(store.report().applied, 0);
 });
 
 test('form confirmations retain their exact profile purpose, milestones and duplicate protection', async t => {
@@ -109,41 +54,12 @@ test('unknown form intents block other purposes and late confirmation remains pr
   const run = start({ createProfiles: true, sendCvEmails: true });
   const intent = store.prepareFormSubmission({ runId: run.id, companyId, purpose: 'profile', role: 'Profile', url: 'https://careers.example.test/profile' });
   assert.throws(() => store.prepareFormSubmission({ runId: run.id, companyId, purpose: 'application', role: 'Changed role', url: 'https://careers.example.test/apply' }), /unresolved/);
-  const provider = mailbox();
-  await assert.rejects(sendEmailForRun({ store, ...provider, runId: run.id, input: email(companyId) }), /unresolved/);
-  assert.equal(provider.writes.length, 0);
+  assert.throws(() => store.beginEmailSend({ runId: run.id, companyId, role: 'General CV', purpose: 'cv_share', to: 'careers@example.test', subject: 'Synthetic CV', body: 'Synthetic body' }), /unresolved/);
   setTime('2026-11-13T10:00:00Z');
   assert.equal(store.getRun(run.id).status, 'expired');
   const resolved = store.resolveFormSubmission({ id: intent.application.id, outcome: 'confirmed', evidence: 'Existing profile inspected and confirmed' });
   assert.equal(resolved.status, 'profile_created'); assert.equal(resolved.appliedAt, undefined);
   assert.equal(store.report().applied, 0);
-});
-
-test('durable email and form identity cannot change through ordinary record updates', async t => {
-  const { store, companyId, start } = await fixture(t);
-  const run = start(future), provider = mailbox({ structuredContent: { status: 'pending' } });
-  const sent = await sendEmailForRun({ store, ...provider, runId: run.id, input: email(companyId) });
-  const original = sent.application;
-  for (const status of ['prepared', 'replied', 'error']) {
-    for (const patch of [{ role: 'A new job' }, { method: 'form' }, { runId: 'another-run' }, { to: 'other@example.test' }, { recipient: 'other@example.test' }, { url: 'https://other.example.test' }, { purpose: 'application' }, { idempotencyKey: 'new-key' }]) {
-      assert.throws(() => store.logApplication({ id: original.id, companyId, status, ...patch }), /original submission identity/);
-    }
-  }
-  store.updateRun(run.id, { status: 'cancelled' });
-  const reply = store.logApplication({ id: original.id, companyId, status: 'replied', method: original.method, notes: 'Reply inspected', evidence: { messageId: 'reply-123' }, threadId: 'cv-thread' });
-  assert.equal(reply.runId, run.id); assert.equal(reply.to, original.to); assert.equal(reply.role, original.role); assert.equal(reply.purpose, 'cv_share');
-  const reconciled = await reconcileApplicationEmail({ store, ...provider, applicationId: original.id });
-  assert.equal(reconciled.application.status, 'replied'); assert.equal(reconciled.application.purpose, 'cv_share');
-  assert.ok(reconciled.application.cvSentAt); assert.equal(reconciled.application.appliedAt, undefined);
-  assert.equal(provider.writes.length, 1); assert.equal(provider.reads.length, 1);
-
-  const next = start(future);
-  const form = store.prepareFormSubmission({ runId: next.id, companyId, purpose: 'profile', role: 'Profile', url: 'https://careers.example.test/profile' }).application;
-  assert.throws(() => store.logApplication({ id: form.id, companyId, status: 'prepared', url: 'https://careers.example.test/apply' }), /original submission identity/);
-  const noted = store.logApplication({ id: form.id, companyId, status: 'prepared', notes: 'Inspect the saved profile', role: form.role, url: form.url });
-  assert.equal(noted.url, form.url); assert.equal(noted.deliveryStatus, 'unknown');
-  const confirmed = store.resolveFormSubmission({ id: form.id, outcome: 'confirmed', evidence: 'Profile confirmation inspected' });
-  assert.equal(confirmed.status, 'profile_created'); assert.equal(confirmed.appliedAt, undefined);
 });
 
 test('list, preview and start share all filters across pages and selection never widens scope', async t => {
@@ -172,12 +88,14 @@ test('list, preview and start share all filters across pages and selection never
 
 test('machine list and Run tools expose the same explicit scope, rejecting invalid filters', async t => {
   const { store, companyId } = await fixture(t);
-  const tools = buildTools(store, { mode: 'local-adapters' }), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
+  const tools = buildTools(store, { assistant: 'codex' }), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
   const filters = { directoryId: 'test', search: 'Fixture', status: 'not_started', attention: '', companyTypes: ['private'], locations: ['location:dubai'] };
   const list = await call('list_companies', filters), preview = await call('preview_run', filters);
   assert.equal(list.remainingCount, preview.count); assert.equal(preview.listScopeVersion, 1); assert.equal(preview.runActionsVersion, 1);
-  const run = await call('start_run', { ...filters, companyIds: [companyId], actions: future, explicit: true, mode: 'send_and_submit' });
-  assert.deepEqual(run.companyIds, [companyId]); assert.equal(run.statusFilter, 'not_started');
+  const input = { ...filters, companyIds: [companyId], actions: future, explicit: true, mode: 'send_and_submit', assistant: 'codex' };
+  await assert.rejects(call('start_run', { ...input, explicit: false }), /must be one of/);
+  const { run } = store.startNativeRun(input);
+  assert.deepEqual(store.listNativeTargets({ runId: run.id }).items.map(item => item.companyId), [companyId]); assert.equal(run.filters.status, 'not_started');
   for (const patch of [{ status: 'unknown-status' }, { attention: 'unknown-attention' }, { search: {} }]) {
     assert.throws(() => store.listCompanies({ ...filters, ...patch }));
     assert.throws(() => store.previewRun({ ...filters, ...patch }));

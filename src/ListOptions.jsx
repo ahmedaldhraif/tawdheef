@@ -202,7 +202,7 @@ export default function ListOptions({
             href={exportUrl}
             onClick={() => closeMenu(true)}
           >
-            {t("Export CSV")}
+            {t("Export all companies (CSV)")}
           </a>
           {onPacks && <button type="button" role="menuitem" tabIndex={-1} onClick={() => choose(onPacks)}>{t('Manage directory packs')}</button>}
         </div>,

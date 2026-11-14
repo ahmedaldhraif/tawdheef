@@ -9,7 +9,7 @@ The app is free; your client and connected services may have their own costs.
 ## Get the app
 
 Use a platform app or `tawdheef-VERSION-source.zip` from the
-[GitHub releases](https://github.com/ahmedaldhraif/tawdheef/releases).
+[GitHub releases](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases).
 Extract the complete app before opening its launcher. App packages contain Node
 and the browser interface; see [desktop release status](DESKTOP-RELEASE.md).
 A country directory ZIP contains research data, not the app.
@@ -18,8 +18,8 @@ For a source checkout, install [Node.js 26 LTS](https://nodejs.org/en/download)
 (patched Node 24 also works), then run:
 
 ```sh
-git clone https://github.com/ahmedaldhraif/tawdheef.git
-cd tawdheef
+git clone https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs.git
+cd tawdheef-auto-apply-jobs
 npm start
 ```
 
@@ -98,14 +98,7 @@ The computer, client and Tawdheef must be available. Monitoring does not apply,
 create profiles, upload/share CVs, send messages or change calendars.
 See [MONITORING.md](MONITORING.md).
 
-## Advanced compatibility
 
-Only an explicit **Connections → Advanced compatibility → Tawdheef local
-adapters** choice enables the older app-owned OAuth/bridge forms and CLI-runner
-workflow. Existing private settings remain preserved. This mode has its own
-provider registrations, credentials, checks and optional dependencies; it is not
-needed for native-client setup. See [CONNECTIONS.md](CONNECTIONS.md).
+## Upgrading older installations
 
-Setup never grants application, sending or scheduling authority. End with what
-was actually observed and one concrete Needs you step when blocked. Do not ask
-for passwords, OAuth tokens, master keys or recovery codes in a chat or record.
+App-managed provider adapters and the managed assistant runner have been retired. Existing tracking, settings, private credential files and historical rules/results are preserved. These saved credentials and rules are inert: Tawdheef does not read their sessions or run their actions. Configure external connections in the actual Codex or Claude Code client. Do not copy tokens, passwords or vault contents into Tawdheef.

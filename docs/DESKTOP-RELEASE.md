@@ -1,6 +1,6 @@
 # Desktop packages and compatibility
 
-Tawdheef keeps its browser interface and local Node/SQLite service. Windows adds a small native `Tawdheef.exe` launcher; macOS uses a proper `Tawdheef.app` bundle with a native launcher, icon and bundle metadata. These open the existing browser interface and add no embedded browser or UI framework. A user package includes the prebuilt interface, server dependencies, Node 26.13.1 LTS and npm for explicitly selected optional integrations. It does not include Vite, React development packages, tests, marketing assets, downloadable directory packs or mailbox/browser bridges. The source edition remains available for contributors and supports patched Node 24 and Node 26.
+Tawdheef keeps its browser interface and local Node/SQLite service. Windows adds a small native `Tawdheef.exe` launcher; macOS uses a proper `Tawdheef.app` bundle with a native launcher, icon and bundle metadata. These open the existing browser interface and add no embedded browser or UI framework. A user package includes the prebuilt interface, server dependencies, Node 26.13.1 LTS. npm and optional provider bridges are excluded. It does not include Vite, React development packages, tests, marketing assets, downloadable directory packs or mailbox/browser bridges. The source edition remains available for contributors and supports patched Node 24 and Node 26.
 
 ## Build and verify
 
@@ -15,7 +15,7 @@ npm run release:app -- --output outputs/NEW-DESKTOP-CANDIDATE
 npm run release:app:smoke -- --directory outputs/NEW-DESKTOP-CANDIDATE --output outputs/NEW-DESKTOP-CANDIDATE/smoke-verification.json
 ```
 
-The output must be a new folder. Packaging downloads the official Node archive over HTTPS and compares SHA-256 with the official release checksum before extraction. Third-party runtime/npm licences remain in `runtime/`; application dependency licences remain in their packages. `package-report.json` records the exact target, runtime archive/hash, app archive/hash, file count and installed size. Packaging does not publish anything or establish that checks passed.
+The output must be a new folder. Packaging downloads the official Node archive over HTTPS and compares SHA-256 with the official release checksum before extraction. Third-party runtime licences remain in `runtime/`; application dependency licences remain in their packages. `package-report.json` records the exact target, runtime archive/hash, app archive/hash, file count and installed size. Packaging does not publish anything or establish that checks passed.
 
 The exact-ZIP smoke test uses a path with spaces and Arabic characters, invokes the native Windows/Mac executable or Linux script, opens the app using bundled Node, verifies a repeated launch reuses its process, configures both clients in an external temporary workspace, and performs real stdio MCP discovery and a context read. It checks that private data and client configuration were not created inside the app. Signed downloads undergo platform signature verification before startup and again after setup. Mac extraction uses `ditto` to preserve notarization metadata. The test stops its server and never signs into accounts, calls an AI model or sends applications/emails. A direct native-executable smoke is distinct from a manual Finder/Explorer launch or an actual login-startup test.
 
@@ -27,17 +27,17 @@ The Mac browser matrix also checks core tracker flows in Playwright WebKit, the 
 
 Extract the complete folder. Windows uses **Tawdheef.exe**; Mac uses **Tawdheef.app**; Linux uses **start-tawdheef.sh**. Native launchers use bundled Node and accept only the controlled `--no-open` option for verification. The source edition retains `.cmd` and `.command` launchers. The initial working app needs no npm install, build or account. Connected services still need internet, personal sign-in and consent.
 
-Use Connections to choose Codex or Claude Code and copy the setup request. Each assistant still requires its own installation and account; these clients are not bundled. Discovery checks native, Homebrew, Volta, nvm and npm installations. If needed, explicitly set `TAWDHEEF_CODEX_PATH` or `TAWDHEEF_CLAUDE_PATH` to an absolute native executable or supported JS entrypoint; shell wrappers and relative overrides are rejected. The default browser-only chat products do not automatically read local MCP settings.
+Use Connections to choose Codex or Claude Code and copy the setup request. Each assistant still requires its own installation and account; these clients are not bundled. Browser-only chat products do not automatically read local MCP settings.
 
 With no system Node/npm, use the bundled runtime directly. Examples on Windows:
 
 ```powershell
-.\runtime\node.exe scripts/setup.mjs --browser
-.\runtime\node.exe scripts/agent-setup.mjs codex --browser --check
-.\runtime\node.exe scripts/agent-setup.mjs codex --browser
+.\runtime\node.exe scripts/doctor.mjs
+.\runtime\node.exe scripts/agent-setup.mjs codex --check
+.\runtime\node.exe scripts/agent-setup.mjs codex
 ```
 
-On Linux, replace `.\runtime\node.exe` with `./runtime/bin/node`. In the Mac bundle, the app files and runtime are under `Tawdheef.app/Contents/Resources/app/`; use its `runtime/bin/node` with the corresponding absolute script path. Browser tools install only when `--browser` is selected; use `--integration google-cli` or `--integration outlook-mcp` for one bridge. `--all` explicitly requests all supported integrations. Google Workspace CLI is currently unavailable on Windows ARM64; native mail providers and other integrations remain usable. npm lifecycle processes receive the bundled Node directory in PATH, without changing system settings.
+On Linux, replace `.\runtime\node.exe` with `./runtime/bin/node`. In the Mac bundle, the app files and runtime are under `Tawdheef.app/Contents/Resources/app/`; use its `runtime/bin/node` with the corresponding absolute script path. External tools and their sign-in belong to the actual selected Codex or Claude Code client. The app never installs browser or mailbox bridges.
 
 Only explicit agent setup changes project configuration. It preserves unrelated settings, previews with `--check`, backs up managed upgrades in `.tawdheef-setup/backups/`, and refuses edited/unowned conflicting entries. The ownership merger does not validate arbitrary unrelated TOML. Keep `.tawdheef-setup/` private and excluded from releases, just like `.local/`.
 

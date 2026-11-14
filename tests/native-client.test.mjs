@@ -66,10 +66,10 @@ test('native Run needs explicit authority but no CLI/model connection and expose
   assert.throws(() => start(), /Stop the current/);
 });
 
-test('Stop, expiry, app-owner restart recovery and mode changes revoke native authority without resuming work', async t => {
+test('Stop, expiry and app-owner restart revoke Native authority and retired mode cannot be enabled', async t => {
   const { store, start, claim, identity, dataDir, advance, clock } = await fixture(t);
   let run = start().run, lease = claim(run.id);
-  assert.throws(() => store.updateSettings({ connectionMode: 'local-adapters' }), /Stop the active Run/);
+  assert.throws(() => store.updateSettings({ connectionMode: 'local-adapters' }), /retired/);
   const reader = openStore({ dataDir, seed: false, clock });
   try { assert.equal(reader.getNativeRun({ runId: run.id }).status, 'running', 'ordinary MCP opens cannot cancel another native worker'); }
   finally { reader.close(); }
@@ -80,7 +80,8 @@ test('Stop, expiry, app-owner restart recovery and mode changes revoke native au
   assert.equal(store.recoverNativeRuns().cancelled, 1);
   run = start().run; claim(run.id); assert.equal(store.recoverNativeRuns().cancelled, 1);
   assert.equal(store.getNativeRun({ runId: run.id }).status, 'cancelled');
-  store.updateSettings({ connectionMode: 'local-adapters' }); assert.throws(() => start(), /native connection mode/);
+  assert.throws(() => store.updateSettings({ connectionMode: 'local-adapters' }), /retired/);
+  assert.equal(start().run.native, true);
 });
 
 test('native email reserves one exact send plan, preserves unknown intents and accepts only original-account late receipts', async t => {
