@@ -1,13 +1,21 @@
 # Contributing
 
-## Add or fix a directory
+## Start with one useful change
 
-Companies from any country are welcome. Add a public careers link, correct an entry, or contribute a country or industry pack.
+You do not need to code. A corrected careers link or one missing organisation is a useful first contribution. Contributions from **any country** are welcome.
 
-- For one change, open a **Directory data** issue with the organisation, country and source link. No coding needed.
-- For a new pack, open a **New directory pack** issue or submit a pull request using the pack template. Corrected CSV rows and source notes are also welcome for review.
+- [Fix a record](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml): report a wrong link, duplicate or inaccurate detail.
+- [Add a company](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=add-company.yml): share a missing organisation and its public source.
+- [Enrich an entry](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml&title=%5BDirectory%5D%20Add%20details%3A%20): add a published careers route, sector, location or other missing detail.
+- [Propose a country or industry pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml): start with a few researched entries.
+- [Report an app bug](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=bug.yml) using steps with private details removed.
+- [Suggest a feature](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=feature.yml): describe the task you want to make easier.
 
-See [the short directory guide](docs/DIRECTORY-CONTRIBUTING.md). Keep original source IDs and evidence; leave unknown details blank.
+For directory changes, include the country/pack, organisation, record ID if known, public evidence URL and date checked. Leave unknown details blank. An issue or corrected CSV is enough; a pull request is optional. See [the directory guide](docs/DIRECTORY-CONTRIBUTING.md) for editing files.
+
+A maintainer reviews the evidence and may ask a question or request changes. Accepted data goes into a reviewed pack source and becomes downloadable when a new pack version is published. Existing local trackers do not update in the background: preview and import that published pack to receive the changes while preserving tracking. There is no promised review or release date.
+
+Keep private CVs, tracking, account details and credentials out of public issues. For a sensitive concern, follow [SECURITY.md](SECURITY.md) instead of posting the material.
 
 ## Code changes
 

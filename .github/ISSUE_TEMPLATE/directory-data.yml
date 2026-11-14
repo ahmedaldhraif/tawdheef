@@ -1,10 +1,10 @@
 name: Directory data
-description: Add an organisation or correct a directory entry in any country
+description: Fix an existing record or add missing details, in any country
 title: "[Directory] "
 body:
   - type: markdown
     attributes:
-      value: "A public source link is enough to start. Use this for any country. Do not include a CV, private contact details, tracking records, passwords or account data."
+      value: "No coding needed. Use this to correct or enrich an existing entry in any country. For a missing organisation, choose Add a company. Issues are public: do not include CVs, private contacts, tracking, passwords or account data. See SECURITY.md for sensitive concerns."
   - type: input
     id: country
     attributes:
@@ -15,8 +15,8 @@ body:
   - type: input
     id: organisation
     attributes:
-      label: Organisation and existing record ID
-      description: Keep the record ID when correcting an existing entry. A new organisation does not need one yet.
+      label: Organisation and existing record ID or public record link
+      description: Copy the record ID from the pack index if you can. If you cannot find it, the organisation name and public URL are enough for review.
       placeholder: "Organisation name; record ID if known"
     validations:
       required: true
@@ -25,10 +25,11 @@ body:
     attributes:
       label: What needs changing?
       options:
-        - Add an organisation
         - Correct a link or contact route
+        - Add missing public details
         - Correct a name, source role or other detail
         - Report a duplicate or an unavailable route
+        - Request removal of public directory information
     validations:
       required: true
   - type: textarea
@@ -42,8 +43,15 @@ body:
     id: evidence
     attributes:
       label: Public source links
-      description: Link to the pages that support the change, preferably the organisation's own site. Include the actual careers/contact destination and the date you checked it. Do not guess an email address, ownership or nationality eligibility.
-      placeholder: "Source URL:\nWhat it confirms:\nChecked on: YYYY-MM-DD"
+      description: Link to pages supporting the change, preferably the organisation's own site. Include the actual careers/contact destination. Do not guess an email, ownership or eligibility. Do not repost sensitive material to request its removal.
+      placeholder: "Source URL:\nWhat it confirms:"
+    validations:
+      required: true
+  - type: input
+    id: checked-date
+    attributes:
+      label: Date checked
+      placeholder: "YYYY-MM-DD"
     validations:
       required: true
   - type: checkboxes
