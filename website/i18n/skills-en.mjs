@@ -5,6 +5,7 @@ export default {
     subtitle: "Use your real CV with Codex or Claude Code. Tawdheef connects your agent to your local tracker through its built-in CLI and MCP.",
     installNote: "App setup below already installs this skill. Use this command if you only need its workflow guidance.",
     setupLink: "App setup below",
+    community: "The app, directory packs and agent skills grow together. Help improve Tawdheef on GitHub.",
     source: "Read the skill source",
     license: "MIT licensed",
     release: "Release"

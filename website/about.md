@@ -2,7 +2,7 @@
 
 Tawdheef (توظيف) means employment in Arabic. It is a free, open-source app to apply for jobs with your agent and keep track of applications and replies.
 
-Created and personally maintained by [Ahmed AlDhraif](https://www.linkedin.com/in/ahmedaldhraif). This is an independent project, with its source on [GitHub](https://github.com/ahmedaldhraif/tawdheef).
+Created and personally maintained by [Ahmed AlDhraif](https://www.linkedin.com/in/ahmedaldhraif). An independent open-source project, open to community contributions across the app, directory packs, skills and guides. Its source is on [GitHub](https://github.com/ahmedaldhraif/tawdheef).
 
 [Get started](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/FIRST-RUN.md)
 

@@ -2,13 +2,17 @@
 
 <img src="public/brand/logo-latin-purple.svg" alt="tawdheef.com" width="320" />
 
-**Auto Job Apply & Application Tracker**
+**Automate your job search.**
 
 Free and open source. Choose companies, let your Codex or Claude Code agent apply, and track applications and replies in one place. Your records stay on your computer.
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
-Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldhraif), founder of [Tabbio](https://www.tabbio.com/en).
+Created by [Ahmed AlDhraif](https://github.com/ahmedaldhraif). Open to community contributions.
+
+The app, company directory packs, agent skills and guides are one open-source project. [Fix data, add a directory, improve a skill or contribute code](CONTRIBUTING.md). Any country is welcome.
+
+[English](README.md) · [العربية](README.ar.md)
 
 [Download the app](https://github.com/ahmedaldhraif/tawdheef/releases/download/v0.1.2/tawdheef-0.1.2-source.zip) · [Release notes](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
 
