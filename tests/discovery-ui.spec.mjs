@@ -116,13 +116,50 @@ test('unreported CV, incomplete posting and unknown source do not become a guess
 
 test('missing API, a failed read and an empty list stay distinct', async ({ page }) => {
   page.__missing = true;
-  await page.goto('/'); const section = page.locator('.discovery-panel').first(); await section.locator('summary').click();
-  await expect(section.getByRole('alert')).toContainText('Restart Tawdheef');
-  page.__missing = false; await section.getByRole('button', { name: 'Retry', exact: true }).click(); await expect(section).toContainText('New 21');
-  page.__serverError = true; await section.getByRole('button', { name: 'Review jobs', exact: true }).click();
-  const dialog = page.getByRole('dialog'); await expect(dialog.getByRole('alert')).toContainText('temporarily unavailable'); await expect(dialog).not.toContainText('No jobs to review yet.');
-  page.__serverError = false; page.__jobs = []; await dialog.getByRole('button', { name: 'Retry', exact: true }).click();
-  await expect(dialog).toContainText('No jobs to review yet.');
+  let releaseRows, heldRows = false;
+  const initialRows = new Promise(resolve => { releaseRows = resolve; });
+  await page.route('**/api/companies?*', async route => {
+    if (!heldRows && new URL(route.request().url()).searchParams.get('directoryId') === page.__directory.id) {
+      heldRows = true; await initialRows;
+    }
+    return route.continue();
+  });
+  // Automatic reads keep failing until the actual Retry click is dispatched.
+  // Flipping a healthy flag before click() lets a rowsRevision refresh remove
+  // the button while Playwright is still checking that it is actionable.
+  await page.route('**/api/discovery/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/summary') || path.endsWith('/jobs')) {
+      const retried = await route.request().frame().evaluate(key => window.__discoveryRetryClicked?.[key] === true, path);
+      if (retried && path.endsWith('/summary')) page.__missing = false;
+      if (retried && path.endsWith('/jobs')) page.__serverError = false;
+    }
+    return route.fallback();
+  });
+  async function retry(button, path) {
+    await button.evaluate((node, key) => node.addEventListener('click', () => {
+      window.__discoveryRetryClicked ||= {}; window.__discoveryRetryClicked[key] = true;
+    }, { once: true }), path);
+    const response = page.waitForResponse(value => new URL(value.url()).pathname === path && value.status() === 200);
+    await button.click(); await response;
+  }
+  try {
+    await page.goto('/'); await expect(page.getByRole('heading', { level: 1 })).toContainText(page.__directory.name);
+    const section = page.locator('.discovery-panel').first(); await section.locator('summary').click();
+    await expect(section.getByRole('alert')).toContainText('Restart Tawdheef');
+    const beforeRows = page.__calls.filter(call => call.path === '/summary').length;
+    releaseRows(); await expect(page.locator('tbody tr:not(.skeleton-row)')).toHaveCount(1);
+    await expect.poll(() => page.__calls.filter(call => call.path === '/summary').length).toBeGreaterThan(beforeRows);
+    await expect(section.getByRole('alert')).toContainText('Restart Tawdheef');
+    expect(page.__missing).toBe(true);
+    await retry(section.getByRole('button', { name: 'Retry', exact: true }), '/api/discovery/summary');
+    await expect(section).toContainText('New 21');
+    page.__serverError = true; await section.getByRole('button', { name: 'Review jobs', exact: true }).click();
+    const dialog = page.getByRole('dialog'); await expect(dialog.getByRole('alert')).toContainText('temporarily unavailable'); await expect(dialog).not.toContainText('No jobs to review yet.');
+    page.__jobs = [];
+    await retry(dialog.getByRole('button', { name: 'Retry', exact: true }), '/api/discovery/jobs');
+    await expect(dialog).toContainText('No jobs to review yet.');
+  } finally { releaseRows(); }
 });
 
 test('job preference typing is preserved and saves once through a revision-protected explicit patch', async ({ page }) => {
