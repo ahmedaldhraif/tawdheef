@@ -44,6 +44,14 @@ The direct app-setup path stays available for people already ready to use it. In
 
 ## Implemented in this pass
 
+The approved follow-up also brings these resources into native English/Arabic
+website pages, places public packs before setup and the CV section, and states
+Run's connected-CV requirement before download. [Launch drafts](LAUNCH-KIT.md),
+[pack update notes](../../directories/PACK-UPDATES.md) and a distinct
+[Tabbio integration-page draft](TABBIO-INTEGRATION-PAGE.md) are prepared.
+The owner deferred domain connection on 14 November 2026; no personal post or
+Tabbio page is published by preparing these files.
+
 - README starting-point choices for public research, app setup and contribution.
 - One copyable public-data research task and a private, fillable job-search brief in English and Arabic.
 - Links from the directory and guide indexes and the existing `llms.txt` navigation aid.
@@ -60,6 +68,15 @@ The direct app-setup path stays available for people already ready to use it. In
 6. **Test one conversion change at a time.** Start with whether people can find a useful pack and understand setup. Introduce Tabbio when they want to compare companies with their actual CV. Keep the free CV path and separate provider costs clear. Only add an optional update email if someone owns the consent, delivery and publishing process; keep downloads usable without it.
 
 GitHub's [README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) favors explaining usefulness, getting started, help and maintenance. [Topics](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics) help people discover relevant repositories. Keep topics accurate and the social preview current, rather than adding keyword lists to prose.
+
+## CV sources: a future product decision
+
+Run currently requires a readable connected Tabbio CV; public research and
+manual tracking remain available without one. A local CV or another connected
+source could make the project more independent. Evaluate those options against
+the same truthful career-data, readiness and action-scope contract before
+implementing one. This is under consideration, not a shipped alternative or
+a promise to remove the current requirement.
 
 ## Measure useful progress
 

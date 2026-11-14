@@ -30,3 +30,4 @@ client_secret*.json
 connections.private.json
 .DS_Store
 Thumbs.db
+.vercel/

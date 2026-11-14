@@ -107,3 +107,7 @@ The public repository and website do not expose a person's local tracker, connec
 - [تابع الردود والتقارير | Tawdheef](https://www.tawdheef.com/ar/guides/replies-and-reports/)
 - [عالج مشكلة في الإعداد أو التشغيل | Tawdheef](https://www.tawdheef.com/ar/guides/troubleshoot/)
 - [استخدم Tawdheef بصفتك مساعدًا | Tawdheef](https://www.tawdheef.com/ar/guides/for-agents/)
+- [Find companies before installing | Tawdheef](https://www.tawdheef.com/examples/)
+- [Your job-search brief | Tawdheef](https://www.tawdheef.com/examples/job-search-brief/)
+- [ابحث عن الشركات قبل تثبيت التطبيق | Tawdheef](https://www.tawdheef.com/ar/examples/)
+- [ملخص تفضيلات البحث عن عمل | Tawdheef](https://www.tawdheef.com/ar/examples/job-search-brief/)
