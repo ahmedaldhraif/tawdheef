@@ -102,9 +102,10 @@ stale claim or invent a new key to continue stopped work.
 
 Read all three saved action booleans. The screen defaults to matching
 applications and career profiles; CV-only email starts off. Apply only when the
-actual vacancy fits the real CV and requested locations. Profile/CV-sharing
-choices are fallbacks after verifying no suitable current role, or standalone
-when applications are off. A blocked search is not proof of no matching job.
+actual vacancy fits the real CV and requested locations. Profile building is independent:
+when selected, reuse or complete the career profile even when a matching job exists.
+CV-only email remains separately selected, after finding no suitable current role or
+standalone when applications are off. A blocked search is not proof of no matching job.
 
 The profile choice permits offered account/profile steps, a real CV upload and
 an offered talent pool. Inspect prior progress and reuse existing accounts.

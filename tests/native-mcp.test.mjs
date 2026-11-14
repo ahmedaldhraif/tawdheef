@@ -57,7 +57,9 @@ const ownership = lease => ({ runId: lease.run.id, companyId: lease.target.compa
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 52); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  assert.equal(names.length, 62); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'save_monitor', 'set_monitor_status', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
+  for (const name of ['check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
   for (const name of ['get_cv', 'configure_connection', 'connect_connection', 'get_connection_tools', 'refresh_replies', 'send_application_email', 'list_calendars', 'create_calendar_event']) assert.ok(!names.includes(name), name);
   const context = await call(client, 'get_agent_context'), capabilities = await call(client, 'get_capabilities');
   assert.equal(context.connectionOwner, 'native-client'); assert.equal(capabilities.mode, 'native');

@@ -4,6 +4,7 @@ import { createScheduler } from './scheduler.mjs';
 import { createAgentRunner, checkAssistantAuthentication } from './agent-runner.mjs';
 import { createSetupStatus } from './setup-status.mjs';
 import { createMonitoring } from './monitoring.mjs';
+import { createMonitoring as createRecurringMonitoring } from './recurring-monitor.mjs';
 import { createAgentCheck } from './agent-check.mjs';
 import { readConnectedCv } from './cv-read.mjs';
 import { sendEmailForRun, reconcileApplicationEmail } from './email-send.mjs';
@@ -12,7 +13,6 @@ import { AppError } from './store.mjs';
 
 export function createLocalAdapterServices({ store, port, baseUrl }) {
   const connections = new ConnectionManager({ dataDir: store.dataDir, baseUrl });
-  const scheduler = createScheduler({ store, connections, baseUrl });
   const setupStatus = createSetupStatus({ store, connections, port });
   const monitoring = createMonitoring({ store, connections });
   const agentCheck = createAgentCheck({ store, port });
@@ -22,8 +22,11 @@ export function createLocalAdapterServices({ store, port, baseUrl }) {
     try { await readConnectedCv({ store, connections }); }
     catch { throw new AppError('Check your CV connection, then press Run.'); }
   } });
+  const recurringMonitoring = createRecurringMonitoring({ store, agentRunner });
+  const scheduler = createScheduler({ store, connections, baseUrl, monitoring: recurringMonitoring });
+  recurringMonitoring.setApplicationRefresher((companyIds, options) => scheduler.refreshForCompanies(companyIds, options));
   return {
-    connections, scheduler, setupStatus, monitoring, agentCheck, agentRunner,
+    connections, scheduler, setupStatus, monitoring, recurringMonitoring, agentCheck, agentRunner,
     readCv: () => readConnectedCv({ store, connections }),
     calendar: (action, input) => calendarAction(connections, action, input),
     sendEmail: (runId, input) => sendEmailForRun({ store, connections, runId, input }),

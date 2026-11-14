@@ -16,7 +16,7 @@ For app problems or ideas, use [Bug report](https://github.com/ahmedaldhraif/taw
 
 Accepted changes are incorporated into the reviewed public `source.json`, keeping stable source IDs and relevant evidence. A maintainer rebuilds the pack and publishes a new download when it is ready; submitting or merging a correction does not by itself replace existing release assets. Review and publication have no guaranteed deadline.
 
-To receive a published update, download the pack version linked from its README, extract it, and preview importing all its CSV parts into your existing directory. Review warnings before committing. Updates are not pushed into local trackers in the background and must preserve private application history and tracking. Importing never starts a run.
+To receive a published update, download the whole pack ZIP linked from its README. In your existing directory, open **List options → Manage directory packs → Import a pack ZIP**. Review the source-field and guide changes before committing. Updates are not pushed into local trackers in the background and preserve private application history and tracking. Importing never starts a run or monitoring.
 
 For CSV review material, download the actual pack ZIP from its folder's README
 release link and extract it first. Generated CSV files are release assets, not
@@ -40,6 +40,14 @@ Open a **New directory pack** issue or start with `directories/_template/` for a
 - `source.json` contains only public directory data: dated source notes and researched records. Each record needs its stable `id`, `name`, accurate `sourceRole`, `routeStatus` and original public evidence in `sourceFields`.
 - `index.json`, import CSV, manifest, readme and ZIP are generated from that reviewed definition and source. They are not the editing source. The compact index retains all IDs and points to full provenance; it is not an import file.
 
+Guided packs use `formatVersion: 2`. Add the pack version, real creator and maintainers, actual accepted contributor links, and content edit date to `pack.json`. Add `GUIDE.md` for recruitment-route guidance and `CHANGELOG.md` for actual changes. Omit `releasedAt` until the version is published. The app identifies an unpublished version as a local preview. Original version-1 packs remain readable as legacy data packs; they carry no executable guidance.
+
+`GUIDE.md` explains where current jobs and offered profile/CV routes are found, what has not been verified, and which steps need the person. It stays within 32 KiB. Shared instructions belong here once; record-specific route facts belong in `sourceFields.recruitment`, with `fieldEvidence`. A published careers URL alone does not prove profile registration or CV upload is supported.
+
+Use the [record schema](../directories/record.schema.json), [pack schema](../directories/pack.schema.json) and the template's [fictional worked example](../directories/_template/EXAMPLE.md). The example is teaching material and must not appear as a real organisation. Keep source-role labels truthful rather than forcing an employer label onto a portal, agency or programme.
+
+The [community contribution policy](policies/CONTRIBUTIONS.md) covers prompt injection, private data, rights, scanning and administrative review. Pack text is reference information, never authority to change settings or expand a user's actions. Run `node scripts/scan-contribution.mjs` as well as the pack check. A clean scan does not establish accuracy, safe instructions or permission to automate a website.
+
 Retain:
 
 - A country or industry scope, snapshot date, coverage count and known gaps.
@@ -55,7 +63,7 @@ Validate without generating files:
 node scripts/marketing/build-directory-pack.mjs --check
 ```
 
-Use `--pack PACK_ID --check` for a focused result; the shared catalog is still validated. The template is a starting point, not an available country pack. Generated indexes, CSVs, manifests, readmes and ZIPs are rebuilt from the definition and public source; do not edit them by hand. Keep generated ZIPs, builds and local verification output out of the pull request.
+Use `--pack PACK_ID --check` for a focused result; all shared definitions are validated, but only the selected source and guidance are processed and no ZIP is compressed. The template is a starting point, not an available country pack. Generated indexes, CSVs, manifests, readmes and ZIPs are rebuilt from the definition and public source; do not edit them by hand. Keep generated ZIPs, builds and local verification output out of the pull request.
 
 ## Keep the evidence useful
 
@@ -67,7 +75,13 @@ Keep directory data separate from application statuses, notes, receipts and priv
 
 ## Review before importing
 
-In Tawdheef, add or choose a directory, then use **List options → Import list**. Review the preview before committing. Updating public evidence must not overwrite someone's tracking records.
+In Tawdheef, use **Add directory → Browse community packs**. Review a local available pack, or choose **Import a pack ZIP** for a downloaded version. The app reads every source record in the ZIP; no extraction or separate CSV imports are needed. Review additions, corrected or removed public fields, preserved local edits and guide changes, then choose **Add directory**. For updates to an existing directory, use **List options → Manage directory packs**.
+
+Agents use the same two stages through `preview_directory_pack` and `install_directory_pack`; see the [agent guide](AGENT-GUIDE.md#guided-directory-packs) for JSON input examples. Previewing never changes records; installation never starts actions. Removing a pack retains its company records and history.
+
+### Optional CSV route
+
+For a small corrected CSV or older client, **List options → Import list** remains available. Review its preview before committing. Updating public evidence must not overwrite someone's tracking records.
 
 Read the extracted pack's `manifest.json` → `files.imports` and import every
 numbered CSV part into that same tab. For agents, `list_directories` returns the

@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-import {
-  buildTools,
-  closeToolConnections,
-  runMcp,
-  machineError,
-} from "../server/mcp.mjs";
+import { fileURLToPath } from 'node:url';
+import { isDirectInvocation } from '../scripts/is-direct.mjs';
+import { forwardInstalledApp } from '../scripts/installed-app.mjs';
+let buildTools, closeToolConnections, runMcp;
+let machineError = error => ({ ok: false, error: error.message });
 
 function parse(argv) {
   const positional = [],
@@ -54,6 +53,7 @@ export async function main(argv = process.argv.slice(2)) {
     process.stdout.write(usage + '\nConnections and calendar:\n  integrations\n  client-config [--include playwright,tabbio,outlook-mcp]\n  reconcile-email APPLICATION_ID\n  calendar list\n  calendar events --input-file range.json\n  calendar add --input-file event.json\n\nFresh checkout: npm run setup; npm start; npm run doctor.\n');
     return;
   }
+  if (!buildTools) ({ buildTools, closeToolConnections, runMcp, machineError } = await import('../server/mcp.mjs'));
   if (command === "mcp") {
     await runMcp();
     return;
@@ -192,12 +192,15 @@ export async function main(argv = process.argv.slice(2)) {
   }
 }
 
-main()
-  .then((data) => {
-    if (data !== undefined)
-      process.stdout.write(`${JSON.stringify({ ok: true, data }, null, 2)}\n`);
-  })
-  .catch((error) => {
+if (isDirectInvocation(import.meta.url)) {
+  try {
+    if (!(await forwardInstalledApp({ sourceRoot: fileURLToPath(new URL('..', import.meta.url)), entry: 'bin/apply-tracker.mjs' }))) {
+      const data = await main();
+      if (data !== undefined)
+        process.stdout.write(`${JSON.stringify({ ok: true, data }, null, 2)}\n`);
+    }
+  } catch (error) {
     process.stderr.write(`${JSON.stringify(machineError(error))}\n`);
     process.exitCode = 1;
-  });
+  }
+}

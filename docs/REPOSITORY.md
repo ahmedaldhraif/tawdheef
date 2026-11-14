@@ -2,6 +2,10 @@
 
 There is one app and one local database. You and your agent use the same records. Native mode is the default: the actual Codex/Claude client owns every external connection and tool.
 
+Tawdheef is one product with three useful entry points: public directory packs for research, the skill and CLI/MCP workflow for an existing Codex or Claude user, and the local tracker for shared progress and evidence. The core user is a job seeker using one of those clients to work across employers. Tabbio is a separate connected CV service. A skill installation is not an app installation, a connected account or permission to act.
+
+Directory packs retain their version, bounded untrusted guidance and verified shared-company identity. Installing or updating a pack preserves private history and manual edits and never starts a run. Native profile work remains independent of applications, including after a confirmed application. Older app-owned vacancy rules and discoveries stay accessible through the compatibility APIs; Native mode never runs them. Restart revokes unfinished run authority and pauses recurring application rules without opening provider sessions. See [local upgrade checks](LOCAL-UPGRADE.md).
+
 ```text
 You use the screen ─────────┐
                            ├─ local coordinator/domain tools ─ SQLite

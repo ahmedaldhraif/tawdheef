@@ -12,6 +12,8 @@ import { createCompanyQuery } from './company-query.mjs';
 import { defaultDataDir } from '../scripts/app-paths.mjs';
 import { createMonitoringStore } from './monitoring-store.mjs';
 import { createNativeStore } from './native-store.mjs';
+import { createPackStore } from './pack-store.mjs';
+import { createRecurringMonitoringStore } from './recurring-monitor-store.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -191,6 +193,7 @@ export function openStore({
     db.prepare(
       "INSERT INTO companies VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,status=excluded.status,payload=excluded.payload",
     ).run(c.id, c.directoryId, c.name, c.status, JSON.stringify(saved));
+    store.noteCompanySource?.(saved);
     companyQuery.companyChanged(c.id);
   }
   function progressActivity(companyIds) {
@@ -200,10 +203,12 @@ export function openStore({
   }
   function withProgress(companies) {
     if (!companies.length) return companies;
-    const ids = companies.map(company => company.id);
+    store.refreshCompanyIdentities?.();
+    const relations = new Map(companies.map(company => [company.id, store.relatedCompanyIds?.(company.id) || [company.id]]));
+    const ids = [...new Set([...relations.values()].flat())];
     const applications = db.prepare('SELECT payload FROM applications WHERE company_id IN (SELECT value FROM json_each(?))').all(JSON.stringify(ids)).map(parse);
     const progress = progressByCompany(applications, progressActivity(ids));
-    return companies.map(company => ({ ...company, progress: progress.get(company.id) || emptyProgress() }));
+    return companies.map(company => ({ ...company, progress: Object.fromEntries(Object.keys(emptyProgress()).map(event => [event, Math.max(0, ...relations.get(company.id).map(id => progress.get(id)?.[event] || 0))])) }));
   }
   const defaults = {
     refreshFrequency: "manual",
@@ -227,17 +232,20 @@ export function openStore({
     lastReportError: null,
   };
   if (!read("settings", "main")) write("settings", "main", defaults);
-  function recentSubmission(apps, companyId, role, exceptId) {
+  function recentSubmission(apps, companyId, role, exceptId, monitoredJobId) {
+    const related = new Set(store.relatedCompanyIds?.(companyId) || [companyId]);
+    const monitoredKey = monitoredJobId && store.monitoringJobKey?.(monitoredJobId);
     const key = roleKey(role),
       cutoff = currentMs() - 60 * 86400000;
     return apps.find(
-      (a) =>
-        a.id !== exceptId &&
-        a.companyId === companyId &&
-        roleKey(a.role) === key &&
-        (((a.appliedAt || a.cvSentAt) && Date.parse(a.appliedAt || a.cvSentAt) > cutoff) ||
+      (a) => {
+        if (a.id === exceptId || !related.has(a.companyId)) return false;
+        const previousKey = a.monitoredJobId && store.monitoringJobKey?.(a.monitoredJobId);
+        if (monitoredKey && previousKey) return monitoredKey === previousKey && Boolean(a.appliedAt || a.cvSentAt);
+        return roleKey(a.role) === key && (((a.appliedAt || a.cvSentAt) && Date.parse(a.appliedAt || a.cvSentAt) > cutoff) ||
           ["sending", "unknown"].includes(a.deliveryStatus) ||
-          (a.status === 'needs_user' && /uncertain submission/i.test(a.notes || ''))),
+          (a.status === 'needs_user' && /uncertain submission/i.test(a.notes || '')));
+      },
     );
   }
   function runActions(value, options) {
@@ -247,11 +255,13 @@ export function openStore({
     try { return assertRunPurpose(run, purpose); } catch (error) { throw new AppError(error.message); }
   }
   function unresolvedSubmission(apps, companyId, exceptId) {
-    return apps.find(a => a.companyId === companyId && a.id !== exceptId && (['sending', 'unknown'].includes(a.deliveryStatus) || (a.status === 'needs_user' && /uncertain submission/i.test(a.notes || ''))));
+    const related = new Set(store.relatedCompanyIds?.(companyId) || [companyId]);
+    return apps.find(a => related.has(a.companyId) && a.id !== exceptId && (['sending', 'unknown'].includes(a.deliveryStatus) || (a.status === 'needs_user' && /uncertain submission/i.test(a.notes || ''))));
   }
   function recentCvShare(apps, companyId, exceptId, recipient) {
+    const related = new Set(store.relatedCompanyIds?.(companyId) || [companyId]);
     const to = String(recipient || '').trim().toLowerCase();
-    return apps.find(a => a.companyId === companyId && a.id !== exceptId && (!to || !a.to || a.to.trim().toLowerCase() === to) && a.cvSentAt && Date.parse(a.cvSentAt) > currentMs() - 60 * 86400000);
+    return apps.find(a => related.has(a.companyId) && a.id !== exceptId && (!to || !a.to || a.to.trim().toLowerCase() === to) && a.cvSentAt && Date.parse(a.cvSentAt) > currentMs() - 60 * 86400000);
   }
   function formDestination(value) {
     const url = new URL(value); return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
@@ -295,9 +305,13 @@ export function openStore({
       locations: [...places.values()].sort((a, b) => a.id === 'unknown' ? 1 : b.id === 'unknown' ? -1 : a.label.localeCompare(b.label, undefined, { numeric: true })),
     };
   }
-  function unfinishedRows(rows) {
-    const submitted = new Set(store.listApplications().filter(application => application.appliedAt).map(application => application.companyId));
-    return rows.filter(company => ['not_started', 'ready'].includes(company.status) && !submitted.has(company.id));
+  function unfinishedRows(rows, inputActions) {
+    const actions = runActions(inputActions);
+    return rows.filter(company => !company.archived && company.status !== 'closed' && (
+      (actions.applyMatchingJobs && ['not_started', 'ready'].includes(company.status) && !company.progress?.applied) ||
+      (actions.createProfiles && !company.progress?.profile_created) ||
+      (actions.sendCvEmails && !company.progress?.cv_sent)
+    ));
   }
   const monitoring = createMonitoringStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError });
   const native = createNativeStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError, usage: attemptUsage, saveCompany });
@@ -705,7 +719,7 @@ export function openStore({
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
     prepareFormSubmission(input) {
-      record(input); stringFields(input, ['companyId', 'runId', 'role', 'url', 'purpose']);
+      record(input); stringFields(input, ['companyId', 'runId', 'role', 'url', 'purpose', 'monitoredJobId']);
       const purpose = input.purpose ?? 'application';
       requireValue(Object.hasOwn(FORM_PURPOSE_EVENTS, purpose), 'Choose a supported form purpose.');
       const url = safeUrl(input.url);
@@ -713,12 +727,14 @@ export function openStore({
       return tx(() => {
         const run = store.getRun(input.runId);
         requirePurpose(run, purpose);
-        const key = purpose === 'application' ? `form:${input.runId}:${input.companyId}:${roleKey(input.role)}` : `form:${purpose}:${input.runId}:${input.companyId}:${formDestination(url)}`;
-        const apps = store.listApplications(input.companyId);
+        const jobKey = run.monitoringRuleId && input.monitoredJobId && store.monitoringJobKey?.(input.monitoredJobId);
+        const key = purpose === 'application' ? `form:${input.runId}:${input.companyId}:${jobKey || roleKey(input.role)}` : `form:${purpose}:${input.runId}:${input.companyId}:${formDestination(url)}`;
+        const relatedIds = new Set(store.relatedCompanyIds?.(input.companyId) || [input.companyId]);
+        const apps = store.listApplications().filter(application => relatedIds.has(application.companyId));
         const previous = apps.find(a => a.idempotencyKey === key || (purpose !== 'application' && a.method === 'form' && a.purpose === purpose && a.deliveryStatus === 'confirmed' && a.url && formDestination(a.url) === formDestination(url)));
         if (previous) return { application: previous, reused: true, nextStep: 'Inspect this existing intent. Do not submit again.' };
         store.checkSubmission({ ...input, purpose });
-        const a = { id: id('application'), companyId: input.companyId, runId: input.runId, role: text(input.role, 500), method: 'form', purpose, url, idempotencyKey: key, status: 'prepared', deliveryStatus: 'unknown', notes: 'Submission reserved. Inspect the form for a receipt before any retry.', createdAt: now(), updatedAt: now() };
+        const a = { id: id('application'), companyId: input.companyId, runId: input.runId, monitoredJobId: input.monitoredJobId || null, role: text(input.role, 500), method: 'form', purpose, url, idempotencyKey: key, status: 'prepared', deliveryStatus: 'unknown', notes: 'Submission reserved. Inspect the form for a receipt before any retry.', createdAt: now(), updatedAt: now() };
         db.prepare('INSERT INTO applications VALUES(?,?,?)').run(a.id, a.companyId, JSON.stringify(a));
         activity('form_submission_started', a.role || 'Application form', a.companyId);
         return { application: a, reused: false, nextStep: 'Submit this form once, then resolve the intent with its actual receipt.' };
@@ -758,9 +774,10 @@ export function openStore({
     },
     checkSubmission(input = {}) {
       record(input);
-      stringFields(input, ["companyId", "runId", "role", "id", "purpose"]);
+      stringFields(input, ["companyId", "runId", "role", "id", "purpose", "monitoredJobId"]);
       const c = store.getCompany(input.companyId),
         r = store.getRun(input.runId);
+      if (r.monitoringRuleId) store.assertMonitoringSubmission(input);
       requireValue(
         !c.archived && r.status === "running" && r.companyIds.includes(c.id) && ((!r.managed && !r.native) || r.activeCompanyId === c.id),
         "Start an explicit run for this company before submitting.",
@@ -768,7 +785,7 @@ export function openStore({
       const purpose = input.purpose ?? 'application';
       requirePurpose(r, purpose);
       const apps = store.listApplications();
-      const duplicate = unresolvedSubmission(apps, c.id, input.id) || (purpose === 'cv_share' ? recentCvShare(apps, c.id, input.id) : purpose === 'application' ? recentSubmission(apps, c.id, input.role, input.id) : null);
+      const duplicate = unresolvedSubmission(apps, c.id, input.id) || (purpose === 'cv_share' ? recentCvShare(apps, c.id, input.id) : purpose === 'application' ? recentSubmission(apps, c.id, input.role, input.id, r.monitoringRuleId ? input.monitoredJobId : null) : null);
       requireValue(
         !duplicate,
         "This role was already submitted in the last 60 days or has an unresolved send.",
@@ -790,16 +807,19 @@ export function openStore({
         "subject",
         "body",
         "purpose",
+        "monitoredJobId",
       ]);
       const begin = () => {
         const c = store.getCompany(input.companyId),
           r = store.getRun(input.runId);
+        if (r.monitoringRuleId) store.assertMonitoringSubmission(input);
         const purpose = input.purpose ?? 'application';
         requireValue(EMAIL_PURPOSES.includes(purpose), 'Choose application or cv_share as the email purpose.');
         requirePurpose(r, purpose);
         const role = text(input.role, 500).trim();
         const roleKey = role.toLowerCase().replace(/\s+/g, " ");
-        const key = purpose === 'cv_share' ? `cv-share:${r.id}:${c.id}` : `${r.id}:${c.id}:${roleKey}`;
+        const jobKey = r.monitoringRuleId && input.monitoredJobId && store.monitoringJobKey?.(input.monitoredJobId);
+        const key = purpose === 'cv_share' ? `cv-share:${r.id}:${c.id}` : `${r.id}:${c.id}:${jobKey || roleKey}`;
         const apps = store.listApplications();
         const prior = apps.find((a) => a.idempotencyKey === key);
         if (prior) return { application: prior, reused: true };
@@ -816,7 +836,7 @@ export function openStore({
           text(input.subject).trim() && text(input.body).trim(),
           "Email needs a subject and body.",
         );
-        const duplicate = unresolvedSubmission(apps, c.id) || (purpose === 'cv_share' ? recentCvShare(apps, c.id, undefined, input.to) : recentSubmission(apps, c.id, role));
+        const duplicate = unresolvedSubmission(apps, c.id) || (purpose === 'cv_share' ? recentCvShare(apps, c.id, undefined, input.to) : recentSubmission(apps, c.id, role, undefined, r.monitoringRuleId ? input.monitoredJobId : null));
         requireValue(
           !duplicate,
           "This role has a submission or an unresolved send. Check the existing application before trying again.",
@@ -825,6 +845,7 @@ export function openStore({
           id: id("application"),
           companyId: c.id,
           runId: r.id,
+          monitoredJobId: input.monitoredJobId || null,
           role,
           method: "email",
           purpose,
@@ -928,6 +949,7 @@ export function openStore({
         "providerMessageId",
         "to",
         "recipient",
+        "monitoredJobId",
       ])
         if (input[key] !== null) stringFields(input, [key]);
       return tx(() => {
@@ -943,6 +965,7 @@ export function openStore({
             role: previous.role,
             method: previous.method,
             runId: previous.runId,
+            monitoredJobId: previous.monitoredJobId,
             to: previous.to,
             recipient: previous.to,
             url: previous.url,
@@ -956,6 +979,7 @@ export function openStore({
             );
           }
         }
+        if (previous?.monitoredJobId && Object.hasOwn(input, 'monitoredJobId')) requireValue(input.monitoredJobId === previous.monitoredJobId, 'Keep the original monitored job identity.');
         const role = previous?.idempotencyKey ? previous.role : text(input.role ?? previous?.role, 500).trim();
         const status = input.status || input.event || "prepared";
         const known = [
@@ -986,9 +1010,14 @@ export function openStore({
           requireValue(eventPurpose === (previous.purpose || 'application'), 'Keep the original submission purpose. Create a separate intent for a different action; do not relabel its receipt.');
         }
         if (status === 'profile_created') requireValue(hasEvidence(input.evidence) || (input.url && safeUrl(input.url)), 'Record the confirmed profile URL or evidence.');
+        let verifiedMonitoredJobId = null;
         if (eventPurpose && (status === 'applied' || status === 'cv_sent' || input.runId || previous?.runId)) {
           const runId = input.runId || previous?.runId;
           const r = runId ? read("runs", runId) : null;
+          if (r?.monitoringRuleId) {
+            verifiedMonitoredJobId = input.monitoredJobId || previous?.monitoredJobId;
+            store.assertMonitoringSubmission({ ...input, runId, monitoredJobId: verifiedMonitoredJobId, purpose: eventPurpose });
+          }
           requireValue(
             r &&
               r.status === "running" &&
@@ -1006,7 +1035,7 @@ export function openStore({
             "A submission needs a provider message ID or a form receipt.",
           );
           const apps = store.listApplications();
-          const duplicate = unresolvedSubmission(apps, c.id, input.id) || (status === 'cv_sent' ? recentCvShare(apps, c.id, input.id, input.to || input.recipient || previous?.to) : recentSubmission(apps, c.id, role, input.id));
+          const duplicate = unresolvedSubmission(apps, c.id, input.id) || (status === 'cv_sent' ? recentCvShare(apps, c.id, input.id, input.to || input.recipient || previous?.to) : recentSubmission(apps, c.id, role, input.id, verifiedMonitoredJobId));
           if (duplicate)
             throw new AppError(
               "This role was already submitted in the last 60 days or has an unresolved send. Update the existing application instead.",
@@ -1017,6 +1046,7 @@ export function openStore({
           id: previous?.id || id("application"),
           companyId: c.id,
           runId: input.runId || previous?.runId || null,
+          monitoredJobId: input.monitoredJobId || previous?.monitoredJobId || null,
           role,
           method: text(input.method ?? previous?.method),
           status,
@@ -1089,7 +1119,10 @@ export function openStore({
       if (companyIds !== undefined) requireValue(Array.isArray(companyIds) && companyIds.every(id => typeof id === "string"), "Company IDs must be a list of text.");
       const candidates = companyIds === undefined ? store.exportCompanies(directoryId) : [...new Set(companyIds)].map(id => store.getCompany(id));
       requireValue(candidates.every(c => c.directoryId === directoryId && !c.archived), "All selected companies must belong to this active directory.");
-      return unfinishedRows(filterCompanyRows(candidates, filters));
+      return unfinishedRows(filterCompanyRows(candidates, filters), filters.actions);
+    },
+    isCompanyEligibleForRun(companyId, actions) {
+      return unfinishedRows([store.getCompany(companyId)], actions).length > 0;
     },
     validateCompanyTypes(companyTypes) {
       if (companyTypes === undefined) return [];
@@ -1105,14 +1138,34 @@ export function openStore({
       record(input);
       const actions = runActions(input.actions);
       const filters = companyFilter(input);
-      const candidates = store.remainingCompanies({ directoryId: input.directoryId, companyIds: input.companyIds });
-      return {
-        runActionsVersion: 1,
-        listScopeVersion: 1,
-        actions,
-        count: filterCompanyRows(candidates, filters).length,
-        ...companyFacets(candidates),
-      };
+      const ownTransaction = !db.isTransaction;
+      if (ownTransaction) db.exec('BEGIN');
+      try {
+        const directory = typeof input.directoryId === 'string' && read('directories', input.directoryId);
+        requireValue(directory && !directory.archived, 'Choose an active directory.');
+        let selected;
+        if (input.companyIds !== undefined) {
+          requireValue(Array.isArray(input.companyIds) && input.companyIds.every(id => typeof id === 'string'), 'Company IDs must be a list of text.');
+          selected = [...new Set(input.companyIds)];
+        }
+        const today = calendarDay(now(), store.getSettings().timezone);
+        const scopeIds = companyQuery.ids({ directoryId: directory.id, companyIds: selected, filters: companyFilter({}), today, sort: 'name', direction: 'asc' });
+        const rows = companyQuery.summariesForIds(selected ?? scopeIds);
+        if (selected) {
+          if (rows.length !== selected.length) throw new AppError('Company not found.', 404);
+          requireValue(rows.every(company => company.directoryId === directory.id && !company.archived), 'All selected companies must belong to this active directory.');
+        }
+        const eligibleIds = unfinishedRows(withProgress(rows), actions).map(company => company.id);
+        const matchingIds = filters.search || filters.status || filters.attention || filters.companyTypes.length || filters.locations.length
+          ? companyQuery.ids({ directoryId: directory.id, companyIds: eligibleIds, filters, today, sort: 'name', direction: 'asc' }) : eligibleIds;
+        const result = { runActionsVersion: 1, listScopeVersion: 1, actions, count: matchingIds.length, ...companyQuery.facetsForIds(eligibleIds) };
+        if (ownTransaction) db.exec('COMMIT');
+        return result;
+      } catch (error) {
+        companyQuery.invalidate();
+        if (ownTransaction) db.exec('ROLLBACK');
+        throw error;
+      }
     },
     startManagedRun(input) {
       return tx(() => {
@@ -1160,10 +1213,35 @@ export function openStore({
       });
     },
     runSummaries() {
-      return store.listRuns().slice(0, 10).map(({ targets, companyIds, brief, ...run }) => {
-        if (run.native) { const compact = store.getNativeRun({ runId: run.id }); return { ...compact, appliedCount: compact.outcomes.applicationsSent }; }
-        return { ...run, total: companyIds.length, appliedCount: targets?.filter(t => t.status === 'applied').length || 0, directoryName: read('directories', run.directoryId)?.name || '', currentName: targets?.find(t => t.companyId === run.activeCompanyId)?.name || '' };
+      return db.prepare("SELECT id FROM runs ORDER BY json_extract(payload,'$.createdAt') DESC LIMIT 10").all().map(run => store.getRunSummary(run.id));
+    },
+    getRunSummary(runId) {
+      const { targets, companyIds, brief, ...run } = store.getRun(runId);
+      if (run.native) { const compact = store.getNativeRun({ runId }); return { ...compact, appliedCount: compact.outcomes.applicationsSent }; }
+      return { ...run, total: companyIds?.length || 0, appliedCount: targets?.filter(target => target.status === 'applied').length || 0, directoryName: read('directories', run.directoryId)?.name || '', currentName: targets?.find(target => target.companyId === run.activeCompanyId)?.name || '' };
+    },
+    getRunTargets(runId, { offset = 0, limit = 50 } = {}) {
+      requireValue(Number.isSafeInteger(offset) && offset >= 0 && Number.isSafeInteger(limit) && limit >= 1 && limit <= 100, 'Choose a valid target page with a limit from 1 to 100.');
+      const run = store.getRun(runId);
+      if (run.native) return { id: runId, runId, ...store.listNativeTargets({ runId, offset, limit }) };
+      const targets = run.targets || [];
+      return { id: run.id, runId, items: targets.slice(offset, offset + limit).map(({ companyId, name, status, reason, startedAt, finishedAt }) => ({ companyId, name, status, reason, startedAt, finishedAt })), total: targets.length, offset, limit };
+    },
+    recoverInterruptedRuns() {
+      const recovered = store.recoverNativeRuns();
+      const legacy = tx(() => {
+        const rows = db.prepare("SELECT payload FROM runs WHERE json_extract(payload,'$.managed')=1 AND json_extract(payload,'$.native') IS NOT 1 AND json_extract(payload,'$.status')='running'").all();
+        for (const row of rows) {
+          const run = parse(row), reason = 'The app restarted. Sending authority was cancelled; start a fresh explicit Run for unfinished work.';
+          run.status = 'cancelled'; run.activeCompanyId = null; run.notes = reason; run.updatedAt = now();
+          for (const target of run.targets || []) if (target.status === 'working') { target.status = 'needs_you'; target.reason = reason; target.finishedAt = now(); }
+          run.completed = (run.targets || []).filter(target => !['pending', 'working'].includes(target.status)).length;
+          write('runs', run.id, run);
+        }
+        return rows.length;
       });
+      store.interruptMonitoringRules?.();
+      return { cancelled: recovered.cancelled + legacy, native: recovered.cancelled, managed: legacy };
     },
     startRun(input = {}, { transaction = true } = {}) {
       record(input);
@@ -1178,7 +1256,7 @@ export function openStore({
           "An explicit start is required to send and submit applications.",
         );
         let companyIds = input.companyIds;
-        if (companyIds === undefined) companyIds = store.remainingCompanies({ directoryId: input.directoryId, companyTypes, locations, search, status, attention }).map(c => c.id);
+        if (companyIds === undefined) companyIds = store.remainingCompanies({ directoryId: input.directoryId, companyTypes, locations, search, status, attention, actions }).map(c => c.id);
         requireValue(Array.isArray(companyIds) && companyIds.length > 0, "No remaining companies. Choose another directory or selection.");
         requireValue(
           companyIds.every((companyId) => typeof companyId === "string"),
@@ -1516,6 +1594,8 @@ export function openStore({
     ...monitoring,
     ...native,
   };
+  Object.assign(store, createPackStore({ db, store, tx, saveCompany, now, activity, AppError }));
+  Object.assign(store, createRecurringMonitoringStore({ db, store, clock: () => new Date(clock()) }));
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");
     if (existsSync(seedPath)) {

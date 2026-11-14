@@ -86,7 +86,7 @@ export async function sendEmailForRun({ store, connections, runId, input = {} })
   if (/[\r\n]/.test(to) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new AppError('Choose one valid careers email address.');
   if (/[\r\n]/.test(subject)) throw new AppError('The email subject must be one line.');
   if (body.length > 20000 || subject.length > 1000 || (role != null && (typeof role !== 'string' || role.length > 500))) throw new AppError('Keep the role under 500 characters, subject under 1,000 and email under 20,000.');
-  const intent = store.beginEmailSend({ runId, companyId, role, to: to.trim(), subject, body, ...(input.purpose !== undefined ? { purpose: input.purpose } : {}) });
+  const intent = store.beginEmailSend({ runId, companyId, role, to: to.trim(), subject, body, ...(input.purpose !== undefined ? { purpose: input.purpose } : {}), ...(input.monitoredJobId !== undefined ? { monitoredJobId: input.monitoredJobId } : {}) });
   if (intent.reused) return { application: intent.application, reused: true, status: intent.application.status };
   const pending = intent.application;
   let providerCallStarted = false;
@@ -103,6 +103,7 @@ export async function sendEmailForRun({ store, connections, runId, input = {} })
     const run = store.getRun(runId);
     if (run.status !== 'running' || !run.companyIds.includes(companyId) || (run.managed && run.activeCompanyId !== companyId)) throw new AppError('This run is no longer active. Start a new run before sending.');
     assertRunPurpose(run, pending.purpose || 'application');
+    if (run.monitoringRuleId) store.assertMonitoringSubmission({ ...input, runId, companyId, role: pending.role, purpose: pending.purpose || 'application', monitoredJobId: pending.monitoredJobId });
     const receiptScope = connectedReceiptScope(connections);
     providerCallStarted = true;
     const result = await connections.call('email', mapping.tool, args);

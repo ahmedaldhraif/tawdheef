@@ -94,6 +94,30 @@ export function createCompanyQuery(db, statuses) {
     return structuredClone(facets.get(key));
   }
 
+  // Preview needs only eligibility facts and the same cached classifications;
+  // original source payloads remain available through the ordinary record tools.
+  function summariesForIds(ids) {
+    refresh();
+    return ids.flatMap(id => {
+      const company = companies.get(id);
+      return company ? [{ id, directoryId: company.directoryId, status: company.sort.status, archived: company.archived }] : [];
+    });
+  }
+  function facetsForIds(ids) {
+    refresh();
+    const counts = Object.fromEntries(COMPANY_TYPES.map(type => [type.id, 0])), places = new Map();
+    for (const id of ids) {
+      const company = companies.get(id);
+      if (!company) continue;
+      counts[company.type]++;
+      for (const place of company.places) places.set(place.id, { ...place, count: (places.get(place.id)?.count || 0) + 1 });
+    }
+    return {
+      companyTypes: COMPANY_TYPES.map(type => ({ ...type, count: counts[type.id] })),
+      locations: [...places.values()].sort((a, b) => a.id === 'unknown' ? 1 : b.id === 'unknown' ? -1 : compare(a.label, b.label)),
+    };
+  }
+
   function sortRanks(field) {
     if (!ranks.has(field)) {
       const ordered = [...companies].sort(([, a], [, b]) => compare(a.sort[field], b.sort[field]));
@@ -170,5 +194,5 @@ export function createCompanyQuery(db, statuses) {
       throw error;
     }
   }
-  return { list, ids: options => list({ ...options, idsOnly: true }), invalidate, companyChanged };
+  return { list, ids: options => list({ ...options, idsOnly: true }), summariesForIds, facetsForIds, invalidate, companyChanged };
 }

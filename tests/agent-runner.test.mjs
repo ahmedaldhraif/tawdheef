@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { openStore } from '../server/store.mjs';
-import { createAgentRunner, launchArguments, executeAssistant } from '../server/agent-runner.mjs';
+import { createAgentRunner, launchArguments, executeAssistant, inheritedMcpServers } from '../server/agent-runner.mjs';
 import { guardOperatorCall } from '../server/operator-contract.mjs';
 
 async function fixture(t, execute, count = 3, overrides = {}) {
@@ -14,7 +14,7 @@ async function fixture(t, execute, count = 3, overrides = {}) {
   const store = openStore({ dataDir, seed: false });
   store.createDirectory({ id: 'test', name: 'Test' });
   const ids = store.addCompanies('test', Array.from({ length: count }, (_, i) => ({ name: `Company ${i}`, email: 'jobs@example.test' }))).ids;
-  const runner = createAgentRunner({ store, port: 4000, discover: async () => [{ id: 'codex', installed: true, command: process.execPath, args: [] }], presets: async () => [], makeConfig: async () => ({ mcpServers: { 'apply-tracker': { command: process.execPath, args: [], env: {} } } }), execute: args => execute(args, store, ids), ...overrides });
+  const runner = createAgentRunner({ store, port: 4000, readMcpServers: async () => [], discover: async () => [{ id: 'codex', installed: true, command: process.execPath, args: [] }], presets: async () => [], makeConfig: async () => ({ mcpServers: { 'apply-tracker': { command: process.execPath, args: [], env: {} } } }), execute: args => execute(args, store, ids), ...overrides });
   t.after(async () => { await runner.close(); store.close(); await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }); });
   const start = () => runner.start({ directoryId: 'test', assistant: 'codex', mode: 'send_and_submit', explicit: true });
   return { store, ids, runner, start };
@@ -202,13 +202,14 @@ test('closing revokes pending discovery/readiness and rejects future starts with
   }
 });
 
-test('closing during integration discovery/configuration revokes the pump before any assistant launch', async t => {
-  for (const phase of ['presets', 'configuration']) {
+test('closing during integration or inherited-catalog discovery revokes the pump before any assistant launch', async t => {
+  for (const phase of ['presets', 'configuration', 'catalog']) {
     let release, entered, calls = 0;
     const gate = new Promise(resolve => { release = resolve; }), ready = new Promise(resolve => { entered = resolve; });
     const { runner, start, store } = await fixture(t, async () => { calls++; return { status: 'finished' }; }, 1, {
       presets: async () => { if (phase === 'presets') { entered(); await gate; } return []; },
       makeConfig: async () => { if (phase === 'configuration') { entered(); await gate; } return { mcpServers: { 'apply-tracker': { command: process.execPath, args: [], env: {} } } }; },
+      readMcpServers: async () => { if (phase === 'catalog') { entered(); await gate; } return []; },
     });
     const run = await start(); await ready;
     const closing = runner.close();
@@ -217,6 +218,22 @@ test('closing during integration discovery/configuration revokes the pump before
     assert.equal(calls, 0); assert.equal(store.getRun(run.id).targets[0].status, 'needs_you');
     await assert.rejects(start(), /runner was closed/);
   }
+});
+
+test('malformed inherited catalogs fail closed before any assistant work', async t => {
+  for (const output of ['not-json', '{}', JSON.stringify([{ name: 'unsafe.name' }]), JSON.stringify(Array.from({ length: 201 }, (_, index) => ({ name: `server${index}` })))]) {
+    await assert.rejects(inheritedMcpServers({ command: 'fixture' }, { run: async () => output }), /catalog|isolated safely/);
+  }
+  let executions = 0;
+  const { runner, start, store } = await fixture(t, async () => { executions++; return { status: 'finished' }; }, 2, {
+    readMcpServers: executable => inheritedMcpServers(executable, { run: async () => JSON.stringify([{ name: 'unsafe.name' }]) }),
+  });
+  const run = await start(); await runner.settled();
+  assert.equal(executions, 0);
+  assert.equal(store.getRun(run.id).status, 'failed');
+  assert.equal(store.getRun(run.id).targets[0].status, 'needs_you');
+  assert.match(store.getRun(run.id).targets[0].reason, /catalog cannot be isolated safely/);
+  assert.equal(store.getRun(run.id).targets[1].status, 'pending');
 });
 
 test('reconciling a form receipt preserves an interview status and its next action', async t => {

@@ -67,7 +67,7 @@ test('actual operator MCP bounds a 13,714-target run and shares exact CV provena
   await writeFile(join(dataDir, 'cv-cache.json'), JSON.stringify(cached));
   const scoped = await connect({ APPLY_TRACKER_OPERATOR_RUN: run.id, APPLY_TRACKER_OPERATOR_COMPANY: ids[0] });
   const names = (await scoped.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 18); assert.deepEqual([...names].sort(), [...OPERATOR_TOOLS].sort());
+  assert.equal(names.length, 19); assert.deepEqual([...names].sort(), [...OPERATOR_TOOLS].sort());
   const capabilities = await call(scoped, 'get_capabilities'); assert.deepEqual(capabilities.toolNames, names);
   const context = await call(scoped, 'get_agent_context'), view = await call(scoped, 'get_run', { id: run.id });
   assert.equal(view.totalTargets, 13714); assert.deepEqual(view.companyIds, [ids[0]]); assert.equal(view.targets.length, 1);
@@ -82,7 +82,7 @@ test('actual operator MCP bounds a 13,714-target run and shares exact CV provena
   assert.equal(fullCv.sha256, context.attempt.candidate.source.sha256); assert.equal(fullCv.sha256, createHash('sha256').update(cvJson).digest('hex'));
   assert.equal(fullCv.text, cvJson.slice(context.attempt.candidate.nextOffset, context.attempt.candidate.nextOffset + 700));
   assert.equal((await scoped.callTool({ name: 'get_company', arguments: { id: ids[1] } })).isError, true);
-  const normal = await connect(); assert.equal((await normal.listTools()).tools.length, 56);
+  const normal = await connect(); assert.equal((await normal.listTools()).tools.length, 68);
   const fullRun = await call(normal, 'get_run', { id: run.id }); assert.equal(fullRun.companyIds.length, 13714); assert.equal(fullRun.targets.length, 13714);
   t.diagnostic(JSON.stringify({ syntheticTargets: 13714, operatorGetRunTextBytes: Buffer.byteLength(JSON.stringify({ ok: true, data: view })), operatorContextTextBytes: Buffer.byteLength(JSON.stringify({ ok: true, data: context })), normalGetRunTextBytes: Buffer.byteLength(JSON.stringify({ ok: true, data: fullRun })), candidateExcerptCharacters: context.attempt.candidate.text.length }));
   store.updateRun(run.id, { status: 'cancelled' });
@@ -174,7 +174,7 @@ test('diagnostic proof never follows an existing receipt-file symlink', async t 
 
 test('native --monitor setup creates only a dedicated scoped fixture workspace and no native schedule', async t => {
   const { root, dataDir } = await fixture(t), project = join(root, 'installed-code'), ordinary = join(root, 'ordinary-workspace');
-  const files = ['scripts/agent-setup.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs'];
+  const files = ['scripts/agent-setup.mjs', 'scripts/installed-app.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs'];
   for (const name of files) { const target = join(project, name); await mkdir(dirname(target), { recursive: true }); await copyFile(new URL('../' + name, import.meta.url), target); }
   await mkdir(ordinary); await writeFile(join(ordinary, '.mcp.json'), '{"custom":"preserve ordinary configuration"}');
   const env = { ...process.env, APPLY_TRACKER_DATA: dataDir, TAWDHEEF_WORKSPACE: ordinary };

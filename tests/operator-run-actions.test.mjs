@@ -40,11 +40,13 @@ test('future-only prompt receives actual saved cities and types without enabling
   assert.match(prompt, /application, account, profile, cv_upload or talent_pool/);
 });
 
-test('fallback prompt distinguishes an unsuccessful search from a blocked search', () => {
+test('profiles remain independent of job search while speculative CV email requires a complete search', () => {
   const prompt = operatorPrompt(savedRun({ applyMatchingJobs: true, createProfiles: true, sendCvEmails: false }), 'company-fixture');
-  assert.match(prompt, /Only after checking the verified careers route and finding no suitable current job/);
-  assert.match(prompt, /login block, tool error or incomplete search is not proof that no job matches/);
+  assert.match(prompt, /Career profiles: enabled as an independent task, whether or not a matching job is available or a prior job was applied for/);
   assert.match(prompt, /CV emails for future opportunities: disabled/);
+  const emailPrompt = operatorPrompt(savedRun({ applyMatchingJobs: true, createProfiles: true, sendCvEmails: true }), 'company-fixture');
+  assert.match(emailPrompt, /Only after checking the verified careers route and finding no suitable current job/);
+  assert.match(emailPrompt, /login block, tool error or incomplete search is not proof that no job matches/);
   assert.throws(() => operatorPrompt(savedRun({ applyMatchingJobs: false, createProfiles: false, sendCvEmails: false }), 'company-fixture'), /choose|select/i);
 });
 
@@ -84,6 +86,7 @@ test('queue forwards saved actions to the real operator prompt and records profi
   const prompts = [];
   const runner = createAgentRunner({
     store, port: 4000,
+    readMcpServers: async () => [],
     discover: async () => [{ id: 'codex', installed: true, command: process.execPath, args: [] }],
     presets: async () => [],
     makeConfig: async () => ({ mcpServers: { 'apply-tracker': { command: process.execPath, args: [], env: {} } } }),

@@ -37,13 +37,13 @@ export function buildRunBrief({ actions: input, directoryName = '', locationLabe
     `Company types: ${typeLabels.length ? typeLabels.join(', ') : 'all types'}.`,
   ];
   if (locationLabels.length) lines.push('Use named cities as my work-location preferences and verify the actual job location. Nationwide, unknown and address labels describe directory records; they are not proof of a job location.');
-  if (actions.applyMatchingJobs) lines.push('Apply only to current jobs that match my CV, experience, eligibility and chosen work locations. Create an account or complete a profile only when required for a suitable application.');
+  if (actions.applyMatchingJobs) lines.push('Apply only to current jobs that match my CV, experience, eligibility and chosen work locations. Reuse existing accounts and profiles for the application.');
   else lines.push('Do not apply to advertised jobs. Build my presence for suitable future opportunities only.');
   const future = [];
-  if (actions.createProfiles) future.push('create or complete my career profile, upload my CV and join an available talent pool');
+  if (actions.createProfiles) lines.push('Independently of whether a matching job exists, create or complete my career profile, upload my authorized CV and join an available talent pool where supported. Reuse completed profiles and uploads.');
   if (actions.sendCvEmails) future.push('email my CV or CV link to the company’s verified published careers address for suitable future opportunities');
   if (future.length) lines.push(`${actions.applyMatchingJobs ? 'If no suitable current job is found after checking the careers page' : 'For future opportunities'}, ${future.join(' and ')}.`);
-  else if (actions.applyMatchingJobs) lines.push('If no suitable job is found, record that result and move to the next company. Do not send a general CV email or register solely for future opportunities.');
+  else if (actions.applyMatchingJobs && !actions.createProfiles) lines.push('If no suitable job is found, record that result and move to the next company. Do not send a general CV email or register solely for future opportunities.');
   if (!Object.values(actions).some(Boolean)) lines.push('Choose at least one action before starting.');
   lines.push('A blocked or incomplete search is not proof that there are no suitable jobs. Reuse existing accounts, inspect uncertain submissions and avoid duplicate sends. Record only confirmed progress, with evidence.');
   if (instructions.trim()) lines.push(`Additional preferences: ${instructions.trim()}`);

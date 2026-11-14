@@ -47,6 +47,7 @@ test.beforeEach(async ({ page, request }) => {
   });
   await page.route('**/api/native/runs/native-ui-fixture/request', route => route.fulfill({ json: { prompt: 'Fixture reopened native run request.', assistant: page.__nativeAssistant } }));
   await page.route('**/api/runs/native-ui-fixture', route => route.fulfill({ json: page.__nativeRun }));
+  await page.route('**/api/runs/native-ui-fixture/targets?*', route => { const offset=Number(new URL(route.request().url()).searchParams.get('offset')); return route.fulfill({json:{runId:'native-ui-fixture',offset,limit:50,total:page.__nativeRun?.total || 0,items:page.__nativeRun?.targets || []}}); });
   await page.route('**/api/runs/native-ui-fixture/stop', route => {
     page.__nativeWrites.push({ path: 'stop' }); page.__nativeRun = { ...page.__nativeRun, status: 'cancelled', activeCompanyId: null };
     return route.fulfill({ json: page.__nativeRun });

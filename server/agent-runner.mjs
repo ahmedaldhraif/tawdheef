@@ -6,7 +6,7 @@ import { homedir } from 'node:os';
 import { execFile } from 'node:child_process';
 import { AppError } from './store.mjs';
 import { createClientConfig, integrationPresets } from './integrations.mjs';
-import { OPERATOR_TOOLS, operatorPrompt } from './operator-contract.mjs';
+import { OPERATOR_TOOLS, operatorPrompt, operatorTools, MONITOR_BROWSER_TOOLS } from './operator-contract.mjs';
 import { createAssistantUsageCollector, createAssistantEventReader, sanitizeAssistantUsage } from './assistant-usage.mjs';
 
 const CLAUDE_TOOLS = 'Read,WebFetch,WebSearch,ToolSearch';
@@ -51,9 +51,9 @@ export async function discoverAssistants({ env = process.env, platform = process
   }));
 }
 
-async function readAssistantCommand({ executable, args, timeoutMs = 15000 }) {
+async function readAssistantCommand({ executable, args, timeoutMs = 15000, cwd = homedir() }) {
   return new Promise((accept, reject) => {
-    execFile(executable, args, { cwd: homedir(), env: process.env, windowsHide: true, shell: false, timeout: timeoutMs, maxBuffer: 256_000 }, (error, stdout) => {
+    execFile(executable, args, { cwd, env: process.env, windowsHide: true, shell: false, timeout: timeoutMs, maxBuffer: 256_000 }, (error, stdout) => {
       if (error) reject(new AppError('The assistant CLI cannot run the required local commands. Update its installation and check its settings.'));
       else accept(stdout);
     });
@@ -75,14 +75,30 @@ export async function checkAssistantCompatibility(executable, { run = readAssist
   return { version, capabilitiesChecked: true, ...(executable.id === 'claude-code' ? { toolSearch: { requested: true, modelSupportVerified: false } } : {}) };
 }
 
-export function launchArguments(assistant, config, cwd) {
-  if (assistant === 'claude-code') return ['-p', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: config }), '--tools', CLAUDE_TOOLS, '--allowedTools', [...OPERATOR_TOOLS.map(name => `mcp__apply-tracker__${name}`), ...(config.playwright ? ['mcp__playwright__*'] : [])].join(','), '--permission-mode', 'default'];
-  const args = ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', cwd];
+export function launchArguments(assistant, config, cwd, { inheritedServers = [], tools = OPERATOR_TOOLS, readOnlyBrowser = false } = {}) {
+  const browserTools = readOnlyBrowser ? MONITOR_BROWSER_TOOLS.map(name => `mcp__playwright__${name}`) : ['mcp__playwright__*'];
+  if (assistant === 'claude-code') return ['-p', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: config }), '--tools', readOnlyBrowser ? 'WebFetch,WebSearch' : CLAUDE_TOOLS, '--allowedTools', [...tools.map(name => `mcp__apply-tracker__${name}`), ...(config.playwright ? browserTools : [])].join(','), '--permission-mode', 'default'];
+  const args = ['exec', '--json', '--ephemeral', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', cwd, '-c', 'features.apps=false', '-c', 'features.plugins=false', '-c', 'features.remote_plugin=false', '-c', 'features.shell_tool=false', '-c', 'features.shell_snapshot=false', '-c', 'features.multi_agent=false'];
+  // Codex deep-merges MCP tables. Disable inherited servers without changing
+  // the person's selected model, provider, authentication or managed policy.
+  for (const name of inheritedServers) {
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(name)) throw new AppError('An inherited MCP server name cannot be isolated safely. Review the assistant configuration.');
+    args.push('-c', `mcp_servers.${name}.enabled=false`);
+  }
   for (const [name, server] of Object.entries(config)) for (const [key, value] of Object.entries(server)) {
     if (key === 'env') for (const [envKey, envValue] of Object.entries(value)) args.push('-c', `mcp_servers.${name}.env.${envKey}=${JSON.stringify(envValue)}`);
     else args.push('-c', `mcp_servers.${name}.${key}=${JSON.stringify(value)}`);
   }
+  for (const name of Object.keys(config)) args.push('-c', `mcp_servers.${name}.enabled=true`);
   return [...args, '-'];
+}
+
+export async function inheritedMcpServers(executable, { run = readAssistantCommand, cwd = homedir() } = {}) {
+  const output = await run({ executable: executable.command, args: [...(executable.args || []), 'mcp', 'list', '--json'], timeoutMs: 15000, cwd });
+  let servers;
+  try { servers = JSON.parse(output); } catch { throw new AppError('The assistant could not report its MCP catalog. Update its CLI before Run.'); }
+  if (!Array.isArray(servers) || servers.length > 200 || servers.some(server => !server || typeof server.name !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(server.name))) throw new AppError('The assistant MCP catalog cannot be isolated safely. Review its settings.');
+  return servers.map(server => server.name);
 }
 
 export async function checkAssistantAuthentication(executable) {
@@ -141,7 +157,7 @@ export function executeAssistant({ executable, args, prompt, cwd, env, signal, t
   });
 }
 
-export function createAgentRunner({ store, port, discover = discoverAssistants, execute = executeAssistant, makeConfig = createClientConfig, presets = integrationPresets, checkReady = async () => {} }) {
+export function createAgentRunner({ store, port, discover = discoverAssistants, execute = executeAssistant, makeConfig = createClientConfig, presets = integrationPresets, checkReady = async () => {}, readMcpServers = inheritedMcpServers }) {
   let active = null, starting = false, closed = false, preflight = null;
   const assertOpen = signal => {
     if (closed || signal?.aborted) throw new AppError('The local-adapter runner was closed. Use the selected connection mode and start a fresh explicit Run.');
@@ -166,7 +182,11 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
         const companyId = target.companyId;
         store.beginRunTarget(run.id, companyId);
         const latestCompany = store.getCompany(companyId);
-        if (latestCompany.archived || !['not_started', 'ready'].includes(latestCompany.status) || store.listApplications(companyId).some(a => a.appliedAt)) {
+        if (run.monitoringRuleId) {
+          try { store.assertMonitoringRun(run.id, companyId); }
+          catch (error) { store.finishRunTarget(run.id, companyId, { status: 'needs_you', reason: String(error.message || 'Review the monitoring scope.').slice(0, 500) }); continue; }
+        }
+        if (latestCompany.archived || (!run.monitoringRuleId && !store.isCompanyEligibleForRun(companyId, run.actions))) {
           store.finishRunTarget(run.id, companyId, { status: 'skipped', reason: 'Already submitted, completed or archived since this run began.' }); continue;
         }
         let result;
@@ -177,20 +197,29 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
           const config = await makeConfig({ dataDir: store.dataDir, port, mode: 'local-adapters', assistant: run.assistant, include: browser ? ['playwright'] : [] });
           assertOpen(signal);
           Object.assign(config.mcpServers['apply-tracker'].env, { APPLY_TRACKER_OPERATOR_RUN: run.id, APPLY_TRACKER_OPERATOR_COMPANY: companyId });
-          if (run.assistant === 'codex') config.mcpServers['apply-tracker'].enabled_tools = OPERATOR_TOOLS;
-          result = await execute({ executable: executable.command, args: [...executable.args, ...launchArguments(run.assistant, config.mcpServers, cwd)], prompt: operatorPrompt(run, companyId), cwd, env: { ...process.env, APPLY_TRACKER_DATA: store.dataDir, APPLY_TRACKER_PORT: String(port) }, signal, onSpawn: pid => writeFile(ownedProcess, JSON.stringify({ pid, runId: run.id }), { mode: 0o600 }) });
+          const tools = operatorTools(run);
+          if (run.assistant === 'codex') {
+            config.mcpServers['apply-tracker'].enabled_tools = tools;
+            if (run.monitoringMode === 'notify' && config.mcpServers.playwright) config.mcpServers.playwright.enabled_tools = MONITOR_BROWSER_TOOLS;
+          }
+          const inheritedServers = run.assistant === 'codex' ? await readMcpServers(executable, { cwd }) : [];
+          assertOpen(signal);
+          if (run.monitoringRuleId) store.assertMonitoringRun(run.id, companyId);
+          result = await execute({ executable: executable.command, args: [...executable.args, ...launchArguments(run.assistant, config.mcpServers, cwd, { inheritedServers, tools, readOnlyBrowser: run.monitoringMode === 'notify' })], prompt: operatorPrompt(run, companyId), cwd, env: { ...process.env, APPLY_TRACKER_DATA: store.dataDir, APPLY_TRACKER_PORT: String(port) }, signal, onSpawn: pid => writeFile(ownedProcess, JSON.stringify({ pid, runId: run.id }), { mode: 0o600 }) });
           if (!result.terminationUnconfirmed) await unlink(ownedProcess).catch(error => { if (error.code !== 'ENOENT') throw error; });
-        } catch { result = closed || signal.aborted ? { status: 'stopped', reason: 'Stopped. Inspect any open application before a fresh Run.' } : { status: 'failed', reason: 'The assistant tools could not start. Check Connections and try again.' }; }
+        } catch (error) { result = closed || signal.aborted ? { status: 'stopped', reason: 'Stopped. Inspect any open application before a fresh Run.' } : error instanceof AppError ? { status: 'needs_you', global: true, reason: error.message } : { status: 'failed', reason: 'The assistant tools could not start. Check Connections and try again.' }; }
         const applications = store.listApplications(companyId);
         const current = applications.filter(a => a.runId === run.id);
         const uncertain = applications.some(a => ['sending', 'unknown'].includes(a.deliveryStatus) || /uncertain submission/i.test(a.notes || ''));
-        const applied = applications.some(a => a.appliedAt);
+        const applied = current.some(a => a.appliedAt && a.appliedAt >= run.createdAt);
+        const checks = run.monitoringRuleId ? store.monitoringChecks(run.id, companyId) : [];
+        const sourceBlocker = checks.find(check => check.status !== 'checked');
         const needs = current.some(a => a.status === 'needs_user');
         const failure = current.some(a => a.status === 'error');
         const progressLabels = { account_created: 'Account created', profile_created: 'Profile completed', cv_uploaded: 'CV uploaded', cv_sent: 'CV sent for future opportunities', talent_pool_joined: 'Talent pool joined' };
         const progress = [...new Set(current.flatMap(application => application.milestones || []).filter(milestone => milestone.at >= run.createdAt && progressLabels[milestone.event]).map(milestone => progressLabels[milestone.event]))];
-        const status = applied ? 'applied' : uncertain ? 'uncertain' : needs ? 'needs_you' : failure ? 'failed' : result.status === 'finished' && current.length ? 'checked' : result.status === 'finished' ? 'needs_you' : result.status === 'stopped' ? 'needs_you' : result.status;
-        const reason = applied ? 'Submission recorded with evidence.' : uncertain ? 'Inspect the previous submission before retrying.' : needs || failure ? (current.find(a => a.status === (needs ? 'needs_user' : 'error'))?.notes || 'Check application history.') : result.reason || (result.status === 'stopped' ? 'Stopped. Inspect any open application before retrying.' : progress.length ? `${progress.join('; ')}. See application history.` : current.length ? 'Company checked. See application history.' : 'No outcome recorded. Check assistant access and try again.');
+        const status = applied ? 'applied' : uncertain ? 'uncertain' : sourceBlocker || needs ? 'needs_you' : failure ? 'failed' : result.status === 'finished' && (current.length || checks.length) ? 'checked' : result.status === 'finished' ? 'needs_you' : result.status === 'stopped' ? 'needs_you' : result.status;
+        const reason = applied ? 'Submission recorded with evidence.' : uncertain ? 'Inspect the previous submission before retrying.' : sourceBlocker ? sourceBlocker.reason : needs || failure ? (current.find(a => a.status === (needs ? 'needs_user' : 'error'))?.notes || 'Check application history.') : result.reason || (result.status === 'stopped' ? 'Stopped. Inspect any open application before retrying.' : checks.length ? `${checks.reduce((sum, check) => sum + check.matches, 0)} matching jobs found. See monitored jobs.` : progress.length ? `${progress.join('; ')}. See application history.` : current.length ? 'Company checked. See application history.' : 'No outcome recorded. Check assistant access and try again.');
         store.finishRunTarget(run.id, companyId, { status, reason, usage: sanitizeAssistantUsage(result.usage), ...(typeof result.durationMs === 'number' && Number.isFinite(result.durationMs) && result.durationMs >= 0 ? { durationMs: result.durationMs } : {}) });
         if (!applied && status === 'checked') { const c = store.getCompany(companyId); store.updateCompany(companyId, { expectedRevision: c.revision, nextAction: reason }); }
         if (result.global && store.getRun(run.id).status === 'running') { store.updateRun(run.id, { status: 'failed', notes: reason }); break; }
@@ -202,6 +231,7 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
   }
   return {
     assistants,
+    busy: () => Boolean(active || starting),
     preview: input => store.previewRun(input),
     async start(input) {
       assertOpen();
@@ -226,6 +256,30 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
       active = { id: run.id, controller, done: null };
       active.done = work(run, executable, controller.signal);
       return run;
+      } finally { if (preflight === controller) preflight = null; starting = false; }
+    },
+    async startMonitoring(ruleId) {
+      assertOpen();
+      if (active || starting) throw new AppError('A run is already starting or working. Stop it before starting another.');
+      starting = true;
+      const controller = new AbortController(); preflight = controller;
+      try {
+        const rule = store.getMonitoringRule(ruleId);
+        let previousProcess;
+        try { previousProcess = JSON.parse(await readFile(ownedProcess, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw new AppError('Check the previous assistant process before monitoring.'); }
+        assertOpen(controller.signal);
+        if (previousProcess && processAlive(previousProcess.pid)) throw new AppError('The previous assistant may still be running. Close it before another check.');
+        const executable = (await discover()).find(item => item.id === rule.assistant && item.installed);
+        assertOpen(controller.signal);
+        if (!executable) throw new AppError('Install and sign in to your chosen assistant before monitoring.');
+        await checkReady(executable, { signal: controller.signal });
+        assertOpen(controller.signal);
+        try { const owner = JSON.parse(await readFile(ownedProcess, 'utf8')); if (processAlive(owner.pid)) throw new AppError('The previous assistant is still running. Close it before another check.'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+        assertOpen(controller.signal);
+        const run = store.startMonitoringRun(ruleId);
+        active = { id: run.id, controller, done: null };
+        active.done = work(run, executable, controller.signal);
+        return run;
       } finally { if (preflight === controller) preflight = null; starting = false; }
     },
     async stop(id) {

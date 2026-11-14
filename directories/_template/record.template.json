@@ -18,6 +18,14 @@
     "fieldEvidence": {},
     "missingDataNotes": [],
     "sourceNotes": [],
-    "licenseNotes": ""
+    "licenseNotes": "",
+    "recruitment": {
+      "jobsUrl": "",
+      "profileUrl": "",
+      "cvUploadUrl": "",
+      "talentPoolUrl": "",
+      "capabilities": { "profileCreation": "unknown", "cvUpload": "unknown", "talentPool": "unknown" },
+      "notes": []
+    }
   }
 }

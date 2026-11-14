@@ -40,7 +40,7 @@ jobs:
           path: ${{ runner.temp }}/tawdheef-benchmark.json
           if-no-files-found: error
 
-  browser:
+  browser-matrix:
     timeout-minutes: 25
     strategy:
       fail-fast: false
@@ -70,6 +70,33 @@ jobs:
           name: browser-failure-${{ matrix.os }}
           path: test-results/
           retention-days: 7
+
+  # Stable names retain the branch's existing required checks while the real
+  # matrix verifies both supported Node versions on every platform.
+  backend-required:
+    name: backend (${{ matrix.platform }})
+    if: ${{ always() }}
+    needs: backend
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the complete backend matrix
+        env:
+          BACKEND_RESULT: ${{ needs.backend.result }}
+        run: test "$BACKEND_RESULT" = success
+
+  browser:
+    if: ${{ always() }}
+    needs: [browser-matrix, mac-webkit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all Chromium and Safari checks
+        env:
+          BROWSER_RESULT: ${{ needs.browser-matrix.result }}
+          WEBKIT_RESULT: ${{ needs.mac-webkit.result }}
+        run: test "$BROWSER_RESULT" = success && test "$WEBKIT_RESULT" = success
 
   mac-webkit:
     timeout-minutes: 20

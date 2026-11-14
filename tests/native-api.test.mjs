@@ -46,6 +46,19 @@ syncBuiltinESMExports();`);
   assert.equal((await api('/registration-context')).data.primaryEmail, 'native@example.test');
   const directory = (await api('/directories', 'POST', { name: 'Native HTTP fixture' })).data;
   const added = (await api(`/directories/${directory.id}/companies`, 'POST', { records: [{ name: 'Native employer', careersUrl: 'https://example.test/careers' }, { name: 'Second employer' }] })).data;
+  // Upgrade compatibility retains public pack operations and saved rule data,
+  // without giving app-owned rules a native client clock or send permission.
+  assert.equal((await api('/directory-packs')).status, 200);
+  const preview = await api('/run-preview?scope=' + encodeURIComponent(JSON.stringify({ directoryId: directory.id, actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } })));
+  assert.equal(preview.status, 200);
+  const savedRule = await api('/monitoring/rules', 'POST', { directoryId: directory.id, companyIds: added.ids, name: 'Preserved rule', enabled: false });
+  assert.equal(savedRule.status, 200); assert.equal(savedRule.data.enabled, false);
+  const ruleId = savedRule.data.id;
+  const rules = await api('/monitoring/rules'); assert.equal(rules.data[0].executionOwner, 'local-adapters'); assert.equal(rules.data[0].runnable, false);
+  const enable = await api(`/monitoring/rules/${ruleId}/status`, 'POST', { enabled: true, explicit: true, expectedRevision: savedRule.data.revision });
+  assert.equal(enable.status, 400); assert.match(enable.data.error, /actual Codex or Claude client/);
+  assert.equal((await api(`/monitoring/rules/${ruleId}/check`, 'POST', { explicit: true })).status, 400);
+  assert.equal((await api('/monitoring/results')).status, 200);
   const started = await api('/native/runs', 'POST', { directoryId: directory.id, assistant: 'codex', explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } });
   assert.equal(started.status, 200); const run = started.data.run;
   assert.equal(run.native, true); assert.equal(run.total, 2); assert.equal(Object.hasOwn(run, 'companyIds'), false);

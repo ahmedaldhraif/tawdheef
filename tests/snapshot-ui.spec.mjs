@@ -47,6 +47,9 @@ async function openDirectory(page, directory) {
   await page.addInitScript(id => localStorage.setItem('apply-directory', id), directory.id);
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(directory.name);
+  // The initial table response advances the snapshot revision. Let it render
+  // before opening records so a legitimate refresh cannot interrupt pagination.
+  await expect(page.locator('tbody tr:not(.skeleton-row)')).toHaveCount(Math.min(directory.companies.length, 100));
   await expect(snapshot(page)).toBeVisible();
 }
 

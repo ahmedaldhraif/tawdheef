@@ -152,7 +152,7 @@ test('the setup CLI honors external workspace environment without placing config
   const { root } = await project(t), workspace = join(root, 'external-workspace');
   for (const name of ['scripts', 'server', 'docs']) await mkdir(join(root, name), { recursive: true });
   await writeFile(join(root, 'server/mcp.mjs'), '// Fixture entrypoint; configuration check only.');
-  for (const file of ['scripts/agent-setup.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
+  for (const file of ['scripts/agent-setup.mjs', 'scripts/installed-app.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
   for (const [name, content] of Object.entries({ 'AGENTS.md': 'Fixture rules', 'CLAUDE.md': '@AGENTS.md', 'docs/FIRST-RUN.md': 'Fixture guide' })) await writeFile(join(root, name), content);
   const env = { ...process.env, TAWDHEEF_WORKSPACE: workspace, APPLY_TRACKER_DATA: join(root, 'private-data') };
   const configured = spawnSync(process.execPath, [join(root, 'scripts/agent-setup.mjs'), 'both', '--json'], { cwd: root, env, shell: false, windowsHide: true, encoding: 'utf8' });

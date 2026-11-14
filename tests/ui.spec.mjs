@@ -92,7 +92,7 @@ test('opens the real 772-record UAE source without invented applications', async
   expect(abb.careersUrl).toBe('https://careers.abb/global/en/career-opportunities');
   const detail = await json(request, `/api/companies/${abb.id}`);
   expect(detail.applications).toEqual([]);
-  expect((await json(request, '/api/bootstrap')).runs).toEqual([]);
+  expect((await json(request, '/api/bootstrap')).runs.filter(run => run.directoryId === 'uae')).toEqual([]);
   await expect(page.getByRole('combobox', { name: 'Application status', exact: true })).toBeVisible();
   await expect(page.locator('.status-filters')).toHaveCount(0);
   await expect(page.locator('.company-initial')).toHaveCount(0);
@@ -392,6 +392,7 @@ test('Run chooses an installed assistant, shows real queue state and stops witho
   await page.route('**/api/assistants', route => route.fulfill({ json: [{ id: 'codex', name: 'Codex', installed: true }, { id: 'claude-code', name: 'Claude Code', installed: false }] }));
   await page.route('**/api/run', route => { const input = route.request().postDataJSON(); expect(input.explicit).toBe(true); expect(input.assistant).toBe('codex'); expect(input.companyIds).toEqual([company.id]); expect(input.limit).toBeUndefined(); return route.fulfill({ json: run }); });
   await page.route('**/api/runs/fixture-run', route => route.fulfill({ json: run }));
+  await page.route('**/api/runs/fixture-run/targets?*', route => route.fulfill({json:{runId:run.id,offset:0,limit:50,total:run.companyIds.length,items:run.targets}}));
   await page.route('**/api/runs/fixture-run/stop', route => { run = { ...run, status: 'cancelled', activeCompanyId: null }; return route.fulfill({ json: run }); });
   await page.getByRole('button', { name: /^Run/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Run', exact: true });
@@ -413,13 +414,15 @@ test('active run stays visible across directories and summary keeps confirmed co
   const summary = { id: 'progress-fixture', directoryId: 'uae', directoryName: 'UAE', managed: true, assistant: 'codex', total: 40, completed: 30, appliedCount: 3, activeCompanyId: 'company-30', currentName: 'Current company', status: 'running' };
   await page.route('**/api/bootstrap', async route => { const response = await route.fetch(); const body = await response.json(); body.settings.connectionMode = 'local-adapters'; body.runs = [summary]; await route.fulfill({ json: body }); });
   await page.route('**/api/runs/progress-fixture', route => route.fulfill({ status: 503, json: { error: 'Fixture details unavailable' } }));
+  await page.route('**/api/runs/progress-fixture/targets?*', route => route.fulfill({status:503,json:{error:'Fixture target history unavailable'}}));
   await openTracker(page); await page.getByRole('tab', { name: /Other run tab/ }).click();
   await expect(page.locator('.run-banner')).toContainText('UAE'); await expect(page.locator('.run-banner')).toContainText('Current company');
   await expect(page.locator('.run-banner').getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await page.locator('.heading-actions').getByRole('button', { name: 'View progress', exact: true }).click();
   const progress = page.getByRole('dialog', { name: 'Run progress', exact: true });
   await expect(progress).toContainText('3 with confirmed submissions'); await expect(progress).toContainText('Working on Current company');
-  await expect(progress.getByRole('alert')).toContainText('Fixture details unavailable');
+  await expect(progress.getByRole('alert').filter({hasText:'Fixture details unavailable'})).toBeVisible();
+  await expect(progress.getByRole('alert').filter({hasText:'Fixture target history unavailable'})).toBeVisible();
 });
 
 test('Contacts keeps website, careers, LinkedIn and email directly available in one cell', async ({ page }) => {
@@ -460,7 +463,7 @@ test('List options supports keyboard navigation, Escape focus return and an uncl
   await page.keyboard.press('ArrowDown');
   await expect(page.getByRole('menuitem', { name: 'Import list', exact: true })).toBeFocused();
   await page.keyboard.press('End');
-  await expect(page.getByRole('menuitem', { name: 'Export CSV', exact: true })).toBeFocused();
+  await expect(page.getByRole('menuitem', { name: 'Manage directory packs', exact: true })).toBeFocused();
   await page.keyboard.press('Home');
   await expect(page.getByRole('menuitem', { name: 'Choose columns', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
@@ -481,6 +484,8 @@ test('List options supports keyboard navigation, Escape focus return and an uncl
   expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBeTruthy();
   await page.keyboard.press('Escape');
   await trigger.press('ArrowUp');
+  await expect(page.getByRole('menuitem', { name: 'Manage directory packs', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowUp');
   await expect(page.getByRole('menuitem', { name: 'Export CSV', exact: true })).toBeFocused();
   const exported = page.waitForEvent('download');
   await page.keyboard.press('Space');

@@ -18,7 +18,7 @@ export const NODE_VERSION = '26.13.1';
 export const APP_TARGETS = Object.freeze(['win32-x64', 'win32-arm64', 'darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64']);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export function appSourceFile(file) {
-  return /^(server|bin|skills\/tawdheef|docs)\//.test(file) || /^src\/[^/]+\.js$/.test(file) || /^scripts\/[^/]+\.mjs$/.test(file) ||
+  return /^(server|bin|skills\/tawdheef|docs)\//.test(file) || /^directories\/(?:catalog\.json|(?:pack|record)\.schema\.json|[^/]+\/(?:pack\.json|manifest\.json|GUIDE\.md|CHANGELOG\.md))$/.test(file) || /^src\/[^/]+\.js$/.test(file) || /^scripts\/[^/]+\.mjs$/.test(file) ||
     ['data/uae-directory.json', 'AGENTS.md', 'CLAUDE.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'Start Tawdheef.cmd', 'Start Tawdheef.command', 'start-tawdheef.sh'].includes(file);
 }
 export async function directoryFiles(root) {

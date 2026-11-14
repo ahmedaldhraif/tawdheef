@@ -14,12 +14,14 @@ import { saveCvArtifact, getCvArtifactStatus, stageCvArtifact, MAX_CV_ARTIFACT_B
 import { assertRunPurpose } from '../src/run-actions.js';
 import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus } from './native-guidance.mjs';
 import { createLocalAdapterOwner } from './local-adapter-owner.mjs';
+import { createDirectoryPacks } from './directory-packs.mjs';
 
 const port = Number(process.env.APPLY_TRACKER_PORT || 4000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
   throw new Error("Choose a port between 1024 and 65535.");
 const baseUrl = `http://127.0.0.1:${port}`;
 const store = openStore();
+const directoryPacks = createDirectoryPacks({ store, root: ROOT });
 const nativeMode = () => store.getSettings().connectionMode !== 'local-adapters';
 const adapterOwner = createLocalAdapterOwner({ isNative: nativeMode, ErrorType: AppError, loadFactory: async () => {
   const { createLocalAdapterServices } = await import('./local-adapter-services.mjs');
@@ -27,7 +29,7 @@ const adapterOwner = createLocalAdapterOwner({ isNative: nativeMode, ErrorType: 
 } });
 const localAdapters = () => adapterOwner.get();
 const deferred = key => new Proxy({}, { get: (_target, method) => (...args) => localAdapters().then(services => services[key][method](...args)) });
-const connections = deferred('connections'), agentRunner = deferred('agentRunner'), agentCheck = deferred('agentCheck'), scheduler = deferred('scheduler'), monitoring = deferred('monitoring');
+const connections = deferred('connections'), agentRunner = deferred('agentRunner'), agentCheck = deferred('agentCheck'), scheduler = deferred('scheduler'), monitoring = deferred('monitoring'), recurringMonitoring = deferred('recurringMonitoring');
 const setupStatus = input => nativeMode() ? nativeSetupStatus({ store, ...input }) : localAdapters().then(services => services.setupStatus(input));
 const nativeRun = input => { const result = store.startNativeRun(input); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; };
 const runView = id => { const run = store.getRun(id); return run.native ? { ...store.getNativeRun({ runId: id }), targets: store.listNativeTargets({ runId: id, limit: 20 }).items } : run; };
@@ -121,6 +123,35 @@ app.get('/api/registration-context', wrap(async req => {
     instructions: 'Reuse existing career accounts and their original login. For a new registration use only this fresh observed main email. If missing, check the actual client mailbox identity. Passwords stay in the browser/password manager; sign-in and identity prompts become Needs you.' };
 }));
 app.get('/api/monitoring', wrap(() => store.getMonitoring()));
+app.get('/api/directory-packs', wrap(() => directoryPacks.list()));
+app.get('/api/directory-packs/:id', wrap(req => directoryPacks.get(req.params.id, { directoryId: req.query.directoryId })));
+app.post('/api/directory-packs/preview', wrap(req => directoryPacks.preview(req.body)));
+app.post('/api/directory-packs/install', wrap(req => directoryPacks.install(req.body)));
+app.post('/api/directory-packs/remove', wrap(req => directoryPacks.remove(req.body)));
+const recurringMode = () => {
+  if (nativeMode()) throw new AppError('This saved rule uses the optional local-adapters runner. Use Updates with your actual Codex or Claude client for native checks. Saved rules and results are preserved.');
+};
+app.get('/api/monitoring/rules', wrap(req => store.listMonitoringRules(req.query).map(rule => ({ ...rule,
+  executionOwner: 'local-adapters', runnable: !nativeMode(), ...(nativeMode() ? { nextCheckAt: null } : {}) }))));
+app.get('/api/monitoring/rules/:id', wrap(req => ({ ...store.getMonitoringRule(req.params.id), executionOwner: 'local-adapters', runnable: !nativeMode() })));
+app.get('/api/monitoring/rules/:id/companies', wrap(req => {
+  const rule = store.getMonitoringRule(req.params.id), offset = Number(req.query.offset || 0), limit = Number(req.query.limit || 50);
+  if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new AppError('Choose a company page of 1 to 100 records.');
+  return { id: rule.id, total: rule.companyIds.length, offset, limit, items: rule.companyIds.slice(offset,offset + limit).map(id => { const company = store.getCompany(id); return { id, name: company.name, archived: company.archived }; }) };
+}));
+app.post('/api/monitoring/rules', wrap(req => {
+  if (nativeMode()) { if (req.body.enabled === true) recurringMode(); return store.saveMonitoringRule(req.body); }
+  return recurringMonitoring.save(req.body);
+}));
+app.post('/api/monitoring/rules/:id/status', wrap(req => {
+  const input = { ...req.body, id: req.params.id };
+  if (nativeMode()) { if (input.enabled === true) recurringMode(); return store.setMonitoringRuleStatus(input); }
+  return recurringMonitoring.setStatus(input);
+}));
+app.post('/api/monitoring/rules/:id/check', wrap(req => { recurringMode(); return recurringMonitoring.check(req.params.id, req.body); }));
+app.get('/api/monitoring/results', wrap(req => store.getMonitoringResults({ ...req.query,
+  offset: Number(req.query.offset || 0), limit: Number(req.query.limit || 20), matchedOnly: req.query.matchedOnly !== 'false' })));
+app.get('/api/monitoring/summary', wrap(req => store.monitoringSummary(req.query)));
 app.patch('/api/monitoring', wrap(req => store.configureMonitoring(req.body)));
 app.post('/api/monitoring/scope', wrap(req => store.snapshotMonitoringScope(req.body)));
 app.post('/api/monitoring/recipe', wrap(req => monitoringRecipe({ store, ...req.body })));
@@ -217,11 +248,10 @@ app.post(
 );
 app.get(
   "/api/companies/:id",
-  wrap((req) => ({
-    company: store.getCompany(req.params.id),
-    applications: store.listApplications(req.params.id),
-    activity: store.listActivity({ companyId: req.params.id }),
-  })),
+  wrap((req) => {
+    const history = store.getRelatedCompanyHistory(req.params.id);
+    return { company: store.getCompany(req.params.id), applications: history.applications, activity: history.activity, sharedHistory: history.shared };
+  }),
 );
 app.patch(
   "/api/companies/:id",
@@ -236,9 +266,15 @@ app.post(
   wrap((req) => nativeMode() ? nativeRun(req.body).run : store.startRun(req.body)),
 );
 app.get('/api/assistants', wrap(() => agentRunner.assistants()));
+app.get('/api/run-preview', wrap(req => {
+  if (typeof req.query.scope !== 'string' || req.query.scope.length > 6000) throw new AppError('Supply a compact run scope.');
+  let input; try { input = JSON.parse(req.query.scope); } catch { throw new AppError('Supply a valid run scope.'); }
+  return store.previewRun(input);
+}));
 app.post('/api/run-preview', wrap(req => store.previewRun(req.body)));
 app.post('/api/run', wrap(req => nativeMode() ? nativeRun(req.body) : agentRunner.start(req.body)));
 app.post('/api/runs/:id/stop', wrap(req => stopRun(req.params.id)));
+app.get('/api/runs/:id/targets', wrap(req => store.getRunTargets(req.params.id, { offset: Number(req.query.offset || 0), limit: Number(req.query.limit || 50) })));
 app.get(
   "/api/runs/:id",
   wrap((req) => runView(req.params.id)),
@@ -402,7 +438,7 @@ app.use((error, req, res, next) => {
     ),
   });
 });
-store.recoverNativeRuns();
+store.recoverInterruptedRuns();
 if (!nativeMode()) await localAdapters();
 const server = app.listen(port, "127.0.0.1", () => {
   console.log(`Apply Tracker is running locally at ${baseUrl}`);
@@ -411,7 +447,7 @@ let shuttingDown = false;
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
-  store.recoverNativeRuns();
+  store.recoverInterruptedRuns();
   await adapterOwner.close();
   await new Promise((resolve) => server.close(resolve));
   store.close();

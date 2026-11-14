@@ -22,6 +22,8 @@
     "connect": "node scripts/setup.mjs --login",
     "agent": "node scripts/agent-setup.mjs",
     "tools:catalog": "node scripts/tool-catalog.mjs",
+    "packs:check": "node scripts/marketing/build-directory-pack.mjs --check",
+    "contributions:scan": "node scripts/scan-contribution.mjs",
     "release:check": "node scripts/release-check.mjs && node scripts/tool-catalog.mjs --check",
     "release:prepare": "node scripts/prepare-release.mjs",
     "release:smoke": "node scripts/release-smoke.mjs",

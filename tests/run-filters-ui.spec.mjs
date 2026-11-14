@@ -48,6 +48,7 @@ async function fakeRun(page, directory) {
     await route.fulfill({ json: run });
   });
   await page.route('**/api/runs/guided-fixture-run', route => route.fulfill({ json: run }));
+  await page.route('**/api/runs/guided-fixture-run/targets?*', route => route.fulfill({json:{id:run.id,offset:0,limit:50,total:0,items:[]}}));
   return () => submitted;
 }
 test.beforeEach(async ({ page, request }) => {
@@ -180,7 +181,7 @@ test('future-only actions are explicit, all off disables Run, and the assistant 
   await dialog.getByRole('checkbox', { name: 'Create an account or complete my profile', exact: true }).uncheck();
   await expect(dialog.getByRole('button', { name: /^Run on/ })).toBeDisabled();
   await expect(dialog).toContainText('Choose at least one action to start.');
-  await expect(dialog).toContainText('For future opportunities:');
+  await expect(dialog).toContainText('Career profiles and future opportunities');
   await dialog.getByRole('checkbox', { name: 'Email my CV for future opportunities', exact: true }).check();
   await expect(dialog.getByRole('combobox', { name: 'Assistant for this run', exact: true })).toHaveCount(0);
   await expect(dialog.locator('.run-assistant-selected')).toContainText('Claude Code');

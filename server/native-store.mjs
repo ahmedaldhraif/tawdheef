@@ -239,9 +239,9 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
         while (true) {
           const row = db.prepare("SELECT payload FROM native_run_targets WHERE run_id=? AND json_extract(payload,'$.status')='pending' ORDER BY position LIMIT 1").get(run.id);
           if (!row) { run.status = 'completed'; run.updatedAt = now(); saveRun(run); return { run: view(run.id), target: null, claimToken: null, reused: false }; }
-          item = JSON.parse(row.payload); const company = getStore().getCompany(item.companyId);
-          if (!company.archived && ['not_started', 'ready'].includes(company.status) && !getStore().listApplications(company.id).some(application => application.appliedAt)) break;
-          item.status = 'skipped'; item.reason = 'Already submitted, completed or archived.'; item.finishedAt = now(); saveTarget(item); run.completed++;
+          item = JSON.parse(row.payload);
+          if (getStore().isCompanyEligibleForRun(item.companyId, run.actions)) break;
+          item.status = 'skipped'; item.reason = 'The selected actions are already completed, or this company was closed or archived.'; item.finishedAt = now(); saveTarget(item); run.completed++;
         }
         const claimToken = randomBytes(32).toString('base64url'); item.status = 'working'; item.startedAt = now(); item.expiresAt = new Date(Date.parse(now()) + 3600_000).toISOString(); item.tokenHash = hash(claimToken); saveTarget(item);
         run.activeCompanyId = item.companyId; run.expiresAt = item.expiresAt; run.updatedAt = now(); saveRun(run);
@@ -254,7 +254,7 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       return tx(() => {
         const { run, item } = claim(input);
         require(['applied', 'checked', 'failed', 'needs_you', 'uncertain', 'skipped'].includes(input.status), 'Choose a supported target outcome.');
-        const applied = getStore().listApplications(item.companyId).some(application => application.appliedAt);
+        const applied = getStore().listApplications(item.companyId).some(application => application.runId === run.id && application.appliedAt);
         require(input.status !== 'applied' || applied, 'Record an actual application receipt before marking the target applied.');
         item.status = applied ? 'applied' : input.status; item.reason = input.reason === undefined || input.reason === '' ? '' : safeText(input.reason).slice(0, 500); item.finishedAt = now(); delete item.tokenHash;
         if (input.usage !== undefined && input.usage !== null) item.usage = usage(input.usage);

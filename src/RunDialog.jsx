@@ -32,6 +32,7 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
   const [previewError, setPreviewError] = useState('');
   const [previewRetry, setPreviewRetry] = useState(0);
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [targetOffset, setTargetOffset] = useState(0), [targetPage, setTargetPage] = useState(null), [targetsError, setTargetsError] = useState(''), [targetsRetry, setTargetsRetry] = useState(0);
   const listScope = scope || { directoryId: directory.id, ...(selected?.size ? { companyIds: [...selected].sort() } : {}) };
   const scopeKey = JSON.stringify({ ...listScope, actions });
   const count = preview?.scopeKey === scopeKey ? preview.count : null;
@@ -42,6 +43,18 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
   const locationLabels = scopeLabels?.locationLabels || locations.map(id => preview?.locations?.find(item => item.id === id)?.label || (id === 'unknown' ? 'Unknown location' : id.replace(/^location:/, '')));
   const companyTypeLabels = scopeLabels?.companyTypeLabels || COMPANY_TYPES.filter(type => companyTypes.includes(type.id)).map(type => type.label);
   const startLabel = count === null ? 'Checking companies…' : `Run on ${count} ${hasSelection ? 'selected' : count === 1 ? 'company' : 'companies'}`;
+  const currentTargetPage = targetPage && targetPage.runId === run?.id && targetPage.offset === targetOffset ? targetPage : null;
+  useEffect(() => { setTargetOffset(0); setTargetPage(null); setTargetsError(''); }, [run?.id]);
+  useEffect(() => {
+    if (!run?.id) return;
+    let active = true; setTargetsError('');
+    api(`/runs/${encodeURIComponent(run.id)}/targets?offset=${targetOffset}&limit=50`).then(value => {
+      if (!active) return;
+      if ((value.runId || value.id) !== run.id || value.offset !== targetOffset || !Array.isArray(value.items) || !Number.isSafeInteger(value.total) || value.total < 0) throw new Error('Run history could not be checked.');
+      setTargetPage({ ...value, runId: run.id });
+    }).catch(failure => { if (active) setTargetsError(failure.message); });
+    return () => { active = false; };
+  }, [run?.id, run?.completed, run?.status, run?.activeCompanyId, targetOffset, targetsRetry]);
   useEffect(() => {
     if (run || nativeMode) return;
     let active = true;
@@ -99,7 +112,10 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
       <p className="field-hint">{working ? nativeMode ? <>{t('Paste the run request into your existing')} {run.assistant === 'claude-code' ? 'Claude Code' : 'Codex'} {t('chat. Keep Tawdheef open to record progress.')}</> : 'You can close this panel. The run continues while the local app and computer are running.' : run.notes || 'Press Run again to retry unfinished companies.'}</p>
       {nativeMode && run.status === 'cancelled' && <p className="field-hint">{t('Stop any remaining work in your assistant.')}</p>}
       {working && handoffFallback && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={handoffFallback} onFocus={event => event.target.select()} /></label>}
-      <ol className="run-targets">{run.targets?.map(target => <li key={target.companyId}><span>{target.name || target.companyId}</span><strong>{({ pending: working ? 'Waiting' : 'Not attempted', working: working ? 'Working…' : 'Needs you', applied: 'Applied', checked: 'Checked', failed: 'Try again', needs_you: 'Needs you', uncertain: 'Check submission', skipped: 'Skipped' })[target.status]}</strong>{target.reason && <small>{target.reason}</small>}</li>)}</ol>
+      {targetsError && <p className="form-error" role="alert">{targetsError} <button type="button" onClick={() => setTargetsRetry(value => value + 1)}>{t('Try again')}</button></p>}
+      {!currentTargetPage && !targetsError && <p role="status">{t('Loading records…')}</p>}
+      <ol className="run-targets" start={targetOffset + 1}>{currentTargetPage?.items.map(target => <li key={target.companyId}><span>{target.name || target.companyId}</span><strong>{({ pending: working ? 'Waiting' : 'Not attempted', working: working ? 'Working…' : 'Needs you', applied: 'Applied', checked: 'Checked', failed: 'Try again', needs_you: 'Needs you', uncertain: 'Check submission', skipped: 'Skipped' })[target.status]}</strong>{target.reason && <small>{target.reason}</small>}</li>)}</ol>
+      {currentTargetPage && <div className="form-actions"><span>{targetOffset + (currentTargetPage.items.length ? 1 : 0)}–{targetOffset + currentTargetPage.items.length} {t('of')} {currentTargetPage.total}</span><button disabled={targetOffset === 0} onClick={() => setTargetOffset(value => Math.max(0, value - 50))}>{t('Previous records')}</button><button disabled={targetOffset + 50 >= currentTargetPage.total} onClick={() => setTargetOffset(value => value + 50)}>{t('Next records')}</button></div>}
     </> : <>
       <p className="dialog-intro" role="status"><strong>{count === null ? previewError ? 'Count unavailable' : 'Checking your list…' : `${count.toLocaleString()} ${hasSelection ? 'selected ' : ''}${count === 1 ? 'company' : 'companies'}`}</strong> in {directory.name}.</p>
       {(locationLabels.length > 0 || companyTypeLabels.length > 0) && <p className="run-scope-summary">{[...locationLabels, ...companyTypeLabels].join(' · ')}</p>}
@@ -108,7 +124,7 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
         <div className="run-action-row">
           <label className="checkbox-label run-action-choice"><input type="checkbox" checked={actions.applyMatchingJobs} onChange={event => setActions(value => ({ ...value, applyMatchingJobs: event.target.checked }))} /><span>{t('Apply to jobs that match my CV')}</span></label>
         </div>
-        <p className="run-future-heading">{actions.applyMatchingJobs ? 'If no matching job is found:' : 'For future opportunities:'}</p>
+        <p className="run-future-heading">{t('Career profiles and future opportunities')}</p>
         <div className="run-action-row">
           <label className="checkbox-label run-action-choice"><input type="checkbox" checked={actions.createProfiles} onChange={event => setActions(value => ({ ...value, createProfiles: event.target.checked }))} /><span>{t('Create an account or complete my profile')}</span></label>
         </div>

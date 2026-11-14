@@ -32,6 +32,7 @@ import {
   Linkedin,
 } from "lucide-react";
 import "./styles.css";
+import { Editable, Modal, Form, ModalNotification } from './SharedUI.jsx';
 import './workspace-depth.css';
 import Flag from "./Flag.jsx";
 import BrandIcon from "./BrandIcon.jsx";
@@ -44,6 +45,7 @@ import useRunUpdates from './useRunUpdates.js';
 import CompanyFilters from './CompanyFilters.jsx';
 import CompanyProgress, { PROGRESS_LABELS } from './CompanyProgress.jsx';
 import DirectorySnapshot from './DirectorySnapshot.jsx';
+import DirectoryPacksDialog from './DirectoryPacksDialog.jsx';
 import ConnectionsHub from './ConnectionsHub.jsx';
 import MonitoringPanel from './MonitoringPanel.jsx';
 import WorkspaceBackground from './WorkspaceBackground.jsx';
@@ -61,7 +63,7 @@ const LABELS = {
   offer: "Offer",
   closed: "Closed",
 };
-const ModalBusy = React.createContext(() => {});
+
 const savedView = (id) => {
   try {
     return JSON.parse(localStorage.getItem("apply-view-" + id) || "{}");
@@ -87,6 +89,18 @@ const FIELDS = {
   followUpAt: "Follow-up",
 };
 const AR = {
+  'Directory packs': 'حزم الأدلة',
+  'Browse community packs': 'تصفّح حزم المجتمع',
+  'Manage directory packs': 'إدارة حزم الأدلة',
+  'Directory added': 'تمت إضافة الدليل',
+  'Career profiles and future opportunities': 'الملفات المهنية والفرص المستقبلية',
+  'Shared company history from other directories is included.': 'يتضمن تاريخ الجهة المشترك من الأدلة الأخرى.',
+  'Discard unsaved changes?': 'هل تريد تجاهل التغييرات غير المحفوظة؟',
+  'Your changes have not been saved.': 'لم تُحفظ تغييراتك.',
+  'Keep editing': 'متابعة التعديل',
+  'Discard changes': 'تجاهل التغييرات',
+  'Saving…': 'جارٍ الحفظ…',
+  'Try again': 'حاول مجدداً',
   'Assistant': 'المساعد',
   'Tabbio CV': 'سيرة Tabbio الذاتية',
   'Calendar': 'التقويم',
@@ -462,6 +476,7 @@ function App() {
     [modal, setModal] = useState(null),
     [detail, setDetail] = useState(null),
     [toast, setToast] = useState(null),
+    [toastScope, setToastScope] = useState(null),
     [busy, setBusy] = useState(""),
     [rowsLoading, setRowsLoading] = useState(true),
     [error, setError] = useState(""),
@@ -469,6 +484,7 @@ function App() {
   const rowsRequest = useRef(0),
     detailRequest = useRef(0),
     toastTimer = useRef(null);
+  const overlayKey = detail ? 'company:' + detail.company.id : modal?.type || null;
   const toastRemaining = useRef(6000), toastDeadline = useRef(0), toastInteraction = useRef({ hovered: false, focused: false }), toastActive = useRef(false);
   const pauseToast = useCallback(() => {
     if (toastTimer.current) toastRemaining.current = Math.max(0, toastDeadline.current - Date.now());
@@ -499,9 +515,7 @@ function App() {
   const runScope = { ...listScope, ...(selected.size ? { companyIds: [...selected].sort() } : {}) };
   const runScopeKey = JSON.stringify(runScope);
   const rowsCurrent = data._scopeKey === listScopeKey && data.listScopeVersion === 1;
-  const runCount = selected.size
-    ? selectedPreview?.scopeKey === runScopeKey ? selectedPreview.count : null
-    : rowsCurrent ? data.remainingCount : null;
+  const runCount = selectedPreview?.scopeKey === runScopeKey ? selectedPreview.count : null;
   const runLabel = runCount == null ? 'Checking companies…' : `Run on ${runCount} ${selected.size ? 'selected' : runCount === 1 ? 'company' : 'companies'}`;
   const chooseDirectory = (id) => {
     const v = savedView(id);
@@ -516,6 +530,7 @@ function App() {
   };
   const notify = (message, undoAction = null) => {
     setToast(message);
+    setToastScope(overlayKey);
     setUndo(undoAction);
     toastActive.current = true;
     toastRemaining.current = 6000;
@@ -637,10 +652,13 @@ function App() {
     setSelected(new Set());
   }, [query, status, companyTypes, locations]);
   useEffect(() => {
-    if (!active || !selected.size) { setSelectedPreview(null); return; }
+    if (!active) { setSelectedPreview(null); return; }
     let current = true;
     setSelectedPreview(null);
-    api('/run-preview', 'POST', JSON.parse(runScopeKey)).then(result => {
+    const previewInput = { ...JSON.parse(runScopeKey), actions: { applyMatchingJobs: true, createProfiles: true, sendCvEmails: false } };
+    const previewJson = JSON.stringify(previewInput);
+    const read = previewJson.length <= 6000 ? api('/run-preview?scope=' + encodeURIComponent(previewJson)) : api('/run-preview', 'POST', previewInput);
+    read.then(result => {
       if (current && result.listScopeVersion === 1 && Number.isInteger(result.count)) setSelectedPreview({ scopeKey: runScopeKey, count: result.count });
     }).catch(e => { if (current) setError(e.message); });
     return () => { current = false; };
@@ -750,8 +768,45 @@ function App() {
         {error && <button onClick={() => location.reload()}>Try again</button>}
       </div>
     );
+  const toastContent = toast && (
+        <div className="toast" role="status"
+          onPointerEnter={e => { if (e.pointerType === 'mouse') { toastInteraction.current.hovered = true; pauseToast(); } }}
+          onPointerLeave={() => { toastInteraction.current.hovered = false; resumeToast(); }}
+          onFocusCapture={() => { toastInteraction.current.focused = true; pauseToast(); }}
+          onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) { toastInteraction.current.focused = false; resumeToast(); } }}>
+          <Check size={17} />
+          {toast}
+          {undo && (
+            <button
+              onClick={() =>
+                perform("undo", async () => {
+                  if (undo.type === "directory")
+                    await api("/directories/" + undo.id, "PATCH", {
+                      archived: false,
+                    });
+                  else if (undo.type === "edit")
+                    await api("/companies/" + undo.id, "PATCH", {
+                      ...undo.patch,
+                      expectedRevision: undo.revision,
+                    });
+                  else
+                    await api("/companies/" + undo.id, "PATCH", {
+                      archived: false,
+                    });
+                  setUndo(null);
+                  await refresh();
+                  notify(t("Restored"));
+                })
+              }
+            >
+              <Undo2 size={14} />
+              {t("Undo")}
+            </button>
+          )}
+        </div>
+      );
   return (
-    <>
+    <ModalNotification.Provider value={toastScope === overlayKey ? toastContent : null}>
       <WorkspaceBackground />
       <header className="app-header">
         <a className="brand" href="/" aria-label={lang === "ar" ? "توظيف — الرئيسية" : "Tawdheef home"}>
@@ -812,7 +867,7 @@ function App() {
           </div>
           <button
             className="add-directory"
-            onClick={() => setModal({ type: "directory" })}
+            onClick={event => { event.currentTarget.focus(); setModal({ type: "directory" }); }}
           >
             <Plus />
             {t("Add directory")}
@@ -938,6 +993,7 @@ function App() {
                 <ListOptions
                   onColumns={() => setModal({ type: "columns" })}
                   onImport={() => setModal({ type: "import" })}
+                  onPacks={() => setModal({ type: 'packs', directory })}
                   exportUrl={"/api/export/" + active}
                   t={t}
                 />
@@ -1297,42 +1353,20 @@ function App() {
           </span>
         </footer>
       </main>
-      {toast && (
-        <div className="toast" role="status"
-          onPointerEnter={e => { if (e.pointerType === 'mouse') { toastInteraction.current.hovered = true; pauseToast(); } }}
-          onPointerLeave={() => { toastInteraction.current.hovered = false; resumeToast(); }}
-          onFocusCapture={() => { toastInteraction.current.focused = true; pauseToast(); }}
-          onBlurCapture={e => { if (!e.currentTarget.contains(e.relatedTarget)) { toastInteraction.current.focused = false; resumeToast(); } }}>
-          <Check size={17} />
-          {toast}
-          {undo && (
-            <button
-              onClick={() =>
-                perform("undo", async () => {
-                  if (undo.type === "directory")
-                    await api("/directories/" + undo.id, "PATCH", {
-                      archived: false,
-                    });
-                  else if (undo.type === "edit")
-                    await api("/companies/" + undo.id, "PATCH", {
-                      ...undo.patch,
-                      expectedRevision: undo.revision,
-                    });
-                  else
-                    await api("/companies/" + undo.id, "PATCH", {
-                      archived: false,
-                    });
-                  setUndo(null);
-                  await refresh();
-                  notify(t("Restored"));
-                })
-              }
-            >
-              <Undo2 size={14} />
-              {t("Undo")}
-            </button>
-          )}
-        </div>
+      {!modal && !detail && toastContent}
+      {modal?.type === 'packs' && (
+        <DirectoryPacksDialog
+          api={api} Modal={Modal} t={t} language={lang}
+          directory={modal.directory}
+          close={() => setModal(null)}
+          createEmpty={() => setModal({ type: 'directory' })}
+          installed={async result => {
+            chooseDirectory(result.directoryId);
+            await refresh();
+            setModal(null);
+            notify(t('Directory added'));
+          }}
+        />
       )}
       {modal?.type === "directory" && (
         <DirectoryDialog
@@ -1340,6 +1374,7 @@ function App() {
           edit={modal.edit}
           close={() => setModal(null)}
           onArchive={archiveDirectory}
+          browse={() => setModal({ type: 'packs' })}
           save={async (values) => {
             await api(
               "/directories" + (modal.edit ? "/" + modal.edit.id : ""),
@@ -1552,216 +1587,11 @@ function App() {
           }}
         />
       )}
-    </>
+    </ModalNotification.Provider>
   );
 }
 
-function Editable({ value, label, placeholder, onSave, display }) {
-  const [editing, setEditing] = useState(false),
-    [draft, setDraft] = useState(value),
-    [error, setError] = useState(""),
-    [saving, setSaving] = useState(false);
-  const committed = useRef(false);
-  useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-  async function save() {
-    if (committed.current) return;
-    if (draft === value) {
-      setEditing(false);
-      return;
-    }
-    committed.current = true;
-    setSaving(true);
-    try {
-      await onSave(draft);
-      setEditing(false);
-    } catch (e) {
-      setError(e.message);
-      committed.current = false;
-    } finally {
-      setSaving(false);
-    }
-  }
-  return editing ? (
-    <div className="inline-editor">
-      <input
-        autoFocus
-        aria-label={label}
-        value={draft}
-        disabled={saving}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={save}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            committed.current = true;
-            setDraft(value);
-            setEditing(false);
-          }
-          if (e.key === "Enter") {
-            e.preventDefault();
-            save();
-          }
-        }}
-      />
-      {error && (
-        <span role="alert" className="inline-error">
-          {error}
-        </span>
-      )}
-    </div>
-  ) : (
-    <button
-      className={"editable " + (!value ? "placeholder" : "")}
-      title={value || label}
-      aria-label={"Edit " + label}
-      onClick={() => {
-        committed.current = false;
-        setError("");
-        setEditing(true);
-      }}
-    >
-      {display || value || placeholder}
-    </button>
-  );
-}
-function Modal({
-  title,
-  close,
-  children,
-  t,
-  narrow = false,
-  wide = false,
-  footer,
-  pending = false,
-}) {
-  const ref = useRef(null),
-    state = useRef({ close, pending });
-  const [saving, setSaving] = useState(false);
-  state.current = { close, pending: pending || saving };
-  const requestClose = () => {
-    if (!state.current.pending) state.current.close();
-  };
-  useEffect(() => {
-    const previous = document.activeElement,
-      node = ref.current;
-    const items = () =>
-      [
-        ...node.querySelectorAll(
-          'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex="0"]',
-        ),
-      ].filter((e) => e.getClientRects().length);
-    items()[0]?.focus();
-    const handle = (e) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        if (!state.current.pending) state.current.close();
-      }
-      if (e.key === "Tab") {
-        const list = items();
-        if (e.shiftKey && document.activeElement === list[0]) {
-          e.preventDefault();
-          list.at(-1)?.focus();
-        } else if (!e.shiftKey && document.activeElement === list.at(-1)) {
-          e.preventDefault();
-          list[0]?.focus();
-        }
-      }
-    };
-    node.addEventListener("keydown", handle);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      node.removeEventListener("keydown", handle);
-      document.body.style.overflow = overflow;
-      if (previous?.isConnected && previous !== document.body) previous.focus?.();
-      else document.querySelector('[data-connections-trigger]')?.focus();
-    };
-  }, []);
-  return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) requestClose();
-      }}
-    >
-      <section
-        ref={ref}
-        className={"dialog " + (narrow ? "narrow " : "") + (wide ? "wide" : "")}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dialog-title"
-        aria-busy={pending || saving}
-      >
-        <header className="dialog-header">
-          <h2 id="dialog-title">{title}</h2>
-          <button
-            className="icon-button"
-            aria-label={t("Close")}
-            onClick={requestClose}
-            disabled={pending || saving}
-          >
-            <X />
-          </button>
-        </header>
-        <div className="dialog-content">
-          <ModalBusy.Provider value={setSaving}>{children}</ModalBusy.Provider>
-        </div>
-        {footer && <footer className="dialog-footer">{footer}</footer>}
-      </section>
-    </div>
-  );
-}
-function Form({
-  children,
-  save,
-  label = "Save changes",
-  close,
-  t,
-  extra,
-  pending = false,
-}) {
-  const [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const lock = React.useContext(ModalBusy);
-  return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault();
-        if (busy || pending) return;
-        setBusy(true);
-        lock(true);
-        setError("");
-        try {
-          await save();
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setBusy(false);
-          lock(false);
-        }
-      }}
-    >
-      {children}
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-      <div className="form-actions">
-        {extra}
-        <button type="button" onClick={close} disabled={busy || pending}>
-          {t("Cancel")}
-        </button>
-        <button type="submit" className="primary" disabled={busy || pending}>
-          {busy ? "Saving…" : t(label)}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function DirectoryDialog({ edit, t, close, save, onArchive }) {
+function DirectoryDialog({ edit, t, close, save, onArchive, browse }) {
   const [v, setV] = useState({
     name: edit?.name || "",
     flag: edit?.flag || "icon:folder",
@@ -1833,6 +1663,7 @@ function DirectoryDialog({ edit, t, close, save, onArchive }) {
           </label>
         )}
       </Form>
+      {!edit && browse && <button type="button" className="directory-pack-shortcut" onClick={browse}><Download size={16}/>{t('Browse community packs')}</button>}
     </Modal>
   );
 }
@@ -2491,6 +2322,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
             {t("Notes")}
             <textarea
               rows={4}
+              aria-label={t('Notes')}
               value={v.notes || ""}
               onChange={(e) => setV({ ...v, notes: e.target.value })}
             />
@@ -2513,6 +2345,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
           <p className="dialog-intro">
             Accounts, career profiles, CVs and confirmed applications are recorded separately.
           </p>
+          {detail.sharedHistory && <p className="field-hint">{t('Shared company history from other directories is included.')}</p>}
           {!detail.applications.length && (
             <div className="empty small">
               <Briefcase size={26} />

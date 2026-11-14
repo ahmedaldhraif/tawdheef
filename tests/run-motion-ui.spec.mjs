@@ -14,6 +14,7 @@ async function openRunFixture(page, overrides = {}) {
     await route.fulfill({ json: body });
   });
   await page.route('**/api/runs/motion-fixture', route => route.fulfill({ json: run }));
+  await page.route('**/api/runs/motion-fixture/targets?*', route => route.fulfill({json:{id:run.id,offset:0,limit:50,total:run.total,items:run.targets || []}}));
   await page.route('**/api/runs/motion-fixture/stop', route => {
     run = { ...run, status: 'cancelled', activeCompanyId: null };
     return route.fulfill({ json: run });

@@ -1,0 +1,3 @@
+.dialog [hidden] { display: none !important; }
+.form-fields { min-inline-size: 0; padding: 0; margin: 0; border: 0; }
+.discard-changes p { margin-top: 0; }

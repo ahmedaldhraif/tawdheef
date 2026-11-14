@@ -31,6 +31,7 @@ async function fixture(page, { failFirst = false, holdFirst = false } = {}) {
     run = { ...run, status: 'cancelled', activeCompanyId: null };
     return route.fulfill({ json: run });
   });
+  await page.route('**/api/runs/polling-fixture/targets?*', route => route.fulfill({json:{id:run.id,offset:0,limit:50,total:run.total,items:run.targets}}));
   // No real assistant or provider action can start in this fixture.
   await page.route('**/api/run', route => route.fulfill({ status: 409, json: { error: 'Only fixture runs are allowed.' } }));
   await page.clock.install();

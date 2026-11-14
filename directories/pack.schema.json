@@ -13,6 +13,16 @@
     "snapshotDate": { "type": "string", "format": "date" },
     "source": { "type": "string", "description": "Repository-relative reviewed public JSON source. Canonical contribution sources live under directories/<id>/source.json." },
     "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "formatVersion": { "enum": [1, 2], "description": "Version 1 is legacy data only. Version 2 adds bounded, reviewed recruitment guidance." },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?$" },
+    "createdBy": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$", "description": "Actual public GitHub login of the creator. No private contact details." },
+    "maintainers": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,38}$" } },
+    "contributors": { "type": "array", "items": { "type": "object", "required": ["login", "contributionUrl", "summary"], "additionalProperties": false, "properties": { "login": { "type": "string" }, "contributionUrl": { "type": "string", "pattern": "^https://github\\.com/[^/]+/[^/]+/(pull|issues)/[0-9]+$" }, "summary": { "type": "string", "minLength": 1 } } }, "description": "Credit actual accepted contributions with a real issue/PR. An empty array is honest." },
+    "updatedAt": { "type": "string", "format": "date", "description": "Pack content edit date; not a claim every source was rechecked." },
+    "releasedAt": { "type": "string", "format": "date", "description": "Actual publication date. Omit for local drafts." },
+    "minimumAppVersion": { "type": "string" },
+    "guide": { "const": "GUIDE.md" },
+    "changelog": { "const": "CHANGELOG.md" },
     "description": { "type": "string" },
     "featured": { "type": "boolean" },
     "historical": { "type": "boolean" },
@@ -21,5 +31,6 @@
     "notes": { "type": "array", "items": { "type": "string" } },
     "tags": { "type": "array", "items": { "type": "string" } },
     "overlaps": { "type": "array", "items": { "type": "string" }, "description": "Pack IDs with overlapping records; do not add their counts as unique organisations." }
-  }
+  },
+  "allOf": [{ "if": { "properties": { "formatVersion": { "const": 2 } }, "required": ["formatVersion"] }, "then": { "required": ["version", "createdBy", "maintainers", "contributors", "updatedAt", "guide", "changelog"] } }]
 }

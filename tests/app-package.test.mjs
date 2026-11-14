@@ -55,6 +55,7 @@ test('basic setup selects no optional integrations and unsupported bridges are n
   assert.equal(presets.find(item => item.id === 'playwright').supported, true);
 });
 test('user distribution keeps domain tools and setup guidance separate from development and marketing', () => {
+  for (const file of ['directories/catalog.json', 'directories/pack.schema.json', 'directories/record.schema.json', 'directories/kuwait/pack.json', 'directories/kuwait/GUIDE.md', 'directories/kuwait/CHANGELOG.md']) assert.equal(appSourceFile(file), true, file);
   for (const file of ['server/store.mjs', 'src/company-types.js', 'scripts/agent-setup.mjs', 'skills/tawdheef/SKILL.md', 'docs/FIRST-RUN.md', 'data/uae-directory.json']) assert.equal(appSourceFile(file), true, file);
   for (const file of ['tests/api.test.mjs', '.agents/skills/emil-design-eng/SKILL.md', 'website/build.mjs', 'public/downloads/source.zip', 'src/main.jsx', 'directories/uae/source.json', '.local/tracker.sqlite']) assert.equal(appSourceFile(file), false, file);
   assert.ok(APP_TARGETS.includes('win32-arm64') && APP_TARGETS.includes('darwin-x64') && APP_TARGETS.includes('darwin-arm64'));

@@ -67,6 +67,13 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     const boot = await (await http('/api/bootstrap')).json(); assert.equal(boot.directories.find(item => item.id === 'uae').count, 772);
     assert.equal(boot.settings.connectionMode, 'native'); assert.deepEqual(boot.connections, []);
     assert.equal(boot.nativeClient.capabilities.email.status, 'unknown');
+    const packs = await (await http('/api/directory-packs')).json();
+    assert.equal(packs.available.length, 7, 'directory metadata remains available without bundling full datasets');
+    for (const pack of packs.available.filter(pack => pack.formatVersion === 2)) {
+      assert.equal(pack.sourceAvailable, false, 'large directory sources remain separate downloads');
+      assert.equal(pack.guidanceStatus, 'scanned_on_preview');
+      await access(join(root, 'directories', pack.id, 'GUIDE.md'));
+    }
     for (const path of ['/examples/', '/ar/examples/job-search-brief/']) {
       const response = await http(path);
       assert.equal(response.status, 302); assert.equal(response.headers.get('location'), `https://www.tawdheef.com${path}`);
@@ -106,7 +113,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     }
     const report = { ok: true, archive: basename(archive), sha256: archiveSha256, platform: process.platform, arch: process.arch, node: version, version: manifest.version, firstLaunchMs: Math.round(firstLaunchMs), tools: tools.tools.length,
       checks: ['exact ZIP extracted to a Unicode path with spaces', 'bundled runtime', 'native platform launcher or Linux script', 'prebuilt offline startup', 'native default without optional mail/cloud SDKs', 'one background process', 'external private data and assistant workspace', 'repeat setup for both clients', 'real stdio MCP discovery and context'],
-      dataPathChecks, liveAssistantCalls: false, liveAccountActions: false, osSigningVerified: signature.osSigningVerified, signing: signature };
+      directoryPackMetadata: packs.available.length, dataPathChecks, liveAssistantCalls: false, liveAccountActions: false, osSigningVerified: signature.osSigningVerified, signing: signature };
     if (signature.signed) await verifyDesktopSigning({ folder, codeRoot: root, layout });
     if (output) await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
     return report;

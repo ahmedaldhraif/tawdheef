@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { runtimeEnvironment } from './runtime-env.mjs';
 import { coreInstalled } from './runtime-check.mjs';
+import { forwardInstalledApp } from './installed-app.mjs';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+try { if (await forwardInstalledApp({ sourceRoot: root, entry: 'scripts/start.mjs' })) process.exit(process.exitCode ?? 0); }
+catch (error) { console.error(error.message); process.exit(1); }
 if (Number(process.versions.node.split('.')[0]) < 24) { console.error('Install Node.js 26 LTS from https://nodejs.org/en/download, then open Tawdheef again.'); process.exit(1); }
 if (process.argv.includes('--help')) { console.log('Start Tawdheef: npm start\nInstalls missing dependencies, builds when files change, and opens the local app. Add -- --no-open to keep the browser closed.'); process.exit(0); }
 if (process.argv.slice(2).some(arg => arg !== '--no-open')) { console.error('Only --no-open is supported.'); process.exit(1); }

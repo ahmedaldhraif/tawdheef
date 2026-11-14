@@ -7,6 +7,7 @@ import { runtimeEnvironment } from './runtime-env.mjs';
 import { defaultDataDir } from './app-paths.mjs';
 import { homedir } from 'node:os';
 import { isDirectInvocation } from './is-direct.mjs';
+import { forwardInstalledApp } from './installed-app.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const serverPath = join(root, 'server', 'index.mjs');
@@ -141,5 +142,10 @@ export const installBackground = options => backgroundCommand('install', options
 export const uninstallBackground = options => backgroundCommand('uninstall', options);
 
 if (isDirectInvocation(import.meta.url)) {
-  backgroundCommand(process.argv[2] || 'status').then(result => process.stdout.write(`${JSON.stringify({ ok: true, data: result }, null, 2)}\n`)).catch(error => { process.stderr.write(`${JSON.stringify({ ok: false, error: error.message })}\n`); process.exitCode = 1; });
+  try {
+    if (!(await forwardInstalledApp({ sourceRoot: root, entry: 'scripts/background.mjs' }))) {
+      const result = await backgroundCommand(process.argv[2] || 'status');
+      process.stdout.write(`${JSON.stringify({ ok: true, data: result }, null, 2)}\n`);
+    }
+  } catch (error) { process.stderr.write(`${JSON.stringify({ ok: false, error: error.message })}\n`); process.exitCode = 1; }
 }

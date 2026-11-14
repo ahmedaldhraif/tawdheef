@@ -95,37 +95,66 @@ function reportBody(report, baseUrl) {
   ];
   if (report.followUps.length) lines.push('', 'Follow-ups', ...report.followUps.map(item => `${item.name}: ${item.followUpAt}`));
   if (report.needsYou.length) lines.push('', 'Needs you', ...report.needsYou.map(item => item.name));
+  if (report.monitoring) {
+    lines.push('', `New matching jobs: ${report.monitoring.newMatches}`, `Companies checked for jobs: ${report.monitoring.companiesChecked}`, `Recruitment sources checked: ${report.monitoring.sourcesChecked}`, `Sources needing sign-in or help: ${report.monitoring.blockedSources}`, `Source checks failed: ${report.monitoring.failedSources}`);
+    for (const item of report.monitoring.needsYou) lines.push(`${item.companyName}: ${item.reason}`);
+    if (report.monitoring.applicationUpdates) {
+      const updates = report.monitoring.applicationUpdates;
+      lines.push(`Tracked application threads checked: ${updates.checked}`, `Application statuses not freshly verified: ${updates.failed + updates.unavailable + updates.skipped}`);
+      for (const item of updates.outcomes.filter(item => item.status !== 'checked')) lines.push(`${item.role || 'Tracked application'}: ${item.reason}`);
+    }
+  }
   lines.push('', `Open your tracker on this computer: ${baseUrl}`);
   return lines.join('\n');
 }
 
-/** Local timers refresh recorded threads and create reports. They never start application runs. */
-export function createScheduler({ store, connections, clock = () => new Date(), intervalMs = 60_000, baseUrl = 'http://127.0.0.1:4000' }) {
+/** Reply/report timers remain separate from explicitly enabled monitoring rules. */
+export function createScheduler({ store, connections, clock = () => new Date(), intervalMs = 60_000, baseUrl = 'http://127.0.0.1:4000', monitoring = null }) {
   let timer = null;
   let refreshing = null;
   let reporting = null;
   let ticking = null;
+  const scopedRefreshes = new Map(), threadReads = new Map();
 
-  async function refreshInternal() {
+  async function refreshInternal({ companyIds = null, shouldContinue = () => true } = {}) {
     const current = clock();
     const startedAt = current.toISOString();
     // Reserve before network access; wake/restart does not repeatedly retry the same slot.
-    store.updateSettings({ lastRefreshAt: startedAt, lastRefreshError: null });
-    const applications = store.listApplications().filter(item => (item.appliedAt || item.cvSentAt) && item.threadId && item.method === 'email' && ['applied', 'cv_sent', 'replied'].includes(item.status));
+    if (companyIds === null) store.updateSettings({ lastRefreshAt: startedAt, lastRefreshError: null });
+    const scope = companyIds === null ? null : new Set(companyIds);
+    const sent = store.listApplications().filter(item => item.appliedAt || item.cvSentAt);
+    const known = scope ? sent.filter(item => scope.has(item.companyId)) : sent.filter(item => item.threadId && item.method === 'email' && ['applied', 'cv_sent', 'replied'].includes(item.status));
+    const applications = known.filter(item => item.threadId && item.method === 'email' && item.status !== 'closed');
     const threadCounts = new Map();
-    for (const application of applications) threadCounts.set(application.threadId, (threadCounts.get(application.threadId) || 0) + 1);
-    const summary = { checked: 0, updated: 0, skipped: 0, errors: [], lastRefreshAt: startedAt };
+    for (const application of sent.filter(item => item.threadId)) threadCounts.set(application.threadId, (threadCounts.get(application.threadId) || 0) + 1);
+    const summary = { scope: scope ? 'selected_companies' : 'all_tracked', companyCount: scope?.size ?? null, checked: 0, updated: 0, skipped: 0, unavailable: 0, errors: [], outcomes: [], lastRefreshAt: startedAt };
+    const record = (application, status, reason, extra = {}) => summary.outcomes.push({ applicationId: application.id, companyId: application.companyId, role: application.role || '', method: application.method, applicationStatus: application.status, status, reason, checkedAt: status === 'checked' ? startedAt : null, observedAt: startedAt, ...extra });
+    for (const application of known) if (!applications.includes(application)) {
+      if (application.status === 'closed') { summary.skipped++; record(application, 'skipped', 'This application is closed; its status was not refreshed.'); }
+      else { summary.unavailable++; record(application, 'unavailable', 'No known email submission thread is recorded. Review the career portal for a fresh status.'); }
+    }
     let next = 0;
     async function worker() {
       while (next < applications.length) {
         const application = applications[next++];
-        if (threadCounts.get(application.threadId) !== 1) { summary.skipped++; continue; }
+        if (!shouldContinue()) { summary.skipped++; record(application, 'skipped', 'Monitoring was paused or its permission changed before this thread read.'); continue; }
+        if (threadCounts.get(application.threadId) !== 1) { summary.skipped++; record(application, 'skipped', 'This thread belongs to more than one tracked submission; inspect it before assigning a reply.'); continue; }
         try {
           const company = store.getCompany(application.companyId);
-          if (company.archived || !address(application.to || application.recipient || application.evidence?.to || company.email)) { summary.skipped++; continue; }
-          const result = await connections.callMapped('email', 'readThread', { threadId: application.threadId, applicationId: application.id });
-          summary.checked++;
+          const recipient = application.to || application.recipient || application.evidence?.to || (scope ? '' : company.email);
+          if (company.archived || !address(recipient)) { summary.skipped++; record(application, 'skipped', 'The company is archived or the original submission has no verified recipient address.'); continue; }
+          let reading = threadReads.get(application.id);
+          if (!reading) {
+            reading = Promise.resolve().then(() => shouldContinue() ? connections.callMapped('email', 'readThread', { threadId: application.threadId, applicationId: application.id }) : null).finally(() => { if (threadReads.get(application.id) === reading) threadReads.delete(application.id); });
+            threadReads.set(application.id, reading);
+          }
+          const result = await reading;
+          if (!shouldContinue()) { summary.skipped++; record(application, 'skipped', 'Monitoring was paused or its permission changed during the read; no application status was changed.'); continue; }
+          const envelope = unpack(result), payload = envelope?.data && typeof envelope.data === 'object' ? envelope.data : envelope;
+          if (!payload || !Array.isArray(payload.replies) && !Array.isArray(payload.messages) || payload.threadId && payload.threadId !== application.threadId || /^(?:error|failed|pending|approval_required|auth_required|authentication_required)$/i.test(payload.status || '')) throw new Error('The mailbox did not return a readable result for the tracked thread. Its application status is not freshly verified.');
           const latest = normalizedReplies(result, application, company, current).at(-1);
+          summary.checked++;
+          record(application, 'checked', latest ? 'Known submission thread checked against its saved sender and receipt.' : 'Known submission thread checked; no newer supported reply was found. The recorded application outcome remains unchanged.', { ...(latest ? { latestReplyAt: latest.receivedAt } : {}), source: 'tracked_email_thread' });
           if (!latest || (application.lastReplyAt && Date.parse(latest.receivedAt) <= Date.parse(application.lastReplyAt))) continue;
           // Human progress can change during a read; never move Interview/Offer/Closed backwards.
           const fresh = store.listApplications(application.companyId).find(item => item.id === application.id);
@@ -135,6 +164,7 @@ export function createScheduler({ store, connections, clock = () => new Date(), 
           summary.updated++;
         } catch (error) {
           summary.errors.push({ applicationId: application.id, error: errorText(error) });
+          record(application, 'failed', errorText(error));
         }
       }
     }
@@ -144,23 +174,37 @@ export function createScheduler({ store, connections, clock = () => new Date(), 
       summary.status = summary.checked ? 'partial' : 'failed';
       summary.message = summary.checked ? `${summary.checked} email threads checked. ${failure}` : `No email threads could be checked. ${failure}`;
     } else if (summary.checked) {
-      summary.status = 'checked';
+      summary.status = summary.unavailable ? 'partial' : 'checked';
       summary.message = `${summary.checked} email thread${summary.checked === 1 ? '' : 's'} checked. ${summary.updated ? `${summary.updated} application${summary.updated === 1 ? '' : 's'} updated with a reply.` : 'No new matched replies.'}`;
+      if (summary.unavailable) summary.message += ` ${summary.unavailable} application statuses need a portal check.`;
+    } else if (summary.unavailable) {
+      summary.status = 'unavailable';
+      summary.message = `No email threads could be checked. ${summary.unavailable} application statuses need a portal check; their saved outcomes are unchanged.`;
     } else if (!applications.length) {
       summary.status = 'no_threads';
       summary.message = 'No sent email threads to check yet. Directory links have not been rechecked.';
     } else {
       summary.status = 'skipped';
-      summary.message = 'No email threads were checked. Add a known recipient and a unique thread ID to the recorded applications.';
+      summary.message = scope ? 'No email threads were checked. See the recorded per-application reason; saved outcomes are unchanged.' : 'No email threads were checked. Add a known recipient and a unique thread ID to the recorded applications.';
     }
-    store.updateSettings({ lastRefreshError: failure, lastRefreshMessage: summary.message, lastRefreshStatus: summary.status });
-    store.addActivity(summary.checked ? 'refresh_completed' : 'refresh_skipped', summary.message);
+    if (companyIds === null) store.updateSettings({ lastRefreshError: failure, lastRefreshMessage: summary.message, lastRefreshStatus: summary.status });
+    store.addActivity(scope ? 'monitor_application_updates' : summary.checked ? 'refresh_completed' : 'refresh_skipped', summary.message);
     return summary;
   }
 
   function refresh() {
     if (!refreshing) refreshing = refreshInternal().finally(() => { refreshing = null; });
     return refreshing;
+  }
+
+  function refreshForCompanies(companyIds, { shouldContinue = () => true } = {}) {
+    if (!Array.isArray(companyIds) || companyIds.some(id => typeof id !== 'string') || typeof shouldContinue !== 'function') throw new Error('Choose explicit company IDs for tracked-thread updates.');
+    const ids = [...new Set(companyIds)].sort(), key = JSON.stringify(ids);
+    if (!scopedRefreshes.has(key)) {
+      const refreshing = refreshInternal({ companyIds: ids, shouldContinue }).finally(() => scopedRefreshes.delete(key));
+      scopedRefreshes.set(key, refreshing);
+    }
+    return scopedRefreshes.get(key);
   }
 
   async function generateReportInternal() {
@@ -170,7 +214,7 @@ export function createScheduler({ store, connections, clock = () => new Date(), 
     const generatedAt = current.toISOString();
     // Persist before send; ambiguous delivery is never automatically resent in this slot.
     store.updateSettings({ lastReportAt: generatedAt, lastReportError: null });
-    const report = store.saveReport({ ...store.report({ since }), generatedAt, delivery: { status: settings.emailReports ? 'pending' : 'local', ...(settings.emailReports ? { to: settings.reportEmail, attemptedAt: generatedAt } : {}) } });
+    const report = store.saveReport({ ...store.report({ since }), ...(store.monitoringReport ? { monitoring: store.monitoringReport({ since, until: generatedAt }) } : {}), generatedAt, delivery: { status: settings.emailReports ? 'pending' : 'local', ...(settings.emailReports ? { to: settings.reportEmail, attemptedAt: generatedAt } : {}) } });
     if (!settings.emailReports) {
       store.addActivity('report_created', 'Report saved on this computer.');
       return report;
@@ -214,6 +258,7 @@ export function createScheduler({ store, connections, clock = () => new Date(), 
     const result = {};
     if (interval && (!settings.lastRefreshAt || current.getTime() - Date.parse(settings.lastRefreshAt) >= interval)) result.refresh = await refresh();
     if (isReportDue(store.getSettings(), current)) result.report = await generateReport();
+    if (monitoring) result.monitoring = await monitoring.tick();
     return result;
   }
 
@@ -236,8 +281,8 @@ export function createScheduler({ store, connections, clock = () => new Date(), 
   async function stop() {
     clearInterval(timer);
     timer = null;
-    await Promise.allSettled([ticking, refreshing, reporting].filter(Boolean));
+    await Promise.allSettled([ticking, refreshing, reporting, ...scopedRefreshes.values()].filter(Boolean));
   }
 
-  return { tick, refresh, generateReport, start, stop };
+  return { tick, refresh, refreshForCompanies, generateReport, start, stop };
 }

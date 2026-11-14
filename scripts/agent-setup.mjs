@@ -1,10 +1,19 @@
 /** Explicit, project-only MCP setup. Never edits home-directory client settings. */
-import { readFile, readdir, realpath } from 'node:fs/promises';
+import { readFile, readdir, realpath, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClientConfig, INTEGRATIONS_ROOT } from '../server/integrations.mjs';
 import { readSetupManifest, planAgentSetup, applyAgentSetup } from './agent-config-merge.mjs';
 import { appPaths } from './app-paths.mjs';
+import { forwardInstalledApp } from './installed-app.mjs';
+
+async function existingSourceWorkspace(workspace) {
+  try {
+    const pkg = JSON.parse(await readFile(join(workspace, 'package.json'), 'utf8'));
+    if (pkg.name !== 'apply-tracker') return false;
+    return (await Promise.all(['server/store.mjs', 'src/main.jsx', 'AGENTS.md'].map(file => stat(join(workspace, file))))).every(info => info.isFile());
+  } catch { return false; }
+}
 
 export async function configureAgent(client, options = {}) {
   if (!['codex', 'claude-code', 'both'].includes(client)) throw new Error('Choose codex, claude-code or both. Example: npm run agent -- codex');
@@ -33,7 +42,7 @@ export async function configureAgent(client, options = {}) {
   for (const selected of options.monitor ? [] : clients) {
     await addSkill(join(root, 'skills/tawdheef'), join(workspace, selected === 'codex' ? '.agents/skills/tawdheef' : '.claude/skills/tawdheef'));
   }
-  if (workspace !== root) {
+  if (workspace !== root && (options.monitor || !(await existingSourceWorkspace(workspace)))) {
     // Native app bundles may be signed and read-only. Only copied guidance and
     // assistant settings belong in the separate writable project workspace.
     const introduction = `# Installed Tawdheef workspace\n\nThis is the writable assistant workspace for Tawdheef. The installed application directory is ${JSON.stringify(root)} and its Node executable is ${JSON.stringify(process.execPath)}. Use the configured apply-tracker MCP server for ordinary operations. Do not edit installed application files or run npm install in this workspace. Relative CLI/setup examples in the copied guides refer to the installed application directory; execute its scripts with the installed Node executable. The application keeps private tracking in the configured APPLY_TRACKER_DATA directory, separately from these guidance files.\n\n`;
@@ -61,6 +70,8 @@ export async function configureAgent(client, options = {}) {
 const invokedScript = process.argv[1] ? await realpath(resolve(process.argv[1])).catch(() => null) : null;
 const ownScript = await realpath(fileURLToPath(import.meta.url));
 if (invokedScript === ownScript) {
+  try { if (await forwardInstalledApp({ sourceRoot: fileURLToPath(new URL('..', import.meta.url)), entry: 'scripts/agent-setup.mjs' })) process.exit(process.exitCode ?? 0); }
+  catch (error) { console.error(error.message); process.exit(1); }
   const [client, ...flags] = process.argv.slice(2);
   if (!client || client === '--help') console.log('Connect this project: npm run agent -- codex | claude-code | both\nNative client ownership is default. --tabbio explicitly adds direct remote Tabbio MCP to the actual client; sign-in remains client-owned. --monitor prepares per-client read-only workspaces, without creating a schedule. --check previews; --json prints machine output. --local-adapters selects legacy app-owned bridges (--browser requires that mode). Preserves unrelated settings and ownership backups. Never signs into accounts or changes global settings.');
   else if (flags.some(flag => !['--browser', '--tabbio', '--local-adapters', '--monitor', '--check', '--json'].includes(flag))) { console.error('Only --tabbio, --local-adapters, --browser, --monitor, --check and --json are supported.'); process.exitCode = 1; }

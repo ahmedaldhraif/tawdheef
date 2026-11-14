@@ -12,5 +12,16 @@
   "license": "The project code license does not sublicense third-party websites, artwork or source content. Original evidence, source-specific license notes and rights remain attached to each record.",
   "notes": [
     "Contains all reviewed source records, including unresolved roster-only leads. Published contacts and recruitment routes may be untested."
-  ]
+  ],
+  "formatVersion": 2,
+  "version": "1.0.0-preview",
+  "createdBy": "ahmedaldhraif",
+  "maintainers": [
+    "ahmedaldhraif"
+  ],
+  "contributors": [],
+  "updatedAt": "2026-11-14",
+  "minimumAppVersion": "0.2.0",
+  "guide": "GUIDE.md",
+  "changelog": "CHANGELOG.md"
 }
