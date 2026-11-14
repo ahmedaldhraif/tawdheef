@@ -302,7 +302,7 @@ test('agent setup stays in the actual client while machine configuration remains
   const dialog = page.getByRole('dialog', { name: 'Assistant', exact: true });
   await expect(dialog.locator('pre, code, textarea')).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
-  expect(await page.evaluate(() => window.__setupClipboard)).toContain('Codex');
+  await expect.poll(() => page.evaluate(() => window.__setupClipboard)).toContain('Codex');
   await expect(dialog.getByRole('button', { name: 'Setup request copied', exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('compact-native-assistant.png') });
 });
