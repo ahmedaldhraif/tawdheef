@@ -161,23 +161,51 @@ test('zero confirmed outcomes stay clickable and open an honest empty result', a
 
 test('failed summaries and details remain unavailable until a successful retry', async ({ page, request }) => {
   const directory = await directoryFixture(request, 'Snapshot retry');
-  let failSummary = true, failDetails = true;
+  await page.clock.install();
+  await page.addInitScript(() => {
+    const recovered = { summary: false, details: false }, fetch = window.fetch.bind(window);
+    document.addEventListener('click', event => {
+      const button = event.target instanceof Element ? event.target.closest('button') : null;
+      if (button?.textContent.trim() !== 'Retry') return;
+      if (button.closest('.directory-snapshot')) recovered.summary = true;
+      if (button.closest('.snapshot-detail')) recovered.details = true;
+    }, true);
+    window.fetch = (input, options) => {
+      const url = new URL(typeof input === 'string' ? input : input.url, location.href);
+      if (url.pathname !== '/api/snapshot') return fetch(input, options);
+      const kind = url.searchParams.has('metric') ? 'details' : 'summary';
+      const headers = new Headers(options?.headers || input?.headers);
+      // Classify each request when it is made, not after a later Retry click.
+      // Automatic reads keep failing until that kind's actual manual retry.
+      headers.set('X-Snapshot-Fixture-Recovery', recovered[kind] ? kind : 'pending');
+      return fetch(input, { ...options, headers });
+    };
+  });
+  let failedSummaryReads = 0;
   await page.route('**/api/snapshot?*', route => {
     const url = route.request().url(), details = new URL(url).searchParams.has('metric');
-    if (details ? failDetails : failSummary) return route.fulfill({ status: 503, json: { error: 'Snapshot fixture is temporarily unavailable.' } });
+    if (route.request().headers()['x-snapshot-fixture-recovery'] !== (details ? 'details' : 'summary')) {
+      if (!details) failedSummaryReads++;
+      return route.fulfill({ status: 503, json: { error: 'Snapshot fixture is temporarily unavailable.' } });
+    }
     return route.fulfill({ json: responseFor(url, directory, { applications: 2, profiles: 0, emails: 1 }, { applications: fakeItems(directory, 2, 'applications') }) });
   });
   await openDirectory(page, directory);
   await expect(snapshot(page).getByRole('alert')).toContainText('Couldn’t load totals.');
   await expect(metric(page, 'applications')).toBeDisabled();
   await expect(metric(page, 'applications', 0)).toHaveCount(0);
-  failSummary = false;
+  await expect(page.locator('.table-scroll')).toHaveAttribute('aria-busy', 'false');
+  const beforeRefresh = failedSummaryReads;
+  await page.clock.runFor(15100);
+  await expect.poll(() => failedSummaryReads).toBeGreaterThan(beforeRefresh);
+  await expect(snapshot(page).getByRole('alert')).toContainText('Couldn’t load totals.');
+  await expect(metric(page, 'applications')).toBeDisabled();
+  await expect(metric(page, 'applications', 0)).toHaveCount(0);
   await snapshot(page).getByRole('button', { name: /Retry/ }).click();
   await metric(page, 'applications', 2).click();
   const dialog = page.getByRole('dialog', { name: 'Applications sent', exact: true });
   await expect(dialog.getByRole('alert')).toContainText('Couldn’t load records.');
   await expect(dialog).not.toContainText(/No .*applications/i);
-  failDetails = false;
   await dialog.getByRole('button', { name: /Retry/ }).click();
   await expect(records(dialog)).toHaveCount(2);
   await expect(dialog.getByRole('alert')).toHaveCount(0);
