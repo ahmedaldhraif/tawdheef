@@ -45,6 +45,7 @@ import CompanyFilters from './CompanyFilters.jsx';
 import CompanyProgress, { PROGRESS_LABELS } from './CompanyProgress.jsx';
 import DirectorySnapshot from './DirectorySnapshot.jsx';
 import ConnectionsHub from './ConnectionsHub.jsx';
+import MonitoringPanel from './MonitoringPanel.jsx';
 import WorkspaceBackground from './WorkspaceBackground.jsx';
 import CalendarPanel from './CalendarPanel.jsx';
 import ProviderLogo from './ProviderLogo.jsx';
@@ -86,6 +87,111 @@ const FIELDS = {
   followUpAt: "Follow-up",
 };
 const AR = {
+  'Assistant': 'المساعد',
+  'Tabbio CV': 'سيرة Tabbio الذاتية',
+  'Calendar': 'التقويم',
+  'Browser & computer use': 'المتصفح والتحكم بالجهاز',
+  'Passwords': 'كلمات المرور',
+  'In your browser': 'في متصفحك',
+  'Optional': 'اختياري',
+  'Connected': 'متصل',
+  'Reconnect': 'إعادة الاتصال',
+  'Connecting…': 'جارٍ الاتصال…',
+  'Done': 'تم',
+  'Back to connections': 'العودة إلى الاتصالات',
+  'Check connections': 'فحص الاتصالات',
+  'Checking connections…': 'جارٍ فحص الاتصالات…',
+  'Connections ready': 'الاتصالات جاهزة',
+  'Checked': 'تم الفحص',
+  'Sign-in checked': 'تم فحص الدخول',
+  'View setup': 'الإعداد',
+  'Copy setup request': 'نسخ طلب الإعداد',
+  'Setup request copied': 'تم نسخ طلب الإعداد',
+  'Copy into your assistant': 'انسخ الطلب إلى مساعدك',
+  'Open Codex setup': 'فتح إعداد Codex',
+  'Open Claude Code setup': 'فتح إعداد Claude Code',
+  'Set up browser tools': 'إعداد أدوات المتصفح',
+  'Open Tabbio CV': 'فتح سيرة Tabbio الذاتية',
+  'Open email connection': 'فتح اتصال البريد',
+  'Open calendar connection': 'فتح اتصال التقويم',
+  'Choose a directory': 'اختيار دليل',
+  'Test Codex': 'اختبار Codex',
+  'Test Claude Code': 'اختبار Claude Code',
+  'Testing agent…': 'جارٍ اختبار المساعد…',
+  'Use Codex for Run': 'استخدام Codex للتشغيل',
+  'Use Claude Code for Run': 'استخدام Claude Code للتشغيل',
+  'Test your assistant with one small read-only model check.': 'اختبر اتصال مساعدك بالنموذج بمهمة قصيرة للقراءة فقط.',
+  'Model access is checked when your assistant starts work.': 'يتحقق المساعد من الوصول إلى النموذج عند بدء العمل.',
+  'Open your assistant, check its access, then test again.': 'افتح مساعدك وتحقق من صلاحية الوصول، ثم أعد الاختبار.',
+  'The agent check did not return a verified result. Try again.': 'لم يؤكد اختبار المساعد النتيجة. حاول مرة أخرى.',
+  'The setup request could not be prepared. Try again.': 'تعذّر تجهيز طلب الإعداد. حاول مرة أخرى.',
+  'Browser and computer use are managed in your assistant.': 'يتولى مساعدك إدارة أدوات المتصفح والتحكم بالجهاز.',
+  'Your assistant can check supported tools and guide you through setup. Sign-ins and identity checks may need you.': 'يمكن لمساعدك فحص الأدوات المدعومة وإرشادك لإعدادها. قد يحتاج تسجيل الدخول والتحقق من الهوية إلى تدخلك.',
+  'Website passwords stay in your browser or password manager.': 'تبقى كلمات مرور المواقع في متصفحك أو مدير كلمات المرور.',
+  'Your assistant reuses existing accounts and checks your connected primary email before creating an account. Sign-ins and identity checks may need you.': 'يعيد مساعدك استخدام الحسابات الموجودة ويتحقق من بريدك الأساسي المتصل قبل إنشاء حساب. قد يحتاج تسجيل الدخول والتحقق من الهوية إلى تدخلك.',
+  'Change': 'تغيير',
+  'Monitoring': 'المتابعة',
+  'Loading monitoring settings…': 'جارٍ تحميل إعدادات المتابعة…',
+  'Monitor with': 'المتابعة عبر',
+  'What to monitor': 'ما تريد متابعته',
+  'Matching jobs': 'الوظائف المناسبة',
+  'Application emails': 'رسائل طلبات التوظيف',
+  'Companies': 'الجهات',
+  'Scope': 'النطاق',
+  'Saved companies': 'الجهات المحفوظة',
+  'saved company': 'جهة محفوظة',
+  'saved companies': 'جهات محفوظة',
+  'saved directory': 'دليل محفوظ',
+  'saved directories': 'أدلة محفوظة',
+  'Use current list': 'استخدام القائمة الحالية',
+  'Choose a calendar': 'اختيار تقويم',
+  'Choose a calendar to monitor.': 'اختر تقويماً لمتابعته.',
+  'Open Calendar in Connections': 'فتح التقويم في الاتصالات',
+  'Loading calendars…': 'جارٍ تحميل التقويمات…',
+  'Calendar events in the next 14 days.': 'أحداث التقويم خلال الأيام الأربعة عشر القادمة.',
+  'Frequency': 'التكرار',
+  'Your saved time zone': 'منطقتك الزمنية المحفوظة',
+  'Check in progress': 'الفحص جارٍ',
+  'Last check': 'آخر فحص',
+  'Last successful check': 'آخر فحص ناجح',
+  'Last result': 'آخر نتيجة',
+  'unread update': 'تحديث غير مقروء',
+  'unread updates': 'تحديثات غير مقروءة',
+  'source needs attention': 'مصدر يحتاج إلى متابعة',
+  'sources need attention': 'مصادر تحتاج إلى متابعة',
+  'Awaiting first check': 'بانتظار أول فحص',
+  'Set up the local schedule in': 'أعِدّ جدول المتابعة المحلي في',
+  'Monitoring is off': 'المتابعة متوقفة',
+  'Recent updates': 'آخر التحديثات',
+  'Update': 'تحديث',
+  'Found': 'جديد',
+  'Changed': 'تغيّر',
+  'Source': 'المصدر',
+  'Open company': 'فتح الجهة',
+  'Mark as read': 'تحديد كمقروء',
+  'Marking as read…': 'جارٍ التحديد كمقروء…',
+  'No updates recorded yet.': 'لا توجد تحديثات مسجلة بعد.',
+  'Your assistant checks for changes. Applications, messages and calendar changes need a separate request.': 'يتابع مساعدك التغييرات. يتطلب تقديم الطلبات وإرسال الرسائل وتعديل التقويم طلباً منفصلاً.',
+  'Preparing request…': 'جارٍ تجهيز الطلب…',
+  'Schedule request copied': 'تم نسخ طلب الجدولة',
+  'Copy schedule request': 'نسخ طلب الجدولة',
+  'Paste into': 'الصق الطلب في',
+  'Creating the schedule happens there.': 'يُنشأ جدول المتابعة هناك.',
+  'The schedule request could not be prepared. Try again.': 'تعذّر تجهيز طلب الجدولة. حاول مرة أخرى.',
+  'The update could not be marked as read. Try again.': 'تعذّر تحديد التحديث كمقروء. حاول مرة أخرى.',
+  'Calendars could not be loaded. Check your connection and try again.': 'تعذّر تحميل التقويمات. تحقق من الاتصال وحاول مرة أخرى.',
+  'Local reply checks': 'فحص الردود محلياً',
+  'For all directories.': 'لجميع الأدلة.',
+  'Preferences': 'التفضيلات',
+  'Latest report': 'آخر تقرير',
+  'Scheduled updates need this computer awake and online.': 'تحتاج التحديثات المجدولة إلى بقاء هذا الجهاز مستيقظاً ومتصلاً بالإنترنت.',
+  'Original CV for uploads': 'ملف السيرة الذاتية الأصلي للرفع',
+  'Choose your existing PDF or DOCX for sites that ask for a file. It stays on this computer until an authorized upload.': 'اختر ملف سيرتك الذاتية الحالي بصيغة PDF أو DOCX للمواقع التي تطلب ملفاً. يبقى على هذا الجهاز حتى تسمح برفعه.',
+  'CV file': 'ملف السيرة الذاتية',
+  'Saving…': 'جارٍ الحفظ…',
+  'Choose a PDF or DOCX file up to 10 MB.': 'اختر ملف PDF أو DOCX بحجم لا يتجاوز 10 ميغابايت.',
+  'The file could not be read. Choose it again.': 'تعذّرت قراءة الملف. اختره مرة أخرى.',
+  'Run actions': 'إجراءات التشغيل',
   'Directory snapshot': 'ملخص الدليل',
   'Snapshot period': 'فترة الملخص',
   'All companies': 'جميع الشركات',
@@ -289,6 +395,7 @@ async function api(path, method = "GET", body) {
   return data;
 }
 function App() {
+  const settingsDraft = useRef(null);
   const [boot, setBoot] = useState(null),
     [active, setActive] = useState(
       localStorage.getItem("apply-directory") || "uae",
@@ -1274,6 +1381,10 @@ function App() {
       )}
       {modal?.type === "settings" && (
         <SettingsDialog
+          draftRef={settingsDraft}
+          monitoringScope={runScope}
+          onOpenConnections={() => setModal({ type: 'connections' })}
+          onOpenCompany={async id => { setModal(null); await openDetail({ id }); }}
           reports={boot.reports}
           checkReplies={async () => {
             const result = await api("/refresh", "POST", {});
@@ -1288,7 +1399,7 @@ function App() {
           }}
           t={t}
           settings={boot.settings}
-          close={() => setModal(null)}
+          close={() => { settingsDraft.current = null; setModal(null); }}
           save={async (values) => {
             const keys = [
                     "refreshFrequency",
@@ -1307,13 +1418,19 @@ function App() {
               Object.fromEntries(keys.map((key) => [key, values[key]])),
             );
             await loadBoot();
+            settingsDraft.current = null;
             setModal(null);
             notify(t("Saved"));
           }}
         />
       )}
-      {modal?.type === 'connections' && <ConnectionsHub api={api} connections={boot.connections} Modal={Modal} t={t} close={() => setModal(null)} open={(kind, provider) => setModal(kind === 'ai' ? { type: 'ai', client: provider } : { type: 'connection', kind, provider })} />}
-      {modal?.type === 'connection' && modal.kind === 'calendar' && <CalendarPanel conn={boot.connections.find(c => c.kind === 'calendar')} provider={modal.provider} api={api} updated={loadBoot} close={() => setModal(null)} back={() => setModal({ type: 'connections' })} notify={notify} Modal={Modal} t={t} safeHref={safeHref} />}
+      {modal?.type === 'connections' && <ConnectionsHub api={api} connections={boot.connections} settings={boot.settings} restoreNavigation={modal.restoreNavigation === true}
+        onSettingsChange={async patch => { const saved = await api('/settings', 'PATCH', patch); await loadBoot(); return saved; }}
+        onTestAgent={assistant => api('/assistant-check', 'POST', { assistant, explicit: true })}
+        onCopyCapabilityRequest={kind => api(`/agent-capabilities/recipe?kind=${encodeURIComponent(kind)}&assistant=${boot.settings.preferredAssistant || 'codex'}`)}
+        onNextStep={action => action === 'directory' ? setModal(null) : action === 'schedule' ? setModal({ type: 'settings' }) : undefined}
+        Modal={Modal} t={t} close={() => setModal(null)} open={(kind, provider) => setModal(kind === 'ai' ? { type: 'ai', client: provider } : { type: 'connection', kind, provider })} />}
+      {modal?.type === 'connection' && modal.kind === 'calendar' && <CalendarPanel conn={boot.connections.find(c => c.kind === 'calendar')} provider={modal.provider} api={api} updated={loadBoot} close={() => setModal(null)} back={() => setModal({ type: 'connections', restoreNavigation: true })} notify={notify} Modal={Modal} t={t} safeHref={safeHref} />}
       {modal?.type === "connection" && modal.kind !== 'calendar' && (
         <ConnectionPanel
           api={api}
@@ -1324,7 +1441,7 @@ function App() {
           conn={boot.connections.find((c) => c.kind === modal.kind && (!modal.provider || c.provider === modal.provider || c.adapter === modal.provider))}
           provider={modal.provider}
          
-          back={() => setModal({ type: 'connections' })}
+          back={() => setModal({ type: 'connections', restoreNavigation: true })}
           close={() => {
             setModal(null);
             loadBoot();
@@ -1334,10 +1451,12 @@ function App() {
         />
       )}
       {modal?.type === "ai" && (
-        <AIDialog initialClient={modal.client} t={t} close={() => setModal(null)} back={() => setModal({ type: 'connections' })} notify={notify} />
+        <AIDialog initialClient={modal.client} t={t} close={() => setModal(null)} back={() => setModal({ type: 'connections', restoreNavigation: true })} notify={notify} />
       )}
       {modal?.type === "run" && directory && (
         <RunDialog
+          preferredAssistant={boot.settings.preferredAssistant}
+          onChangeAssistant={() => setModal({ type: 'connections' })}
           t={t}
           directory={directory}
           selected={selected}
@@ -1841,6 +1960,10 @@ function SettingsDialog({
   reports = [],
   checkReplies,
   generateReport,
+  monitoringScope,
+  draftRef,
+  onOpenConnections,
+  onOpenCompany,
 }) {
   const [actionBusy, setActionBusy] = useState(""),
     [actionError, setActionError] = useState(""),
@@ -1863,7 +1986,28 @@ function SettingsDialog({
     }
   }
 
-  const [v, setV] = useState({ ...settings });
+  const [v, setV] = useState(draftRef?.current?.values || { ...settings });
+  const [monitor, setMonitor] = useState(draftRef?.current?.monitor || null), [monitorStatus, setMonitorStatus] = useState(null), [monitorError, setMonitorError] = useState(''), [monitorUpdates, setMonitorUpdates] = useState([]), [calendars, setCalendars] = useState([]);
+  const savedMonitor = useRef(null);
+  useEffect(() => {
+    let active = true;
+    Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]).then(([value, updates]) => {
+      if (!active) return;
+      savedMonitor.current = value.config;
+      setMonitor(previous => previous || value.config); setMonitorStatus(value.status); setMonitorUpdates(updates.items || []);
+    }).catch(error => { if (active) setMonitorError(error.message); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor }; }, [v, monitor]);
+  async function saveMonitor() {
+    if (!monitor || !savedMonitor.current) return monitor;
+    const prepared = { ...monitor, timezone: v.timezone };
+    if (JSON.stringify(prepared) === JSON.stringify(savedMonitor.current)) return prepared;
+    const { revision, ...patch } = prepared;
+    const value = await api('/monitoring', 'PATCH', { expectedRevision: revision, explicit: true, patch });
+    savedMonitor.current = value.config; setMonitor(value.config); setMonitorStatus(value.status);
+    return value.config;
+  }
   const [background, setBackground] = useState(null),
     [startupBusy, setStartupBusy] = useState(false),
     [startupError, setStartupError] = useState("");
@@ -1910,18 +2054,28 @@ function SettingsDialog({
           event.preventDefault();
           if (pending) return;
           setSaveBusy(true); setSaveError('');
-          try { await save(v); } catch (error) { setSaveError(error.message); }
+          try { await saveMonitor(); await save({ ...v, ...(monitor?.enabled && monitor.channels.email ? { refreshFrequency: 'manual' } : {}) }); } catch (error) { setSaveError(error.message); }
           finally { setSaveBusy(false); }
         }}
       >
         <>
-            <p className="field-hint">For all directories.</p>
+            <MonitoringPanel config={monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
+              onChange={value => { setMonitor(value); if (value.enabled && value.channels.email) setV(previous => ({ ...previous, refreshFrequency: 'manual' })); }}
+              onUseCurrentScope={async () => { setActionBusy('scope'); setMonitorError(''); try { const value = await api('/monitoring/scope', 'POST', monitoringScope); setMonitor(previous => ({ ...previous, scope: { ...value.scope, calendarIds: previous.scope.calendarIds } })); } catch (error) { setMonitorError(error.message); } finally { setActionBusy(''); } }}
+              onChooseCalendar={async () => { setActionBusy('calendars'); try { const result = await api('/calendar/calendars'); const items = result.calendars || result.items || result.data?.calendars; if (!Array.isArray(items)) throw new Error('Open Calendar in Connections and check its access.'); setCalendars(items); } finally { setActionBusy(''); } }}
+              calendars={calendars} onOpenConnections={onOpenConnections} onOpenCompany={onOpenCompany}
+              onAcknowledge={async update => { await api(`/monitoring/updates/${encodeURIComponent(update.id)}/ack`, 'POST', { expectedRevision: update.revision }); const [value, updates] = await Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]); setMonitorStatus(value.status); setMonitorUpdates(updates.items || []); }}
+              onCopyRequest={async () => { const config = await saveMonitor(); return api('/monitoring/recipe', 'POST', { configurationRevision: config.revision, assistant: config.assistant }); }} />
+            {monitorError && <p className="form-error" role="alert">{monitorError}</p>}
+            <details className="advanced"><summary>{t('Local reply checks')}</summary>
+            <p className="field-hint">{t('For all directories.')}</p>
             <section className="settings-section">
               <div className="settings-update-row">
               <label>
-                Check replies
+                {t('Check replies')}
                 <select
-                  value={v.refreshFrequency}
+                  value={monitor?.enabled && monitor.channels.email ? 'manual' : v.refreshFrequency}
+                  disabled={monitor?.enabled && monitor.channels.email}
                   onChange={(e) => field("refreshFrequency", e.target.value)}
                 >
                   {["manual", "hourly", "daily", "weekly"].map((f) => (
@@ -1938,11 +2092,12 @@ function SettingsDialog({
               </div>
               <p className="field-hint">{settings.lastRefreshAt ? `Last check: ${new Date(settings.lastRefreshAt).toLocaleString()}` : 'Not checked yet'}</p>
             </section>
+            </details>
             <section className="settings-section">
               <h3>{t("Report schedule")}</h3>
               <div className="form-row">
                 <label>
-                  Frequency
+                  {t('Frequency')}
                   <select
                     value={v.reportFrequency}
                     onChange={(e) => field("reportFrequency", e.target.value)}
@@ -2021,7 +2176,7 @@ function SettingsDialog({
               )}
             </section>
             <details className="updates-report advanced">
-              <summary>Latest report</summary>
+              <summary>{t('Latest report')}</summary>
               {latestReport ? (
                 <>
                   <p className="field-hint">
@@ -2076,7 +2231,7 @@ function SettingsDialog({
               </button>
             </details>
             <details className="advanced settings-preferences">
-              <summary>Preferences</summary>
+              <summary>{t('Preferences')}</summary>
               <div className="form-row">
                 <label>
                   {t("Language")}
@@ -2116,7 +2271,7 @@ function SettingsDialog({
                 </p>
               )}
             </details>
-            <p className="field-hint">Scheduled updates need this computer awake and online.</p>
+            <p className="field-hint">{t('Scheduled updates need this computer awake and online.')}</p>
         </>
         {actionError && (
           <p className="form-error" role="alert">

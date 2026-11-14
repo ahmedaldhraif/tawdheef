@@ -25,6 +25,12 @@ Call `get_setup_status` for the current checklist. Call it with `{"verify":true,
 
 Before MCP is connected, use `node bin/apply-tracker.mjs call get_setup_status`, with a JSON input file for verification arguments. If the local app is unavailable, start it with `npm start` and check again. Do not work around a mismatched private-data directory.
 
+Connection readiness and model proof are separate. The optional **Test Codex / Test Claude Code** UI action explicitly runs a small CLI model task in an empty disposable project. Its diagnostic MCP role exposes only `get_agent_context` and `get_capabilities`, and success requires proof of both real calls. It may use the assistant's quota. It does not read real CV/mail, browse employers, send/submit, create native tasks or change client settings. Saved evidence is limited to timestamps, status/category and available numeric usage/duration. `get_setup_status.modelAccessVerified` reflects this separate point-in-time result, which expires after 24 hours; it does not establish native Desktop schedule availability or guarantee future work. A passive setup-status read never starts this test, and its invocation is not a general MCP tool.
+
+Usage counters come from terminal CLI events. Missing values remain unknown; cache counters have different inclusion rules in Codex and Claude. Client cost fields are estimates rather than authoritative bills. Do not infer token savings or billing from byte counts alone.
+
+The two-tool limit describes the diagnostic **tracker MCP catalog**. Codex's normal built-in tools and client policies remain in effect; the diagnostic prompt forbids using them to inspect real files or providers. Inherited Codex MCP servers are disabled for that invocation after a read-only metadata check, and the fixture uses a fresh server name. Unsafe/unreadable metadata stops the test before a model task. This does not modify global client configuration or weaken its sandbox.
+
 ## Connect once
 
 After `npm start`, run `npm run agent -- codex` or `npm run agent -- claude-code`. This explicitly creates project MCP settings and installs the Tawdheef skill for that client. `--check` previews changes. Setup preserves unrelated settings, upgrades only unchanged Tawdheef-owned entries and skill files, and backs up changes under private `.tawdheef-setup/backups/`. Edited or ambiguous entries require review. Open this folder in your client and approve its project/server trust prompt. This is configuration, not an account sign-in.
@@ -96,6 +102,8 @@ node bin/apply-tracker.mjs call get_snapshot --input-file snapshot.json
 
 `compact:false` includes full source fields in a company page. Prefer single-record evidence reads to repeated bulk source dumps. `get_connection_tools` also supports `search`, `limit` and `offset` and returns `{items,total,nextOffset}`.
 
+Managed company attempts receive `get_agent_context.attempt`: one scoped run, a company summary and an exact bounded candidate-source excerpt. Their `get_run` returns only the assigned target with total/completed counts, actions, filters and expiry; normal clients retain full target lists. A CV excerpt is not an inferred or independently verified profile. Read `get_company` for original evidence before editing, and more `get_cv` pages whenever relevant facts are missing. The CV's SHA256 identifies the full cached JSON across the brief and pages; do not mix versions after a refresh. Payload limits and scoped tools reduce context bulk, but do not establish a billed-token saving.
+
 Example read/filter input:
 
 ```json
@@ -132,6 +140,14 @@ A durable email or form intent keeps its original company, run ID, purpose, role
 
 `check_submission` is a read-only preflight, not an email reservation or authorization renewal. An external client must still avoid parallel duplicate form submissions. A cancelled, completed or expired run cannot regain authority through an update.
 
+## Career sign-in and original CV uploads
+
+Call `get_registration_context({companyId})` before a new career registration. Its `primaryEmail` comes from the observed connected mailbox; missing identity requires the person to connect the address they intend to use. Existing accounts keep their original login. Inspect prior account/profile evidence before creating anything, and never create another mailbox or change an account email as a workaround.
+
+The user's supported browser/password manager owns career credentials. The tracker does not inspect/export vaults or verify that a manager can fill this site. Ask for unlock, CAPTCHA, approval or essential declarations when required. Save only a non-secret manager reference/login email with confirmed account evidence; never put passwords or recovery codes in tracker notes, prompts or logs.
+
+The person can select an original PDF/DOCX up to 10 MB in Connections. `get_cv_file` exposes filename, size, MIME and SHA256 metadata; it does not verify candidate facts. For an authorized file-upload step, call `prepare_cv_attachment` with the current `runId`, `companyId` and `purpose:"cv_upload"`. It stages exact bytes under the private browser output folder. Use the returned path with supported browser upload tools. Reserve the actual form with `prepare_form_submission` before final Submit and resolve only its real confirmation. Local staging is neither upload evidence nor an email attachment. The current email tool has no attachment input. Do not generate a CV from cached JSON, publish the CV, change its visibility or invent a provider export URL.
+
 ## Background connections and schedules
 
 Company records include `progress` counts per event. Application records preserve `milestones` with the event, timestamp, destination, URL and evidence even after later status updates. The optional Progress column opens this history. Reports add `accountsCreated`, `profilesCreated`, `cvsUploaded`, `cvsSent` and `talentPoolsJoined`; each is the number of distinct companies with that recorded achievement in the reporting window, not a raw event count.
@@ -142,11 +158,12 @@ The running local app owns provider sessions and rotating OAuth credentials. Age
 - `get_cv` reads the cached Tabbio response. `refresh:true` asks the local app to use its configured `readCV` tool. Long responses are paged by `offset` and `maxChars`; a returned payload is not verification of CV contents.
 - `get_report` reads a summary without creating or sending anything.
 - `generate_report` saves a local report by default. `sendEmail:true` explicitly requests delivery to the recipient already enabled in Settings and uses the saved reporting window; omit `since` for email delivery. A pending or uncertain email remains unconfirmed.
-- Schedule settings apply across directories. The **Settings** gear beside Connections contains reply checks, reports, language and background startup. Last update entries open company history.
+- **Settings → Monitoring** saves selected read-only sources and prepares a request for a local native Codex/Claude Desktop task. Follow [Monitoring](MONITORING.md) for its dedicated project-only tools, revision checks, status and wake/app requirements. A copied request is not a created task; reported task metadata is not independently verified scheduler status.
+- Existing **Local reply checks** and report settings apply across directories. They remain separate from native monitoring. Keep local reply checks manual when native email monitoring owns the same work. Last update entries open company history.
 
 No scheduled action starts applications, creates profiles, shares CVs or automatically sends follow-ups. The computer must be awake and online for provider work. Read-only tool discovery does not prove that the configured provider response shape supports sending or reply normalization; verify actual results after connecting.
 
-The background app checks due schedules each minute; closing the assistant chat or browser tab does not stop it. Stopping the local server or shutting down the computer stops checks. Explicit start-at-login installs a per-user Windows launcher, macOS LaunchAgent or Linux XDG entry; it does not enable schedules or start a job-search run. Removing login startup leaves an already running app alone. Report generation uses saved reporting/email preferences. Unknown progress remains unknown; repeated milestones do not inflate distinct-company totals. Native OS login execution requires platform release verification.
+Legacy local reply/report schedules use the running background app's clock; closing the assistant chat does not stop those enabled checks. Native Monitoring uses the selected desktop client's local clock and needs that client, the computer and Tawdheef available. Stopping the local server prevents provider work. Explicit start-at-login installs a per-user Windows launcher, macOS LaunchAgent or Linux XDG entry; it does not enable schedules or start a job-search run. Removing login startup leaves an already running app alone. Report generation uses saved reporting/email preferences. Unknown progress remains unknown; repeated milestones do not inflate distinct-company totals. Native OS login execution requires platform release verification.
 
 ## Directory import, export and symbols
 
@@ -206,4 +223,4 @@ The list returns full-directory `facets:{companyTypes,locations}` before filteri
 
 Before a browser's final Submit action, call `prepare_form_submission` with the company, run, role and actual form URL. A reused intent means inspect, not submit again. Call `resolve_form_submission` with `outcome:"confirmed"` and the actual confirmation evidence after inspecting success. An unknown intent persists through timeouts, cancellation and restart. Clearing it as not_submitted requires explicit user confirmation and verified evidence; lack of a receipt alone is insufficient.
 
-Scheduled checks remain provider reads and configured reports, not another applying assistant. They continue while Codex/Claude Code are closed if the local app and computer remain running. Daily, weekly and custom report schedules are in Settings.
+Scheduled work never starts applications, creates/edits career profiles, uploads/shares CVs or sends follow-ups. Native Monitoring requires the selected desktop client; legacy local reply/report schedules can run while the assistant is closed if the local app and computer remain running. See [Monitoring](MONITORING.md) before creating or changing a native task.

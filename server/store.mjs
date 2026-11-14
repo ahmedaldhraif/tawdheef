@@ -10,6 +10,7 @@ import { companyLocations, companyMatchesLocations } from '../src/company-locati
 import { normalizeRunActions, assertRunPurpose, buildRunBrief, EMAIL_PURPOSES, FORM_PURPOSE_EVENTS } from '../src/run-actions.js';
 import { createCompanyQuery } from './company-query.mjs';
 import { defaultDataDir } from '../scripts/app-paths.mjs';
+import { createMonitoringStore } from './monitoring-store.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -24,6 +25,8 @@ export const STATUSES = [
   "closed",
 ];
 const now = () => new Date().toISOString();
+const ASSISTANT_CHECK_TTL_MS = 24 * 60 * 60_000;
+const ASSISTANT_CHECK_CATEGORIES = ['assistant_missing', 'configuration', 'reasoning_setting', 'model_access', 'tool_proof_missing', 'probe_failed', 'probe_interrupted'];
 const calendarDay = (value, timeZone) => {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone,
@@ -79,6 +82,16 @@ function stringFields(value, keys) {
   for (const key of keys)
     if (key in value)
       requireValue(typeof value[key] === "string", `${key} must be text.`);
+}
+function attemptUsage(value) {
+  const counts = ['inputTokens', 'cachedInputTokens', 'cacheCreationInputTokens', 'outputTokens', 'reasoningOutputTokens', 'turns', 'toolCalls'];
+  const keys = ['schemaVersion', 'source', ...counts, 'clientEstimatedCostUsd'];
+  record(value, 'Supply structured assistant usage, without messages or reasoning.');
+  requireValue(Object.keys(value).every(key => keys.includes(key)), 'Keep only supported numeric assistant usage fields.');
+  requireValue(value.schemaVersion === 1 && ['codex.turn.completed', 'claude.result'].includes(value.source), 'Use a supported assistant usage source.');
+  for (const key of counts) if (value[key] !== undefined && value[key] !== null) requireValue(Number.isSafeInteger(value[key]) && value[key] >= 0, `${key} must be a nonnegative safe integer or null.`);
+  if (value.clientEstimatedCostUsd !== undefined && value.clientEstimatedCostUsd !== null) requireValue(typeof value.clientEstimatedCostUsd === 'number' && Number.isFinite(value.clientEstimatedCostUsd) && value.clientEstimatedCostUsd >= 0, 'Assistant cost must be a finite nonnegative number or null.');
+  return structuredClone(value);
 }
 function columnList(value) {
   requireValue(
@@ -201,6 +214,7 @@ export function openStore({
     emailReports: false,
     reportEmail: "",
     language: "en",
+    preferredAssistant: "codex",
     cvLink: "",
     cvText: "",
     lastRefreshAt: null,
@@ -283,6 +297,7 @@ export function openStore({
     const submitted = new Set(store.listApplications().filter(application => application.appliedAt).map(application => application.companyId));
     return rows.filter(company => ['not_started', 'ready'].includes(company.status) && !submitted.has(company.id));
   }
+  const monitoring = createMonitoringStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError });
   const store = {
     dataDir,
     close() {
@@ -413,6 +428,38 @@ export function openStore({
         statusCounts: result.statusCounts,
         attentionCounts: result.attentionCounts,
       };
+    },
+    snapshotMonitoringScope(input = {}) {
+      record(input);
+      requireValue(Object.keys(input).every(key => ['directoryId', 'search', 'status', 'attention', 'companyTypes', 'locations', 'companyIds'].includes(key)), 'Use only the current directory, filters and selected company IDs for monitoring scope.');
+      stringFields(input, ['directoryId']);
+      const ownTransaction = !db.isTransaction;
+      if (ownTransaction) db.exec('BEGIN');
+      try {
+        const directory = typeof input.directoryId === 'string' && read('directories', input.directoryId);
+        requireValue(directory && !directory.archived, 'Choose an active directory for monitoring.');
+        const filters = companyFilter(input);
+        let selected;
+        if (input.companyIds !== undefined) {
+          requireValue(Array.isArray(input.companyIds) && input.companyIds.every(value => typeof value === 'string'), 'Company IDs must be a list of text.');
+          selected = [...new Set(input.companyIds)];
+          const count = Number(db.prepare("SELECT COUNT(*) AS n FROM companies WHERE directory_id=? AND json_extract(payload,'$.archived') IS NOT 1 AND id IN (SELECT value FROM json_each(?))").get(directory.id, JSON.stringify(selected)).n);
+          requireValue(count === selected.length, 'All selected companies must belong to this active directory. Refresh the list and select again.');
+        }
+        const companyIds = companyQuery.ids({ directoryId: directory.id, filters, companyIds: selected, today: calendarDay(now(), store.getSettings().timezone), sort: 'name', direction: 'asc' });
+        requireValue(companyIds.length > 0, 'No companies match this monitoring selection. Change the filters or select companies first.');
+        const result = {
+          scope: { directoryIds: [directory.id], companyIds, calendarIds: [] },
+          count: companyIds.length, directoryName: directory.name,
+          summary: `${companyIds.length} ${companyIds.length === 1 ? 'company' : 'companies'} from ${directory.name}, saved from the current ${selected === undefined ? 'filtered list' : 'selection and filters'}.`,
+        };
+        if (ownTransaction) db.exec('COMMIT');
+        return result;
+      } catch (error) {
+        companyQuery.invalidate();
+        if (ownTransaction) db.exec('ROLLBACK');
+        throw error;
+      }
     },
     getCompany(companyId) {
       const c = parse(
@@ -1081,13 +1128,17 @@ export function openStore({
         write("runs", r.id, r); return r;
       });
     },
-    finishRunTarget(runId, companyId, { status, reason = "" }) {
+    finishRunTarget(runId, companyId, { status, reason = "", usage, durationMs }) {
       return tx(() => {
         const r = store.getRun(runId);
         requireValue(r.managed && r.activeCompanyId === companyId, "This company is not active in this queue.");
         requireValue(["applied", "checked", "failed", "needs_you", "uncertain", "skipped"].includes(status), "Choose a valid queue outcome.");
+        if (durationMs !== undefined) requireValue(typeof durationMs === 'number' && Number.isFinite(durationMs) && durationMs >= 0, 'Assistant duration must be a finite nonnegative number.');
+        const measured = usage === undefined || usage === null ? undefined : attemptUsage(usage);
         const target = r.targets.find(t => t.companyId === companyId);
         Object.assign(target, { status, reason: text(reason, 500), finishedAt: now() });
+        if (measured !== undefined) target.usage = measured;
+        if (durationMs !== undefined) target.durationMs = durationMs;
         r.activeCompanyId = null; r.completed = r.targets.filter(t => !["pending", "working"].includes(t.status)).length; r.updatedAt = now();
         write("runs", r.id, r);
         activity("run_company_finished", `${status}: ${text(reason, 500)}`, companyId);
@@ -1241,6 +1292,44 @@ export function openStore({
       delete settings.dailyCap; // Earlier versions imposed a daily count; runs now have no app count limit.
       return settings;
     },
+    getAssistantCheck({ assistant = store.getSettings().preferredAssistant } = {}) {
+      requireValue(['codex', 'claude-code'].includes(assistant), 'Choose Codex or Claude Code for the agent check.');
+      const saved = read('settings', `assistant_check:${assistant}`);
+      const age = saved?.checkedAt ? currentMs() - Date.parse(saved.checkedAt) : Infinity;
+      const interrupted = saved?.status === 'checking' && currentMs() - Date.parse(saved.startedAt) > 150_000;
+      const expired = saved?.status === 'ready' && (age < 0 || age > ASSISTANT_CHECK_TTL_MS);
+      const status = interrupted || expired ? 'needs_you' : saved?.status || 'not_checked';
+      const category = interrupted ? 'probe_interrupted' : expired ? 'check_expired' : saved?.category || null;
+      return {
+        assistant, status, modelAccessVerified: status === 'ready',
+        checkedAt: saved?.checkedAt || null, startedAt: saved?.startedAt || null,
+        lastSuccessAt: saved?.lastSuccessAt || null,
+        expiresAt: saved?.status === 'ready' && saved.checkedAt ? new Date(Date.parse(saved.checkedAt) + ASSISTANT_CHECK_TTL_MS).toISOString() : null,
+        clientVersion: saved?.clientVersion || null, category,
+        usage: saved?.usage || null, durationMs: saved?.durationMs ?? null,
+        scope: 'isolated_fixture',
+      };
+    },
+    recordAssistantCheck(input) {
+      record(input);
+      requireValue(Object.keys(input).every(key => ['assistant', 'status', 'category', 'clientVersion', 'usage', 'durationMs'].includes(key)), 'Save only numeric agent-check metadata and supported status fields.');
+      const { assistant, status, category = null, clientVersion = null, usage = null, durationMs = null } = input;
+      requireValue(['codex', 'claude-code'].includes(assistant), 'Choose Codex or Claude Code for the agent check.');
+      requireValue(['checking', 'ready', 'needs_you'].includes(status), 'Choose a supported agent-check status.');
+      requireValue(category === null || ASSISTANT_CHECK_CATEGORIES.includes(category), 'Use a supported agent-check error category.');
+      requireValue(status === 'needs_you' || category === null, 'Only an unsuccessful check has an error category.');
+      requireValue(clientVersion === null || (typeof clientVersion === 'string' && clientVersion.length <= 100 && /^\d+\.\d+\.\d+(?:[-+][\w.-]{1,64})?$/.test(clientVersion)), 'Save an observed client version or null.');
+      requireValue(durationMs === null || (typeof durationMs === 'number' && Number.isFinite(durationMs) && durationMs >= 0), 'Agent-check duration must be a finite nonnegative number or null.');
+      const safeUsage = usage === null ? null : attemptUsage(usage);
+      const previous = read('settings', `assistant_check:${assistant}`), at = now();
+      write('settings', `assistant_check:${assistant}`, {
+        assistant, status, category, clientVersion, usage: safeUsage, durationMs,
+        startedAt: status === 'checking' ? at : previous?.startedAt || at,
+        checkedAt: status === 'checking' ? previous?.checkedAt || null : at,
+        lastSuccessAt: status === 'ready' ? at : previous?.lastSuccessAt || null,
+      });
+      return store.getAssistantCheck({ assistant });
+    },
     updateSettings(patch) {
       record(patch);
       stringFields(patch, [
@@ -1250,6 +1339,7 @@ export function openStore({
         "timezone",
         "reportEmail",
         "language",
+        "preferredAssistant",
         "cvLink",
         "cvText",
       ]);
@@ -1290,6 +1380,10 @@ export function openStore({
         ["manual", "hourly", "daily", "weekly"].includes(s.refreshFrequency),
         "Choose a supported update frequency.",
       );
+      if ('refreshFrequency' in patch && patch.refreshFrequency !== 'manual') {
+        const monitoring = read('settings', 'monitoring');
+        requireValue(!(monitoring?.enabled && monitoring.channels.email), 'Turn off native email monitoring before scheduling local reply checks.');
+      }
       requireValue(
         ["off", "daily", "weekly", "custom"].includes(s.reportFrequency),
         "Choose a supported report frequency.",
@@ -1312,6 +1406,7 @@ export function openStore({
         ["en", "ar"].includes(s.language),
         "Choose English or Arabic.",
       );
+      requireValue(['codex', 'claude-code'].includes(s.preferredAssistant), 'Choose Codex or Claude Code as the preferred assistant.');
       try {
         new Intl.DateTimeFormat("en", { timeZone: s.timezone }).format();
       } catch {
@@ -1402,6 +1497,7 @@ export function openStore({
         .map(parse);
     },
     addActivity: activity,
+    ...monitoring,
   };
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");

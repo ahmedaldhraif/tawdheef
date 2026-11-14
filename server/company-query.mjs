@@ -111,7 +111,7 @@ export function createCompanyQuery(db, statuses) {
 
   db.function('tracker_company_search', (id, query) => Number(companies.get(id)?.search.some(value => value.includes(query)) || false));
 
-  function list({ directoryId, filters, limit, offset, sort, direction, today }) {
+  function list({ directoryId, filters, limit, offset, sort, direction, today, idsOnly = false, companyIds }) {
     // One read snapshot keeps metadata, counts and the page consistent with
     // concurrent UI/CLI/MCP writers. Other connections invalidate data_version;
     // this connection's writes are tracked centrally by saveCompany.
@@ -140,7 +140,17 @@ export function createCompanyQuery(db, statuses) {
         where.push(`q.id IN (SELECT company_id FROM tracker_company_places WHERE location_id IN (${filters.locations.map(() => '?').join(',')}))`);
         args.push(...filters.locations);
       }
+      if (idsOnly && companyIds !== undefined) {
+        where.push('q.id IN (SELECT value FROM json_each(?))');
+        args.push(JSON.stringify(companyIds));
+      }
       const predicate = where.join(' AND ');
+      if (idsOnly) {
+        const result = db.prepare(`SELECT q.id FROM tracker_company_query q WHERE ${predicate}
+          ORDER BY q.${sort}_rank ${direction === 'desc' ? 'DESC' : 'ASC'},q.source_order ASC`).all(...args).map(row => row.id);
+        if (ownTransaction) db.exec('COMMIT');
+        return result;
+      }
       const counts = db.prepare(`SELECT COUNT(*) AS total,
         COALESCE(SUM(CASE WHEN q.status IN ('not_started','ready') AND NOT EXISTS (
           SELECT 1 FROM applications a WHERE a.company_id=q.id AND COALESCE(json_extract(a.payload,'$.appliedAt'),'') <> ''
@@ -160,5 +170,5 @@ export function createCompanyQuery(db, statuses) {
       throw error;
     }
   }
-  return { list, invalidate, companyChanged };
+  return { list, ids: options => list({ ...options, idsOnly: true }), invalidate, companyChanged };
 }

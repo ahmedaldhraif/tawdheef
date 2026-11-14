@@ -16,6 +16,11 @@ import { createClientConfig, integrationStatus, integrationPresets } from './int
 import { calendarAction } from './calendar.mjs';
 import { createAgentRunner, checkAssistantAuthentication } from './agent-runner.mjs';
 import { createSetupStatus } from './setup-status.mjs';
+import { createMonitoring } from './monitoring.mjs';
+import { monitoringRecipe, capabilityRecipe, registrationContext } from './client-guidance.mjs';
+import { saveCvArtifact, getCvArtifactStatus, stageCvArtifact, MAX_CV_ARTIFACT_BYTES } from './cv-artifacts.mjs';
+import { assertRunPurpose } from '../src/run-actions.js';
+import { createAgentCheck } from './agent-check.mjs';
 
 const port = Number(process.env.APPLY_TRACKER_PORT || 4000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
@@ -25,6 +30,8 @@ const store = openStore();
 const connections = new ConnectionManager({ dataDir: store.dataDir, baseUrl });
 const setupStatus = createSetupStatus({ store, connections, port });
 const scheduler = createScheduler({ store, connections, baseUrl });
+const monitoring = createMonitoring({ store, connections });
+const agentCheck = createAgentCheck({ store, port });
 const agentRunner = createAgentRunner({ store, port, checkReady: async executable => {
   await checkAssistantAuthentication(executable);
   try { await readConnectedCv({ store, connections }); }
@@ -93,6 +100,37 @@ app.get('/api/integrations', wrap(() => integrationStatus({ dataDir: store.dataD
 app.get('/api/integrations/presets', wrap(() => integrationPresets({ dataDir: store.dataDir, port })));
 app.get('/api/setup-status', wrap(req => setupStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
 app.post('/api/setup-status/check', wrap(req => setupStatus({ ...req.body, verify: true })));
+app.get('/api/assistant-check', wrap(req => agentCheck.get({ assistant: req.query.assistant || store.getSettings().preferredAssistant })));
+app.post('/api/assistant-check', wrap(req => agentCheck.verify(req.body)));
+app.get('/api/agent-capabilities/recipe', wrap(req => capabilityRecipe({ assistant: req.query.assistant || store.getSettings().preferredAssistant, kind: req.query.kind })));
+app.get('/api/registration-context', wrap(req => registrationContext({ store, connections, companyId: req.query.companyId })));
+app.get('/api/monitoring', wrap(() => store.getMonitoring()));
+app.patch('/api/monitoring', wrap(req => store.configureMonitoring(req.body)));
+app.post('/api/monitoring/scope', wrap(req => store.snapshotMonitoringScope(req.body)));
+app.post('/api/monitoring/recipe', wrap(req => monitoringRecipe({ store, ...req.body })));
+app.post('/api/monitoring/check', wrap(req => monitoring.check(req.body)));
+app.post('/api/monitoring/observations', wrap(req => {
+  const check = store.getMonitoringCheck({ id: req.body.id, token: req.body.token });
+  if (!['jobs', 'profiles'].includes(check.source.kind)) throw new AppError('Connected mail/calendar observations are recorded by the local provider reader.');
+  return monitoring.record(req.body);
+}));
+app.get('/api/monitoring/updates', wrap(req => store.listMonitoringUpdates({ ...req.query,
+  ...(req.query.limit ? { limit: Number(req.query.limit) } : {}), ...(req.query.offset ? { offset: Number(req.query.offset) } : {}),
+  ...(req.query.unread !== undefined ? { unread: req.query.unread === 'true' } : {}), ...(req.query.compact !== undefined ? { compact: req.query.compact !== 'false' } : {}) })));
+app.post('/api/monitoring/updates/:id/ack', wrap(req => store.acknowledgeMonitoringUpdate({ id: req.params.id, expectedRevision: req.body.expectedRevision })));
+app.get('/api/cv/file', wrap(() => getCvArtifactStatus({ dataDir: store.dataDir })));
+app.post('/api/cv/file', wrap(req => {
+  if (!req.body || Object.keys(req.body).some(key => !['filename', 'contentBase64'].includes(key)) || typeof req.body.contentBase64 !== 'string' || req.body.contentBase64.length > Math.ceil(MAX_CV_ARTIFACT_BYTES * 4 / 3) + 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(req.body.contentBase64)) throw new AppError('Choose an original PDF or DOCX file up to 10 MB.');
+  return saveCvArtifact({ dataDir: store.dataDir, bytes: Buffer.from(req.body.contentBase64, 'base64'), filename: req.body.filename });
+}));
+app.post('/api/cv/file/prepare', wrap(req => {
+  const { runId, companyId, purpose } = req.body || {};
+  if (purpose !== 'cv_upload') throw new AppError('Prepare a CV file only for an authorized CV-upload step.');
+  const run = store.getRun(runId);
+  if (run.explicit !== true || run.mode !== 'send_and_submit' || run.status !== 'running' || Date.parse(run.expiresAt) <= Date.now() || !run.companyIds.includes(companyId) || (run.managed && run.activeCompanyId !== companyId)) throw new AppError('Use the current company in an active explicitly authorized run.');
+  assertRunPurpose(run, purpose);
+  return stageCvArtifact({ dataDir: store.dataDir, runId, companyId });
+}));
 app.get('/api/calendar/calendars', wrap(() => calendarAction(connections, 'listCalendars')));
 app.post('/api/calendar/events', wrap(req => calendarAction(connections, 'listEvents', req.body)));
 app.post('/api/calendar/event', wrap(req => calendarAction(connections, 'createEvent', req.body)));
@@ -355,6 +393,7 @@ async function shutdown() {
   shuttingDown = true;
   await agentRunner.close();
   await scheduler.stop();
+  await agentCheck.close();
   await new Promise((resolve) => server.close(resolve));
   await connections.close();
   store.close();

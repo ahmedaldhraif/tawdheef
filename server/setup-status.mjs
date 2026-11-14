@@ -38,7 +38,8 @@ export function createSetupStatus({ store, connections, port, discover = discove
     if (assistant !== undefined && !CLIENTS.has(assistant)) throw new AppError('Choose Codex or Claude Code.');
     if (typeof verify !== 'boolean') throw new AppError('verify must be true or false.');
     const [discovered, integrations] = await Promise.all([discover(), presets({ dataDir: store.dataDir, port })]);
-    const selected = discovered.find(item => item.id === assistant) || discovered.find(item => item.installed) || discovered[0];
+    const preferred = assistant || store.getSettings().preferredAssistant;
+    const selected = discovered.find(item => item.id === preferred) || discovered.find(item => item.installed) || discovered[0];
     const active = selected?.id || null;
     const records = connections.list();
     const cv = records.find(item => item.kind === 'tabbio');
@@ -95,10 +96,12 @@ export function createSetupStatus({ store, connections, port, discover = discove
       : missing ? { id: missing.id, title: missing.status === 'not_checked' ? 'Check connections' : missing.title, detail: missing.detail, action: missing.status === 'not_checked' ? 'check' : missing.action }
         : { id: 'check', title: 'Check connections', detail: 'Confirm assistant sign-in and read access to your CV.', action: 'check' };
     return {
-      checkedAt: new Date(clock()).toISOString(), verified: verify, ready, assistant: active, modelAccessVerified: false,
+      checkedAt: new Date(clock()).toISOString(), verified: verify, ready, assistant: active,
+      modelAccessVerified: active && store.getAssistantCheck ? store.getAssistantCheck({ assistant: active }).modelAccessVerified === true : false,
+      modelCheck: active && store.getAssistantCheck ? store.getAssistantCheck({ assistant: active }) : null,
       assistants: discovered.map(({ id, name, installed }) => ({ id, name, installed, status: id === active ? assistantState : installed ? 'not_checked' : 'needs_action', detail: id === active ? assistantDetail : installed ? 'Installed; sign-in not checked.' : 'Not installed.' })),
       steps, nextStep, setupPrompt: SETUP_PROMPT,
-      note: 'Setup never sends an application, email or calendar invitation. No model task was run, so model availability and provider limits were not verified. Readiness is a point-in-time check; provider permissions and website requirements still apply.',
+      note: 'Setup never sends an application, email or calendar invitation. Connection checks do not run a model task; an explicit Test agent result is shown separately. Readiness is a point-in-time check; provider permissions and website requirements still apply.',
     };
   }
   return async function setupStatus(input = {}) {

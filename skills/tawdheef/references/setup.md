@@ -11,8 +11,11 @@ guessing a `releases/latest` URL. The skill alone is not the app download.
 1. Work in the intended checkout. Read `AGENTS.md` and `docs/FIRST-RUN.md`.
    Inspect the existing Node version, data path, app and selected client. Reuse
    working configuration; never delete a custom config to make setup pass.
-2. Node.js 24 or newer is required. With it installed, `npm start` installs
-   missing locked dependencies, builds and starts the local app. Check
+2. Source checkouts prefer Node.js 26 LTS; patched Node 24 remains compatible.
+   `npm start` installs missing locked dependencies without optional bridges,
+   builds and starts the local app. Platform apps contain Node and the interface;
+   use their launcher and exact bundled runtime, without installing developer
+   tools or rebuilding at launch. Check
    `npm run doctor`, then call `get_setup_status`. Before MCP is available,
    use `node bin/apply-tracker.mjs call get_setup_status`.
 3. Install missing browser tools with `npm run setup -- --browser` for the
@@ -36,10 +39,27 @@ guessing a `releases/latest` URL. The skill alone is not the app download.
    They complete sign-in, consent and credential entry in the local form.
    Native Gmail/Outlook need their own OAuth registration; iCloud Mail uses an
    Apple app-specific password. Do not request secrets in chat or records.
+   New career registrations use the observed connected primary mailbox; existing
+   accounts retain their original login. Browser/password-manager setup belongs
+   to the supported client and never exports a vault into the tracker.
 5. Call `get_setup_status` with `verify:true` and `assistant:"codex"` or
    `assistant:"claude-code"`. It checks that client's local sign-in state
    and reads the connected CV through the running app. Report Ready or one
    actionable Needs you item. Installation does not prove account access.
+
+The separate Test Codex/Test Claude Code action explicitly requests one small
+CLI model/MCP proof in an empty disposable project and may use assistant quota.
+Only fixture context/capability calls are permitted. It never reads real CV/mail,
+browses employers, creates tasks or sends/submits. Keep that observed result
+separate from Check connections and native Desktop schedule availability; never run a model from
+a passive status read or infer success from an assistant saying “Ready.”
+
+For upload forms, the person may select an original PDF/DOCX up to 10 MB in
+Connections. The exact-byte file is separate from connected CV facts and does
+not become an email attachment merely by being staged. Do not manufacture a
+PDF from cached content or invent an export URL. Follow `docs/MONITORING.md`
+only when local native monitoring is separately requested; setup does not
+create or enable its schedule.
 
 The app's Run button needs the chosen assistant, a readable connected CV, a
 directory and browser tools or a configured email route. Email is optional

@@ -1562,6 +1562,469 @@
         "idempotentHint": true,
         "openWorldHint": true
       }
+    },
+    {
+      "name": "get_monitoring",
+      "description": "Read compact saved monitoring scope and actual recorded check status. Native Codex/Claude local schedules own the clock. External schedule status is reported, never inferred from settings or copying a request.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "configure_monitoring",
+      "description": "Save explicitly selected read-only monitoring scope with expectedRevision. This configures tracker permissions, not a native schedule. New applications, profile edits, CV sharing, email sends and calendar writes remain unauthorized.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "explicit": {
+            "type": "boolean",
+            "const": true
+          },
+          "patch": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "expectedRevision",
+          "patch"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_monitoring_recipe",
+      "description": "Prepare instructions for the selected client to create one LOCAL native schedule. Does not create or enable a native task or prove its status. Use the dedicated read-only monitoring workspace.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "configurationRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          }
+        },
+        "required": [
+          "configurationRevision",
+          "assistant"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "report_monitoring_schedule",
+      "description": "Record an agent-reported native task ID/description after real creation or inspection. Stored as reported, not externally verified. No schedule is created; no next-run time is invented.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "configurationRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "configurationRevision",
+          "assistant"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_monitoring_sources",
+      "description": "Read a bounded page of the saved monitoring sources. kind: jobs, profiles, email (tracked submission threads only), calendar (selected calendars). Use these exact returned IDs. Process pages without dumping the entire directory into context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "jobs",
+              "profiles",
+              "email",
+              "calendar"
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "check_updates",
+      "description": "Begin one revision-bound read-only source check. Mail/calendar are read by the local provider owner. Public careers/profile pages return untrusted bounded evidence for interpretation. No application, account/profile edit, send, upload or calendar write. Reused checks must not be duplicated.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "configurationRevision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "jobs",
+                  "profiles",
+                  "email",
+                  "calendar"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "configurationRevision",
+          "assistant",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "record_monitoring_observations",
+      "description": "Finish this jobs/profile check with actual dated evidence and its private check token. New means first observed here, not newly published. Partial/blocked/missing sources stay unknown; never infer a deletion or application outcome from absence. Mail/calendar observations belong to the local provider reader. For executable-script pages, sourceRead records your actual fresh native browser read; it is client-reported evidence, never a static HTML change proof.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "checked",
+              "partial",
+              "unknown",
+              "error"
+            ]
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "sourceRead": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "native_browser"
+                ]
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "observedAt": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4000
+              }
+            },
+            "required": [
+              "method",
+              "url",
+              "observedAt",
+              "evidence"
+            ],
+            "additionalProperties": false
+          },
+          "observations": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "externalId": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "new",
+                    "changed",
+                    "unknown",
+                    "error"
+                  ]
+                },
+                "data": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "evidence": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "externalId",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "token",
+          "status",
+          "observations"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_updates",
+      "description": "Read paginated local monitoring observations and evidence. Found/changed/unknown records are not applications, CV views or verified employer interest. compact:false adds evidence data; default keeps responses small.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "changed",
+              "unknown",
+              "error"
+            ]
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "compact": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "acknowledge_update",
+      "description": "Mark one local update read with its expected revision. Does not acknowledge a provider message or modify any website/calendar.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_cv_file",
+      "description": "Inspect metadata for an original CV file explicitly selected in Connections. Does not return file contents, verify CV facts or manufacture a PDF from cached JSON.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_registration_context",
+      "description": "Read the observed connected primary email and non-secret credential-handling guidance before creating a career account. Existing accounts retain their original login; passwords belong in the supported client/browser manager, never tracker records.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "prepare_cv_attachment",
+      "description": "Stage exact bytes of the user-selected original CV for a browser upload in an active authorized run. Does not upload/share it or change CV visibility. Use the returned path with supported browser tools; reserve the real form before Submit.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "cv_upload"
+            ]
+          }
+        },
+        "required": [
+          "runId",
+          "companyId",
+          "purpose"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
     }
   ]
 }

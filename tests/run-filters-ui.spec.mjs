@@ -164,6 +164,11 @@ test('Run includes every filtered company across pages and applies search and st
 });
 
 test('future-only actions are explicit, all off disables Run, and the assistant is remembered', async ({ page, request }) => {
+  await page.route('**/api/bootstrap', async route => {
+    const response = await route.fetch(), boot = await response.json();
+    boot.settings.preferredAssistant = 'claude-code';
+    return route.fulfill({ response, json: boot });
+  });
   const directory = await openFixture(page, request, 'Guided future only');
   const sent = await fakeRun(page, directory);
   const dialog = await openRun(page);
@@ -175,13 +180,14 @@ test('future-only actions are explicit, all off disables Run, and the assistant 
   await expect(dialog).toContainText('Choose at least one action to start.');
   await expect(dialog).toContainText('For future opportunities:');
   await dialog.getByRole('checkbox', { name: 'Email my CV for future opportunities', exact: true }).check();
-  await dialog.getByRole('combobox', { name: 'Assistant for this run', exact: true }).selectOption('claude-code');
+  await expect(dialog.getByRole('combobox', { name: 'Assistant for this run', exact: true })).toHaveCount(0);
+  await expect(dialog.locator('.run-assistant-selected')).toContainText('Claude Code');
   await expect(dialog.getByRole('button', { name: /^Run on/ })).toBeEnabled();
   await dialog.getByRole('button', { name: 'Run on 6 companies', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Run progress', exact: true })).toBeVisible();
   expect(sent().actions).toEqual({ applyMatchingJobs: false, createProfiles: false, sendCvEmails: true });
   expect(sent().assistant).toBe('claude-code');
-  expect(await page.evaluate(() => localStorage.getItem('tawdheef-assistant'))).toBe('claude-code');
+  await expect(dialog.locator('.run-assistant-selected')).toHaveCount(0);
 });
 
 test('failed and stale Run previews cannot enable the wrong scope or actions', async ({ page, request }) => {

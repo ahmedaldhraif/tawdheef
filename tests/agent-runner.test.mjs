@@ -73,6 +73,8 @@ test('assistant command keeps sandbox and permissions intact', () => {
   assert.ok(codex.includes('read-only')); assert.ok(!codex.some(a => /bypass|ignore-rules/.test(a)));
   const claude = launchArguments('claude-code', {}, '/fixture');
   assert.ok(claude.includes('default')); assert.ok(!claude.some(a => /bypass|acceptEdits/.test(a)));
+  assert.equal(claude[claude.indexOf('--tools') + 1], 'Read,WebFetch,WebSearch,ToolSearch');
+  assert.ok(!claude[claude.indexOf('--allowedTools') + 1].includes('Bash'));
 });
 
 test('real subprocess nonzero exits and a stalled company terminate without exposing output', async () => {
@@ -99,7 +101,47 @@ test('provider access error envelopes stop the queue without exposing their priv
 test('ordinary company text and tool output containing HTTP 401 cannot stop the queue', async () => {
   const messages = [{ type: 'assistant', message: { content: [{ type: 'text', text: 'Company reference says API Error: 401.' }] } }, { type: 'user', message: { content: [{ type: 'tool_result', is_error: true, content: 'HTTP 401 from a company website' }] } }];
   const result = await executeAssistant({ executable: process.execPath, args: ['-e', `process.stdout.write(${JSON.stringify(messages.map(message => JSON.stringify(message)).join('\n') + '\n')})`], cwd: process.cwd(), env: process.env });
-  assert.deepEqual(result, { status: 'finished' });
+  assert.equal(result.status, 'finished'); assert.equal(result.usage, null); assert.ok(Number.isFinite(result.durationMs));
+});
+
+test('a real fixture subprocess reports only numeric terminal usage, including a final line without newline', async () => {
+  const events = [
+    { type: 'item.completed', item: { type: 'mcp_tool_call', id: 'fixture-tool', result: 'private CV' } },
+    { type: 'item.completed', item: { type: 'reasoning', text: 'private reasoning' } },
+    { type: 'turn.completed', usage: { input_tokens: 25, cached_input_tokens: 20, output_tokens: 5 } },
+  ];
+  const ticks = [100, 250];
+  const result = await executeAssistant({ executable: process.execPath, args: ['-e', `process.stdout.write(${JSON.stringify(events.map(event => JSON.stringify(event)).join('\n'))})`], cwd: process.cwd(), env: process.env, clock: () => ticks.shift() });
+  assert.equal(result.status, 'finished'); assert.equal(result.durationMs, 150); assert.equal(result.usage.inputTokens, 25); assert.equal(result.usage.cachedInputTokens, 20); assert.equal(result.usage.toolCalls, 1);
+  assert.ok(!JSON.stringify(result).includes('private'));
+});
+
+test('an unsupported ToolSearch name produces an actionable configuration blocker without a permission fallback', async () => {
+  const result = await executeAssistant({ executable: process.execPath, args: ['-e', 'process.stderr.write("Invalid tool name: ToolSearch");process.exit(1)'], cwd: process.cwd(), env: process.env });
+  assert.equal(result.configurationError, true); assert.equal(result.global, true); assert.equal(result.status, 'needs_you'); assert.match(result.reason, /Update that CLI/);
+});
+
+test('an unsupported saved reasoning setting gets one specific handoff without retaining its raw value', async () => {
+  const message = 'Error loading config.toml: unknown variant `private-setting-value`\nin `model_reasoning_effort`';
+  const result = await executeAssistant({ executable: process.execPath, args: ['-e', `process.stderr.write(${JSON.stringify(message)});process.exit(1)`], cwd: process.cwd(), env: process.env });
+  assert.equal(result.configurationField, 'model_reasoning_effort'); assert.equal(result.status, 'needs_you');
+  assert.match(result.reason, /supported reasoning level/); assert.ok(!JSON.stringify(result).includes('private-setting-value'));
+});
+
+test('queue forwards sanitized numeric execution evidence through the store domain operation', async t => {
+  const execution = { status: 'finished', durationMs: 125, usage: { schemaVersion: 1, source: 'claude.result', inputTokens: 12, cachedInputTokens: 34, outputTokens: 5, toolCalls: 2, privateText: 'private candidate or model output' } };
+  const { store, runner, start } = await fixture(t, async () => execution, 1);
+  const captured = [], original = store.finishRunTarget;
+  store.finishRunTarget = (...args) => { captured.push(args[2]); return original(...args); };
+  const run = await start(); await runner.settled();
+  assert.equal(captured.length, 1); assert.equal(captured[0].durationMs, 125); assert.equal(captured[0].usage.inputTokens, 12); assert.equal(captured[0].usage.cachedInputTokens, 34);
+  assert.equal(captured[0].usage.cacheCreationInputTokens, null); assert.ok(!JSON.stringify(captured[0]).includes('private'));
+  const reopened = openStore({ dataDir: store.dataDir, seed: false });
+  try {
+    const target = reopened.getRun(run.id).targets[0];
+    assert.deepEqual(target.usage, captured[0].usage); assert.equal(target.durationMs, 125);
+    assert.ok(!JSON.stringify(target).includes('private candidate or model output'));
+  } finally { reopened.close(); }
 });
 
 test('a child that refuses to terminate returns a bounded blocker instead of hanging Stop', async () => {

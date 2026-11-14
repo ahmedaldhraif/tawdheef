@@ -174,6 +174,8 @@ test('assistant compatibility uses only version/help and requires the actual saf
   assert.ok(calls.every(args => !args.includes('login') && !args.includes('-p')));
   await assert.rejects(checkAssistantCompatibility(executable, { run: async ({ args }) => args[0] === '--version' ? '1.2.3' : '--json' }), /missing required/);
   const claudeCalls = [];
-  await checkAssistantCompatibility({ id: 'claude-code', command: 'fixture', args: [] }, { run: async ({ args }) => { claudeCalls.push(args); return args[0] === '--version' ? '2.1.4 (Claude Code)' : '--mcp-config --output-format --permission-mode'; } });
+  const claude = await checkAssistantCompatibility({ id: 'claude-code', command: 'fixture', args: [] }, { run: async ({ args }) => { claudeCalls.push(args); return args[0] === '--version' ? '2.1.4 (Claude Code)' : '--mcp-config --output-format --permission-mode'; } });
   assert.ok(claudeCalls[1].includes('--strict-mcp-config')); assert.ok(claudeCalls[1].includes('default')); assert.ok(!claudeCalls[1].includes('-p'));
+  assert.equal(claudeCalls[1][claudeCalls[1].indexOf('--tools') + 1], 'Read,WebFetch,WebSearch,ToolSearch');
+  assert.deepEqual(claude.toolSearch, { requested: true, modelSupportVerified: false });
 });

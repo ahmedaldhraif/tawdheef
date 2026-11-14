@@ -126,11 +126,15 @@ Filter the list by city, company type or status, or check specific companies, th
 
 Matching jobs and career profiles are selected by default. If no suitable role is found, the profile choice lets your agent register an account, complete your profile, upload your CV or join an offered talent pool. Existing accounts are reused. CV-only emails are a separate option, off by default. Only a confirmed application is marked **Applied**; accounts, profiles and CV progress have their own records and report counts.
 
-Sign-in, CAPTCHA and provider approvals may need you. LinkedIn application actions stay manual. Scheduled reply checks and reports never start applications, create career profiles or send follow-ups. The background app can check replies while the assistant is closed and the computer is awake.
+Sign-in, CAPTCHA and provider approvals may need you. LinkedIn application actions stay manual. Scheduled work never starts applications, creates career profiles or sends follow-ups. Existing local reply/report schedules use the background app and can run while the assistant is closed and the computer is awake.
+
+**Settings → Monitoring** prepares selected read-only careers/profile updates, tracked replies and calendar reads for a local native Codex/Claude Desktop task. Copy its request into that client and inspect the actual task. The computer, native client and local tracker must be available. A copied request or reported task ID does not prove the schedule is running. [Monitoring setup and status](docs/MONITORING.md).
+
+For new career accounts, your agent uses the observed connected primary mailbox and reuses existing accounts with their original login. Credentials stay in your supported browser/password manager. Select an original PDF/DOCX in **Connections → Your CV** for browser file uploads; readable CV content and the original file are separate. **Check connections** checks prerequisites; the optional **Test Codex / Test Claude Code** runs one small, isolated model/MCP proof and may use your assistant quota.
 
 ## Local storage and costs
 
-Tawdheef's original code is free and MIT licensed. Your AI client, model usage and connected providers may have separate costs or limits. Private data stays in `.local/`, excluded from Git. The app binds to loopback; it is not a hosted mobile account. Connected services still communicate online. Credentials rely on local filesystem permissions rather than encryption by the tracker.
+Tawdheef's original code is free and MIT licensed. Your AI client, model usage and connected providers may have separate costs or limits. Private data stays in the configured local folder: `.local/` for a source checkout, or per-user application data for native apps. Keep it out of Git and releases. The app binds to loopback; it is not a hosted mobile account. Connected services still communicate online. Credentials rely on local filesystem permissions rather than encryption by the tracker.
 
 Stop with `npm run background:stop`. Check readiness with `npm run doctor`. See the [quickstart](docs/QUICKSTART.md) for backups, updates and optional browser tools.
 

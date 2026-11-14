@@ -6,6 +6,30 @@ Connections shows account actions, credential fields and observed status. **Copy
 
 The app's Run needs a readable connected CV and a signed-in assistant. Email and calendar are optional. Use **Check connections** to verify assistant sign-in and a fresh CV read; a saved connection or installed executable alone is not proof of readiness. The check does not send applications, create career profiles, send email or create calendar events. A successful CV read confirms access, not the accuracy of its contents.
 
+The separate **Test Codex / Test Claude Code** button runs one explicitly requested model task through that assistant's CLI against an empty disposable tracker. Actual calls to `get_agent_context` and `get_capabilities` establish the fixture proof. It may consume client quota; it does not read real CV/mail, browse employers, send, submit or create a task. Only status, timestamps and available numeric usage are retained. Connection readiness, this point-in-time CLI model proof and native Desktop schedule availability are separate observations.
+
+## Primary email and career credentials
+
+`get_registration_context` returns the observed address of the currently connected mailbox. Use that address for a new career account; if absent, connect the person's intended mailbox or record Needs you. A mailbox connection does not sign into a career portal. Reuse an existing career account and its original email even if the connected mailbox has changed. Never create another mailbox or change an existing account's login to make a run proceed.
+
+Use the selected client's supported browser/password manager to generate, save and fill credentials. The **Passwords** setup request helps inspect available support without exporting a vault; tracker configuration does not prove access. The person handles unlock, sign-in and approval. Tawdheef is not a password vault: do not put passwords, master keys or recovery codes in records, prompts, logs or a copied schedule. A non-secret manager reference and login email may accompany confirmed account evidence.
+
+## Original CV file
+
+Select the person's original PDF or DOCX, at most 10 MB, under **Your CV** for file-upload forms. Tawdheef stores exact private bytes with a SHA256 and sanitized filename. Format and integrity checks do not verify the CV's facts or remove active content. Connected `readCV` content remains the source for matching; an arbitrary provider response/link is not evidence that an original upload is downloadable.
+
+`get_cv_file` reads metadata. `prepare_cv_attachment` requires an active authorized run, current company and `purpose:"cv_upload"`; it stages the exact file under the private browser output folder. The browser performs the actual upload and the normal form-intent/receipt rules still apply. Missing or changed files require the person; never generate a replacement CV or invent a download/share URL.
+
+The current `send_application_email` input has no attachment argument. A selected/staged file is not an email attachment. Use only actual supported body content or an existing authorized link; never claim a file was sent from local staging alone.
+
+## Browser access and monitoring
+
+**Browser & computer use** can copy a request to inspect the selected client's supported tools and test only a blank page. A browser smoke check does not establish OS computer control, an employer login or password-manager access. Keep client/provider approval rules intact.
+
+For saved read-only updates, use [Monitoring](MONITORING.md). The native desktop client owns the local schedule; Connections and copied requests do not create it or independently verify it.
+
+## Custom MCP connections
+
 The following sections describe custom MCP connections, which remain available under Advanced. Native providers use the same private storage and single-owner background process. Native account sign-in uses one-time state and PKCE; calendar grants are separate from mail. iCloud requires an Apple app-specific password; no main account password belongs in the app.
 
 The tracker connects to an MCP server supplied by the user. Gmail and Outlook

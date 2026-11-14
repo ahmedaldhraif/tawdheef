@@ -7,6 +7,9 @@ import { execFile } from 'node:child_process';
 import { AppError } from './store.mjs';
 import { createClientConfig, integrationPresets } from './integrations.mjs';
 import { OPERATOR_TOOLS, operatorPrompt } from './operator-contract.mjs';
+import { createAssistantUsageCollector, createAssistantEventReader, sanitizeAssistantUsage } from './assistant-usage.mjs';
+
+const CLAUDE_TOOLS = 'Read,WebFetch,WebSearch,ToolSearch';
 
 export async function discoverAssistants({ env = process.env, platform = process.platform, home = homedir() } = {}) {
   // Finder/Explorer launches do not necessarily inherit an interactive shell PATH.
@@ -65,15 +68,15 @@ export async function checkAssistantCompatibility(executable, { run = readAssist
   if (!version) throw new AppError('The assistant CLI did not report a supported version. Update its installation.');
   const args = executable.id === 'codex'
     ? ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '--help']
-    : ['--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--permission-mode', 'default', '--tools', 'Read,WebFetch,WebSearch', '--help'];
+    : ['--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--permission-mode', 'default', '--tools', CLAUDE_TOOLS, '--help'];
   const help = String(await invoke(args));
   const required = executable.id === 'codex' ? ['--json', '--sandbox', '--skip-git-repo-check', '--cd'] : ['--mcp-config', '--output-format', '--permission-mode'];
   if (!required.every(flag => help.includes(flag))) throw new AppError('The assistant CLI is missing required local-run capabilities. Update it before Run.');
-  return { version, capabilitiesChecked: true };
+  return { version, capabilitiesChecked: true, ...(executable.id === 'claude-code' ? { toolSearch: { requested: true, modelSupportVerified: false } } : {}) };
 }
 
 export function launchArguments(assistant, config, cwd) {
-  if (assistant === 'claude-code') return ['-p', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: config }), '--tools', 'Read,WebFetch,WebSearch', '--allowedTools', [...OPERATOR_TOOLS.map(name => `mcp__apply-tracker__${name}`), ...(config.playwright ? ['mcp__playwright__*'] : [])].join(','), '--permission-mode', 'default'];
+  if (assistant === 'claude-code') return ['-p', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--strict-mcp-config', '--mcp-config', JSON.stringify({ mcpServers: config }), '--tools', CLAUDE_TOOLS, '--allowedTools', [...OPERATOR_TOOLS.map(name => `mcp__apply-tracker__${name}`), ...(config.playwright ? ['mcp__playwright__*'] : [])].join(','), '--permission-mode', 'default'];
   const args = ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '--cd', cwd];
   for (const [name, server] of Object.entries(config)) for (const [key, value] of Object.entries(server)) {
     if (key === 'env') for (const [envKey, envValue] of Object.entries(value)) args.push('-c', `mcp_servers.${name}.env.${envKey}=${JSON.stringify(envValue)}`);
@@ -90,10 +93,11 @@ export async function checkAssistantAuthentication(executable) {
 }
 
 /** One owned subprocess per company. No shell, raw agent log, hidden model or automatic retry. */
-export function executeAssistant({ executable, args, prompt, cwd, env, signal, timeoutMs = 20 * 60_000, terminationMs = 3000, spawnProcess = spawn, onSpawn = async () => {} }) {
+export function executeAssistant({ executable, args, prompt, cwd, env, signal, timeoutMs = 20 * 60_000, terminationMs = 3000, spawnProcess = spawn, onSpawn = async () => {}, clock = () => performance.now() }) {
   return new Promise(resolve => {
-    let child, timer, watchdog, escalation, settled = false, failed = false, authError = false, accessDenied = false, configError = false, limited = false, pending = '';
-    const finish = result => { if (settled) return; settled = true; clearTimeout(timer); clearTimeout(watchdog); clearTimeout(escalation); signal?.removeEventListener('abort', abort); resolve(result); };
+    const startedAt = clock(), usage = createAssistantUsageCollector();
+    let child, timer, watchdog, escalation, settled = false, failed = false, authError = false, accessDenied = false, configError = false, reasoningConfig = false, limited = false;
+    const finish = result => { if (settled) return; settled = true; clearTimeout(timer); clearTimeout(watchdog); clearTimeout(escalation); signal?.removeEventListener('abort', abort); const elapsed = clock() - startedAt; resolve({ ...result, usage: usage.snapshot(), durationMs: Number.isFinite(elapsed) && elapsed >= 0 ? Math.round(elapsed) : null }); };
     const force = () => { try { if (process.platform !== 'win32') process.kill(-child.pid, 'SIGKILL'); else child.kill('SIGKILL'); } catch { /* Watchdog reports unconfirmed termination. */ } };
     const kill = () => {
       if (!child?.pid || watchdog) return;
@@ -111,7 +115,8 @@ export function executeAssistant({ executable, args, prompt, cwd, env, signal, t
     let timedOut = false;
     timer = setTimeout(() => { timedOut = true; kill(); }, timeoutMs);
     const classify = (text, providerEnvelope = false) => {
-      if (/error loading configuration|invalid config|unknown variant|unknown option|unrecognized (?:argument|option)/i.test(text)) configError = true;
+      if (/error loading configuration|invalid config|unknown variant|unknown option|unrecognized (?:argument|option)|invalid tool name|unknown (?:built-in )?tool[^\n]{0,30}ToolSearch/i.test(text)) configError = true;
+      if (/model_reasoning_effort/.test(text)) reasoningConfig = true;
       if (/not logged in|authentication failed|invalid_api_key|please (log|sign) in|login required|authentication_error/i.test(text)) authError = true;
       if (/rate_limit_error|usage limit|quota exceeded|rate limit exceeded/i.test(text)) limited = true;
       // Only a client error envelope can establish provider HTTP access errors.
@@ -121,16 +126,16 @@ export function executeAssistant({ executable, args, prompt, cwd, env, signal, t
         if (/(?:API\s*Error|HTTP(?:\s*Error)?|status(?:Code|\s+code)?)[^\d\n]{0,16}403\b/i.test(text)) accessDenied = true;
       }
     };
-    // Inspect error envelopes only. Application text and model reasoning never become UI logs.
-    child.stdout.on('data', chunk => {
-      pending = (pending + chunk.toString()).slice(-256_000);
-      const lines = pending.split('\n'); pending = lines.pop();
-      for (const line of lines) { try { const e = JSON.parse(line); if (e.type === 'error' || e.type === 'turn.failed' || e.is_error) { failed = true; classify(JSON.stringify(e.error || e.message || e.result || e), true); } } catch { /* Non-JSON progress is not evidence. */ } }
-    });
+    // Read only authoritative usage/error envelopes and tool IDs; retain no raw output.
+    const events = createAssistantEventReader(e => {
+      usage.observe(e);
+      if (e.type === 'error' || e.type === 'turn.failed' || e.is_error === true) { failed = true; classify(JSON.stringify(e.error || e.message || e.result || e), true); }
+    }, { onSkipped: () => usage.incomplete() });
+    child.stdout.on('data', chunk => events.write(chunk));
     child.stderr.on('data', chunk => classify(chunk.toString().slice(0,10000)));
     child.stdin.on('error', () => {});
     child.once('error', () => finish({ status: 'failed', reason: 'The assistant could not start. Check its installation.' }));
-    child.once('close', code => finish(signal?.aborted ? { status: 'stopped' } : configError ? { status: 'needs_you', global: true, configurationError: true, reason: 'The assistant CLI cannot load its current configuration or run options. Update that CLI or correct its reported settings, then press Run again.' } : authError ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider rejected authentication. Check that provider's sign-in or credentials in the assistant, then press Run again." } : accessDenied ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider denied access (HTTP 403). Review its access or policy requirements before another Run." } : limited ? { status: 'needs_you', global: true, reason: 'The assistant reached its provider limit. Wait for it to reset, then press Run again.' } : timedOut ? { status: 'failed', reason: 'This company took too long. Check for a submission receipt before retrying.' } : code !== 0 || failed ? { status: 'failed', reason: 'The assistant could not finish this company. Check its application history, then retry with Run.' } : { status: 'finished' }));
+    child.once('close', code => { events.end(); finish(signal?.aborted ? { status: 'stopped' } : configError ? { status: 'needs_you', global: true, configurationError: true, ...(reasoningConfig ? { configurationField: 'model_reasoning_effort' } : {}), reason: reasoningConfig ? 'The installed assistant CLI cannot load its saved reasoning setting. Update that CLI or choose a supported reasoning level in its settings, then try again.' : 'The assistant CLI cannot load its current configuration or run options. Update that CLI or correct its reported settings, then press Run again.' } : authError ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider rejected authentication. Check that provider's sign-in or credentials in the assistant, then press Run again." } : accessDenied ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider denied access (HTTP 403). Review its access or policy requirements before another Run." } : limited ? { status: 'needs_you', global: true, reason: 'The assistant reached its provider limit. Wait for it to reset, then press Run again.' } : timedOut ? { status: 'failed', reason: 'This company took too long. Check for a submission receipt before retrying.' } : code !== 0 || failed ? { status: 'failed', reason: 'The assistant could not finish this company. Check its application history, then retry with Run.' } : { status: 'finished' }); });
     // Record ownership before the assistant receives any work. Restart can detect a stranded process.
     Promise.resolve(onSpawn(child.pid)).then(() => { if (signal?.aborted) kill(); else child.stdin.end(prompt); }).catch(() => { failed = true; kill(); });
   });
@@ -179,7 +184,7 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
         const progress = [...new Set(current.flatMap(application => application.milestones || []).filter(milestone => milestone.at >= run.createdAt && progressLabels[milestone.event]).map(milestone => progressLabels[milestone.event]))];
         const status = applied ? 'applied' : uncertain ? 'uncertain' : needs ? 'needs_you' : failure ? 'failed' : result.status === 'finished' && current.length ? 'checked' : result.status === 'finished' ? 'needs_you' : result.status === 'stopped' ? 'needs_you' : result.status;
         const reason = applied ? 'Submission recorded with evidence.' : uncertain ? 'Inspect the previous submission before retrying.' : needs || failure ? (current.find(a => a.status === (needs ? 'needs_user' : 'error'))?.notes || 'Check application history.') : result.reason || (result.status === 'stopped' ? 'Stopped. Inspect any open application before retrying.' : progress.length ? `${progress.join('; ')}. See application history.` : current.length ? 'Company checked. See application history.' : 'No outcome recorded. Check assistant access and try again.');
-        store.finishRunTarget(run.id, companyId, { status, reason });
+        store.finishRunTarget(run.id, companyId, { status, reason, usage: sanitizeAssistantUsage(result.usage), ...(typeof result.durationMs === 'number' && Number.isFinite(result.durationMs) && result.durationMs >= 0 ? { durationMs: result.durationMs } : {}) });
         if (!applied && status === 'checked') { const c = store.getCompany(companyId); store.updateCompany(companyId, { expectedRevision: c.revision, nextAction: reason }); }
         if (result.global && store.getRun(run.id).status === 'running') { store.updateRun(run.id, { status: 'failed', notes: reason }); break; }
       }

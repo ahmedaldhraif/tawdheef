@@ -5,6 +5,7 @@ import RunActivityMark from './RunActivityMark.jsx';
 import { COMPANY_TYPES } from './company-types.js';
 import { DEFAULT_RUN_ACTIONS } from './run-actions.js';
 import './run-filters.css';
+import './agent-readiness.css';
 
 export function RunProgress({ run, open, stop }) {
   const working = run.status === 'running';
@@ -18,9 +19,9 @@ export function RunProgress({ run, open, stop }) {
   </div>;
 }
 
-export default function RunDialog({ t, directory, selected, scope, scopeLabels, run, onRunUpdate, pollingError, close, start, api, Modal, stopped }) {
+export default function RunDialog({ t, directory, selected, scope, scopeLabels, settings, preferredAssistant, onChangeAssistant, run, onRunUpdate, pollingError, close, start, api, Modal, stopped }) {
   const [instructions, setInstructions] = useState('');
-  const [assistant, setAssistant] = useState(() => localStorage.getItem('tawdheef-assistant') || 'codex');
+  const assistant = (preferredAssistant || settings?.preferredAssistant) === 'claude-code' ? 'claude-code' : 'codex';
   const [assistants, setAssistants] = useState(null);
   const [actions, setActions] = useState(() => ({ ...DEFAULT_RUN_ACTIONS, createProfiles: true }));
   const [preview, setPreview] = useState(null);
@@ -61,9 +62,9 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
     {(error || pollingError || previewError) && <div className="run-dialog-error"><p className="form-error" role="alert">{error || pollingError || previewError}</p>{previewError && !run && <button type="button" onClick={() => { setPreview(null); setPreviewError(''); setPreviewRetry(value => value + 1); }}>Check again</button>}</div>}
     <div className="run-dialog-actions">
       {run ? <><button onClick={close} disabled={busy}>Close</button>{working && <button disabled={busy} onClick={async () => { setBusy(true); try { onRunUpdate(await api(`/runs/${run.id}/stop`, 'POST')); await stopped(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Stop run</button>}</> : <>
-        <label className="run-assistant-picker"><ProviderLogo provider={assistant} size={20} decorative /><select aria-label="Assistant for this run" value={assistant} disabled={busy} onChange={event => setAssistant(event.target.value)}>{(assistants || [{ id: 'codex', name: 'Codex' }, { id: 'claude-code', name: 'Claude Code' }]).map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label>
+        <div className="run-assistant-selected"><ProviderLogo provider={assistant} size={20} decorative /><span>{assistant === 'codex' ? 'Codex' : 'Claude Code'}</span>{onChangeAssistant && <button type="button" className="text-button" disabled={busy} onClick={onChangeAssistant}>{t('Change')}</button>}</div>
         <button onClick={close} disabled={busy}>Cancel</button>
-        <button className="primary" aria-label={busy ? 'Starting…' : startLabel} disabled={busy || !count || !hasAction || !assistants?.find(client => client.id === assistant)?.installed} onClick={async () => { setBusy(true); setError(''); try { localStorage.setItem('tawdheef-assistant', assistant); onRunUpdate(await start(instructions, assistant, actions)); } catch (e) { setError(e.message); } finally { setBusy(false); } }}><Play size={15} />{busy ? 'Starting…' : 'Run'}</button>
+        <button className="primary" aria-label={busy ? 'Starting…' : startLabel} disabled={busy || !count || !hasAction || !assistants?.find(client => client.id === assistant)?.installed} onClick={async () => { setBusy(true); setError(''); try { onRunUpdate(await start(instructions, assistant, actions)); } catch (e) { setError(e.message); } finally { setBusy(false); } }}><Play size={15} />{busy ? 'Starting…' : 'Run'}</button>
       </>}
     </div>
   </div>;

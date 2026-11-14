@@ -116,6 +116,10 @@ export async function integrationStatus(options = {}) {
 
 /** Config generation is read-only. Optional servers are included only by name. */
 export async function createClientConfig(options = {}) {
+  if (options.monitor !== undefined && typeof options.monitor !== 'boolean') throw new Error('monitor must be true or false.');
+  if (options.monitorAssistant !== undefined && !['codex', 'claude-code'].includes(options.monitorAssistant)) throw new Error('Choose a supported monitoring assistant.');
+  if (options.monitor && !options.monitorAssistant) throw new Error('Choose the selected monitoring assistant for this dedicated workspace.');
+  if (options.monitor && options.include?.length) throw new Error('The monitoring workspace uses native read tools; application browser servers belong in the ordinary workspace.');
   const { root, dataDir, port } = locations(options);
   const include = options.include || [];
   if (!Array.isArray(include) || include.some(id => !['playwright', 'tabbio', 'outlook-mcp'].includes(id))) throw new Error('Choose playwright, tabbio or outlook-mcp for optional MCP servers. Google CLI is a CLI, not an MCP server.');
@@ -128,6 +132,8 @@ export async function createClientConfig(options = {}) {
     if (!item.ready) throw new Error(`${item.name} is not installed at the pinned version. ${item.nextStep}`);
     mcpServers[id] = { command: item.command, args: item.args, ...(Object.keys(item.env).length ? { env: item.env } : {}) };
   }
+  if (options.monitor) mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR = '1';
+  if (options.monitor && options.monitorAssistant) mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR_ASSISTANT = options.monitorAssistant;
   const tomlString = value => JSON.stringify(String(value));
   const codexToml = Object.entries(mcpServers).map(([name, server]) => [
     `[mcp_servers.${name}]`, `command = ${tomlString(server.command)}`, `args = ${JSON.stringify(server.args)}`,

@@ -61,6 +61,13 @@ not install, connect or authorise the tracker.
   the requested local report. A follow-up date is a reminder, not permission to
   send. Schedules never start applications, profiles, CV sharing or follow-up messages.
 
+For explicitly requested monitoring, read the checkout's `docs/MONITORING.md`.
+The selected native desktop client owns the local schedule; use the dedicated
+`--monitor` workspace and saved assistant/revision. A copied request or reported
+task ID does not prove a schedule runs. Inspect only saved read-only sources;
+blocked/partial pages remain unknown. The computer, client and tracker must be
+available. Never turn monitoring into an application/profile/CV-sharing run.
+
 ## Work through a run
 
 Filter the list first. `list_companies`, `preview_run` and `start_run` share
@@ -85,6 +92,21 @@ LinkedIn application actions remain manual.
 Login, CAPTCHA, identity checks, required declarations or provider approvals
 can need the person. Record a clear **Needs you** next action. Never put
 passwords, tokens, cookies or identity documents in a tracking record.
+
+For new career registrations, call `get_registration_context` and use the
+observed connected primary email; a missing address needs the person's chosen
+mailbox connection. Reuse existing accounts and their original sign-in.
+Credentials belong in the client's supported browser/password manager, whose
+availability the tracker does not verify. Never create a new mailbox, export a
+vault or put passwords/master keys/recovery codes in tracker records or prompts.
+
+Readable CV facts and an original file are separate. The person selects their
+original PDF/DOCX in Connections. `get_cv_file` reads metadata;
+`prepare_cv_attachment` stages exact bytes only for an authorized current
+`cv_upload` step. Use supported browser upload tools and the normal final-form
+intent/receipt checks. Staging is not an upload or email attachment. Do not
+generate a replacement from cached JSON or invent a share/export URL. Read full
+`get_cv` pages when a source excerpt lacks facts needed to decide eligibility.
 
 ## Record evidence, not intent
 

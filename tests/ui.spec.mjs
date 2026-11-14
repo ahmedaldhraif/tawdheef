@@ -235,20 +235,22 @@ test('schedule settings persist without starting application runs', async ({ pag
   const before = (await json(request, '/api/bootstrap')).runs;
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
   await dialog.getByRole('combobox', { name: 'Check replies', exact: true }).selectOption('manual');
   await dialog.getByRole('combobox', { name: /^Frequency/ }).selectOption('custom');
   await dialog.getByLabel('Every how many days?', { exact: true }).fill('3');
-  await dialog.getByLabel('Time', { exact: true }).fill('09:15');
+  await dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true }).fill('09:15');
   await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
   await dialog.getByLabel('Time zone', { exact: true }).fill('Asia/Dubai');
   await dialog.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(dialog).not.toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
   await expect(dialog.getByRole('combobox', { name: 'Check replies', exact: true })).toHaveValue('manual');
   await expect(dialog.getByRole('combobox', { name: /^Frequency/ })).toHaveValue('custom');
   await expect(dialog.getByLabel('Every how many days?', { exact: true })).toHaveValue('3');
-  await expect(dialog.getByLabel('Time', { exact: true })).toHaveValue('09:15');
+  await expect(dialog.getByRole('heading', { name: 'Report schedule', exact: true }).locator('..').getByLabel('Time', { exact: true })).toHaveValue('09:15');
   await dialog.locator('summary').filter({ hasText: /^Preferences$/ }).click();
   await expect(dialog.getByLabel('Time zone', { exact: true })).toHaveValue('Asia/Dubai');
   expect((await json(request, '/api/bootstrap')).runs).toEqual(before);
@@ -262,6 +264,7 @@ test('Settings owns schedules and preserves a manual check when saving preferenc
   const before = await json(request, '/api/bootstrap');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await dialog.locator('summary').filter({ hasText: /^Local reply checks$/ }).click();
   await expect(dialog.getByRole('button', { name: 'Check replies now', exact: true })).toBeVisible();
   await expect(dialog.locator('summary').filter({ hasText: /^Latest report$/ })).toBeVisible();
   await expect(page.locator('thead').getByRole('button', { name: 'Update schedule', exact: true })).toHaveCount(0);
@@ -340,6 +343,7 @@ test('agent setup stays concise while machine configuration remains available', 
   expect(server.env.APPLY_TRACKER_DATA).toContain('apply-tracker-ui-');
   expect(server.env.APPLY_TRACKER_PORT).toBe(new URL(baseURL).port);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('button', { name: /^Assistant —/ }).click();
   await page.getByRole('button', { name: 'Codex — View setup', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Codex setup', exact: true });
   await expect(dialog.getByRole('link', { name: 'Install Codex', exact: true })).toBeVisible();
@@ -559,6 +563,7 @@ test('email setup leads with sign-in and copies instructions without displaying 
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.__setupClipboard = text; } } }));
   await openTracker(page);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('button', { name: /^Email —/ }).click();
   await page.getByRole('button', { name: 'Gmail — Connect', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Connect email', exact: true });
   await expect(dialog.getByRole('button', { name: 'Sign in to Gmail', exact: true })).toBeVisible();
@@ -577,10 +582,12 @@ test('Connections groups real provider logos and calendar setup without claiming
   await openTracker(page);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   const hub = page.getByRole('dialog', { name: 'Connections', exact: true });
-  for (const name of ['Email', 'Calendar', 'Your CV', 'AI assistants']) await expect(hub.getByRole('heading', { name, exact: true })).toBeVisible();
+  await expect(hub.locator('.connection-category-row')).toHaveCount(6);
   await expect(hub.getByText('Connected', { exact: true })).toHaveCount(0);
-  expect(await hub.locator('img.provider-logo').evaluateAll(images => images.length === 9 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
-  await hub.getByRole('button', { name: 'Google Calendar — Connect', exact: true }).click();
+  expect(await hub.locator('img.provider-logo').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
+  await hub.getByRole('button', { name: /^Calendar —/ }).click();
+  expect(await page.getByRole('dialog').locator('img.provider-logo').evaluateAll(images => images.length === 3 && images.every(img => img.complete && img.naturalWidth > 0))).toBeTruthy();
+  await page.getByRole('button', { name: 'Google Calendar — Connect', exact: true }).click();
   const calendar = page.getByRole('dialog', { name: 'Connect Google Calendar', exact: true });
   await expect(calendar.getByRole('button', { name: 'Sign in to Google Calendar', exact: true })).toBeVisible();
   await expect(calendar.locator('.dialog-intro')).toHaveCount(0);
@@ -589,6 +596,8 @@ test('Connections groups real provider logos and calendar setup without claiming
   await expect(page.getByLabel('App-specific password', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Back to connections', exact: true }).click();
   await expect(page.getByRole('button', { name: 'ChatGPT — View setup', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Back to connections', exact: true }).click();
+  await page.getByRole('button', { name: /^Email —/ }).click();
   await page.getByRole('button', { name: 'iCloud Mail — Connect', exact: true }).click();
   await expect(page.getByLabel('iCloud Mail address', { exact: true })).toBeVisible();
   await expect(page.getByLabel('App-specific password', { exact: true })).toBeVisible();
@@ -624,6 +633,7 @@ test('mobile Connections keeps touch controls and OAuth fields readable without 
     const trigger = page.getByRole('button', { name: 'Connections', exact: true });
     expect((await trigger.boundingBox()).height).toBeGreaterThanOrEqual(44);
     await trigger.click();
+    await page.getByRole('button', { name: /^Calendar —/ }).click();
     const row = page.getByRole('button', { name: 'Google Calendar — Connect', exact: true });
     expect((await row.boundingBox()).height).toBeGreaterThanOrEqual(44);
     await row.click();
@@ -659,6 +669,7 @@ test('changing calendars ignores an older pending event response', async ({ page
   try {
     await openTracker(page);
     await page.getByRole('button', { name: 'Connections', exact: true }).click();
+    await page.getByRole('button', { name: /^Calendar —/ }).click();
     await page.getByRole('button', { name: 'Google Calendar — Connected', exact: true }).click();
     const calendar = page.getByRole('combobox', { name: 'Calendar', exact: true });
     await expect(calendar).toHaveValue('fixture-a');

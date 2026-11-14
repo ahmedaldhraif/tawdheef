@@ -6,6 +6,7 @@ import {
   FileText,
 } from "lucide-react";
 import ProviderLogo from './ProviderLogo.jsx';
+import CvFileControl from './CvFileControl.jsx';
 
 const TABBIO_URL = "https://server.tabbio.com/api/mcp";
 const parseObject = (value, label) => {
@@ -320,6 +321,7 @@ export default function ConnectionPanel({
       pending={busy}
     >
       <div className="connection-panel">
+        {!email && <CvFileControl api={api} t={t} disabled={busy} />}
         {back && <button type="button" className="text-button" disabled={busy} onClick={back}>{backLabel}</button>}
         <p className="calendar-provider-title"><ProviderLogo provider={email ? values.provider : 'tabbio'} size={32} decorative /><strong>{email ? providerName : 'Tabbio CV'}</strong></p>
 

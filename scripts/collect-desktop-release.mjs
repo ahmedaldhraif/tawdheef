@@ -1,6 +1,6 @@
 /** Attach only the six exact, successfully smoke-tested downloads to a prepared draft. */
 import { readFile, writeFile, copyFile, access } from 'node:fs/promises';
-import { constants } from 'node:fs';
+import { constants, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -8,12 +8,13 @@ import { APP_TARGETS, NODE_VERSION } from './package-app.mjs';
 import { isDirectInvocation } from './is-direct.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+export const EXPECTED_TOOL_COUNT = JSON.parse(readFileSync(new URL('../docs/tools.json', import.meta.url), 'utf8')).tools.length;
 export function validateDesktopEvidence({ report, smoke, archive, version, target }) {
   if (!APP_TARGETS.includes(target)) throw new Error('Unexpected desktop target.');
   const [platform, arch] = target.split('-'), name = `tawdheef-${version}-${target}.zip`;
   if (report.archive !== name || report.version !== version || report.platform !== platform || report.arch !== arch || report.runtime?.version !== NODE_VERSION) throw new Error(`Package identity mismatch: ${target}`);
   if (report.sha256 !== sha256(archive) || report.bytes !== archive.length) throw new Error(`Package checksum mismatch: ${target}`);
-  if (smoke.ok !== true || smoke.version !== version || smoke.platform !== platform || smoke.arch !== arch || smoke.node !== `v${NODE_VERSION}` || smoke.archive !== name || smoke.sha256 !== report.sha256 || smoke.tools !== 44) throw new Error(`Exact-archive verification missing or mismatched: ${target}`);
+  if (smoke.ok !== true || smoke.version !== version || smoke.platform !== platform || smoke.arch !== arch || smoke.node !== `v${NODE_VERSION}` || smoke.archive !== name || smoke.sha256 !== report.sha256 || smoke.tools !== EXPECTED_TOOL_COUNT) throw new Error(`Exact-archive verification missing or mismatched: ${target}`);
   if (Boolean(report.signed) !== Boolean(smoke.signing?.signed) || Boolean(report.osSigningVerified) !== Boolean(smoke.osSigningVerified)) throw new Error(`Signing evidence mismatch: ${target}`);
   if (report.signed && (!report.osSigningVerified || !smoke.osSigningVerified || (platform === 'darwin' && (!report.notarized || !smoke.signing?.notarized)))) throw new Error(`OS signing verification incomplete: ${target}`);
   return name;

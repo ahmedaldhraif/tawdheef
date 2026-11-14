@@ -16,6 +16,7 @@ Your agent uses MCP / CLI ┘
 | `AGENTS.md` | Shared operating rules: how to start, read evidence, apply, record results and recover safely. Codex reads this project instruction file. Use the plural, uppercase filename. |
 | `CLAUDE.md` | Claude Code's entry point. Imports `AGENTS.md` so both clients follow the same rules. |
 | `docs/FIRST-RUN.md` | One user prompt and a rerunnable setup checklist, including when the user needs to sign in. |
+| `docs/MONITORING.md` | Selected read-only sources, local native-client schedules and the difference between reported task metadata and actual check evidence. |
 | `skills/tawdheef/SKILL.md` | Reusable job-search workflow: shortlist, explicitly apply, review replies. References expand only when needed. |
 | `DESIGN.md` | Rules for developers changing the interface. |
 | `.agents/skills/`, `.claude/skills/` | Emil Kowalski development skills, loaded on demand. The agent setup command also places the Tawdheef skill here for the chosen client. These Markdown files do not add browser runtime weight. |
@@ -32,13 +33,16 @@ You do not need another `agent.md`, a prompt for every company, or an embedded m
 | `src/` | React screen, tables, panels, accessible controls. |
 | `server/store.mjs` | Shared SQLite records, validation and revisions. |
 | `server/index.mjs` | Loopback web server and provider session owner. |
-| `server/mcp.mjs` | 44 tool definitions and stdio MCP transport. |
+| `server/mcp.mjs` | Shared tool definitions and stdio MCP transport, with separate operator, monitor and diagnostic catalogs. |
 | `server/snapshot.mjs` | Directory snapshot counts and paginated evidence, shared by the screen, CLI and MCP. |
 | `bin/apply-tracker.mjs` | CLI over those same definitions; every tool supports `call TOOL --input-file FILE`. |
 | `server/providers/` | Gmail, Outlook, iCloud Mail, calendars and local bridge adapters. |
 | `server/agent-runner.mjs`, `server/operator-contract.mjs` | One assistant subprocess per company, durable queue outcomes and scoped operating tools. |
 | `server/setup-status.mjs` | Connection readiness shared by the Connections panel, CLI and MCP, with explicit sign-in/CV verification. |
-| `server/scheduler.mjs` | Tracked-thread refreshes and reports while the computer is awake. |
+| `server/agent-context.mjs`, `server/assistant-usage.mjs`, `server/agent-check.mjs` | Source-bound candidate excerpts, numeric CLI usage and explicitly requested disposable model/MCP proof. |
+| `server/cv-artifacts.mjs` | Private exact-byte original CV storage and run-scoped browser staging; no CV generation or content verification. |
+| `server/monitoring.mjs`, `server/monitoring-store.mjs`, `server/client-guidance.mjs` | Revision-bound monitoring sources/evidence, native-task requests and observed registration identity. The native client owns the monitoring clock. |
+| `server/scheduler.mjs` | Separate legacy tracked-thread refreshes and reports while the computer is awake. |
 | `server/email-send.mjs`, `server/calendar.mjs` | Guarded provider actions and recovery. |
 | `data/uae-directory.json` | Original public research seed, never the user's tracking database. |
 | `directories/` | Shareable directory packs and provenance. |
@@ -61,7 +65,7 @@ node bin/apply-tracker.mjs list --directory uae --limit 20
 node bin/apply-tracker.mjs call TOOL_NAME --input-file arguments.json
 ```
 
-The contract covers setup checks, directories, companies, statuses/notes, imports/exports, runs, application evidence, email, calendar, CV reads, connections, settings, schedules, snapshots, activity and reports. See [`tools.json`](tools.json) for all 44 schemas. Background lifecycle and installation use local CLI commands, not provider tools. Browser form filling comes from the user's agent/computer tools; LinkedIn actions remain manual.
+The contract covers setup checks, directories, companies, statuses/notes, imports/exports, runs, application evidence, email, calendar, CV reads/files, registration context, monitoring, connections, settings, snapshots, activity and reports. See [`tools.json`](tools.json) for the generated schemas and `get_capabilities` for the catalog actually exposed in the current role. Background lifecycle and installation use local CLI commands, not provider tools. Browser form filling comes from the user's agent/computer tools; LinkedIn actions remain manual.
 
 Only the running local app owns provider sessions. The CLI/MCP can edit offline records, but live provider operations proxy to the app with a matching private-data directory. Local records and connected online services are distinct.
 

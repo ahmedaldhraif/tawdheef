@@ -7,6 +7,9 @@
 - Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
 - Faster SQL-backed company filtering and paging, incremental edit refreshes and one visibility-aware run reader.
 - Project-only Codex/Claude setup with ownership checks and backups; provider access failures stop the queue with an actionable reason.
+- Six familiar connection categories, a shared assistant choice and an optional explicit model-access test using an empty fixture.
+- Native Codex/Claude local monitoring requests with a separate read-only workspace, saved source scope, deduplicated updates and actionable Needs you outcomes. Copying a request never claims a schedule is active.
+- Compact per-company agent context, exact bounded CV excerpts and numeric usage observations; original PDF/DOCX staging for authorized uploads and verified primary-email registration guidance.
 - Separate optional publisher signing/notarization workflow. Local operation requires no developer account; unsigned previews remain labelled unsigned.
 
 ## 0.1.2 — guides and product walkthrough

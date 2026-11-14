@@ -2,9 +2,9 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer, request } from 'node:http';
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse/sync';
 
@@ -239,4 +239,56 @@ test('HTTP list filters return full-list facets and match preview without silent
   assert.equal(started.result.filters.search, 'target'); assert.equal(started.result.filters.attention, 'needs_you');
   assert.equal(started.result.actions.applyMatchingJobs, false);
   await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+});
+
+test('HTTP native monitoring saves explicit scope without creating a task, starting a run or reading providers', async () => {
+  const { result: initial } = await json('/api/monitoring');
+  assert.equal(initial.config.enabled, false); assert.equal(initial.status.nextRunAt, null);
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'Native schedule HTTP fixture' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Selected careers source' }, { name: 'Other careers source' }] } });
+  const { result: scope } = await json('/api/monitoring/scope', { method: 'POST', body: { directoryId: directory.id, companyIds: [added.ids[0]] } });
+  assert.deepEqual(scope.scope.companyIds, [added.ids[0]]); assert.equal(scope.count, 1);
+  const patch = { enabled: true, assistant: 'claude-code', channels: { jobs: true }, scope: scope.scope };
+  assert.equal((await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: initial.config.revision, patch } })).response.status, 400);
+  const { response, result: saved } = await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: initial.config.revision, explicit: true, patch } });
+  assert.equal(response.status, 200); assert.equal(saved.status.externalScheduleStatus, 'unknown');
+  const { result: recipe } = await json('/api/monitoring/recipe', { method: 'POST', body: { assistant: 'claude-code', configurationRevision: saved.config.revision } });
+  assert.equal(recipe.creation, 'requested_only'); assert.equal(recipe.nextRunAt, null);
+  assert.ok(recipe.setup.args.includes('--monitor')); assert.match(recipe.taskPrompt, /No applications/);
+  const { result: after } = await json('/api/monitoring'); assert.equal(after.status.externalScheduleStatus, 'unknown'); assert.equal(after.status.activeChecks, 0);
+  assert.equal((await json('/api/monitoring/updates?unread=true&limit=1')).result.total, 0);
+  await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: saved.config.revision, patch: { enabled: false } } });
+});
+
+test('HTTP original CV staging preserves bytes and requires an active authorized company and upload purpose', async () => {
+  assert.equal((await json('/api/cv/file')).result.available, false);
+  const original = Buffer.from('%PDF-1.7\nExact original HTTP fixture, never a real candidate.\n%%EOF\n');
+  const saved = await json('/api/cv/file', { method: 'POST', body: { filename: 'Original fixture.pdf', contentBase64: original.toString('base64') } });
+  assert.equal(saved.response.status, 200); assert.equal(saved.result.contentVerified, false);
+  assert.ok(!JSON.stringify(saved.result).includes('Exact original')); assert.equal((await json('/api/cv/file')).result.sha256, saved.result.sha256);
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'CV staging HTTP fixture' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Authorized upload target' }, { name: 'Unrelated target' }] } });
+  const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [added.ids[0]], explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } } });
+  const prepare = body => json('/api/cv/file/prepare', { method: 'POST', body: { runId: run.id, companyId: added.ids[0], purpose: 'cv_upload', ...body } });
+  assert.equal((await prepare({ purpose: 'application' })).response.status, 400);
+  assert.equal((await prepare({ companyId: added.ids[1] })).response.status, 400);
+  const staged = await prepare({}); assert.equal(staged.response.status, 200); assert.deepEqual(await readFile(staged.result.path), original);
+  const stagedRelative = relative(await realpath(dataDir), staged.result.path);
+  assert.ok(!isAbsolute(stagedRelative) && !stagedRelative.startsWith('..'));
+  await json(`/api/runs/${run.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+  assert.equal((await prepare({})).response.status, 400);
+});
+
+test('HTTP capability requests report guidance only and never imply access or model verification', async () => {
+  for (const kind of ['browser', 'passwords']) {
+    const result = await json(`/api/agent-capabilities/recipe?assistant=codex&kind=${kind}`);
+    assert.equal(result.response.status, 200); assert.equal(result.result.kind, kind); assert.match(result.result.prompt, /No applications/);
+    assert.equal(result.result.connected, undefined);
+  }
+  const registration = (await json('/api/registration-context')).result;
+  assert.equal(registration.primaryEmail, null); assert.equal(registration.credentials.storedByTracker, false);
+  const passive = await json('/api/assistant-check?assistant=codex'); assert.equal(passive.result.modelAccessVerified, false);
+  const implicit = await json('/api/assistant-check', { method: 'POST', body: { assistant: 'codex' } });
+  assert.equal(implicit.response.status, 400); assert.match(implicit.result.error, /explicitly/);
+  assert.equal((await json('/api/assistant-check?assistant=codex')).result.status, passive.result.status);
 });
