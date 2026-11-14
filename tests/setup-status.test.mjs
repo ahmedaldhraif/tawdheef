@@ -62,6 +62,7 @@ test('verified setup checks only chosen assistant and connected CV, never mailbo
   const f = fixture(); f.records.push({ kind: 'calendar', status: 'connected' });
   const report = await f.check({ assistant: 'claude-code', verify: true });
   assert.equal(report.ready, true); assert.equal(report.assistant, 'claude-code');
+  assert.equal(report.modelAccessVerified, false);
   assert.equal(report.nextStep.action, 'run');
   assert.deepEqual(f.calls, { auth: 1, cv: 1 });
   assert.equal(report.assistants[0].status, 'not_checked');

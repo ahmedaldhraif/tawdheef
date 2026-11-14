@@ -2,34 +2,79 @@ import { COMPANY_TYPES, classifyCompanyType } from '../src/company-types.js';
 import { companyLocations } from '../src/company-locations.js';
 
 const SORT_FIELDS = ['name', 'status', 'lastUpdate', 'nextAction', 'sector', 'location'];
-const compare = (a, b) => a.localeCompare(b, undefined, { numeric: true });
-const due = "COALESCE(json_extract(c.payload,'$.followUpAt'),'') <> '' AND json_extract(c.payload,'$.followUpAt') <= ? AND c.status NOT IN ('closed','offer')";
+const compare = new Intl.Collator(undefined, { numeric: true }).compare;
+const due = "q.follow_up_at <> '' AND q.follow_up_at <= ? AND q.status NOT IN ('closed','offer')";
 
 /** SQLite owns filtering and paging. Cached source projections retain the shared
  * Unicode search, classification and Intl/numeric ordering semantics. Never use
  * these projections for submission authority or evidence. */
 export function createCompanyQuery(db, statuses) {
-  let signature = null, companies = new Map(), facets = new Map(), ranks = new Map();
-  const version = () => `${db.prepare('PRAGMA data_version').get().data_version}:${db.prepare('SELECT total_changes() AS n').get().n}`;
+  let signature = null, snapshotVersion = null, companies = new Map(), facets = new Map(), ranks = new Set();
+  const changedCompanies = new Set();
+  // These disposable projections contain no authoritative records. Compact
+  // native predicates avoid rescanning company JSON/calling JS for every row.
+  // They disappear with this connection and never migrate the saved schema.
+  db.exec(`PRAGMA temp_store=MEMORY;
+    CREATE TEMP TABLE tracker_company_query(
+    id TEXT PRIMARY KEY, source_order INTEGER NOT NULL, directory_id TEXT NOT NULL,
+    status TEXT NOT NULL, attention TEXT NOT NULL, follow_up_at TEXT NOT NULL,
+    archived INTEGER NOT NULL, type_id TEXT NOT NULL,
+    ${SORT_FIELDS.map(field => `${field}_rank INTEGER NOT NULL DEFAULT 0`).join(',')});
+    CREATE INDEX tracker_query_scope ON tracker_company_query(directory_id,archived,type_id);
+    CREATE INDEX tracker_query_name ON tracker_company_query(directory_id,archived,name_rank,source_order);
+    CREATE TEMP TABLE tracker_company_places(company_id TEXT NOT NULL,location_id TEXT NOT NULL,PRIMARY KEY(company_id,location_id));
+    CREATE INDEX tracker_places_location ON tracker_company_places(location_id,company_id);`);
+  const dataVersion = () => db.prepare('PRAGMA data_version').get().data_version;
+  const totalChanges = () => db.prepare('SELECT total_changes() AS n').get().n;
+  const rememberTemporaryWrites = () => { signature = `${snapshotVersion}:${totalChanges()}`; };
   const invalidate = () => { signature = null; };
+  const companyChanged = id => { changedCompanies.add(id); };
+  const save = db.prepare(`INSERT INTO tracker_company_query(id,source_order,directory_id,status,attention,follow_up_at,archived,type_id) VALUES(?,?,?,?,?,?,?,?)
+    ON CONFLICT(id) DO UPDATE SET source_order=excluded.source_order,directory_id=excluded.directory_id,status=excluded.status,attention=excluded.attention,follow_up_at=excluded.follow_up_at,archived=excluded.archived,type_id=excluded.type_id`);
+  const savePlace = db.prepare('INSERT INTO tracker_company_places VALUES(?,?)');
+
+  function project(row, directory) {
+    const company = JSON.parse(row.payload), previous = companies.get(row.id);
+    const projection = {
+      directoryId: company.directoryId,
+      archived: Boolean(company.archived),
+      search: [company.name, company.arabicName, company.sector, company.location, company.notes, company.sourceRole].map(value => String(value || '').toLowerCase()),
+      type: classifyCompanyType(company),
+      places: companyLocations(company, directory),
+      sort: Object.fromEntries(SORT_FIELDS.map(field => [field, String(company[field] || '')])),
+    };
+    for (const field of SORT_FIELDS) if (!previous || previous.sort[field] !== projection.sort[field]) ranks.delete(field);
+    const facetValue = value => value && JSON.stringify([value.directoryId, value.archived, value.type, value.places]);
+    if (facetValue(previous) !== facetValue(projection)) facets.clear();
+    companies.set(row.id, projection);
+    save.run(row.id, row.source_order, company.directoryId, company.status, company.attention || '', company.followUpAt || '', Number(projection.archived), projection.type);
+    if (previous) db.prepare('DELETE FROM tracker_company_places WHERE company_id=?').run(row.id);
+    for (const place of projection.places) savePlace.run(row.id, place.id);
+  }
 
   function refresh() {
-    const current = version();
+    const observedVersion = dataVersion(), current = `${observedVersion}:${totalChanges()}`;
     if (signature === current) return;
     const directories = new Map(db.prepare('SELECT id,payload FROM directories').all().map(row => [row.id, JSON.parse(row.payload)]));
-    companies = new Map(); facets = new Map(); ranks = new Map();
-    for (const { id, payload } of db.prepare('SELECT id,payload FROM companies ORDER BY rowid').all()) {
-      const company = JSON.parse(payload);
-      companies.set(id, {
-        directoryId: company.directoryId,
-        archived: Boolean(company.archived),
-        search: [company.name, company.arabicName, company.sector, company.location, company.notes, company.sourceRole].map(value => String(value || '').toLowerCase()),
-        type: classifyCompanyType(company),
-        places: companyLocations(company, directories.get(company.directoryId)),
-        sort: Object.fromEntries(SORT_FIELDS.map(field => [field, String(company[field] || '')])),
-      });
+    // All local company writes go through saveCompany. Reproject only those
+    // rows; application/history/settings writes still use live SQL counts.
+    // An external client or rollback takes the full snapshot path below.
+    if (signature !== null && observedVersion === snapshotVersion) {
+      const read = db.prepare('SELECT rowid AS source_order,id,directory_id,payload FROM companies WHERE id=?');
+      for (const id of changedCompanies) {
+        const row = read.get(id);
+        project(row, directories.get(row.directory_id));
+      }
+      changedCompanies.clear();
+      rememberTemporaryWrites();
+      return;
     }
-    signature = current;
+    snapshotVersion = observedVersion;
+    companies = new Map(); facets = new Map(); ranks = new Set();
+    db.exec('DELETE FROM tracker_company_places; DELETE FROM tracker_company_query;');
+    for (const row of db.prepare('SELECT rowid AS source_order,id,directory_id,payload FROM companies ORDER BY rowid').all()) project(row, directories.get(row.directory_id));
+    changedCompanies.clear();
+    rememberTemporaryWrites();
   }
 
   function directoryFacets(directoryId) {
@@ -52,25 +97,24 @@ export function createCompanyQuery(db, statuses) {
   function sortRanks(field) {
     if (!ranks.has(field)) {
       const ordered = [...companies].sort(([, a], [, b]) => compare(a.sort[field], b.sort[field]));
-      const values = new Map(); let rank = 0, previous;
+      const save = db.prepare(`UPDATE tracker_company_query SET ${field}_rank=? WHERE id=?`);
+      let rank = 0, previous;
       for (const [id, company] of ordered) {
         const value = company.sort[field];
         if (previous !== undefined && compare(previous, value) !== 0) rank++;
-        values.set(id, rank); previous = value;
+        save.run(rank, id); previous = value;
       }
-      ranks.set(field, values);
+      ranks.add(field);
+      rememberTemporaryWrites();
     }
   }
 
   db.function('tracker_company_search', (id, query) => Number(companies.get(id)?.search.some(value => value.includes(query)) || false));
-  db.function('tracker_company_type', id => companies.get(id)?.type || 'unknown');
-  db.function('tracker_company_locations', id => JSON.stringify(companies.get(id)?.places.map(place => place.id) || []));
-  db.function('tracker_company_sort_rank', (id, field) => ranks.get(field)?.get(id) ?? 0);
 
   function list({ directoryId, filters, limit, offset, sort, direction, today }) {
     // One read snapshot keeps metadata, counts and the page consistent with
     // concurrent UI/CLI/MCP writers. Other connections invalidate data_version;
-    // this connection's writes invalidate total_changes, including rollbacks.
+    // this connection's writes are tracked centrally by saveCompany.
     const ownTransaction = !db.isTransaction;
     if (ownTransaction) db.exec('BEGIN');
     try {
@@ -81,32 +125,32 @@ export function createCompanyQuery(db, statuses) {
       refresh();
       if (!SORT_FIELDS.includes(sort)) sort = 'name';
       sortRanks(sort);
-      const scope = ["json_extract(c.payload,'$.archived') IS NOT 1"], scopeArgs = [];
-      if (directoryId) { scope.push('c.directory_id=?'); scopeArgs.push(directoryId); }
+      const scope = ['q.archived=0'], scopeArgs = [];
+      if (directoryId) { scope.push('q.directory_id=?'); scopeArgs.push(directoryId); }
       const where = [...scope], args = [...scopeArgs];
-      if (filters.search) { where.push('tracker_company_search(c.id,?)'); args.push(filters.search.toLowerCase()); }
-      if (filters.status) { where.push('c.status=?'); args.push(filters.status); }
-      if (filters.attention === 'needs_you') where.push("json_extract(c.payload,'$.attention')='needs_you'");
+      if (filters.search) { where.push('tracker_company_search(q.id,?)'); args.push(filters.search.toLowerCase()); }
+      if (filters.status) { where.push('q.status=?'); args.push(filters.status); }
+      if (filters.attention === 'needs_you') where.push("q.attention='needs_you'");
       if (filters.attention === 'follow_up_due') { where.push(`(${due})`); args.push(today); }
       if (filters.companyTypes.length) {
-        where.push(`tracker_company_type(c.id) IN (${filters.companyTypes.map(() => '?').join(',')})`);
+        where.push(`q.type_id IN (${filters.companyTypes.map(() => '?').join(',')})`);
         args.push(...filters.companyTypes);
       }
       if (filters.locations.length) {
-        where.push(`EXISTS (SELECT 1 FROM json_each(tracker_company_locations(c.id)) location WHERE location.value IN (${filters.locations.map(() => '?').join(',')}))`);
+        where.push(`q.id IN (SELECT company_id FROM tracker_company_places WHERE location_id IN (${filters.locations.map(() => '?').join(',')}))`);
         args.push(...filters.locations);
       }
       const predicate = where.join(' AND ');
       const counts = db.prepare(`SELECT COUNT(*) AS total,
-        COALESCE(SUM(CASE WHEN c.status IN ('not_started','ready') AND NOT EXISTS (
-          SELECT 1 FROM applications a WHERE a.company_id=c.id AND COALESCE(json_extract(a.payload,'$.appliedAt'),'') <> ''
-        ) THEN 1 ELSE 0 END),0) AS remainingCount FROM companies c WHERE ${predicate}`).get(...args);
+        COALESCE(SUM(CASE WHEN q.status IN ('not_started','ready') AND NOT EXISTS (
+          SELECT 1 FROM applications a WHERE a.company_id=q.id AND COALESCE(json_extract(a.payload,'$.appliedAt'),'') <> ''
+        ) THEN 1 ELSE 0 END),0) AS remainingCount FROM tracker_company_query q WHERE ${predicate}`).get(...args);
       const statusCounts = Object.fromEntries(statuses.map(status => [status, 0]));
-      for (const row of db.prepare(`SELECT c.status,COUNT(*) AS n FROM companies c WHERE ${scope.join(' AND ')} GROUP BY c.status`).all(...scopeArgs)) statusCounts[row.status] = Number(row.n);
-      const attention = db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_extract(c.payload,'$.attention')='needs_you' THEN 1 ELSE 0 END),0) AS needsYou,
-        COALESCE(SUM(CASE WHEN ${due} THEN 1 ELSE 0 END),0) AS followUpDue FROM companies c WHERE ${scope.join(' AND ')}`).get(today, ...scopeArgs);
-      const rows = db.prepare(`SELECT c.payload FROM companies c WHERE ${predicate}
-        ORDER BY tracker_company_sort_rank(c.id,?) ${direction === 'desc' ? 'DESC' : 'ASC'}, c.rowid ASC LIMIT ? OFFSET ?`).all(...args, sort, limit, offset).map(row => JSON.parse(row.payload));
+      for (const row of db.prepare(`SELECT q.status,COUNT(*) AS n FROM tracker_company_query q WHERE ${scope.join(' AND ')} GROUP BY q.status`).all(...scopeArgs)) statusCounts[row.status] = Number(row.n);
+      const attention = db.prepare(`SELECT COALESCE(SUM(CASE WHEN q.attention='needs_you' THEN 1 ELSE 0 END),0) AS needsYou,
+        COALESCE(SUM(CASE WHEN ${due} THEN 1 ELSE 0 END),0) AS followUpDue FROM tracker_company_query q WHERE ${scope.join(' AND ')}`).get(today, ...scopeArgs);
+      const rows = db.prepare(`SELECT c.payload FROM tracker_company_query q JOIN companies c ON c.id=q.id WHERE ${predicate}
+        ORDER BY q.${sort}_rank ${direction === 'desc' ? 'DESC' : 'ASC'}, q.source_order ASC LIMIT ? OFFSET ?`).all(...args, limit, offset).map(row => JSON.parse(row.payload));
       const result = { rows, total: Number(counts.total), remainingCount: Number(counts.remainingCount), facets: directoryFacets(directoryId), statusCounts, attentionCounts: { needsYou: Number(attention.needsYou), followUpDue: Number(attention.followUpDue) } };
       if (ownTransaction) db.exec('COMMIT');
       return result;
@@ -116,5 +160,5 @@ export function createCompanyQuery(db, statuses) {
       throw error;
     }
   }
-  return { list, invalidate };
+  return { list, invalidate, companyChanged };
 }

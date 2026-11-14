@@ -73,11 +73,21 @@ async function measure(companyCount) {
     // avoid attributing a single warm-cache run to every case.
     for (const scenario of scenarios) cold.push({ scenario: scenario.name, ms: round(query(scenario)) });
     for (let sample = 0; sample < SAMPLES; sample++) for (const scenario of scenarios) samples.get(scenario.name).push(query(scenario));
+    const edits = [];
+    for (let sample = 0; sample < SAMPLES; sample++) {
+      const company = store.getCompany(records[0].id), notes = `Synthetic local edit ${sample}`;
+      const started = performance.now();
+      store.updateCompany(company.id, { expectedRevision: company.revision, notes });
+      const page = store.listCompanies({ directoryId: 'benchmark', limit: 20 });
+      if (page.items[0]?.notes !== notes) throw new Error('Synthetic edit was not reflected in the next list page.');
+      edits.push(performance.now() - started);
+    }
     return {
       companyCount, historyCount: HISTORY_COUNT, pageSize: 20,
       initialRequests: cold,
       scenarios: scenarios.map(scenario => ({ name: scenario.name, total: scenario.expected, ...statistics(samples.get(scenario.name)) })),
       combinedWarm: statistics([...samples.values()].flat()),
+      localEditAndList: statistics(edits),
     };
   } finally {
     store?.close();

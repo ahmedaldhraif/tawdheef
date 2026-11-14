@@ -1,0 +1,106 @@
+name: Sign verified desktop download
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing reviewed version tag
+        required: true
+        type: string
+      platform:
+        description: Publisher credentials must be configured for every selected OS
+        required: true
+        default: macos
+        type: choice
+        options: [macos, windows, all]
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.platform == 'macos' && '["macos-latest","macos-15-intel"]' || inputs.platform == 'windows' && '["windows-latest","windows-11-arm"]' || '["macos-latest","macos-15-intel","windows-latest","windows-11-arm"]') }}
+    runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      TAWDHEEF_SIGN: required
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.1'
+          cache: npm
+      - name: Require a reviewed version tag
+        run: node scripts/verify-release-ref.mjs
+      - name: Require publisher credentials
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_BASE64 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_CERT_SHA1: ${{ secrets.WINDOWS_CERT_SHA1 }}
+        run: node scripts/signing-secrets.mjs
+      - name: Import Developer ID certificate into a temporary keychain
+        if: runner.os == 'macOS'
+        uses: Apple-Actions/import-codesign-certs@288b8ec97b82c66b6f2a6baaf7acc8dfbcbe331c # v7.2.0
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      - name: Import Windows publisher certificate
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_PFX_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_CERT_SHA1: ${{ secrets.WINDOWS_CERT_SHA1 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pfx = Join-Path $env:RUNNER_TEMP 'Tawdheef-signing.pfx'
+          try {
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX_BASE64))
+            $password = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $pfx -Password $password -CertStoreLocation 'Cert:\CurrentUser\My'
+            if (-not ($cert | Where-Object { $_.HasPrivateKey -and $_.Thumbprint -eq $env:WINDOWS_CERT_SHA1 })) { throw 'The configured Windows publisher certificate was not imported.' }
+            $sdk = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+            $architecture = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+            $tool = Get-ChildItem -LiteralPath $sdk -Directory | Sort-Object Name -Descending | ForEach-Object { Join-Path $_.FullName "$architecture\signtool.exe" } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+            if (-not $tool) { throw 'Windows SDK SignTool is missing.' }
+            "TAWDHEEF_WIN_SIGNTOOL=$tool" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } finally {
+            if (Test-Path -LiteralPath $pfx) { Remove-Item -LiteralPath $pfx -Force }
+          }
+      - run: npm ci
+      - run: npm test
+      - run: npm run release:check
+      - name: Build, sign and verify
+        env:
+          TAWDHEEF_MAC_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          TAWDHEEF_MAC_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          TAWDHEEF_MAC_NOTARY_ISSUER: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          TAWDHEEF_WIN_CERT_SHA1: ${{ secrets.WINDOWS_CERT_SHA1 }}
+        run: npm run release:app -- --output outputs/signed-desktop
+      - name: Verify the exact extracted signed download
+        run: npm run release:app:smoke -- --directory outputs/signed-desktop --output outputs/signed-desktop/smoke-verification.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: signed-desktop-${{ matrix.os }}
+          path: |
+            outputs/signed-desktop/*.zip
+            outputs/signed-desktop/package-report.json
+            outputs/signed-desktop/SHA256SUMS.txt
+            outputs/signed-desktop/smoke-verification.json
+          if-no-files-found: error
+      - name: Remove temporary notarization key
+        if: always() && runner.os == 'macOS'
+        run: node scripts/signing-secrets.mjs cleanup

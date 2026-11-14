@@ -95,10 +95,10 @@ export function createSetupStatus({ store, connections, port, discover = discove
       : missing ? { id: missing.id, title: missing.status === 'not_checked' ? 'Check connections' : missing.title, detail: missing.detail, action: missing.status === 'not_checked' ? 'check' : missing.action }
         : { id: 'check', title: 'Check connections', detail: 'Confirm assistant sign-in and read access to your CV.', action: 'check' };
     return {
-      checkedAt: new Date(clock()).toISOString(), verified: verify, ready, assistant: active,
+      checkedAt: new Date(clock()).toISOString(), verified: verify, ready, assistant: active, modelAccessVerified: false,
       assistants: discovered.map(({ id, name, installed }) => ({ id, name, installed, status: id === active ? assistantState : installed ? 'not_checked' : 'needs_action', detail: id === active ? assistantDetail : installed ? 'Installed; sign-in not checked.' : 'Not installed.' })),
       steps, nextStep, setupPrompt: SETUP_PROMPT,
-      note: 'Setup never sends an application, email or calendar invitation. Readiness is a point-in-time check; provider permissions and website requirements still apply.',
+      note: 'Setup never sends an application, email or calendar invitation. No model task was run, so model availability and provider limits were not verified. Readiness is a point-in-time check; provider permissions and website requirements still apply.',
     };
   }
   return async function setupStatus(input = {}) {

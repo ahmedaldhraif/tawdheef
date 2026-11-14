@@ -9,6 +9,7 @@ import { COMPANY_TYPES, classifyCompanyType, companyMatchesTypes } from '../src/
 import { companyLocations, companyMatchesLocations } from '../src/company-locations.js';
 import { normalizeRunActions, assertRunPurpose, buildRunBrief, EMAIL_PURPOSES, FORM_PURPOSE_EVENTS } from '../src/run-actions.js';
 import { createCompanyQuery } from './company-query.mjs';
+import { defaultDataDir } from '../scripts/app-paths.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -107,7 +108,7 @@ function safeUrl(value) {
 }
 
 export function openStore({
-  dataDir = process.env.APPLY_TRACKER_DATA || resolve(ROOT, ".local"),
+  dataDir = defaultDataDir(ROOT),
   seed = true,
   clock = () => new Date(),
 } = {}) {
@@ -176,6 +177,7 @@ export function openStore({
     db.prepare(
       "INSERT INTO companies VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,status=excluded.status,payload=excluded.payload",
     ).run(c.id, c.directoryId, c.name, c.status, JSON.stringify(saved));
+    companyQuery.companyChanged(c.id);
   }
   function progressActivity(companyIds) {
     const ids = typeof companyIds === 'string' ? [companyIds] : companyIds;

@@ -3,6 +3,7 @@
 import { readFile, writeFile, mkdir, cp, readdir, stat, unlink } from 'node:fs/promises';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import JSZip from 'jszip';
 import { sourceArchive, checkPublicSource } from '../scripts/release-files.mjs';
 import { packageBrand } from '../scripts/branding/package-assets.mjs';
@@ -30,6 +31,12 @@ const date='10 November 2026';
 const profile=config.githubProfile;
 const catalog=JSON.parse(await readFile(join(root,'directories/catalog.json'),'utf8'));
 const packs=catalog.packs;
+// Download packs belong to the website build, never the working app build.
+// A fresh checkout has no generated ZIPs, so prepare them explicitly here.
+if ((await Promise.all(packs.map(async pack=>{try{await stat(join(root,'directories',pack.download));return false;}catch(error){if(error.code==='ENOENT')return true;throw error;}}))).some(Boolean)) {
+ const result=spawnSync(process.execPath,[join(root,'scripts/marketing/build-directory-pack.mjs')],{cwd:root,stdio:'inherit',windowsHide:true});
+ if(result.error||result.status!==0)throw new Error('Website download packs could not be prepared. Run node scripts/marketing/build-directory-pack.mjs.');
+}
 const featuredPacks=packs.filter(pack=>pack.featured!==false&&!pack.historical);
 const packIndices=new Map(await Promise.all(featuredPacks.map(async pack=>[pack.id,JSON.parse(await readFile(join(root,'directories',pack.id,pack.files.index),'utf8'))])));
 const countryTitle=pack=>pack.country==='AE'?'UAE':pack.name;

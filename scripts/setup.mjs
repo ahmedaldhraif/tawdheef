@@ -8,6 +8,7 @@ import { doctor } from './doctor.mjs';
 import { findNpmCli } from './npm-cli.mjs';
 import { runtimeEnvironment } from './runtime-env.mjs';
 import { coreInstalled } from './runtime-check.mjs';
+import { defaultDataDir } from './app-paths.mjs';
 
 const usage = `Tawdheef setup\n\n  npm run setup                         Install missing source dependencies and build the tracker\n  npm run setup -- --all                Install all supported optional integrations and Chromium\n  npm run setup -- --browser            Install only Playwright MCP and Chromium\n  npm run setup -- --tabbio             Download Tabbio CLI into private local tools\n  npm run setup -- --integration ID     Install only google-cli, outlook-mcp, playwright or tabbio\n  npm run setup -- --login google-cli   Sign in to the isolated Google CLI mailbox\n  npm run setup -- --login tabbio       Sign in to the external Tabbio CLI\n  npm run setup -- --login outlook-mcp  Sign in to the optional Microsoft mail bridge\n  npm run setup -- --export-config DIR [--include playwright,tabbio,outlook-mcp]\n  npm run setup -- --check              Check readiness without installing or signing in\n\nPrebuilt app packages never rebuild or install developer tools. No sign-in runs unless --login is supplied. Client settings are never changed.\n`;
 
@@ -66,7 +67,7 @@ export async function setup(argv = process.argv.slice(2)) {
   if (options.help) { process.stdout.write(usage); return; }
   if (Number(process.versions.node.split('.')[0]) < 24) throw new Error('Install Node.js 26 LTS before running Tawdheef.');
   if (options.check) return doctor({ probe: true });
-  const dataDir = resolve(process.env.APPLY_TRACKER_DATA || join(INTEGRATIONS_ROOT, '.local'));
+  const dataDir = defaultDataDir(INTEGRATIONS_ROOT);
   const prebuilt = await exists(join(INTEGRATIONS_ROOT, 'tawdheef-app.json'));
   const installed = await coreInstalled(INTEGRATIONS_ROOT, prebuilt);
   if (!installed && prebuilt) throw new Error('This app package is incomplete. Download a fresh copy; your private data was not changed.');

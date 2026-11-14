@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { defaultDataDir } from '../scripts/app-paths.mjs';
 
 export const INTEGRATIONS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const INTEGRATIONS = Object.freeze([
@@ -15,7 +16,7 @@ export const INTEGRATIONS = Object.freeze([
 
 function locations(options = {}) {
   const root = resolve(options.root || INTEGRATIONS_ROOT);
-  const dataDir = resolve(options.dataDir || process.env.APPLY_TRACKER_DATA || join(root, '.local'));
+  const dataDir = resolve(options.dataDir || defaultDataDir(root));
   const port = Number(options.port || process.env.APPLY_TRACKER_PORT || 4000);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Choose a port from 1024 to 65535.');
   return { root, dataDir, port };

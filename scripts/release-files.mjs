@@ -57,7 +57,7 @@ export async function checkPublicSource(root, { git = true } = {}) {
   let bytes = 0;
   for (const file of files) {
     const buffer = await readFile(join(root, file)); bytes += buffer.length;
-    if (!/\.(?:mjs|js|jsx|json|md|txt|html|css|yml|yaml|toml|csv|py|cmd|sh|command)$/.test(file) && !publicFiles.includes(file)) continue;
+    if (!/\.(?:mjs|js|jsx|json|md|txt|html|css|yml|yaml|toml|csv|py|cmd|sh|command|c|h|m|plist|entitlements)$/.test(file) && !publicFiles.includes(file)) continue;
     const content = buffer.toString('utf8');
     if (secretPatterns.some(pattern => pattern.test(content))) findings.push(`${file}: possible embedded credential (value withheld)`);
     if (userProfile && content.replaceAll('\\\\', '/').replaceAll('\\', '/').includes(`${userProfile}/`)) findings.push(`${file}: contains this computer's private profile path`);

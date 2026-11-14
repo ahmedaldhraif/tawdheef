@@ -1,6 +1,6 @@
 {
   "name": "apply-tracker",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Find matching jobs and build career profiles. Free, open-source local app with built-in CLI and MCP for Codex and Claude Code.",
@@ -28,6 +28,7 @@
     "release:app": "node scripts/package-app.mjs",
     "release:app:smoke": "node scripts/app-smoke.mjs",
     "benchmark": "node scripts/benchmark.mjs",
+    "browser:benchmark": "node scripts/browser-benchmark.mjs",
     "background:start": "node scripts/background.mjs start",
     "background:stop": "node scripts/background.mjs stop",
     "background:status": "node scripts/background.mjs status"

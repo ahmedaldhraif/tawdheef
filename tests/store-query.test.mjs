@@ -3,16 +3,20 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Worker } from 'node:worker_threads';
+import { once } from 'node:events';
+import { setImmediate } from 'node:timers/promises';
 import { openStore } from '../server/store.mjs';
 
 async function fixture(t) {
   const dataDir = await mkdtemp(join(tmpdir(), 'tawdheef-query-'));
   const store = openStore({ dataDir, seed: false, clock: () => new Date('2026-11-13T21:00:00Z') });
   const clients = [];
+  const cleanup = [];
   store.createDirectory({ id: 'query', name: 'Query fixture', country: 'AE' });
   store.updateSettings({ timezone: 'Asia/Dubai' });
-  t.after(async () => { for (const client of clients) client.close(); store.close(); await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }); });
-  return { store, otherClient: () => { const client = openStore({ dataDir, seed: false }); clients.push(client); return client; } };
+  t.after(async () => { for (const stop of cleanup) await stop(); for (const client of clients) client.close(); store.close(); await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }); });
+  return { store, dataDir, beforeCleanup: stop => cleanup.push(stop), otherClient: () => { const client = openStore({ dataDir, seed: false }); clients.push(client); return client; } };
 }
 
 test('SQL pages preserve Unicode literal search and stable natural ordering in both directions', async t => {
@@ -93,4 +97,64 @@ test('paged progress is derived only from each company history while remaining c
   assert.equal(nextPage.items[0].progress.profile_created, 1);
   assert.equal(nextPage.remainingCount, 2);
   assert.equal(store.previewRun({ directoryId: 'query' }).count, 2);
+});
+
+test('local edits refresh only affected query facts while ranks, facets and rolled-back source stay correct', async t => {
+  const { store } = await fixture(t);
+  store.addCompanies('query', [
+    { id: 'alpha', name: 'Company 10', type: 'Private company', location: 'Dubai' },
+    { id: 'beta', name: 'Company 2', type: 'Federal government', location: 'Abu Dhabi' },
+  ]);
+  for (const sort of ['name', 'status', 'lastUpdate', 'nextAction', 'sector', 'location']) store.listCompanies({ directoryId: 'query', sort });
+  store.updateCompany('alpha', { name: 'Company 1', notes: 'Fresh résumé note', status: 'ready', nextAction: 'Step 1', location: 'Sharjah' });
+  store.updateSettings({ timezone: 'Asia/Dubai' });
+  const edited = store.listCompanies({ directoryId: 'query', search: 'RÉSUMÉ' });
+  assert.deepEqual(edited.items.map(row => row.id), ['alpha']);
+  assert.equal(edited.items[0].nextAction, 'Step 1');
+  assert.deepEqual(store.listCompanies({ directoryId: 'query' }).items.map(row => row.id), ['alpha', 'beta']);
+  assert.deepEqual(store.listCompanies({ directoryId: 'query', sort: 'status' }).items.map(row => row.id), ['beta', 'alpha']);
+  assert.deepEqual(edited.facets.locations.map(place => place.id), ['location:abu dhabi', 'location:sharjah']);
+  assert.throws(() => store.addCompanies('query', [
+    { id: 'alpha', name: 'Uncommitted name', type: 'Federal government', location: 'Never committed' },
+    { id: 'invalid', name: '' },
+  ]), /name/);
+  const restored = store.listCompanies({ directoryId: 'query', companyTypes: ['private'] });
+  assert.equal(restored.total, 1);
+  assert.equal(restored.items[0].name, 'Company 1');
+  assert.deepEqual(restored.facets.locations, edited.facets.locations);
+  store.addCompanies('query', [{ id: 'gamma', name: 'Company 02', type: 'Private employer', location: 'Dubai' }]);
+  assert.deepEqual(store.listCompanies({ directoryId: 'query' }).items.map(row => row.id), ['alpha', 'beta', 'gamma']);
+});
+
+test('list counts, facets and source rows share a snapshot during another client commits', async t => {
+  const { store, dataDir, beforeCleanup } = await fixture(t);
+  const records = [{ id: 'alpha', name: 'Alpha' }, { id: 'beta', name: 'Beta' }];
+  store.addCompanies('query', records.map(record => ({ ...record, type: 'Federal government' })));
+  store.listCompanies({ directoryId: 'query' });
+  const worker = new Worker(`
+    const { parentPort, workerData } = require('node:worker_threads');
+    (async () => {
+      const { openStore } = await import(workerData.moduleUrl);
+      const store = openStore({ dataDir: workerData.dataDir, seed: false });
+      try {
+        parentPort.postMessage('ready');
+        await new Promise(resolve => parentPort.once('message', resolve));
+        for (let index = 0; index < 200; index++) store.addCompanies('query', workerData.records.map(record => ({ ...record, type: index % 2 ? 'Federal government' : 'Private company' })));
+      } finally { store.close(); parentPort.close(); }
+    })().catch(error => { throw error; });
+  `, { eval: true, workerData: { dataDir, records, moduleUrl: new URL('../server/store.mjs', import.meta.url).href } });
+  beforeCleanup(() => worker.terminate());
+  const finished = once(worker, 'exit');
+  assert.deepEqual(await once(worker, 'message'), ['ready']);
+  worker.postMessage('start');
+  for (let index = 0; index < 300; index++) {
+    const result = store.listCompanies({ directoryId: 'query', companyTypes: ['private'] });
+    assert.ok(result.total === 0 || result.total === 2, 'atomic import must never expose one changed company');
+    assert.equal(result.items.length, result.total);
+    assert.equal(result.facets.companyTypes.find(type => type.id === 'private').count, result.total);
+    assert.ok(result.items.every(company => company.type === 'Private company'), 'returned source must match its projected classification');
+    if (index % 10 === 0) await setImmediate();
+  }
+  assert.deepEqual(await finished, [0]);
+  assert.equal(store.listCompanies({ directoryId: 'query', companyTypes: ['private'] }).total, 0);
 });

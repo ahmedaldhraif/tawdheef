@@ -10,6 +10,8 @@ import { checkPublicSource, sourceFiles } from './release-files.mjs';
 import { ensureBuild } from './build.mjs';
 import { findNpmCli } from './npm-cli.mjs';
 import { runtimeEnvironment } from './runtime-env.mjs';
+import { nativeLayout, buildNativeLauncher, nativeCommand } from './native-package.mjs';
+import { signingConfiguration, signDesktop } from './sign-desktop.mjs';
 
 export const NODE_VERSION = '26.13.1';
 export const APP_TARGETS = Object.freeze(['win32-x64', 'win32-arm64', 'darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64']);
@@ -78,12 +80,15 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   if (!APP_TARGETS.includes(`${platform}-${arch}`)) throw new Error('Unsupported app target.');
   if (platform !== process.platform || arch !== process.arch) throw new Error('Build on the target OS and architecture so npm dependencies can be verified there.');
   if (!output) throw new Error('Choose a new --output folder. Existing packages are never overwritten.');
+  const signing = signingConfiguration({ platform }); // Required signing fails before producing an unsigned download.
   output = resolve(output);
   try { await lstat(output); throw new Error('The package output already exists. Choose a new folder.'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   await checkPublicSource(root, { git: false });
   if (!skipBuild) await ensureBuild({ directory: root, force: true });
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-  const folder = join(output, 'tawdheef'); await mkdir(folder, { recursive: true });
+  const packageFolder = join(output, 'tawdheef');
+  const layout = nativeLayout(platform);
+  const folder = join(packageFolder, layout.codeRoot); await mkdir(folder, { recursive: true });
   for (const file of (await sourceFiles(root)).filter(appSourceFile)) {
     await mkdir(dirname(join(folder, file)), { recursive: true }); await cp(join(root, file), join(folder, file));
   }
@@ -96,30 +101,37 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   await writeFile(join(folder, 'package-lock.json'), JSON.stringify(lock, null, 2) + '\n');
   await run(process.execPath, [await findNpmCli(root), 'ci', '--omit=dev', '--omit=optional', '--no-fund', '--no-audit'], folder);
   const runtime = await addRuntime(folder, platform, arch);
-  const manifest = { format: 1, name: 'Tawdheef', version: pkg.version, platform, arch, runtime, prebuilt: true, signed: false, published: false,
+  const manifest = { format: 1, name: 'Tawdheef', version: pkg.version, platform, arch, runtime, prebuilt: true, layout, published: false,
+    signing: { requested: signing.requested, verification: 'See signing-verification.json outside the app bundle; the exact extracted download must be verified.' },
     validation: 'Run release:app:smoke on this exact extracted package. Account sign-in and other platforms are separate checks.' };
   await writeFile(join(folder, 'tawdheef-app.json'), JSON.stringify(manifest, null, 2) + '\n');
-  await writeFile(join(folder, 'OPEN-ME.txt'), 'Tawdheef\n\nExtract the whole folder, then open Start Tawdheef.cmd (Windows) or Start Tawdheef.command (Mac). Node is included; no npm install or build is needed.\n\nOpen Connections to choose Codex or Claude Code. Your assistant still needs its own installation and sign-in. Browser tools and provider bridges install only when selected.\n\nPrivate data stays in .local, or your existing APPLY_TRACKER_DATA folder. Keep it when updating. This preview package is unsigned. Do not disable operating-system security to run it.\n');
   for (const file of ['Start Tawdheef.command', 'start-tawdheef.sh']) await chmod(join(folder, file), 0o755);
-  // Optional signing runs only through the platform-specific, explicit command.
-  if (process.env.TAWDHEEF_SIGN_SCRIPT) {
-    const script = resolve(process.env.TAWDHEEF_SIGN_SCRIPT);
-    await run(process.execPath, [script, folder], root);
-    manifest.signingScriptCompleted = true; manifest.signing = 'External signing script completed. OS signature verification has not been performed by this packager.';
-    await writeFile(join(folder, 'tawdheef-app.json'), JSON.stringify(manifest, null, 2) + '\n');
-  }
-  const zip = new JSZip(); const files = await directoryFiles(folder); let unpackedBytes = 0;
+  await buildNativeLauncher({ root, folder: packageFolder, version: pkg.version, platform, arch });
+  const signature = await signDesktop({ folder: packageFolder, codeRoot: folder, layout, platform });
+  await writeFile(join(packageFolder, 'signing-verification.json'), JSON.stringify(signature, null, 2) + '\n');
+  await writeFile(join(packageFolder, 'OPEN-ME.txt'), `Tawdheef\n\nExtract the whole folder, then open ${platform === 'darwin' ? 'Tawdheef.app' : platform === 'win32' ? 'Tawdheef.exe' : 'start-tawdheef.sh'}. Node is included; no npm install or build is needed. The interface opens in your browser.\n\nOpen Connections to choose Codex or Claude Code. Your assistant still needs its own installation and sign-in. Browser tools and provider bridges install only when selected.\n\nNative Windows/Mac launchers preserve APPLY_TRACKER_DATA or an adjacent existing .local. New native installations store data in your user application-data folder; assistant settings live in its workspace subfolder. Nothing migrates automatically. Keep the same data path when updating.\n\n${signature.signed ? 'Platform signing was verified during packaging; retain the separate verification receipt and verify the extracted download.' : 'This is an unsigned candidate. Do not disable operating-system security to run it.'}\n`);
+  const zip = new JSZip(); const files = await directoryFiles(packageFolder); let unpackedBytes = 0;
   for (const file of files) {
-    const bytes = await readFile(join(folder, file)); unpackedBytes += bytes.length;
-    const executable = /\.(command|sh)$/.test(file) || file.replaceAll(sep, '/') === 'runtime/bin/node';
+    if (platform === 'darwin') { unpackedBytes += (await lstat(join(packageFolder, file))).size; continue; }
+    const bytes = await readFile(join(packageFolder, file)); unpackedBytes += bytes.length;
+    const portablePath = file.replaceAll(sep, '/');
+    const executable = /\.(command|sh)$/.test(file) || portablePath.endsWith('runtime/bin/node') || portablePath === layout.launcher;
     zip.file(`tawdheef/${file.replaceAll(sep, '/')}`, bytes, { unixPermissions: executable ? 0o100755 : 0o100644 });
   }
-  const name = `tawdheef-${pkg.version}-${platform}-${arch}.zip`; const archive = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 }, platform: 'UNIX' });
-  await writeFile(join(output, name), archive);
-  const report = { ...manifest, archive: name, bytes: archive.length, unpackedBytes, files: files.length, sha256: createHash('sha256').update(archive).digest('hex') };
+  const name = `tawdheef-${pkg.version}-${platform}-${arch}.zip`;
+  let archive;
+  if (platform === 'darwin') {
+    // Apple's archive tool preserves signature/notarization extended metadata.
+    await nativeCommand('ditto', ['-c', '-k', '--keepParent', '--sequesterRsrc', packageFolder, join(output, name)], { capture: true });
+    archive = await readFile(join(output, name));
+  } else {
+    archive = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 }, platform: 'UNIX' });
+    await writeFile(join(output, name), archive);
+  }
+  const report = { ...manifest, ...signature, signing: signature, archive: name, bytes: archive.length, unpackedBytes, files: files.length, sha256: createHash('sha256').update(archive).digest('hex') };
   await writeFile(join(output, 'package-report.json'), JSON.stringify(report, null, 2) + '\n');
   await writeFile(join(output, 'SHA256SUMS.txt'), `${report.sha256}  ${name}\n`);
-  return { folder, report };
+  return { folder: packageFolder, appRoot: folder, report };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2); const index = args.indexOf('--output');

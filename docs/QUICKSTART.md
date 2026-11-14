@@ -6,7 +6,7 @@ Find jobs that fit your CV and build career profiles for future opportunities, e
 
 The instructions below are the manual route.
 
-For the source edition, install **Node.js 26 LTS** (patched Node 24 is also supported), download/extract or clone this repository, and open a terminal in that folder. A platform app package includes Node; extract it fully and use **Start Tawdheef.cmd** on Windows or **Start Tawdheef.command** on Mac. App packages never install developer tools or rebuild the screen. See [desktop releases](DESKTOP-RELEASE.md) for candidate and signing status.
+For the source edition, install **Node.js 26 LTS** (patched Node 24 is also supported), download/extract or clone this repository, and open a terminal in that folder. A platform app package includes Node; extract it fully and open **Tawdheef.exe** on Windows or **Tawdheef.app** on Mac. App packages never install developer tools or rebuild the screen. See [desktop releases](DESKTOP-RELEASE.md) for candidate and signing status.
 
 ```sh
 npm start

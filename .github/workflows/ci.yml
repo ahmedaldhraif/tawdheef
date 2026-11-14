@@ -2,21 +2,28 @@ name: Verify local tracker
 
 on:
   push:
+    branches: [main]
   pull_request:
+
+concurrency:
+  group: tracker-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   backend:
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node: ['24', '26']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -25,15 +32,23 @@ jobs:
       - run: npm test
       - run: npm run doctor
       - run: npm run release:check
+      - run: npm run benchmark -- --output "${{ runner.temp }}/tawdheef-benchmark.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: queries-${{ matrix.os }}-node${{ matrix.node }}
+          path: ${{ runner.temp }}/tawdheef-benchmark.json
+          if-no-files-found: error
 
   browser:
+    timeout-minutes: 25
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26'
           cache: npm
@@ -42,7 +57,13 @@ jobs:
       - run: node website/build.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
-      - uses: actions/upload-artifact@v4
+      - run: npm run browser:benchmark -- --output "${{ runner.temp }}/tawdheef-browser-benchmark.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-performance-${{ matrix.os }}
+          path: ${{ runner.temp }}/tawdheef-browser-benchmark.json
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: browser-failure-${{ matrix.os }}

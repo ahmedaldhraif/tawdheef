@@ -92,7 +92,7 @@ export async function checkAssistantAuthentication(executable) {
 /** One owned subprocess per company. No shell, raw agent log, hidden model or automatic retry. */
 export function executeAssistant({ executable, args, prompt, cwd, env, signal, timeoutMs = 20 * 60_000, terminationMs = 3000, spawnProcess = spawn, onSpawn = async () => {} }) {
   return new Promise(resolve => {
-    let child, timer, watchdog, escalation, settled = false, failed = false, authError = false, configError = false, limited = false, pending = '';
+    let child, timer, watchdog, escalation, settled = false, failed = false, authError = false, accessDenied = false, configError = false, limited = false, pending = '';
     const finish = result => { if (settled) return; settled = true; clearTimeout(timer); clearTimeout(watchdog); clearTimeout(escalation); signal?.removeEventListener('abort', abort); resolve(result); };
     const force = () => { try { if (process.platform !== 'win32') process.kill(-child.pid, 'SIGKILL'); else child.kill('SIGKILL'); } catch { /* Watchdog reports unconfirmed termination. */ } };
     const kill = () => {
@@ -110,17 +110,27 @@ export function executeAssistant({ executable, args, prompt, cwd, env, signal, t
     signal?.addEventListener('abort', abort, { once: true });
     let timedOut = false;
     timer = setTimeout(() => { timedOut = true; kill(); }, timeoutMs);
-    const classify = text => { if (/error loading configuration|invalid config|unknown variant|unknown option|unrecognized (?:argument|option)/i.test(text)) configError = true; if (/not logged in|authentication failed|invalid_api_key|please (log|sign) in|login required|authentication_error/i.test(text)) authError = true; if (/rate_limit_error|usage limit|quota exceeded|rate limit exceeded/i.test(text)) limited = true; };
+    const classify = (text, providerEnvelope = false) => {
+      if (/error loading configuration|invalid config|unknown variant|unknown option|unrecognized (?:argument|option)/i.test(text)) configError = true;
+      if (/not logged in|authentication failed|invalid_api_key|please (log|sign) in|login required|authentication_error/i.test(text)) authError = true;
+      if (/rate_limit_error|usage limit|quota exceeded|rate limit exceeded/i.test(text)) limited = true;
+      // Only a client error envelope can establish provider HTTP access errors.
+      // Company text, ordinary model output and tool results cannot stop a queue.
+      if (providerEnvelope) {
+        if (/(?:API\s*Error|HTTP(?:\s*Error)?|status(?:Code|\s+code)?)[^\d\n]{0,16}401\b/i.test(text)) authError = true;
+        if (/(?:API\s*Error|HTTP(?:\s*Error)?|status(?:Code|\s+code)?)[^\d\n]{0,16}403\b/i.test(text)) accessDenied = true;
+      }
+    };
     // Inspect error envelopes only. Application text and model reasoning never become UI logs.
     child.stdout.on('data', chunk => {
       pending = (pending + chunk.toString()).slice(-256_000);
       const lines = pending.split('\n'); pending = lines.pop();
-      for (const line of lines) { try { const e = JSON.parse(line); if (e.type === 'error' || e.type === 'turn.failed' || e.is_error) { failed = true; classify(JSON.stringify(e.error || e.message || e.result || e)); } } catch { /* Non-JSON progress is not evidence. */ } }
+      for (const line of lines) { try { const e = JSON.parse(line); if (e.type === 'error' || e.type === 'turn.failed' || e.is_error) { failed = true; classify(JSON.stringify(e.error || e.message || e.result || e), true); } } catch { /* Non-JSON progress is not evidence. */ } }
     });
     child.stderr.on('data', chunk => classify(chunk.toString().slice(0,10000)));
     child.stdin.on('error', () => {});
     child.once('error', () => finish({ status: 'failed', reason: 'The assistant could not start. Check its installation.' }));
-    child.once('close', code => finish(signal?.aborted ? { status: 'stopped' } : configError ? { status: 'needs_you', global: true, configurationError: true, reason: 'The assistant CLI cannot load its current configuration or run options. Update that CLI or correct its reported settings, then press Run again.' } : authError ? { status: 'needs_you', global: true, reason: 'Sign in to this assistant on this computer, then press Run again.' } : limited ? { status: 'needs_you', global: true, reason: 'The assistant reached its provider limit. Wait for it to reset, then press Run again.' } : timedOut ? { status: 'failed', reason: 'This company took too long. Check for a submission receipt before retrying.' } : code !== 0 || failed ? { status: 'failed', reason: 'The assistant could not finish this company. Check its application history, then retry with Run.' } : { status: 'finished' }));
+    child.once('close', code => finish(signal?.aborted ? { status: 'stopped' } : configError ? { status: 'needs_you', global: true, configurationError: true, reason: 'The assistant CLI cannot load its current configuration or run options. Update that CLI or correct its reported settings, then press Run again.' } : authError ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider rejected authentication. Check that provider's sign-in or credentials in the assistant, then press Run again." } : accessDenied ? { status: 'needs_you', global: true, reason: "The assistant's configured model provider denied access (HTTP 403). Review its access or policy requirements before another Run." } : limited ? { status: 'needs_you', global: true, reason: 'The assistant reached its provider limit. Wait for it to reset, then press Run again.' } : timedOut ? { status: 'failed', reason: 'This company took too long. Check for a submission receipt before retrying.' } : code !== 0 || failed ? { status: 'failed', reason: 'The assistant could not finish this company. Check its application history, then retry with Run.' } : { status: 'finished' }));
     // Record ownership before the assistant receives any work. Restart can detect a stranded process.
     Promise.resolve(onSpawn(child.pid)).then(() => { if (signal?.aborted) kill(); else child.stdin.end(prompt); }).catch(() => { failed = true; kill(); });
   });

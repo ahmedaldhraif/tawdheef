@@ -26,7 +26,7 @@ export async function readSetupManifest(root) {
       if (client === 'codex' && !/^[a-f0-9]{64}$/.test(owned.blockHash)) throw new Error('invalid');
       if (client === 'claude-code' && (!owned.entries || Object.entries(owned.entries).some(([name, digest]) => !names.includes(name) || !/^[a-f0-9]{64}$/.test(digest)))) throw new Error('invalid');
     }
-    for (const [path, digest] of Object.entries(manifest.files)) if (!/^(?:\.agents|\.claude)\/skills\/tawdheef\/.+$/.test(path) || path.includes('\\') || path.split('/').some(part => !part || part === '..' || part === '.') || !/^[a-f0-9]{64}$/.test(digest)) throw new Error('invalid');
+    for (const [path, digest] of Object.entries(manifest.files)) if (!/^(?:(?:\.agents|\.claude)\/skills\/tawdheef\/.+|AGENTS\.md|CLAUDE\.md|docs\/.+)$/.test(path) || path.includes('\\') || path.split('/').some(part => !part || part === '..' || part === '.') || !/^[a-f0-9]{64}$/.test(digest)) throw new Error('invalid');
     return manifest;
   } catch (error) {
     if (error.code === 'ENOENT') return { version: 1, clients: {}, files: {} };
@@ -50,7 +50,7 @@ async function existingFile(root, path) {
   try { return await readFile(path, 'utf8'); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
-const conflict = path => new Error(`Keep your existing ${path}. Its Tawdheef entry is unowned or was edited. Export the needed entries with npm run setup -- --export-config agent-config --include playwright and merge only missing entries using docs/AGENT-GUIDE.md#connect-once. No setup files were changed.`);
+const conflict = path => new Error(`Keep your existing ${path}. Its Tawdheef entry is unowned or was edited. ${path === '.mcp.json' || path === '.codex/config.toml' ? 'Export the needed entries with npm run setup -- --export-config agent-config --include playwright and merge only missing entries using docs/AGENT-GUIDE.md#connect-once.' : 'Compare it with the installed Tawdheef guidance and merge your changes before trying again.'} No setup files were changed.`);
 
 function outsideHasManagedEntry(text, names) {
   // Deliberately conservative: inline/dotted/quoted ambiguous TOML requires review.

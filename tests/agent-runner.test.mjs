@@ -82,6 +82,26 @@ test('real subprocess nonzero exits and a stalled company terminate without expo
   assert.equal(timeout.status, 'failed'); assert.match(timeout.reason, /too long/);
 });
 
+test('provider access error envelopes stop the queue without exposing their private text', async t => {
+  for (const [status, pattern] of [[401, /provider rejected authentication/], [403, /provider denied access/]]) {
+    const payload = { type: 'result', is_error: true, result: `API Error: ${status}: fixture-private-provider-text` };
+    const result = await executeAssistant({ executable: process.execPath, args: ['-e', `process.stdout.write(${JSON.stringify(JSON.stringify(payload) + '\n')});process.exit(1)`], cwd: process.cwd(), env: process.env });
+    assert.equal(result.global, true); assert.equal(result.status, 'needs_you'); assert.match(result.reason, pattern);
+    assert.ok(!JSON.stringify(result).includes('fixture-private-provider-text'));
+  }
+  let attempts = 0;
+  const { store, runner, start } = await fixture(t, async () => { attempts++; return executeAssistant({ executable: process.execPath, args: ['-e', 'process.stdout.write(JSON.stringify({type:"result",is_error:true,result:"API Error: 401"})+"\\n");process.exit(1)'], cwd: process.cwd(), env: process.env }); });
+  const run = await start(); await runner.settled();
+  assert.equal(attempts, 1); assert.equal(store.getRun(run.id).status, 'failed');
+  assert.equal(store.getRun(run.id).targets[1].status, 'pending');
+});
+
+test('ordinary company text and tool output containing HTTP 401 cannot stop the queue', async () => {
+  const messages = [{ type: 'assistant', message: { content: [{ type: 'text', text: 'Company reference says API Error: 401.' }] } }, { type: 'user', message: { content: [{ type: 'tool_result', is_error: true, content: 'HTTP 401 from a company website' }] } }];
+  const result = await executeAssistant({ executable: process.execPath, args: ['-e', `process.stdout.write(${JSON.stringify(messages.map(message => JSON.stringify(message)).join('\n') + '\n')})`], cwd: process.cwd(), env: process.env });
+  assert.deepEqual(result, { status: 'finished' });
+});
+
 test('a child that refuses to terminate returns a bounded blocker instead of hanging Stop', async () => {
   const fakeSpawn = () => { const child = new EventEmitter(); child.pid = 2147483647; child.stdin = new PassThrough(); child.stdout = new PassThrough(); child.stderr = new PassThrough(); child.kill = () => false; return child; };
   const result = await executeAssistant({ executable: 'fixture', args: [], prompt: '', cwd: process.cwd(), env: {}, timeoutMs: 5, terminationMs: 10, spawnProcess: fakeSpawn });

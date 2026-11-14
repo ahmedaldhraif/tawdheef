@@ -4,12 +4,13 @@ import { join, resolve, dirname, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { runtimeEnvironment } from './runtime-env.mjs';
+import { defaultDataDir } from './app-paths.mjs';
 import { homedir } from 'node:os';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const serverPath = join(root, 'server', 'index.mjs');
 const marker = 'Apply Tracker managed startup launcher';
-const getDataDir = options => resolve(options?.dataDir || process.env.APPLY_TRACKER_DATA || join(root, '.local'));
+const getDataDir = options => resolve(options?.dataDir || defaultDataDir(root));
 const statePath = options => join(getDataDir(options), 'background.json');
 
 async function readState(options) { try { return JSON.parse(await readFile(statePath(options), 'utf8')); } catch { return null; } }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — local desktop preview
+
+- Node 26.13.1 and Vite 8.3.8, a prebuilt tracker-only interface and explicitly selected optional integrations.
+- Windows and Mac native launchers around the local browser interface, with external private data and assistant workspaces.
+- Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
+- Faster SQL-backed company filtering and paging, incremental edit refreshes and one visibility-aware run reader.
+- Project-only Codex/Claude setup with ownership checks and backups; provider access failures stop the queue with an actionable reason.
+- Separate optional publisher signing/notarization workflow. Local operation requires no developer account; unsigned previews remain labelled unsigned.
+
 ## 0.1.2 — guides and product walkthrough
 
 - Eight practical guides on the website, generated from the same Markdown available on GitHub.
