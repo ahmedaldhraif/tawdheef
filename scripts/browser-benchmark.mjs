@@ -15,7 +15,38 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const COMPANY_COUNT = 13714;
 const PAGE_ROWS = 100;
 const IDLE_WINDOW_MS = 16100;
-const HELP = 'Usage: node scripts/browser-benchmark.mjs [--app APP_OR_PACKAGE_DIRECTORY] [--output NEW_FILE] [--screenshot NEW_PNG]\nRun from the source edition with its Playwright Chromium installed. By default measures this checkout; --app can select an extracted user package or Tawdheef.app.\nUses synthetic records, a disposable database, a reserved loopback port and 4x CPU throttling. Observes visible and simulated-hidden idle activity for 16.1 seconds each. No model, sign-in, CV, mail or application actions.\n';
+const VISIBLE_IDLE_MAX_MS = 30000;
+const HELP = 'Usage: node scripts/browser-benchmark.mjs [--app APP_OR_PACKAGE_DIRECTORY] [--output NEW_FILE] [--screenshot NEW_PNG]\nRun from the source edition with its Playwright Chromium installed. By default measures this checkout; --app can select an extracted user package or Tawdheef.app.\nUses synthetic records, a disposable database, a reserved loopback port and 4x CPU throttling. Observes visible idle for at least 16.1 seconds, allowing up to 30 seconds for a real periodic refresh; simulated-hidden idle stays 16.1 seconds. No model, sign-in, CV, mail or application actions.\n';
+
+export async function observeVisibleIdle({ page, requests, minimumMs = IDLE_WINDOW_MS, maximumMs = VISIBLE_IDLE_MAX_MS, now = () => performance.now(), wait = ms => page.waitForTimeout(ms) }) {
+  assert.ok(minimumMs > 0 && maximumMs >= minimumMs && Number.isFinite(maximumMs), 'Use a finite visible idle observation window.');
+  const state = () => page.evaluate(() => ({
+    hidden: document.hidden, visibilityState: document.visibilityState,
+    activeElement: document.activeElement?.tagName || null,
+    editableFocused: ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable === true,
+    rafCalls: window.__benchmark?.rafCalls || 0,
+  }));
+  const before = await state();
+  assert.ok(!before.hidden && before.visibilityState === 'visible' && !before.editableFocused, 'Visible idle measurement requires a visible page without an active editor: ' + JSON.stringify(before));
+  const start = requests.length, startedAt = now();
+  const refreshed = () => requests.slice(start).some(request => request.method === 'GET' && new URL(request.url).pathname === '/api/companies');
+  await wait(minimumMs);
+  // Browser timers are best-effort. Shared/throttled runners may dispatch the
+  // unchanged app's 15 second interval after the minimum window; never force a read.
+  while (!refreshed()) {
+    const remaining = maximumMs - (now() - startedAt);
+    if (remaining <= 0) break;
+    await wait(Math.min(100, remaining));
+  }
+  const after = await state();
+  const result = { observedMs: Math.round(now() - startedAt), requestedMinimumMs: minimumMs, maximumMs,
+    requests: requests.slice(start).map(request => new URL(request.url).pathname), requestAnimationFrameCalls: after.rafCalls - before.rafCalls,
+    before: { hidden: before.hidden, visibilityState: before.visibilityState, activeElement: before.activeElement },
+    after: { hidden: after.hidden, visibilityState: after.visibilityState, activeElement: after.activeElement, editableFocused: after.editableFocused } };
+  assert.ok(refreshed(), 'Visible idle app refresh must remain active: ' + JSON.stringify(result));
+  assert.ok(!after.hidden && after.visibilityState === 'visible' && !after.editableFocused, 'The visible idle page became ineligible: ' + JSON.stringify(result));
+  return result;
+}
 
 export function parseArguments(argv) {
   const result = {};
@@ -187,11 +218,10 @@ export async function benchmarkBrowser({ app, output, screenshot } = {}) {
       }
       throw new Error('The table and summary did not finish their pending reads before idle measurement.');
     };
-    await page.locator('h1').click(); await settleWork();
-    const visibleStart = requests.length, visibleRafStart = await page.evaluate(() => window.__benchmark.rafCalls);
-    await page.waitForTimeout(IDLE_WINDOW_MS);
-    const visibleRequests = requests.slice(visibleStart).map(request => new URL(request.url).pathname);
-    const visibleIdleRafCalls = await page.evaluate(start => window.__benchmark.rafCalls - start, visibleRafStart);
+    await page.bringToFront(); await page.locator('h1').click();
+    await page.evaluate(() => document.activeElement?.blur()); await settleWork();
+    const visibleIdle = await observeVisibleIdle({ page, requests });
+    const visibleRequests = visibleIdle.requests;
     await settleWork();
     const transitionStart = requests.length;
     await page.evaluate(() => { window.__benchmarkHidden = true; document.dispatchEvent(new Event('visibilitychange')); });
@@ -219,7 +249,7 @@ export async function benchmarkBrowser({ app, output, screenshot } = {}) {
     const report = { benchmark: 'tawdheef-browser', version: 1, scope: 'isolated_synthetic_production_browser', app: { version: packageInfo.version, edition: manifest ? 'prebuilt' : 'source' }, environment: { platform: process.platform, architecture: process.arch, measurementNode: process.version, appNode: appNodeVersion, browser: await browser.version() }, companyCount: COMPANY_COUNT, pageRows: PAGE_ROWS, cpuThrottleRate: 4, viewport: { width: 1440, height: 960 }, initialRowsMs: Math.round(initialRowsMs), initialMetrics,
       searchResults: searches.map(item => ({ ...item, resultPaintMs: Math.round(item.resultPaintMs) })), sequentialTyping: { characters: 5, resultPaintMs: Math.round(typingMs), companyRequests: typingRequests }, inlineEditSavePaintMs: Math.round(savePaintMs),
       inputEventDurationMs: { observedEntries: durations.length, p50: percentile(.5), p95: percentile(.95), max: durations.at(-1) ?? 0 }, longTasks: { count: measurements.longTasks.length, totalMs: Math.round(measurements.longTasks.reduce((sum, entry) => sum + entry.duration, 0)), maximumMs: Math.round(Math.max(0, ...measurements.longTasks.map(entry => entry.duration))) },
-      visibleIdle: { observedMs: IDLE_WINDOW_MS, requests: visibleRequests, requestAnimationFrameCalls: visibleIdleRafCalls }, visibilityTransition: { requests: transitionRequests }, simulatedHidden: { observedMs: IDLE_WINDOW_MS, requests: hiddenRequests, requestAnimationFrameCalls: hiddenIdleRafCalls }, network: { totalRequests: requests.length, externalRequests: externalRequests.length, initialResources: measurements.resources.filter(entry => !new URL(entry.name).pathname.startsWith('/api/')).map(entry => ({ path: new URL(entry.name).pathname, transferBytes: entry.transferBytes, durationMs: Math.round(entry.durationMs) })) }, runtimeErrors: errors,
+      visibleIdle, visibilityTransition: { requests: transitionRequests }, simulatedHidden: { observedMs: IDLE_WINDOW_MS, requests: hiddenRequests, requestAnimationFrameCalls: hiddenIdleRafCalls }, network: { totalRequests: requests.length, externalRequests: externalRequests.length, initialResources: measurements.resources.filter(entry => !new URL(entry.name).pathname.startsWith('/api/')).map(entry => ({ path: new URL(entry.name).pathname, transferBytes: entry.transferBytes, durationMs: Math.round(entry.durationMs) })) }, runtimeErrors: errors,
       checks: ['synthetic directory scope and counts', 'search results match the requested company', 'fixture edit persisted without applications', 'visible idle refresh', 'hidden polling and animation-frame pause', 'no external resource requests or browser runtime errors'],
       limitations: ['Headless Chromium measurement, not Safari or physical-device verification.', 'The server starts directly; native launcher and signature checks are separate release smoke tests.', 'CPU throttling approximates CPU load, not GPU or memory limits.', 'Input event timings are browser event entries, not a field INP percentile.', 'Hidden state is simulated through document.hidden and visibilitychange, not an OS minimize test.', 'Absolute latency thresholds are observational and do not fail shared CI runners.', 'No model, CV, mailbox, application, profile or calendar action occurred.'] };
     if (output) { await mkdir(dirname(output), { recursive: true }); await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' }); }
