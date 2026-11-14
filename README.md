@@ -13,9 +13,6 @@
 
 A free, open-source job-search app for you and your AI assistant. Find jobs that fit your CV, apply to suitable roles, and build career profiles for future opportunities, even when no suitable job is open. Your agent can create or complete career accounts, fill your details and upload your CV where those options are available. Tawdheef tracks each outcome separately.
 
-
-
-
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
 **Your actual AI client owns the connections.** Native mode is the default: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in Native mode.
@@ -28,7 +25,7 @@ Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, w
 
 Created by [Ahmed AlDhraif](https://github.com/ahmedaldhraif). The app, community directories, skill and guides grow together. [Help improve the project](CONTRIBUTING.md).
 
-[Download the app](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/download/v0.1.2/tawdheef-0.1.2-source.zip) · [Release notes](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
+[Download current source](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip) · [Previous preview release](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
 
 <img src="public/site-assets/tracker-desktop.png" alt="Tawdheef's local directory and application tracker, showing the public UAE research snapshot" width="100%" />
 
@@ -97,10 +94,15 @@ Download a pack, choose a directory in the app, then use **List options → Impo
 
 ## Manual setup
 
-Prefer commands? With Node.js 24+, run these in the downloaded folder:
+Prefer commands? With Node.js 26 LTS, start the app in the downloaded folder:
 
 ```sh
 npm start
+```
+
+In a second terminal in that folder, optionally connect the project manually:
+
+```sh
 npm run agent -- codex
 ```
 
@@ -174,3 +176,5 @@ Tawdheef is maintained personally by Ahmed AlDhraif. Tabbio operates its own CV 
 Keep CVs, mailbox contents, credentials and private tracking out of contributions. Read [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md) and [the release guide](docs/RELEASE.md). Development checks are `npm test`, `npm run build` and `npm run release:check`, using isolated data.
 
 Version **0.1.2** is a public preview. Builds and fixture tests do not establish live provider access or successful applications. Release downloads include checksums. Provider artwork, fonts and source evidence retain their own rights; see [third-party notices](THIRD-PARTY-NOTICES.md).
+
+[Native job discovery and CV-backed review](docs/JOB-DISCOVERY.md) · [Product strategy](docs/PRODUCT-STRATEGY.md)

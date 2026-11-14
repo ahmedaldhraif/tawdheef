@@ -39,7 +39,7 @@ for (const locale of ['en', 'ar']) for (const resource of resources) for (const 
     await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', 'https://www.tawdheef.com/examples/' + resource.slug);
     await expect(page.locator('link[rel="alternate"][hreflang="ar"]')).toHaveAttribute('href', 'https://www.tawdheef.com/ar/examples/' + resource.slug);
     await expect(page.locator('main a[href^="../"], main a[href^="./"], main a[href^="/docs/"]')).toHaveCount(0);
-    await expect(page.locator('main .guide-source a').first()).toHaveAttribute('href', 'https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/' + (locale === 'ar' ? 'i18n/ar/' : '') + 'examples/' + resource.file);
+    await expect(page.locator('main .guide-source a').first()).toHaveAttribute('href', 'https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/' + (locale === 'ar' ? 'i18n/ar/' : '') + 'examples/' + resource.file);
 
     for (const width of [320, 390, 1440]) {
       await page.setViewportSize({ width, height: 844 });
@@ -107,18 +107,13 @@ for (const locale of ['en', 'ar']) {
   test(`${locale} setup explains client-owned CV reading before download and search finds public research`, async ({ page }) => {
     await page.goto(prefix + '/skills/#get-started');
     const requirement = page.locator('.skills-requirements');
-    await expect(requirement).toContainText('Tabbio');
-    await expect(requirement).toContainText('Run');
-    await expect(requirement).toContainText(locale === 'ar'
-      ? 'يقرأ ذلك العميل سيرة Tabbio الحقيقية المصرّح بها قبل المطابقة أو التقديم'
-      : 'It reads the real authorized Tabbio CV before matching or submitting');
-    await expect(requirement).toContainText(locale === 'ar'
-      ? 'تطبيق Codex أو Claude Code الحالي'
-      : 'your existing Codex or Claude Code client');
+    await expect(requirement).toContainText('Native');
+    await expect(page.locator('.skills-cv-step')).toContainText('Tabbio');
     await expect(page.locator('.skills-cv-step')).toContainText(locale === 'ar'
-      ? 'أكمل تسجيل الدخول في تطبيق مساعدك'
-      : 'complete sign-in in your actual client');
-    await expect(page.locator('#skills-quick-cli')).toHaveText('npm start\nnpm run agent -- codex');
+      ? 'أكمل تسجيل الدخول والموافقة'
+      : 'complete provider sign-in and consent in that client');
+    await expect(page.locator('#skills-start-app')).toHaveText('npm start');
+    await expect(page.locator('#skills-quick-cli')).toHaveText('npm run agent -- codex');
     await expect(page.locator('.skills-client-alternative code')).toHaveText('npm run agent -- claude-code');
     expect(await page.evaluate(() => Boolean(document.querySelector('.skills-requirements').compareDocumentPosition(document.querySelector('.skills-start-actions')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
     await expect(requirement.locator(`a[href="${prefix}/examples/"]`)).toHaveCount(1);
@@ -150,7 +145,7 @@ test('country packs lead into public research while preserving agent and CV cont
     const links = section.locator('p').last().locator('a');
     await expect(links.nth(0)).toHaveText('Try public research');
     await expect(links.nth(0)).toHaveAttribute('href', '/examples/#research-request');
-    await expect(links.nth(1)).toHaveAttribute('href', 'https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-DIRECTORIES.md');
+    await expect(links.nth(1)).toHaveAttribute('href', 'https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/AGENT-DIRECTORIES.md');
     await expect(links.nth(2)).toHaveAttribute('href', '/guides/use-the-skill/#cv');
   }
   await page.locator('main a[href="/examples/#research-request"]').click();

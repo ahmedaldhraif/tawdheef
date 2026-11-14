@@ -225,7 +225,7 @@ for (const width of [320, 390]) for (const [locale, path] of [['en', '/welcome/'
     const image = section.locator('.agent-demo-image');
     await image.scrollIntoViewIfNeeded();
     await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste-poster.png');
-    await expect(image).toHaveCSS('border-radius', '12px');
+    await expect(image).toHaveCSS('border-radius', '10px');
     await expect(section.locator('.agent-install-demo button, .agent-install-demo video')).toHaveCount(0);
     const box = await image.boundingBox();
     expect(box.width).toBeGreaterThan(0);
@@ -250,7 +250,7 @@ for (const width of [320, 390]) for (const [locale, path] of [['en', '/skills/']
     await expect(image).toHaveAttribute('src', '/site-assets/agent-setup/claude-paste-poster.png');
     await image.evaluate(element => element.decode());
     expect(await image.evaluate(element => [element.naturalWidth, element.naturalHeight])).toEqual([584, 210]);
-    await expect(image).toHaveCSS('border-radius', '12px');
+    await expect(image).toHaveCSS('border-radius', '10px');
 
     // The CV actions remain in their dedicated setup step, away from the skill command.
     await expect(page.locator('.skills-cv-brand img')).toHaveAttribute('src', '/brands/tabbio-wordmark-violet-original.svg');
@@ -295,7 +295,7 @@ for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) 
     await expect(field).toHaveCSS('pointer-events', 'none');
     await expect(field).toHaveCSS('animation-name', 'none');
     await expect(field.locator('a, button, input, select, textarea, [tabindex], [contenteditable]')).toHaveCount(0);
-    await expect(field.locator('.skills-command-row')).toHaveCount(8);
+    await expect(field.locator('.skills-command-row')).toHaveCount(16);
     const requests = await field.locator('.skills-command-request').allTextContents();
     expect(new Set(requests).size).toBe(8);
     expect(requests.every(text => locale === 'ar' ? /[\u0600-\u06ff]/.test(text) : /[a-z]/i.test(text))).toBe(true);
@@ -311,7 +311,7 @@ for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) 
     }
 
     const layering = await hero.evaluate(element => {
-      const field = element.querySelector('.skills-command-field'), heading = element.querySelector('h1');
+      const field = element.querySelector('.skills-command-field'), heading = element.querySelector('.agent-heading');
       const a = field.getBoundingClientRect(), b = element.getBoundingClientRect();
       return {
         isolation: getComputedStyle(element).isolation,
@@ -350,11 +350,11 @@ for (const locale of ['en', 'ar']) for (const scheme of ['light', 'dark']) {
     for (const [index, template] of ['directory-data.yml', 'add-company.yml', 'new-country-pack.yml'].entries()) {
       const target = new URL(urls[index]);
       expect(target.origin).toBe('https://github.com');
-      expect(target.pathname).toBe('/ahmedaldhraif/tawdheef/issues/new');
+      expect(target.pathname).toBe('/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new');
       expect(target.searchParams.get('template')).toBe(template);
       expect(readFileSync(new URL('../.github/ISSUE_TEMPLATE/' + template, import.meta.url), 'utf8')).toContain('checked-date');
     }
-    expect(urls[3]).toBe('https://github.com/ahmedaldhraif/tawdheef/blob/main/CONTRIBUTING.md#code-changes');
+    expect(urls[3]).toBe('https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/CONTRIBUTING.md#code-changes');
     for (const width of [320, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);

@@ -33,7 +33,7 @@ export default {
     },
     {
       "request": "Check my saved connections",
-      "tool": "list_connections"
+      "tool": "get_native_client_status"
     },
     {
       "request": "Check what setup needs next",

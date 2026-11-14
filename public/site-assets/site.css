@@ -149,3 +149,5 @@ html:has(.guide-layout){scroll-behavior:auto}
 /* Shared by landing and Skills, including Arabic. Allow for glyphs and cursor. */
 .agent-phrase-slot{padding-inline:5px;overflow:visible}
 .agent-phrase-text{padding-inline:5px;overflow:visible}
+
+.hero .hero-community{max-width:480px;margin:20px auto 0;font-size:12px;line-height:1.7;color:var(--site-muted,var(--muted))}.hero-community a{color:inherit;text-decoration-color:var(--site-line);text-underline-offset:4px}

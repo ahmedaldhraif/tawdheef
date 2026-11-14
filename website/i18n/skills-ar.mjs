@@ -33,7 +33,7 @@ export default {
     },
     {
       "request": "تحقق من اتصالاتي المحفوظة",
-      "tool": "list_connections"
+      "tool": "get_native_client_status"
     },
     {
       "request": "تحقق من خطوة الإعداد التالية",
