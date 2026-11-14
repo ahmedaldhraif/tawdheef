@@ -122,7 +122,7 @@ test('forwarded CLI paths remain relative to the caller rather than a different 
   const f = await fixture(t), caller = join(f.sourceRoot, 'caller directory'); await mkdir(caller);
   const result = spawnSync(process.execPath, [join(f.sourceRoot, 'bin/apply-tracker.mjs'), 'call', 'fixture', '--input-file', 'arguments.json'], { cwd: caller, env: f.env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
   assert.equal(result.status, 7); const observed = JSON.parse(result.stdout);
-  assert.equal(observed.cwd, caller); assert.equal(observed.workspace, f.sourceRoot);
+  assert.equal(await realpath(observed.cwd), await realpath(caller)); assert.equal(observed.workspace, f.sourceRoot);
   assert.deepEqual(observed.args, ['call', 'fixture', '--input-file', 'arguments.json']);
 });
 
@@ -132,9 +132,9 @@ for (const entry of ['scripts/start.mjs', 'scripts/background.mjs', 'scripts/age
     const result = spawnSync(process.execPath, [join(f.sourceRoot, entry), 'unchanged argument', '--fixture'], { cwd: f.sourceRoot, env: f.env, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
     assert.equal(result.error, undefined); assert.equal(result.status, 7); assert.equal(result.stderr, 'fixture-installed-stderr');
     const observed = JSON.parse(result.stdout);
-    assert.equal(observed.entry, join(f.appRoot, entry)); assert.deepEqual(observed.args, ['unchanged argument', '--fixture']);
+    assert.equal(await realpath(observed.entry), await realpath(join(f.appRoot, entry))); assert.deepEqual(observed.args, ['unchanged argument', '--fixture']);
     assert.equal(observed.data, f.dataDir); assert.equal(observed.workspace, f.sourceRoot); assert.equal(observed.port, '4017');
-    assert.equal(observed.client, 'claude-code'); assert.equal(observed.monitor, '1'); assert.equal(observed.permissions, 'unchanged'); assert.equal(observed.cwd, f.sourceRoot);
+    assert.equal(observed.client, 'claude-code'); assert.equal(observed.monitor, '1'); assert.equal(observed.permissions, 'unchanged'); assert.equal(await realpath(observed.cwd), await realpath(f.sourceRoot));
     assert.equal(await readFile(f.pointerPath, 'utf8'), pointerBefore);
   });
 }
