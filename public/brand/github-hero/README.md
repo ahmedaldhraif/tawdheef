@@ -1,20 +1,20 @@
 # GitHub identity hero
 
-The native Tawdheef agent types **tawdheef.com**, shimmers, clears the same slot,
-then types **توظيف.كوم**. This is decorative branding, not live application activity.
+The original native agent types **tawdheef.com**, clears the slot, then types **توظيف.كوم**. Both finished wordmarks sit 24 px beside the agent. There is no added text sheen in the default export.
 
-- 800 × 176 pixels, 20 frames per second, 7.45 seconds, continuous loop.
-- Light and dark GIFs; still PNGs for reduced motion and manual reuse.
-- Original outlined wordmarks, original native mascot body and single code eye.
-- README `picture` elements select the appropriate theme and still fallback.
+Frames are sampled by the same `paintTimeline` SVG/CSS renderer used in the native studio: Coding during typing/clearing, Speaking while holding, including the native moving body highlight. No replacement motion is drawn by hand.
 
-Build-only Python dependencies: Pillow, fontTools and aggdraw. They are not app dependencies.
+- 800 × 176 pixels, 24 fps, continuous loop.
+- Light and dark GIFs, plus still PNGs.
+- Original outlined wordmarks with joined Arabic lettering and square dots.
+- README picture elements provide theme and reduced-motion still fallbacks.
+
+## Rebuild
 
 ```sh
-python -m pip install --target outputs/github-hero-render-deps Pillow fonttools aggdraw
-python scripts/branding/export-github-hero.py
+python scripts/branding/export-github-hero.py --open
 ```
 
-Typography uses the existing outlined brand masters. See the font licences in
-`../fonts/`, and `sources.json` for the render source. No provider session,
-tracking records or generated stock imagery is used.
+Open the displayed local export page, choose **Build native hero**, then download its four results into this folder. Keep **Hero text shimmer** off for the default version. The page uses the local native studio timeline renderer, native SVG states and its licensed GIF encoder. No Python image libraries, provider sessions or tracking records are needed.
+
+See `sources.json`, the brand font licences under `../fonts/`, and the GIF encoder licence under `../studio/vendor/`.

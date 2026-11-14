@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Native GitHub hero export</title>
+<style>body{font:15px system-ui;background:#111110;color:#eee;max-width:900px;margin:40px auto;padding:20px}button,a{font:inherit;padding:12px;display:inline-block;color:inherit}canvas,img{max-width:100%;height:auto}#downloads a{margin:8px;border:1px solid #444;border-radius:8px}button{cursor:pointer}#status{min-height:24px}</style>
+<h1>Native GitHub hero export</h1><p>Uses the same SVG and CSS frame renderer as the native studio.</p>
+<button id="build">Build native hero</button><label><input type="checkbox" id="shimmer"> Hero text shimmer</label><p id="status" role="status">Ready</p><canvas id="preview" width="800" height="176"></canvas><div id="downloads"></div>
+<script type="module">
+import {paintTimeline,clearTimelineCache} from '../studio/timeline.mjs';
+import {GIFEncoder,quantize,applyPalette} from '../studio/vendor/gifenc.mjs';
+const W=800,H=176,FPS=24,S=2,words=['tawdheef.com','توظيف.كوم'];
+const status=document.querySelector('#status'),preview=document.querySelector('#preview'),links=document.querySelector('#downloads');
+const textImage=async(file,color)=>{const svg=(await(await fetch('../'+file)).text()).replaceAll('#5A2AFF',color);const image=new Image();image.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));await image.decode();return image;};
+const nativeSVG=new Map();
+const getSVG=async state=>{if(!nativeSVG.has(state))nativeSVG.set(state,await(await fetch('../states/state-'+state+'-animated.svg')).text());return nativeSVG.get(state);};
+function dataLink(bytes,name,type){const a=document.createElement('a');a.download=name;a.textContent='Download '+name;const chunk=32768;let binary='';for(let i=0;i<bytes.length;i+=chunk)binary+=String.fromCharCode(...bytes.subarray(i,i+chunk));a.href='data:'+type+';base64,'+btoa(binary);links.append(a);}
+function timeline(){let total=0;const parts=[];for(let index=0;index<2;index++){for(const [phase,duration]of[['type',words[index].length*65],['hold',2100],['erase',words[index].length*30],['gap',320]]){parts.push({index,phase,start:total,duration});total+=duration;}}return{parts,total};}
+document.querySelector('#build').onclick=async()=>{
+ const button=document.querySelector('#build');button.disabled=true;links.replaceChildren();
+ try{
+  const shimmer=document.querySelector('#shimmer').checked,{parts,total}=timeline(),frames=Math.ceil(total/1000*FPS);
+  const canvas=document.createElement('canvas');canvas.width=W*S;canvas.height=H*S;const ctx=canvas.getContext('2d',{willReadFrequently:true}),agent=document.createElement('canvas');
+  for(const dark of[false,true]){
+   clearTimelineCache();const stem='wordmark-'+(dark?'dark':'light'),background=dark?'#0d1117':'#ffffff',ink=dark?'#f4f4f0':'#242424',violet=dark?'#b29aff':'#5a2aff';
+   const images=await Promise.all([textImage('wordmark-latin-purple.svg',ink),textImage('wordmark-arabic-purple.svg',ink)]),encoder=GIFEncoder();
+   const layer=document.createElement('canvas');layer.width=canvas.width;layer.height=canvas.height;const lc=layer.getContext('2d');
+   for(let frame=0;frame<frames;frame++){
+    const time=Math.min(total-1,frame*1000/FPS),part=parts.find(p=>time>=p.start&&time<p.start+p.duration),local=time-part.start;
+    const count=part.phase==='type'?Math.min(words[part.index].length,Math.floor(local/65)+1):part.phase==='hold'?words[part.index].length:part.phase==='erase'?Math.max(0,words[part.index].length-Math.floor(local/30)-1):0;
+    const state=part.phase==='hold'?'speaking':'coding';
+    await paintTimeline(agent,{steps:[{state,durationMs:10000}],timeMs:local,size:160,color:violet,background:'transparent',showLabel:false,reducedMotion:false,getSVG});
+    ctx.fillStyle=background;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(agent,128*S,46*S,80*S,80*S);
+    const image=images[part.index],height=48*S,width=image.naturalWidth/image.naturalHeight*height,x=224*S,y=64*S,p=count/words[part.index].length;
+    lc.clearRect(0,0,layer.width,layer.height);lc.save();lc.beginPath();lc.rect(part.index===0?x:x+width*(1-p),0,width*p,layer.height);lc.clip();lc.drawImage(image,x,y,width,height);lc.restore();
+    if(shimmer&&part.phase==='hold'){
+     lc.globalCompositeOperation='source-atop';const center=x-width+local/2100*width*3,gradient=lc.createLinearGradient(center-80*S,0,center+80*S,0);gradient.addColorStop(0,ink);gradient.addColorStop(.5,dark?'#b9a5e8':'#6e5b96');gradient.addColorStop(1,ink);lc.fillStyle=gradient;lc.fillRect(0,0,layer.width,layer.height);lc.globalCompositeOperation='source-over';
+    }
+    ctx.drawImage(layer,0,0);
+    if(part.phase==='type'){const cursor=part.index===0?x+width*p:x+width*(1-p);ctx.fillStyle=violet;ctx.fillRect(cursor+(part.index===0?3:-3)*S,68*S,2*S,40*S);}
+    preview.getContext('2d').drawImage(canvas,0,0,W,H);
+    const rgba=preview.getContext('2d',{willReadFrequently:true}).getImageData(0,0,W,H).data,palette=quantize(rgba,256),indexed=applyPalette(rgba,palette);
+    const delay=Math.round((frame+1)*1000/FPS/10)*10-Math.round(frame*1000/FPS/10)*10;
+    encoder.writeFrame(indexed,W,H,{palette,delay,repeat:0});
+    status.textContent=(dark?'Dark':'Light')+' '+(frame+1)+' / '+frames;
+    if(frame===Math.floor(words[0].length*65/1000*FPS)+2){const blob=await new Promise(resolve=>preview.toBlob(resolve,'image/png'));dataLink(new Uint8Array(await blob.arrayBuffer()),stem+'.png','image/png');}
+    if(frame%8===0)await new Promise(resolve=>setTimeout(resolve,0));
+   }
+   encoder.finish();dataLink(Uint8Array.from(encoder.bytes()),stem+'.gif','image/gif');
+  }
+  status.textContent='Finished: exact native Coding and Speaking frames; 24 fps; '+(total/1000).toFixed(2)+' seconds.';
+ }catch(error){status.textContent='Export failed: '+error.message;}finally{button.disabled=false;}
+};
+</script></html>

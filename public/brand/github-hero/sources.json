@@ -1,15 +1,31 @@
 {
-  "generator": "scripts/branding/export-github-hero.py",
-  "artwork": [
+  "generator": "public/brand/github-hero/render.html",
+  "launcher": "scripts/branding/export-github-hero.py",
+  "nativeRenderer": "public/brand/studio/timeline.mjs: paintTimeline",
+  "agentStates": [
+    "coding",
+    "speaking"
+  ],
+  "nativeArtwork": "Canonical state-*-animated.svg, original CSS/keyframes and native moving highlight. No hand-approximated motion.",
+  "wordmarks": [
     "../wordmark-latin-purple.svg",
     "../wordmark-arabic-purple.svg"
   ],
-  "agent": "Original native studio body, square left eye and single right code eye from scripts/branding/mascot.mjs",
-  "rendering": "Pillow + fontTools + aggdraw; local vector rendering only",
-  "purpose": "Decorative GitHub identity animation. No live job progress or account status.",
+  "layout": {
+    "agentSize": 80,
+    "agentX": 128,
+    "wordmarkX": 224,
+    "visibleGapPixels": 24,
+    "arabicExtraOffset": 0
+  },
+  "fps": 24,
+  "textSheen": false,
   "themes": [
     "light",
     "dark"
   ],
-  "reducedMotion": "Separate still PNGs in the README picture element"
+  "purpose": "Decorative identity loop, not live progress.",
+  "frames": 165,
+  "durationMs": 6880,
+  "loop": 0
 }
