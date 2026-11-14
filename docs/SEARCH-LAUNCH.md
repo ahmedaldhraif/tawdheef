@@ -5,18 +5,21 @@ policy file does not certify GitHub compliance or guarantee a search listing.
 
 ## Positioning and first use
 
-Use the approved category **Tawdheef — Auto Job Apply & Application Tracker**
-in descriptive titles and repository context. The hero reads **Auto-apply to
-jobs. Track your applications.** Its supporting line is **Free, open-source
-software for you and your ChatGPT or Claude agent.** This is an owner-approved
-message, not evidence of higher conversion or search ranking.
+Use the category **Auto Job Apply & Application Tracker** in repository context.
+The approved hero reads **Find matching jobs. Build career profiles.** Its
+supporting line describes a free, open-source job-search app for the person's
+local **Codex or Claude Code** agent. Keep the centered hero, original assets
+and quiet Ahmed byline. This is positioning, not measured conversion evidence.
 
-The path is GitHub release → local agent-assisted setup → free Tabbio CV or
-existing account → connect and verify → choose targets → explicitly start Run.
+Offer public company research before setup: directory → sourced research
+request → useful company leads. This path needs no app or CV connection.
+When personal matching is useful, the path is GitHub release → local agent
+setup → free Tabbio CV or existing account → connect and verify → shortlist →
+choose targets → explicitly start Run.
 The hero links to setup; actual downloads go directly to official GitHub
 Release assets, with a clone alternative. Use the current
-[v0.1.1 preview](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.1)
-or `/releases`, not `/releases/latest` while the release is a prerelease.
+release target from `website/config.json`, or `/releases`, rather than assuming
+`/releases/latest` includes a prerelease.
 Coordinate future version links with the release owner.
 
 State the operational limits in setup and workflow help: local Codex or Claude
@@ -42,6 +45,16 @@ contributions already exist or turn research records into vacancy counts.
 
 ## Website
 
+- Tawdheef.com is the canonical product home for the landing page, Skills,
+  guides, research examples, directory library and community. Hosting
+  infrastructure does not change that identity. Ahmed introduces and maintains
+  the project; Tabbio is the separate connected CV service.
+- A supporting page on Tabbio should explain the integration and link to the
+  canonical project and setup. Keep distinct content rather than duplicate
+  primary landing pages. Review [the integration draft](marketing/TABBIO-INTEGRATION-PAGE.md).
+- The owner deferred domain connection on 14 November 2026. Keep deployment
+  prepared and local/preview verification separate from a public-domain launch.
+
 - Deploy only `site-dist`, never the local tracker or its data directory.
 - Production pages have canonical URLs, a sitemap, crawlable links, descriptive
   headings and useful public content. Local preview routes remain non-indexable.
@@ -55,6 +68,18 @@ contributions already exist or turn research records into vacancy counts.
 - Google states that its AI search features use ordinary SEO fundamentals;
   there is no special AI schema requirement. `llms.txt` is a convenience for
   readers, not proof that an agent or search service will use the site.
+
+## Launch and return visits
+
+Use the [English/Arabic launch kit](marketing/LAUNCH-KIT.md) for reviewed drafts
+and an actual public-data recording. Posting requires a chosen destination and
+explicit instruction; drafting does not publish anything. Follow the
+[growth plan](marketing/OPEN-SOURCE-GROWTH.md) for priorities and evidence limits.
+
+Publish [pack update notes](../directories/PACK-UPDATES.md) only when an actual
+download exists, with changed source IDs and real contributor/PR credit.
+Keep data suggestions and downloads usable without an account. Keep downloads,
+completed setup, CV connections, Tabbio visits, signups and completed CVs separate.
 
 ## Limits
 

@@ -13,6 +13,8 @@ export default {
   start: {
     title: "Get started",
     body: "Download the app, let your agent set it up, then connect your CV.",
+    requirement: "Run needs Codex or Claude Code and a connected Tabbio CV.",
+    researchAlternative: "Explore company data first",
     download: "Download the app",
     repository: "View or clone on GitHub",
     steps: [

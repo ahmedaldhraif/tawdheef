@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --ignore-scripts --omit=optional --no-audit --no-fund",
+  "buildCommand": "node scripts/marketing/build-directory-pack.mjs && node website/build.mjs && node scripts/marketing/check-seo.mjs",
+  "outputDirectory": "site-dist",
+  "trailingSlash": true,
+  "redirects": [
+    { "source": "/skills/tawdheef", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/skills/tawdheef/", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/get-started", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/get-started/", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/guides/get-started", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/guides/get-started/", "destination": "/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/skills/tawdheef", "destination": "/ar/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/skills/tawdheef/", "destination": "/ar/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/get-started", "destination": "/ar/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/get-started/", "destination": "/ar/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/guides/get-started", "destination": "/ar/guides/use-the-skill/", "permanent": true },
+    { "source": "/ar/guides/get-started/", "destination": "/ar/guides/use-the-skill/", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}

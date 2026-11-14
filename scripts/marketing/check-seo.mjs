@@ -37,9 +37,9 @@ try {
   check(domain.protocol === 'https:' && config.domain === domain.origin, 'config.domain must be a bare HTTPS origin without a trailing slash.');
   const guides = JSON.parse(await read(join(root, 'website/guides.json')));
   const catalog = JSON.parse(await read(join(root, 'directories/catalog.json')));
-  // Derive the current 32 routes from public definitions so new guides/packs
+  // Derive canonical routes from public definitions so new guides/packs
   // cannot silently disappear from a sitemap that still happens to be valid XML.
-  const expected = new Set(['/', '/skills/', '/guides/', '/about/', '/directories/', '/policies/', '/directories/uae/', '/ar/', '/ar/skills/', '/ar/guides/']);
+  const expected = new Set(['/', '/skills/', '/guides/', '/about/', '/directories/', '/policies/', '/directories/uae/', '/ar/', '/ar/skills/', '/ar/guides/', '/examples/', '/examples/job-search-brief/', '/ar/examples/', '/ar/examples/job-search-brief/']);
   for (const guide of guides) for (const prefix of ['', '/ar']) expected.add(`${prefix}/guides/${guide.slug}/`);
   for (const pack of catalog.packs.filter(pack => pack.featured !== false && !pack.historical)) expected.add(`/directories/${pack.id}/`);
   const redirects = new Map();
@@ -51,8 +51,8 @@ try {
     redirects.set(from, to);
   }
   const legacy = ['/skills/tawdheef', '/get-started', '/guides/get-started'];
-  for (const path of legacy) for (const suffix of ['', '/']) {
-    check(redirects.get(path + suffix) === '/guides/use-the-skill/', `Missing legacy 301: ${path + suffix}`);
+  for (const prefix of ['', '/ar']) for (const path of legacy) for (const suffix of ['', '/']) {
+    check(redirects.get(prefix + path + suffix) === prefix + '/guides/use-the-skill/', `Missing legacy 301: ${prefix + path + suffix}`);
   }
   const files = await walk(site);
   const pages = new Map();
@@ -158,7 +158,7 @@ try {
   }
   for (const path of expected) check(canonicalPages.has(path), `Missing expected canonical page: ${path}`);
   for (const [path, page] of canonicalPages) {
-    const localized = path === '/' || path === '/ar/' || /^\/(?:ar\/)?(?:skills\/|guides\/)/.test(path);
+    const localized = path === '/' || path === '/ar/' || /^\/(?:ar\/)?(?:skills\/|guides\/|examples\/)/.test(path);
     const alternates = page.links.filter(link => link.rel === 'alternate' && link.hreflang);
     if (!localized) { check(!alternates.length, `Unexpected locale alternates without a translated route: ${path}`); continue; }
     const english = path.startsWith('/ar/') ? path.slice(3) : path;

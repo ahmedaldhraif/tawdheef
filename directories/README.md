@@ -33,6 +33,8 @@ All six snapshots are dated 13 November 2026. The separate
 [original UAE snapshot](uae/) preserves the historical 772-record baseline.
 Downloads also appear in [GitHub releases](https://github.com/ahmedaldhraif/tawdheef/releases).
 
+[Pack updates and contributor credit](PACK-UPDATES.md) separates the published downloads from later repository changes.
+
 Extract the selected `<pack-id>-directory-pack.zip` on your computer.
 Each ZIP includes the unchanged public source JSON, provenance manifest, import
 CSV files and instructions. Saudi Arabia and the expanded UAE pack have numbered

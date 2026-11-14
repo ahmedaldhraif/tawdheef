@@ -13,6 +13,8 @@ export default {
   start: {
     title: "ابدأ من هنا",
     body: "حمّل التطبيق، ودع مساعدك يجهّزه، ثم اربط سيرتك الذاتية.",
+    requirement: "لبدء Run، تحتاج إلى Codex أو Claude Code وسيرة مرتبطة على Tabbio.",
+    researchAlternative: "استكشف بيانات الشركات أولًا",
     download: "حمّل التطبيق",
     repository: "عرض المشروع أو نسخه من GitHub",
     steps: [
