@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Public directory record",
+  "description": "A researched organisation or recruitment source, never an applicant or application. Runtime checks additionally validate public URLs, dates, nested credentials and known unsafe directives.",
+  "type": "object",
+  "required": ["id", "name", "sourceRole", "routeStatus", "checkedAt", "sourceFields"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "description": "Stable public source ID; never renumber existing records or copy a private tracker ID." },
+    "name": { "type": "string", "minLength": 1 },
+    "arabicName": { "type": "string" },
+    "sector": { "type": "string" },
+    "location": { "type": "string" },
+    "type": { "type": "string", "description": "Leave unknown ownership/classification blank." },
+    "sourceRole": { "type": "string", "minLength": 1, "examples": ["Employer", "Recruitment agency", "Government recruitment portal", "Programme", "Unresolved source lead"] },
+    "website": { "type": "string" },
+    "careersUrl": { "type": "string" },
+    "applyUrl": { "type": "string" },
+    "linkedinUrl": { "type": "string" },
+    "email": { "type": "string", "description": "Only a published recruitment address, with field evidence; blank if unknown." },
+    "routeStatus": { "type": "string", "minLength": 1, "examples": ["Published careers page; not tested", "Profile registration offered; checked", "Recruitment route unknown"] },
+    "checkedAt": { "type": "string", "description": "Actual source-check ISO date or UTC timestamp, not the pack edit date." },
+    "sourceFields": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Retain original public evidence and unknowns. New records should use evidenceUrls and fieldEvidence. Existing provenance layouts remain valid when they contain supporting public URLs.",
+      "properties": {
+        "evidenceUrls": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "fieldEvidence": { "type": "object", "description": "Map each recruitment route/contact claim to its public source URL and what was observed." },
+        "missingDataNotes": { "type": "array", "items": { "type": "string" } },
+        "sourceNotes": { "type": "array", "items": { "type": "string" } },
+        "licenseNotes": { "type": "string" },
+        "recruitment": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "jobsUrl": { "type": "string" },
+            "profileUrl": { "type": "string" },
+            "cvUploadUrl": { "type": "string" },
+            "talentPoolUrl": { "type": "string" },
+            "capabilities": { "type": "object", "additionalProperties": false, "properties": { "profileCreation": { "$ref": "#/$defs/capability" }, "cvUpload": { "$ref": "#/$defs/capability" }, "talentPool": { "$ref": "#/$defs/capability" } } },
+            "notes": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  },
+  "$defs": { "capability": { "enum": ["supported", "unavailable", "unknown"] } }
+}

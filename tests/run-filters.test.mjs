@@ -90,7 +90,7 @@ test('start rechecks current records after preview, snapshots type scope, and ne
 
 test('invalid type filters fail closed through store and machine tools', async t => {
   const { store } = await fixture(t);
-  const tools = buildTools(store);
+  const tools = buildTools(store, { mode: 'local-adapters' });
   const preview = tools.find(tool => tool.name === 'preview_run');
   const start = tools.find(tool => tool.name === 'start_run');
   assert.deepEqual(preview.inputSchema.properties.companyTypes.items.enum, COMPANY_TYPES.map(type => type.id));
@@ -108,7 +108,7 @@ test('MCP and runner previews agree; unassisted runs apply filters without chang
   const { store } = await fixture(t);
   const runner = createAgentRunner({ store, port: 4000 });
   t.after(() => runner.close());
-  const tools = buildTools(store), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
+  const tools = buildTools(store, { mode: 'local-adapters' }), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
   const input = { directoryId: 'test', companyTypes: ['local_government', 'government_linked'] };
   assert.deepEqual(await call('preview_run', input), runner.preview(input));
   const run = await call('start_run', { ...input, companyIds: ['local', 'linked', 'private'], mode: 'send_and_submit', explicit: true });

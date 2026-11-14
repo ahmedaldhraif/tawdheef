@@ -96,7 +96,7 @@ test('calendar MCP tools expose explicit creation authority and reject unsupport
   const dataDir = await mkdtemp(join(tmpdir(), 'calendar-machine-contract-'));
   const store = openStore({ dataDir });
   t.after(async () => { await closeToolConnections(store); store.close(); await rm(dataDir, { recursive: true, force: true }); });
-  const tools = buildTools(store);
+  const tools = buildTools(store, { mode: 'local-adapters' });
   const read = tools.find(tool => tool.name === 'list_calendar_events');
   const write = tools.find(tool => tool.name === 'create_calendar_event');
   assert.equal(read.annotations.readOnlyHint, true);

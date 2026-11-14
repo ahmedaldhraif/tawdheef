@@ -19,7 +19,7 @@ async function fixture(t) {
   });
   return { store, companyId, otherId, setTime(value) { time = new Date(value); }, clock: () => time };
 }
-const start = (store, companyIds) => store.startRun({ directoryId: 'fixture', companyIds, explicit: true, mode: 'send_and_submit' });
+const start = (store, companyIds, actions) => store.startRun({ directoryId: 'fixture', companyIds, explicit: true, mode: 'send_and_submit', ...(actions ? { actions } : {}) });
 
 test('account, profile and upload milestones survive application and reply transitions', async t => {
   const { store, companyId, setTime } = await fixture(t);
@@ -75,7 +75,7 @@ test('confirmed CV-only sends stay separate from applications and block duplicat
   assert.throws(() => store.logApplication(input), /explicit run/);
   const wrongScope = start(store, [otherId]);
   assert.throws(() => store.logApplication({ ...input, runId: wrongScope.id }), /explicit run/);
-  const run = start(store, [companyId]);
+  const run = start(store, [companyId], { sendCvEmails: true });
   assert.throws(() => store.logApplication({ ...input, runId: run.id, evidence: {} }), /receipt/);
   const sent = store.logApplication({ ...input, runId: run.id });
   assert.ok(sent.cvSentAt);
@@ -147,7 +147,7 @@ test('emailed reports include real progress counts even with zero job applicatio
 
 test('scheduled refresh reads confirmed CV-only threads without marking a job application', async t => {
   const { store, companyId, setTime, clock } = await fixture(t);
-  const run = start(store, [companyId]);
+  const run = start(store, [companyId], { sendCvEmails: true });
   store.logApplication({ companyId, runId: run.id, event: 'cv_sent', method: 'email', role: 'General CV', to: 'careers@example.test', threadId: 'cv-thread', evidence: { providerMessageId: 'cv-confirmation' } });
   setTime('2026-11-13T09:00:00Z');
   const scheduler = createScheduler({ store, clock, connections: { async callMapped(kind, action, input) {

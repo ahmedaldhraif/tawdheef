@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openStore } from '../server/store.mjs';
-import { sendEmailForRun, confirmedEmailReceipt } from '../server/email-send.mjs';
+import { sendEmailForRun, confirmedEmailReceipt, reconcileApplicationEmail } from '../server/email-send.mjs';
 
 async function setup(t, response = { structuredContent: { messageId: 'message-1', threadId: 'thread-1', sent: true } }) {
   const dataDir = await mkdtemp(join(tmpdir(), 'apply-send-'));
@@ -112,4 +112,79 @@ test('send receipt parsing rejects arbitrary IDs, drafts, errors and contradicto
     receipt: { messageIdPath: 'delivery.receipt', statusPath: 'delivery.outcome', successValues: [202] },
   });
   assert.equal(mapped.providerMessageId, 'provider-123');
+});
+
+test('actual send receipts preserve hashed mailbox scope without copying connection secrets', async t => {
+  const f = await setup(t);
+  let identity = 'first-private@example.test';
+  f.connections.list = () => [{ kind: 'email', status: 'connected', provider: 'gmail', account: identity,
+    token: 'PRIVATE-TOKEN', credentials: { password: 'PRIVATE-PASSWORD' }, url: 'https://private.example.test/?token=secret' }];
+  const first = await f.send();
+  assert.equal(first.application.evidence.provider, 'gmail');
+  assert.match(first.application.evidence.accountId, /^sha256:[a-f0-9]{64}$/);
+  identity = 'second-private@example.test';
+  const second = await f.send({ companyId: f.ids[1], to: 'careers-two@example.test' });
+  assert.notEqual(first.application.evidence.accountId, second.application.evidence.accountId);
+  assert.deepEqual(f.store.snapshot({ directoryId: 'fixture' }).counts, { applications: 2, profiles: 0, emails: 2 });
+  // Same message ID on the same connected account is one observed email,
+  // even if the provider duplicated a receipt for a different role record.
+  await f.send({ companyId: f.ids[1], to: 'careers-two@example.test', role: 'Another role' });
+  assert.deepEqual(f.store.snapshot({ directoryId: 'fixture' }).counts, { applications: 2, profiles: 0, emails: 2 });
+  const saved = JSON.stringify(f.store.listApplications());
+  for (const secret of ['first-private@example.test', 'second-private@example.test', 'PRIVATE-TOKEN', 'PRIVATE-PASSWORD', 'private.example.test']) assert.equal(saved.includes(secret), false);
+});
+
+test('tool discovery supplies observed account identity and later account changes do not relabel a sent receipt', async t => {
+  const f = await setup(t);
+  let account = null;
+  f.connections.list = () => [{ kind: 'email', provider: 'outlook', status: account ? 'connected' : 'disconnected', account }];
+  f.connections.tools = async () => { account = { id: 'original-account-id', email: 'original@example.test', accessToken: 'PRIVATE-ACCOUNT-TOKEN' }; return [{ name: 'fixture.send' }]; };
+  f.connections.call = async () => { account = { id: 'later-account-id', email: 'later@example.test' }; return { structuredContent: { messageId: 'same-id', sent: true } }; };
+  const result = await f.send();
+  assert.match(result.application.evidence.accountId, /^sha256:/);
+  const before = result.application.evidence.accountId;
+  const read = await reconcileApplicationEmail({ store: f.store, connections: f.connections, applicationId: result.application.id });
+  assert.equal(read.reused, true);
+  assert.equal(read.application.evidence.accountId, before);
+  assert.equal(JSON.stringify(read.application).includes('PRIVATE-ACCOUNT-TOKEN'), false);
+});
+
+test('the same Gmail mailbox and receipt use one namespace across native and CLI connections', async t => {
+  const f = await setup(t);
+  let provider = 'gmail';
+  f.connections.list = () => [{ kind: 'email', status: 'connected', provider, account: provider === 'gmail' ? 'same@example.test' : { email: 'SAME@example.test' } }];
+  const first = await f.send();
+  provider = 'google-cli';
+  const second = await f.send({ companyId: f.ids[1], to: 'careers-two@example.test' });
+  assert.equal(first.application.evidence.provider, second.application.evidence.provider);
+  assert.equal(first.application.evidence.accountId, second.application.evidence.accountId);
+  assert.equal(f.store.snapshot({ directoryId: 'fixture' }).counts.emails, 1);
+});
+
+test('reconciliation does not guess a historical email account from current connection settings', async t => {
+  const f = await setup(t, { structuredContent: { status: 'unknown' } });
+  const result = await f.send();
+  f.connections.list = () => [{ kind: 'email', status: 'connected', provider: 'gmail', account: 'new@example.test' }];
+  f.connections.getMappings = () => ({ reconcileSend: { tool: 'fixture.read', arguments: { idempotencyKey: '{{idempotencyKey}}' } } });
+  f.connections.tools = async () => [{ name: 'fixture.read', annotations: { readOnlyHint: true } }];
+  f.connections.call = async () => ({ structuredContent: { messageId: 'historical-receipt', sent: true } });
+  const reconciled = await reconcileApplicationEmail({ store: f.store, connections: f.connections, applicationId: result.application.id });
+  assert.equal(reconciled.application.evidence.accountId, undefined);
+  assert.equal(reconciled.application.evidence.provider, undefined);
+  assert.equal(reconciled.application.providerMessageId, 'historical-receipt');
+});
+
+test('reconciliation preserves an original recorded mailbox namespace while the current account differs', async t => {
+  const f = await setup(t, { structuredContent: { status: 'unknown' } });
+  const sent = await f.send();
+  const scope = { provider: 'gmail', accountId: 'sha256:' + 'a'.repeat(64) };
+  f.store.logApplication({ id: sent.application.id, companyId: f.ids[0], event: 'needs_user', evidence: scope });
+  f.connections.list = () => [{ kind: 'email', status: 'connected', provider: 'outlook', account: { id: 'different-account' } }];
+  f.connections.getMappings = () => ({ reconcileSend: { tool: 'fixture.read', arguments: { idempotencyKey: '{{idempotencyKey}}' } } });
+  f.connections.tools = async () => [{ name: 'fixture.read', annotations: { readOnlyHint: true } }];
+  f.connections.call = async () => ({ structuredContent: { messageId: 'original-message', sent: true } });
+  const result = await reconcileApplicationEmail({ store: f.store, connections: f.connections, applicationId: sent.application.id });
+  assert.equal(result.application.evidence.provider, scope.provider);
+  assert.equal(result.application.evidence.accountId, scope.accountId);
+  assert.equal(result.application.idempotencyKey, sent.application.idempotencyKey);
 });

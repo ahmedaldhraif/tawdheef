@@ -227,25 +227,25 @@
   "liveStatus": "The project owner reports the public repository and v0.1.1 preview release are live. This documentation task does not replace release assets, publish the domain, establish search indexing or verify AI citations.",
   "heroDecision": {
     "basis": "Explicit owner-approved positioning and copy decision; not a tested conversion result.",
-    "headline": "Auto-apply to jobs. Track your applications.",
-    "description": "Free, open-source software for you and your ChatGPT or Claude agent.",
-    "layout": "Centered headline and one supporting paragraph with original ChatGPT and Claude marks inline. No separate badge, audience row, stacked technical client captions or duplicate central ta mark; one black primary action and a plain explanatory link.",
+    "headline": "Find matching jobs. Build career profiles.",
+    "description": "A free, open-source job-search app for you and your Codex or Claude Code agent.",
+    "layout": "Centered headline, one supporting paragraph with original provider marks and a quiet Local-first · Built-in CLI + MCP line. One black primary action and a plain explanatory link; no decorative badge or duplicate central ta mark.",
     "primaryAction": "Get the free app → setup guide",
     "secondaryAction": "See how it works",
     "attribution": "The supplied portrait, Built by Ahmed AlDhraif text and original LinkedIn favicon square form one quiet LinkedIn link. No registered-mark artwork and no Founder of Tabbio role line.",
     "logoPlacement": "The ta symbol stays in the header and favicon, without another large mark in the hero.",
-    "category": "Auto Job Apply & Application Tracker",
+    "category": "Local job-search app with built-in CLI and MCP",
     "distribution": "Use the configured explicit releaseTag for direct official GitHub Release assets; preserve source, contribution and clone routes."
   },
   "providerIdentification": {
-    "ChatGPT": "Familiar name with the original generic OpenAI Blossom artwork inline in the supporting hero paragraph; not a direct local-web integration claim.",
-    "Claude": "Familiar name with the original generic Claude artwork inline in the supporting hero paragraph.",
-    "heroParagraph": "Free, open-source software for you and your ChatGPT or Claude agent.",
-    "localOperators": {
-      "ChatGPT": "Codex",
-      "Claude": "Claude Code"
-    },
-    "localRequirementPlacement": "Explain Codex and Claude Code in setup, workflow and FAQ content; do not stack technical operator labels under the hero's audience names.",
+    "Codex": "Explicit local assistant name with the original OpenAI Blossom artwork.",
+    "Claude Code": "Explicit local assistant name with original Claude artwork.",
+    "heroParagraph": "A free, open-source job-search app for you and your Codex or Claude Code agent.",
+    "localOperators": [
+      "Codex",
+      "Claude Code"
+    ],
+    "localRequirementPlacement": "Use the actual local client names in the hero, setup, workflow and FAQ. Explain the built-in CLI and local stdio MCP without adding a second compatibility label.",
     "boundary": "The local tracker is operated through Codex or Claude Code. Direct tracker operation from the ChatGPT or Claude website is not claimed. Tabbio CV MCP compatibility with those web clients is a separate capability.",
     "existingProviderAssets": {
       "Codex": "Original OpenAI Blossom; no distinct Codex product mark was verified.",
@@ -254,12 +254,13 @@
     "policy": "Artwork used for compatibility identification, not endorsement; see THIRD-PARTY-NOTICES.md."
   },
   "approvedPositioning": {
-    "category": "Auto Job Apply & Application Tracker",
+    "category": "Local job-search app with built-in CLI and MCP",
     "meaning": "Tawdheef (توظيف) means employment in Arabic; this is a job-seeker app, not recruiter SaaS.",
     "path": "GitHub release → extract/open locally → agent-assisted setup → free Tabbio CV or existing CV → connect and verify → choose targets → explicitly start Run → review evidence and replies.",
     "scope": "User's Codex or Claude Code performs supported email/form steps; authentication, CAPTCHA, provider restrictions and LinkedIn manual steps remain real. Tracking is local. Tawdheef is free/MIT; AI client/provider costs are separate. Basic directory/manual tracking works without Tabbio, while Run requires its connected CV.",
     "community": "Any country is welcome through source-backed issues and pull requests. Existing packs are dated research, not live vacancies or proof of successful submissions.",
-    "evidenceLimit": "Approved messaging is not conversion, ranking, adoption or successful provider-integration evidence."
+    "evidenceLimit": "Approved messaging is not conversion, ranking, adoption or successful provider-integration evidence.",
+    "purpose": "Find jobs matching the connected CV and build career accounts/profiles for future opportunities, including when no suitable vacancy is open. Keep profile, CV and application outcomes separate."
   },
   "documentationDecision": {
     "date": "2026-11-13",

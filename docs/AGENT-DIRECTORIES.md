@@ -1,6 +1,6 @@
 # Read Tawdheef directories with an agent
 
-These packs extend Tawdheef, the **Auto Job Apply & Application Tracker**.
+These packs extend Tawdheef: **find matching jobs and build career profiles**.
 Start with the public catalog, use a compact index to find records, then read the matching canonical evidence. You do not need a person's CV, mailbox or local database to research public packs. A readable connected CV is required before the local app's Run can start.
 
 The six country packs dated **13 November 2026** contain **13,714 organisation/source records**. They include employers, campuses, agencies, portals, programmes and unresolved leads. Counts are not current vacancies, independent employers, hiring eligibility or tested application routes.
@@ -35,12 +35,17 @@ prerelease, and generated CSVs are distributed inside pack ZIPs rather than Git.
 2. Read `directories/<pack-id>/index.json` for compact discovery across the pack's stable record IDs and primary facts. Search names, source roles, sectors and published routes there instead of loading every full evidence object.
 3. Read the selected record in the pack's canonical `source.json`, matching its `id`. Read `sourceFields` before relying on identity, ownership, a shared parent contact, a career route or a missing field. An index is a discovery view, not the complete evidence or an import file.
 4. Read `manifest.json` for the snapshot, source file path, `sourceSha256`, counts and generated import filenames. Verify the SHA-256 of the canonical source file's **bytes**, rather than parsing and reserializing it before hashing. Use the catalog's actual source path: the historical `uae` pack points to `data/uae-directory.json`.
-5. For local use, download the pack and preview every listed CSV part through the app or CLI. Commit only within the user's authorized import scope. Refreshing public evidence must preserve personal tracking. Importing a directory does not apply to an organisation.
+5. For local use, preview the whole ZIP with `preview_directory_pack`, read the data and guidance changes, then commit the returned token with `install_directory_pack` within the user's requested import scope. Refreshing public evidence preserves personal tracking. Installing never starts applications or monitoring. Older clients can use the CSV route below.
 
 ## Current country packs
 
-Download the selected pack ZIP from its GitHub folder's README link or the
-configured release. Extract it locally and read `manifest.json` → `files.imports`.
+Download the selected pack ZIP from its GitHub folder's README link or the configured release. Check `get_capabilities` against the installed app: current source supports whole-pack review/install, while an older released client may require the CSV route. A local unpublished pack version is not a new public download.
+
+In the current app, **Add directory → Browse community packs → Import a pack ZIP** reads all source records without extraction. For an existing tab, use **List options → Manage directory packs**. Agents use JSON input files and the same [two-stage pack tools](AGENT-GUIDE.md#guided-directory-packs). Read version, declared ownership, guide changes and conflicts before committing. Local imports remain unverified community declarations.
+
+### CSV compatibility route
+
+Extract the ZIP locally and read `manifest.json` → `files.imports`.
 Read `list_directories` to obtain the chosen local ID; create the requested tab
 through `create_directory` if needed. Preview and import **every** CSV part into
 that same directory. Neither `index.json` nor the full source JSON is an import

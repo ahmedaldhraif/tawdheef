@@ -74,12 +74,12 @@ test('reports show account and CV milestones separately from sent applications',
   expect(report.cvsUploaded).toBeGreaterThan(0);
   await page.addInitScript(id => localStorage.setItem('apply-directory', id), directory.id);
   await page.goto('/');
-  await page.getByRole('button', { name: 'Update schedule', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Updates & reports', exact: true });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await dialog.locator('summary').filter({ hasText: /^Latest report$/ }).click();
   for (const [label, key] of [['Accounts created', 'accountsCreated'], ['Profiles created', 'profilesCreated'], ['CVs uploaded', 'cvsUploaded'], ['CVs sent', 'cvsSent'], ['Applications sent', 'applied']]) {
     await expect(dialog.locator('dl > div').filter({ has: page.locator('dt').filter({ hasText: new RegExp(`^${label}$`) }) }).locator('dd')).toHaveText(String(report[key]));
   }
-  await expect(dialog.getByText('Account, profile and CV totals count companies with recorded progress during this report period. They are separate from applications sent.')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(dialog.getByText('CVs sent', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();

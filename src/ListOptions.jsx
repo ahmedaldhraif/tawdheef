@@ -7,6 +7,7 @@ import "./list-options.css";
 export default function ListOptions({
   onColumns,
   onImport,
+  onPacks,
   exportUrl,
   t = (value) => value,
 }) {
@@ -203,6 +204,7 @@ export default function ListOptions({
           >
             {t("Export CSV")}
           </a>
+          {onPacks && <button type="button" role="menuitem" tabIndex={-1} onClick={() => choose(onPacks)}>{t('Manage directory packs')}</button>}
         </div>,
         document.body,
       )}

@@ -1,10 +1,19 @@
 {
+  "formatVersion": 2,
   "id": "",
   "name": "",
   "country": "",
   "kind": "country",
   "snapshotDate": "",
   "source": "",
+  "version": "1.0.0-preview",
+  "createdBy": "",
+  "maintainers": [],
+  "contributors": [],
+  "updatedAt": "",
+  "minimumAppVersion": "0.2.0",
+  "guide": "GUIDE.md",
+  "changelog": "CHANGELOG.md",
   "description": "",
   "notes": []
 }

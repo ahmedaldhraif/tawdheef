@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing reviewed version tag (for example v0.1.0)
+        description: Existing reviewed version tag (for example v0.2.0)
         required: true
         type: string
 
@@ -12,51 +12,86 @@ permissions:
   contents: read
 
 jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+    outputs:
+      commit: ${{ steps.reviewed-ref.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.1'
+      - name: Verify reviewed tag and pin its commit
+        id: reviewed-ref
+        run: node scripts/verify-release-ref.mjs
+
   verify:
+    needs: tag
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag }}
-      - uses: actions/setup-node@v4
+          ref: ${{ needs.tag.outputs.commit }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
-      - run: npm ci --include=optional
+      - run: npm ci
       - run: npm test
       - run: npm run release:check
       - run: npm run build
 
+  desktop:
+    needs: tag
+    uses: ./.github/workflows/desktop-packages.yml
+    with:
+      source-ref: ${{ needs.tag.outputs.commit }}
+
   draft:
-    needs: verify
+    needs: [tag, verify, desktop]
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_RELEASE_SHA: ${{ needs.tag.outputs.commit }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.tag.outputs.commit }}
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
       - name: Verify tag matches source version
-        run: |
-          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json")); if(process.env.RELEASE_TAG!==`v${p.version}`) process.exit(1);'
-          test "$(git rev-parse HEAD)" = "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")"
-      - run: npm ci --include=optional
+        run: node scripts/verify-release-ref.mjs
+      - run: npm ci
       - run: npm run release:prepare
       - run: npm run release:smoke
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
-      - name: Create draft prerelease with verified assets
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: desktop-*
+          path: desktop-artifacts
+      - name: Require matching exact-archive receipts for all six downloads
+        run: node scripts/collect-desktop-release.mjs --artifacts desktop-artifacts --output "release/$RELEASE_TAG"
+      - name: Recheck remote tag and create draft prerelease with verified assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          node scripts/verify-release-ref.mjs --remote
           gh release create "$RELEASE_TAG" release/"$RELEASE_TAG"/* --verify-tag --draft --prerelease --title "Tawdheef ${RELEASE_TAG#v} public preview" --notes-file release/"$RELEASE_TAG"/RELEASE-NOTES.md

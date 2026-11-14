@@ -4,6 +4,7 @@ import { constants } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { defaultDataDir } from '../scripts/app-paths.mjs';
 
 export const INTEGRATIONS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const INTEGRATIONS = Object.freeze([
@@ -15,7 +16,7 @@ export const INTEGRATIONS = Object.freeze([
 
 function locations(options = {}) {
   const root = resolve(options.root || INTEGRATIONS_ROOT);
-  const dataDir = resolve(options.dataDir || process.env.APPLY_TRACKER_DATA || join(root, '.local'));
+  const dataDir = resolve(options.dataDir || defaultDataDir(root));
   const port = Number(options.port || process.env.APPLY_TRACKER_PORT || 4000);
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Choose a port from 1024 to 65535.');
   return { root, dataDir, port };
@@ -45,6 +46,7 @@ async function packageLocation(item, options) {
 export async function integrationPresets(options = {}) {
   const { dataDir } = locations(options);
   return Promise.all(INTEGRATIONS.map(async item => {
+    const supported = !(item.id === 'google-cli' && (options.platform || process.platform) === 'win32' && (options.arch || process.arch) !== 'x64');
     const installed = await packageLocation(item, options);
     let browserInstalled;
     if (item.id === 'playwright' && installed.installed) {
@@ -67,7 +69,7 @@ export async function integrationPresets(options = {}) {
         MS365_MCP_REQUIRE_CONFIRM: 'true',
       } : {};
     return {
-      ...item, ...installed, expectedVersion: item.version, ready: installed.installed && installed.versionMatches,
+      ...item, ...installed, supported, expectedVersion: item.version, ready: supported && installed.installed && installed.versionMatches,
       ...(browserInstalled !== undefined ? { browserInstalled } : {}),
       command: installed.executable || process.execPath,
       args: installed.entry ? [...(installed.executable ? [] : [installed.entry]), ...args] : [],
@@ -76,8 +78,8 @@ export async function integrationPresets(options = {}) {
       ...(item.id === 'tabbio' ? { loginArgs: installed.entry ? [installed.entry, 'login'] : [] } : {}),
       ...(item.id === 'outlook-mcp' ? { loginArgs: installed.entry ? [installed.entry, ...args, '--login'] : [] } : {}),
       nextStep: installed.installed
-        ? installed.versionMatches ? (item.id === 'playwright' ? 'Install Chromium with npm run setup -- --browser, then add these browser tools to your AI client.' : 'Sign in before using this integration. Installation is not account access.') : 'Run npm run setup to restore the pinned integration version.'
-        : item.id === 'tabbio' ? 'Run npm run setup -- --tabbio to download the external Tabbio CLI.' : 'Run npm run setup to install the pinned optional integration.',
+        ? installed.versionMatches ? (item.id === 'playwright' ? 'Install Chromium with npm run setup -- --local-adapters --browser, then add these browser tools to your AI client.' : 'Sign in before using this integration. Installation is not account access.') : `Run npm run setup -- --local-adapters --integration ${item.id} to restore the pinned integration version.`
+        : !supported ? 'This optional bridge is unavailable on this platform. Choose a native provider in Connections.' : `Run npm run setup -- --local-adapters --integration ${item.id} to install only this integration.`,
     };
   }));
 }
@@ -97,6 +99,12 @@ async function runningApp({ dataDir, port }) {
 
 export async function integrationStatus(options = {}) {
   const paths = locations(options);
+  if ((options.mode || (options.localAdapters ? 'local-adapters' : 'native')) === 'native') return {
+    mode: 'native', owner: 'selected_ai_client',
+    runtime: { node: process.version, supported: Number(process.versions.node.split('.')[0]) >= 24, platform: process.platform, architecture: process.arch },
+    app: await runningApp(paths), integrations: [], accountConnected: false,
+    nextStep: 'Check the connections actually available in your Codex or Claude Code client. Tawdheef keeps local guidance, scope and recorded outcomes.',
+  };
   let config = {};
   try { config = JSON.parse(await readFile(join(paths.dataDir, 'connections.private.json'), 'utf8')); } catch { /* Status is useful before first setup. */ }
   const oauth = config.email?.config?.oauth || {};
@@ -114,25 +122,42 @@ export async function integrationStatus(options = {}) {
 
 /** Config generation is read-only. Optional servers are included only by name. */
 export async function createClientConfig(options = {}) {
+  const mode = options.mode || (options.localAdapters ? 'local-adapters' : 'native');
+  if (!['native', 'local-adapters'].includes(mode)) throw new Error('Choose native or local-adapters connection mode.');
+  if (options.assistant !== undefined && !['codex', 'claude-code'].includes(options.assistant)) throw new Error('Choose Codex or Claude Code for the client configuration.');
+  if (options.monitor !== undefined && typeof options.monitor !== 'boolean') throw new Error('monitor must be true or false.');
+  if (options.monitorAssistant !== undefined && !['codex', 'claude-code'].includes(options.monitorAssistant)) throw new Error('Choose a supported monitoring assistant.');
+  if (options.monitor && !options.monitorAssistant) throw new Error('Choose the selected monitoring assistant for this dedicated workspace.');
+  if (options.monitor && options.include?.length) throw new Error('The monitoring workspace uses native read tools; application browser servers belong in the ordinary workspace.');
   const { root, dataDir, port } = locations(options);
   const include = options.include || [];
   if (!Array.isArray(include) || include.some(id => !['playwright', 'tabbio', 'outlook-mcp'].includes(id))) throw new Error('Choose playwright, tabbio or outlook-mcp for optional MCP servers. Google CLI is a CLI, not an MCP server.');
+  const assistant = options.assistant || options.monitorAssistant || 'codex';
   const mcpServers = {
-    'apply-tracker': { command: process.execPath, args: [join(root, 'server', 'mcp.mjs')], env: { APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: String(port) } },
+    'apply-tracker': { command: process.execPath, args: [join(root, 'server', 'mcp.mjs')], env: { APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: String(port), APPLY_TRACKER_CONNECTION_MODE: mode, APPLY_TRACKER_CLIENT: assistant } },
   };
-  const presets = await integrationPresets({ root, dataDir, port });
+  const presets = mode === 'local-adapters' ? await integrationPresets({ root, dataDir, port }) : [];
   for (const id of new Set(include)) {
+    if (mode === 'native') {
+      if (id !== 'tabbio') throw new Error('Use the selected client’s native browser, email and calendar tools. Local bridge servers require explicit --local-adapters mode.');
+      mcpServers.tabbio = { url: 'https://server.tabbio.com/api/mcp' };
+      continue;
+    }
     const item = presets.find(preset => preset.id === id);
     if (!item.ready) throw new Error(`${item.name} is not installed at the pinned version. ${item.nextStep}`);
     mcpServers[id] = { command: item.command, args: item.args, ...(Object.keys(item.env).length ? { env: item.env } : {}) };
   }
+  if (options.monitor) mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR = '1';
+  if (options.monitor && options.monitorAssistant) mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR_ASSISTANT = options.monitorAssistant;
+  const forClient = client => Object.fromEntries(Object.entries(mcpServers).map(([name, server]) => [name, server.env ? { ...server, env: { ...server.env, APPLY_TRACKER_CLIENT: client, ...(options.monitor ? { APPLY_TRACKER_MONITOR_ASSISTANT: client } : {}) } } : { ...server }]));
   const tomlString = value => JSON.stringify(String(value));
-  const codexToml = Object.entries(mcpServers).map(([name, server]) => [
-    `[mcp_servers.${name}]`, `command = ${tomlString(server.command)}`, `args = ${JSON.stringify(server.args)}`,
+  const codexToml = Object.entries(forClient('codex')).map(([name, server]) => [
+    `[mcp_servers.${name}]`, ...(server.url ? [`url = ${tomlString(server.url)}`] : [`command = ${tomlString(server.command)}`, `args = ${JSON.stringify(server.args)}`]),
     ...(server.env ? ['', `[mcp_servers.${name}.env]`, ...Object.entries(server.env).map(([key, value]) => `${key} = ${tomlString(value)}`)] : []),
   ].join('\n')).join('\n\n') + '\n';
-  const claudeJson = JSON.stringify({ mcpServers: Object.fromEntries(Object.entries(mcpServers).map(([name, entry]) => [name, { type: 'stdio', ...entry }])) }, null, 2) + '\n';
-  return { mcpServers, codexToml, claudeJson, included: Object.keys(mcpServers) };
+  const claudeJson = JSON.stringify({ mcpServers: Object.fromEntries(Object.entries(forClient('claude-code')).map(([name, entry]) => [name, { type: entry.url ? 'http' : 'stdio', ...entry }])) }, null, 2) + '\n';
+  const selectedServers = assistant === 'claude-code' ? Object.fromEntries(Object.entries(forClient(assistant)).map(([name, server]) => [name, server.url ? { type: 'http', ...server } : server])) : mcpServers;
+  return { mode, assistant, mcpServers: selectedServers, codexToml, claudeJson, included: Object.keys(mcpServers), accountConnected: false };
 }
 
 export async function exportClientConfig(directory, options = {}) {
@@ -194,7 +219,7 @@ export async function runGws(args, options = {}) {
   const command = validateGwsArgs(args, options);
   const { root, dataDir } = locations(options);
   const item = await packageLocation(INTEGRATIONS.find(entry => entry.id === 'google-cli'), { root, dataDir });
-  if (!item.installed || !item.versionMatches) throw new Error('Google Workspace CLI is unavailable. Run npm run setup to install the pinned version.');
+  if (!item.installed || !item.versionMatches) throw new Error('Google Workspace CLI is unavailable. Run npm run setup -- --local-adapters --integration google-cli to install the pinned version.');
   const timeout = options.timeout ?? 30_000;
   const maxOutput = options.maxOutput ?? 2 * 1024 * 1024;
   if (!Number.isInteger(timeout) || timeout < 1 || timeout > 120_000 || !Number.isInteger(maxOutput) || maxOutput < 1 || maxOutput > 10 * 1024 * 1024) throw new Error('Choose bounded Google CLI timeout and output limits.');

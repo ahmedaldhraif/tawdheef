@@ -10,6 +10,10 @@ const sourceFor = (locale, file) => readFileSync(new URL('../docs/' + (locale ==
 
 for (const locale of ['en', 'ar']) for (const resource of resources) for (const colorScheme of ['light', 'dark']) {
   test(`${locale} ${resource.file} is readable and copies its real source in ${colorScheme}`, async ({ page }) => {
+    const privateApiRequests = [];
+    page.on('request', request => {
+      if (new URL(request.url()).pathname.startsWith('/api/')) privateApiRequests.push(request.url());
+    });
     const markdown = sourceFor(locale, resource.file);
     const title = markdown.match(/^# (.+)$/m)[1];
     const request = markdown.match(/```text\n([\s\S]*?)\n```/)[1];
@@ -52,6 +56,7 @@ for (const locale of ['en', 'ar']) for (const resource of resources) for (const 
     await expect(copy).toHaveText(ui[locale].copied);
     expect(await page.evaluate(() => window.__resourceCopied)).toBe(request);
     await expect(page.locator('#copy-status')).toHaveText(ui[locale].copiedStatus);
+    expect(privateApiRequests, 'Public research must work without bootstrapping private app connections').toEqual([]);
   });
 }
 
@@ -99,11 +104,22 @@ for (const locale of ['en', 'ar']) {
     await expect(page.locator('main input, main form')).toHaveCount(0);
   });
 
-  test(`${locale} setup explains the CV requirement before download and search finds public research`, async ({ page }) => {
+  test(`${locale} setup explains client-owned CV reading before download and search finds public research`, async ({ page }) => {
     await page.goto(prefix + '/skills/#get-started');
     const requirement = page.locator('.skills-requirements');
     await expect(requirement).toContainText('Tabbio');
     await expect(requirement).toContainText('Run');
+    await expect(requirement).toContainText(locale === 'ar'
+      ? 'يقرأ ذلك العميل سيرة Tabbio الحقيقية المصرّح بها قبل المطابقة أو التقديم'
+      : 'It reads the real authorized Tabbio CV before matching or submitting');
+    await expect(requirement).toContainText(locale === 'ar'
+      ? 'تطبيق Codex أو Claude Code الحالي'
+      : 'your existing Codex or Claude Code client');
+    await expect(page.locator('.skills-cv-step')).toContainText(locale === 'ar'
+      ? 'أكمل تسجيل الدخول في تطبيق مساعدك'
+      : 'complete sign-in in your actual client');
+    await expect(page.locator('#skills-quick-cli')).toHaveText('npm start\nnpm run agent -- codex');
+    await expect(page.locator('.skills-client-alternative code')).toHaveText('npm run agent -- claude-code');
     expect(await page.evaluate(() => Boolean(document.querySelector('.skills-requirements').compareDocumentPosition(document.querySelector('.skills-start-actions')) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
     await expect(requirement.locator(`a[href="${prefix}/examples/"]`)).toHaveCount(1);
     await expect(page.locator('.skills-guide-card')).toHaveCount(8);

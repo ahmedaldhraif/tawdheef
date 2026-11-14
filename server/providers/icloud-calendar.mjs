@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
-import { DAVClient } from 'tsdav';
-import ICAL from 'ical.js';
+import { requireProviderDependency } from '../provider-dependencies.mjs';
 import { calendarRange, calendarEvent } from '../calendar.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -31,7 +30,8 @@ export async function appleFetch(input, init = {}, fetchImpl = fetch) {
   throw new Error('iCloud calendar redirected too many times.');
 }
 
-export function parseICloudEvents(objects, range, calendarId) {
+export function parseICloudEvents(objects, range, calendarId, { dataDir } = {}) {
+  const module = requireProviderDependency('ical.js', { dataDir }), ICAL = module.default || module;
   const instances = new Map(), min = Date.parse(range.timeMin), max = Date.parse(range.timeMax);
   let inputBytes = 0, occurrences = 0;
   const emit = (event, start, end, recurrenceId = start) => {
@@ -82,7 +82,7 @@ export function parseICloudEvents(objects, range, calendarId) {
   return { events: events.slice(0, range.limit), hasMore: events.length > range.limit };
 }
 
-export function createICloudCalendarProvider({ config = {}, auth = {}, saveAuth = async () => {}, createClient = options => new DAVClient(options) } = {}) {
+export function createICloudCalendarProvider({ config = {}, auth = {}, dataDir, saveAuth = async () => {}, createClient = options => new (requireProviderDependency('tsdav', { dataDir }).DAVClient)(options) } = {}) {
   let client, calendars;
   const tools = [
     { name: 'icloud_calendar_list_calendars', description: 'Read your iCloud calendars.', inputSchema: { type: 'object', properties: {} }, annotations: { readOnlyHint: true } },
@@ -118,7 +118,7 @@ export function createICloudCalendarProvider({ config = {}, auth = {}, saveAuth 
         const range = calendarRange(args);
         const objects = await client.fetchCalendarObjects({ calendar, timeRange: { start: range.timeMin, end: range.timeMax }, expand: true });
         if (!Array.isArray(objects) || objects.length > 2000) throw new Error('Choose a smaller calendar range.');
-        return result({ provider: 'icloud-calendar', calendarId: calendar.url, ...parseICloudEvents(objects, range, calendar.url) });
+        return result({ provider: 'icloud-calendar', calendarId: calendar.url, ...parseICloudEvents(objects, range, calendar.url, { dataDir }) });
       }
       if (name !== 'icloud_calendar_create_event') throw new Error('Choose a supported iCloud calendar action.');
       const event = calendarEvent(args), key = hash(event.idempotencyKey), fingerprint = hash(JSON.stringify([calendar.url, event.title, event.start, event.end, event.description, event.location]));
@@ -129,6 +129,7 @@ export function createICloudCalendarProvider({ config = {}, auth = {}, saveAuth 
         return result(previous.receipt || { status: 'unknown', eventId: previous.uid, nextStep: 'Check your calendar before trying again. This event will not be automatically repeated.' });
       }
       const uid = `${key}@apply-tracker.local`;
+      const module = requireProviderDependency('ical.js', { dataDir }), ICAL = module.default || module;
       const component = new ICAL.Component('vcalendar'); component.updatePropertyWithValue('version', '2.0'); component.updatePropertyWithValue('prodid', '-//Apply Tracker//Local Calendar//EN');
       const vevent = new ICAL.Component('vevent'); const entry = new ICAL.Event(vevent);
       entry.uid = uid; entry.summary = event.title; entry.description = event.description; entry.location = event.location;

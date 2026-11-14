@@ -14,7 +14,8 @@ and quiet Ahmed byline. This is positioning, not measured conversion evidence.
 Offer public company research before setup: directory → sourced research
 request → useful company leads. This path needs no app or CV connection.
 When personal matching is useful, the path is GitHub release → local agent
-setup → free Tabbio CV or existing account → connect and verify → shortlist →
+setup → free Tabbio CV or existing account in the actual client → read the CV
+and record dated client reports → shortlist →
 choose targets → explicitly start Run.
 The hero links to setup; actual downloads go directly to official GitHub
 Release assets, with a clone alternative. Use the current
@@ -23,10 +24,13 @@ release target from `website/config.json`, or `/releases`, rather than assuming
 Coordinate future version links with the release owner.
 
 State the operational limits in setup and workflow help: local Codex or Claude
-Code is required, provider accounts have their own permissions and possible
+Code client is required for external actions, provider accounts have their own permissions and possible
 costs, and sign-ins, CAPTCHA, provider approval and LinkedIn steps may need
-the person. Directory browsing/manual tracking works without Tabbio; Run needs
-a connected Tabbio CV. Avoid guaranteed, unattended or all-sites claims.
+the person. Directory browsing/manual tracking works without Tabbio. The actual
+client must read the real authorized CV before matching or acting on a Run;
+the app does not gate a Native handoff on a separate CLI/CV probe. Connection
+reports are client-reported, not independently verified by Tawdheef. Avoid
+guaranteed, unattended or all-sites claims.
 
 Country pages should point to their real public pack and its sources. Invite
 any country through GitHub issues and pull requests. Do not imply community

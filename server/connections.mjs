@@ -5,6 +5,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport, getDefaultEnvironment } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { UnauthorizedError } from '@modelcontextprotocol/sdk/client/auth.js';
+import { tabbioSetupCapability } from './tabbio-capabilities.mjs';
+import { APP_VERSION } from './version.mjs';
 
 const KINDS = ['email', 'tabbio', 'calendar'];
 const DEFAULTS = {
@@ -258,6 +260,9 @@ export class ConnectionManager {
       envKeys: Object.keys(config.env || {}),
       mappings: clone(config.mappings || {}),
       toolCount: record.status === 'connected' ? this.clients.get(kind)?.tools?.length || 0 : 0,
+      ...(kind === 'tabbio' ? { capabilities: { setupStatus: record.status === 'connected'
+        ? tabbioSetupCapability(this.clients.get(kind)?.tools || [])
+        : { available: false, tool: null, state: 'not_connected' } } } : {}),
       lastConnectedAt: record.lastConnectedAt || null,
       lastError: record.lastError || null,
       ...(record.authUrl ? { authUrl: record.authUrl } : {}),
@@ -389,7 +394,7 @@ export class ConnectionManager {
     delete record.authUrl;
     if (NATIVE_ADAPTERS.includes(record.config.adapter)) return this.#connectNative(kind);
     const transport = await this.#newTransport(kind);
-    const client = new Client({ name: 'apply-tracker', version: '0.1.0' }, { capabilities: {} });
+    const client = new Client({ name: 'apply-tracker', version: APP_VERSION }, { capabilities: {} });
     // Drain child stderr without retaining/printing potentially sensitive provider output.
     if (transport.stderr) transport.stderr.on('data', () => {});
     let timer;
@@ -557,6 +562,28 @@ export class ConnectionManager {
     const mapping = this.getMappings(kind)[action];
     if (!mapping?.tool) throw new Error(`Choose the ${action} tool in connection settings first.`);
     return this.call(kind, mapping.tool, expandMapping(mapping.arguments || {}, context));
+  }
+
+  // Only an explicit connection check uses this optional future contract.
+  // Never discover, reconnect or start account/CV authoring from this read.
+  async readCvSetupStatus() {
+    this.#reload();
+    const record = this.#record('tabbio');
+    const entry = this.clients.get('tabbio');
+    if (record.disabled || record.status !== 'connected' || !entry?.client) return null;
+    const capability = tabbioSetupCapability(entry.tools || []);
+    if (!capability.available) return null;
+    const generation = this.generations.get('tabbio') || 0;
+    try {
+      const result = await entry.client.callTool({ name: capability.tool, arguments: {} }, undefined, {
+        timeout: this.callTimeout, maxTotalTimeout: this.callTimeout,
+      });
+      if ((this.generations.get('tabbio') || 0) !== generation || this.clients.get('tabbio') !== entry || record.disabled)
+        throw new Error('Connection changed.');
+      return result;
+    } catch {
+      throw new Error('Tabbio could not confirm CV setup. Check the connection and try again.');
+    }
   }
 
   async oauthCallback(kind, query) {

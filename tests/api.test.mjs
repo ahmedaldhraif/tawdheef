@@ -2,9 +2,9 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer, request } from 'node:http';
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse/sync';
 
@@ -51,7 +51,12 @@ before(async () => {
     if (child.exitCode !== null) throw new Error(`Fixture server exited: ${serverOutput}`);
     try {
       const { response, result } = await json('/api/health');
-      if (response.ok && result.instanceId === 'http-fixture-instance') return;
+      if (response.ok && result.instanceId === 'http-fixture-instance') {
+        // These fixtures exercise the explicitly selected compatibility contracts.
+        // Default native ownership is covered separately in native-api.test.mjs.
+        await json('/api/settings', { method: 'PATCH', body: { connectionMode: 'local-adapters' } });
+        return;
+      }
     } catch { /* Wait until the isolated local server is listening. */ }
     await new Promise(accept => setTimeout(accept, 100));
   }
@@ -91,9 +96,37 @@ test('HTTP starts from the actual 772-record seed and returns exact local agent/
   const startupBefore = await startupSnapshot();
   const { response, result: background } = await json('/api/background');
   assert.equal(response.status, 200);
-  assert.equal(background.startupSupported, process.platform === 'win32');
+  assert.equal(background.startupSupported, ['win32', 'darwin', 'linux'].includes(process.platform));
   assert.equal(typeof background.startupInstalled, 'boolean');
   assert.deepEqual(await startupSnapshot(), startupBefore);
+});
+
+test('HTTP directory snapshot counts confirmed work and opens compact paginated history', async () => {
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'Snapshot HTTP fixture' } });
+  const { result: imported } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Snapshot employer', email: 'careers@example.test' }, { name: 'Form employer' }] } });
+  const [companyId, formId] = imported.ids;
+  await json('/api/applications', { method: 'POST', body: { companyId, event: 'profile_created', url: 'https://careers.example.test/profile?session=private-session' } });
+  const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [companyId, formId], explicit: true, mode: 'send_and_submit' } });
+  for (const [id, method] of [[companyId, 'email'], [formId, 'career_page']]) {
+    const { response } = await json('/api/applications', { method: 'POST', body: { companyId: id, runId: run.id, event: 'applied', method, role: 'Snapshot role', evidence: method === 'email' ? { providerMessageId: 'snapshot-http-message' } : 'Fixture form receipt', notes: 'private note', url: 'https://careers.example.test/apply?session=private-session' } });
+    assert.equal(response.status, 200);
+  }
+  await json(`/api/companies/${companyId}`, { method: 'PATCH', body: { archived: true } });
+  const { response, result } = await json(`/api/snapshot?directoryId=${directory.id}`);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(result.counts, { applications: 2, profiles: 1, emails: 1 });
+  assert.equal(result.period, 'all_time');
+  assert.equal(result.metric, null);
+  assert.equal(result.total, 0);
+  assert.deepEqual(result.items, []);
+  const { result: detail } = await json(`/api/snapshot?directoryId=${directory.id}&metric=applications&limit=1&offset=1`);
+  assert.equal(detail.total, 2);
+  assert.equal(detail.items.length, 1);
+  assert.equal(JSON.stringify(detail).includes('private'), false);
+  assert.deepEqual((await json('/api/snapshot?directoryId=uae')).result.counts, { applications: 0, profiles: 0, emails: 0 });
+  assert.equal((await json('/api/snapshot?directoryId=missing')).response.status, 404);
+  for (const query of ['', `directoryId=${directory.id}&period=month`, `directoryId=${directory.id}&limit=101`, `directoryId=${directory.id}&metric=other`, `directoryId=${directory.id}&search=anything`, `directoryId=${directory.id}&period=all_time&period=this_week`]) assert.equal((await json('/api/snapshot?' + query)).response.status, 400);
 });
 
 test('HTTP table summaries omit source bulk while full company evidence remains accessible', async () => {
@@ -182,4 +215,85 @@ test('HTTP run filters preview and snapshot the same selected type and location 
   const empty = await json('/api/run-preview', { method: 'POST', body: { ...input, locations: ['location:absent'] } });
   assert.equal(empty.result.count, 0);
   await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+});
+
+test('HTTP list filters return full-list facets and match preview without silently accepting malformed arrays', async () => {
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'List scope fixture', country: 'AE' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [
+    { name: 'Scope target Dubai', type: 'Private company', location: 'Dubai' },
+    { name: 'Scope target Sharjah', type: 'Private company', location: 'Sharjah' },
+    { name: 'Scope other Dubai', type: 'Federal government entity', location: 'Dubai' },
+  ] } });
+  await json(`/api/companies/${added.ids[0]}`, { method: 'PATCH', body: { attention: 'needs_you', status: 'ready' } });
+  const input = { directoryId: directory.id, search: 'target', status: 'ready', attention: 'needs_you', companyTypes: ['private'], locations: ['location:dubai'] };
+  const query = new URLSearchParams({ ...input, companyTypes: JSON.stringify(input.companyTypes), locations: JSON.stringify(input.locations), limit: '1', summary: 'true' });
+  const list = await json('/api/companies?' + query);
+  const preview = await json('/api/run-preview', { method: 'POST', body: input });
+  assert.equal(list.response.status, 200); assert.equal(list.result.total, 1);
+  assert.equal(list.result.remainingCount, preview.result.count); assert.equal(preview.result.listScopeVersion, 1);
+  assert.deepEqual(list.result.items.map(item => item.id), [added.ids[0]]);
+  assert.equal(list.result.facets.companyTypes.find(type => type.id === 'federal_government').count, 1);
+  assert.equal(list.result.facets.locations.find(place => place.label === 'Sharjah').count, 1);
+  for (const value of ['private', 'null', '{}', '[42]']) {
+    query.set('companyTypes', value);
+    assert.equal((await json('/api/companies?' + query)).response.status, 400);
+  }
+  const started = await json('/api/runs', { method: 'POST', body: { ...input, actions: { applyMatchingJobs: false, createProfiles: true }, mode: 'send_and_submit', explicit: true } });
+  assert.equal(started.response.status, 200);
+  assert.deepEqual(started.result.companyIds, [added.ids[0]]);
+  assert.equal(started.result.filters.search, 'target'); assert.equal(started.result.filters.attention, 'needs_you');
+  assert.equal(started.result.actions.applyMatchingJobs, false);
+  await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+});
+
+test('HTTP native monitoring saves explicit scope without creating a task, starting a run or reading providers', async () => {
+  const { result: initial } = await json('/api/monitoring');
+  assert.equal(initial.config.enabled, false); assert.equal(initial.status.nextRunAt, null);
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'Native schedule HTTP fixture' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Selected careers source' }, { name: 'Other careers source' }] } });
+  const { result: scope } = await json('/api/monitoring/scope', { method: 'POST', body: { directoryId: directory.id, companyIds: [added.ids[0]] } });
+  assert.deepEqual(scope.scope.companyIds, [added.ids[0]]); assert.equal(scope.count, 1);
+  const patch = { enabled: true, assistant: 'claude-code', channels: { jobs: true }, scope: scope.scope };
+  assert.equal((await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: initial.config.revision, patch } })).response.status, 400);
+  const { response, result: saved } = await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: initial.config.revision, explicit: true, patch } });
+  assert.equal(response.status, 200); assert.equal(saved.status.externalScheduleStatus, 'unknown');
+  const { result: recipe } = await json('/api/monitoring/recipe', { method: 'POST', body: { assistant: 'claude-code', configurationRevision: saved.config.revision } });
+  assert.equal(recipe.creation, 'requested_only'); assert.equal(recipe.nextRunAt, null);
+  assert.ok(recipe.setup.args.includes('--monitor')); assert.match(recipe.taskPrompt, /No applications/);
+  const { result: after } = await json('/api/monitoring'); assert.equal(after.status.externalScheduleStatus, 'unknown'); assert.equal(after.status.activeChecks, 0);
+  assert.equal((await json('/api/monitoring/updates?unread=true&limit=1')).result.total, 0);
+  await json('/api/monitoring', { method: 'PATCH', body: { expectedRevision: saved.config.revision, patch: { enabled: false } } });
+});
+
+test('HTTP original CV staging preserves bytes and requires an active authorized company and upload purpose', async () => {
+  assert.equal((await json('/api/cv/file')).result.available, false);
+  const original = Buffer.from('%PDF-1.7\nExact original HTTP fixture, never a real candidate.\n%%EOF\n');
+  const saved = await json('/api/cv/file', { method: 'POST', body: { filename: 'Original fixture.pdf', contentBase64: original.toString('base64') } });
+  assert.equal(saved.response.status, 200); assert.equal(saved.result.contentVerified, false);
+  assert.ok(!JSON.stringify(saved.result).includes('Exact original')); assert.equal((await json('/api/cv/file')).result.sha256, saved.result.sha256);
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'CV staging HTTP fixture' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Authorized upload target' }, { name: 'Unrelated target' }] } });
+  const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [added.ids[0]], explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } } });
+  const prepare = body => json('/api/cv/file/prepare', { method: 'POST', body: { runId: run.id, companyId: added.ids[0], purpose: 'cv_upload', ...body } });
+  assert.equal((await prepare({ purpose: 'application' })).response.status, 400);
+  assert.equal((await prepare({ companyId: added.ids[1] })).response.status, 400);
+  const staged = await prepare({}); assert.equal(staged.response.status, 200); assert.deepEqual(await readFile(staged.result.path), original);
+  const stagedRelative = relative(await realpath(dataDir), staged.result.path);
+  assert.ok(!isAbsolute(stagedRelative) && !stagedRelative.startsWith('..'));
+  await json(`/api/runs/${run.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+  assert.equal((await prepare({})).response.status, 400);
+});
+
+test('HTTP capability requests report guidance only and never imply access or model verification', async () => {
+  for (const kind of ['browser', 'passwords']) {
+    const result = await json(`/api/agent-capabilities/recipe?assistant=codex&kind=${kind}`);
+    assert.equal(result.response.status, 200); assert.equal(result.result.kind, kind); assert.match(result.result.prompt, /No applications/);
+    assert.equal(result.result.connected, undefined);
+  }
+  const registration = (await json('/api/registration-context')).result;
+  assert.equal(registration.primaryEmail, null); assert.equal(registration.credentials.storedByTracker, false);
+  const passive = await json('/api/assistant-check?assistant=codex'); assert.equal(passive.result.modelAccessVerified, false);
+  const implicit = await json('/api/assistant-check', { method: 'POST', body: { assistant: 'codex' } });
+  assert.equal(implicit.response.status, 400); assert.match(implicit.result.error, /explicitly/);
+  assert.equal((await json('/api/assistant-check?assistant=codex')).result.status, passive.result.status);
 });

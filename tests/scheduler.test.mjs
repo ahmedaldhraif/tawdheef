@@ -98,6 +98,52 @@ test('an empty refresh reports no threads and makes no mailbox or directory-chec
   assert.equal(store.listActivity()[0].action, 'refresh_skipped');
 });
 
+test('monitor refresh reads only selected tracked threads while global refresh remains manual', async t => {
+  const { store, company } = await setup(t);
+  const other = store.addCompanies('test', [{ name: 'Unselected employer', email: 'careers@example.com' }]).ids[0];
+  const selected = application(store, company);
+  const unselected = application(store, other, { role: 'Other designer', threadId: 'unselected-thread' });
+  const formRun = store.startRun({ companyIds: [company], explicit: true, mode: 'send_and_submit' });
+  const form = store.logApplication({ companyId: company, runId: formRun.id, method: 'form', role: 'Architect', status: 'applied', url: 'https://careers.example.com/application/42', evidence: { receipt: 'synthetic-portal-receipt' } });
+  const before = store.getSettings();
+  const current = new Date(Date.now() + 2000), reads = [];
+  const scheduler = createScheduler({ store, clock: () => current, connections: { callMapped: async (kind, action, context) => {
+    assert.equal(kind, 'email'); assert.equal(action, 'readThread'); reads.push(context);
+    return { structuredContent: { threadId: selected.threadId, replies: [{ id: 'selected-reply', threadId: selected.threadId, from: 'careers@example.com', body: 'Please review the next step.', receivedAt: current.toISOString() }] } };
+  } } });
+  const result = await scheduler.refreshForCompanies([company]);
+  assert.deepEqual(reads.map(item => item.applicationId), [selected.id]);
+  assert.equal(result.checked, 1); assert.equal(result.updated, 1); assert.equal(result.unavailable, 1);
+  assert.equal(result.outcomes.find(item => item.applicationId === form.id).status, 'unavailable');
+  assert.equal(store.listApplications(other).find(item => item.id === unselected.id).status, 'applied');
+  assert.equal(store.getSettings().refreshFrequency, 'manual');
+  assert.equal(store.getSettings().lastRefreshAt, before.lastRefreshAt);
+  assert.equal((await scheduler.refreshForCompanies([])).outcomes.length, 0);
+  assert.equal(reads.length, 1);
+});
+
+test('scoped status errors and unreadable provider results remain unverified, without inferred rejection', async t => {
+  const { store, company } = await setup(t);
+  const tracked = application(store, company);
+  const scheduler = createScheduler({ store, connections: { callMapped: async () => ({ content: [{ type: 'text', text: 'Finish signing in first.' }] }) } });
+  const result = await scheduler.refreshForCompanies([company]);
+  assert.equal(result.checked, 0); assert.equal(result.errors.length, 1);
+  assert.equal(result.outcomes[0].status, 'failed');
+  assert.equal(result.outcomes[0].checkedAt, null);
+  assert.equal(store.listApplications(company).find(item => item.id === tracked.id).status, 'applied');
+});
+
+test('paused monitoring prevents new thread reads and never changes saved outcomes', async t => {
+  const { store, company } = await setup(t);
+  application(store, company);
+  let calls = 0;
+  const scheduler = createScheduler({ store, connections: { callMapped: async () => { calls++; return { replies: [] }; } } });
+  const result = await scheduler.refreshForCompanies([company], { shouldContinue: () => false });
+  assert.equal(calls, 0); assert.equal(result.checked, 0); assert.equal(result.skipped, 1);
+  assert.equal(result.outcomes[0].status, 'skipped');
+  assert.equal(store.getCompany(company).status, 'applied');
+});
+
 test('report delivery is reserved before send and an uncertain result is not retried in the same slot', async t => {
   const { store } = await setup(t);
   const current = new Date('2026-11-13T09:00:00Z');

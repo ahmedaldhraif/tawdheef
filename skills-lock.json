@@ -1,6 +1,13 @@
 {
   "version": 2,
   "skills": {
+    "amicro-design-system": {
+      "source": "Subhan-code/Amicro--Micro-transitions-",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/amicro-design-system/SKILL.md",
+      "computedHash": "d9a505a0319a8d7fe4eb13b6e9e36444c8456c38f558a81bff758c3173ff4f9f",
+      "installMode": "copy"
+    },
     "animate": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -48,6 +55,13 @@
       "sourceType": "github",
       "skillPath": "skills/break-ui/SKILL.md",
       "computedHash": "accfc40025b4cc57475bebdcef52153a1598beec2794d6f11dec5cbbd79481c9",
+      "installMode": "copy"
+    },
+    "checklist-design": {
+      "source": "Checklist-Design/skills",
+      "sourceType": "github",
+      "skillPath": "skills/checklist-design/SKILL.md",
+      "computedHash": "e035fced1c6a296e895ef5ffb77de9bf6c4a2cb6ce79876f088e20fa255961cb",
       "installMode": "copy"
     },
     "choreograph": {

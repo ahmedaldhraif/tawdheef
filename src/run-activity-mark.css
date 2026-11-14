@@ -1,0 +1,39 @@
+.run-activity-mark {
+  display: block;
+  flex: 0 0 auto;
+  color: #252525;
+  fill: currentColor;
+  overflow: visible;
+  pointer-events: none;
+}
+.run-activity-code {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.run-activity-sheen {
+  fill: #fff;
+  opacity: 0;
+}
+/* The existing mark uses a 1120ms work cycle. Only this small decorative layer
+   moves; the mark silhouette, company name and progress remain stationary. */
+.run-activity-mark[data-active="true"][data-visible="true"] .run-activity-sheen {
+  animation: run-mark-sheen 1120ms linear infinite;
+}
+@keyframes run-mark-sheen {
+  0% { opacity: 0; transform: translateX(0); }
+  15% { opacity: .08; }
+  45% { opacity: .38; }
+  75% { opacity: .08; }
+  100% { opacity: 0; transform: translateX(140px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-activity-mark .run-activity-sheen { animation: none !important; opacity: 0; }
+}
+@media (forced-colors: active) {
+  .run-activity-mark { color: CanvasText; }
+  .run-activity-code { stroke: Canvas; }
+  .run-activity-mark .run-activity-sheen { animation: none !important; display: none; }
+}

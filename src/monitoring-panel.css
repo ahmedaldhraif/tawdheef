@@ -1,0 +1,39 @@
+.monitoring-panel h3 { margin: 0 0 12px; }
+.monitoring-disclosure > summary { min-height: 48px; padding-block: 14px; cursor: pointer; font-size: 14px; }
+.monitoring-disclosure-state { float: inline-end; margin-inline-start: 12px; color: #62626b; font-size: 12px; }
+.monitoring-disclosure > .monitoring-panel { padding-top: 8px; }
+.monitoring-enable { min-height: 44px; margin: 0; }
+.monitoring-enable > span { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.monitoring-options { border: 0; margin: 8px 0 0; padding: 0; min-width: 0; }
+.monitoring-channels { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.monitoring-channels .checkbox-label { min-height: 40px; margin: 0; }
+.monitoring-scope { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; }
+.monitoring-scope > span { overflow-wrap: anywhere; font-size: 12px; color: #62626b; }
+.monitoring-panel .text-button { min-height: 40px; padding-inline: 0; font-size: 12px; }
+.monitoring-calendar { margin-top: 10px; }
+.monitoring-needs-you .text-button { display: block; }
+.monitoring-cadence { margin-top: 16px; }
+.monitoring-timezone { margin-top: 4px; overflow-wrap: anywhere; }
+.monitoring-observed { margin-block: 12px; font-size: 12px; color: #62626b; }
+.monitoring-observed p { margin: 4px 0; overflow-wrap: anywhere; }
+.monitoring-copy { min-height: 40px; }
+.monitoring-copy-fallback { margin-top: 12px; }
+.monitoring-updates { margin-block: 14px; }
+.monitoring-updates > summary { min-height: 44px; padding-block: 12px; cursor: pointer; font-size: 13px; }
+.monitoring-updates > ul { margin: 0; padding: 0; list-style: none; }
+.monitoring-updates li { border-top: 1px solid #ededf1; padding-block: 12px; }
+.monitoring-update-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.monitoring-update-heading > strong { font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.monitoring-update-heading > span { font-size: 12px; flex-shrink: 0; }
+.monitoring-updates li > p { margin: 6px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.monitoring-update-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0 12px; }
+.monitoring-update-actions > time { font-size: 12px; color: #62626b; overflow-wrap: anywhere; }
+.monitoring-update-actions > a { font-size: 12px; min-height: 40px; display: inline-flex; align-items: center; }
+@media (max-width: 460px) {
+  .monitoring-channels { grid-template-columns: 1fr; }
+  .monitoring-channels .checkbox-label, .monitoring-panel .text-button, .monitoring-copy { min-height: 44px; }
+  .monitoring-cadence { flex-wrap: wrap; }
+  .monitoring-cadence > label { min-width: 0; flex: 1 1 120px; }
+  .monitoring-update-heading { flex-wrap: wrap; gap: 4px 12px; }
+  .monitoring-update-actions > a { min-height: 44px; }
+}

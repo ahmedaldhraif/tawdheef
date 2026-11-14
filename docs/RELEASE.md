@@ -4,7 +4,7 @@ The intended repository is `ahmedaldhraif/tawdheef`, recorded in `website/config
 
 ## Prepare a candidate
 
-Use Node.js 24 and the committed lockfile. Review the source and changes before running:
+Use Node.js 26.13.1 LTS and the committed lockfile. Patched Node 24 remains a source compatibility test target. Review the source and changes before running:
 
 ```sh
 npm ci
@@ -33,7 +33,7 @@ Private tracking, OAuth files, local MCP settings, logs, node_modules, developme
 
 1. Confirm the account/repository and public visibility. Review `git status` and the source inventory; never use an unreviewed blanket upload of the working folder.
 2. Create the repository, commit only reviewed source and push the intended branch. Enable private vulnerability reporting in repository settings if available.
-3. Run CI. The configured matrix covers Node 24 on Windows, macOS and Linux; the browser suite runs on Linux. Workflow configuration is not evidence those hosted jobs have already run.
+3. Run CI. The configured matrix covers Node 24/26 on Windows, macOS and Linux; browser checks cover all three OSs. The separate desktop workflow builds and checks six OS/architecture packages using their actual launchers. Workflow configuration is not evidence those hosted jobs have already run. See [desktop packaging and signing](DESKTOP-RELEASE.md).
 4. Tag the reviewed commit with the exact package version, such as `v0.1.0`, and push that tag.
 5. Run **Prepare draft release** in GitHub Actions with that existing tag. It verifies the version, runs tests, packages and checks a fresh download, then creates a **draft prerelease** with the assets attached. Existing releases are not overwritten. It does not publish automatically.
 6. Review the draft notes/downloads and publish when ready. A source release is not a signed installer. Keep the current OAuth setup requirement and live-provider testing limits visible.
@@ -42,3 +42,5 @@ Private tracking, OAuth files, local MCP settings, logs, node_modules, developme
 After publication, the repository identifier can be used with the Skills CLI: `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef`. Until then, use `npx skills@latest add . --skill tawdheef` from the source folder. The simple `npm run agent -- CLIENT` path already installs the local skill.
 
 For manual release management, use [GitHub's release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository). Keep release notes in a file when invoking `gh release create --notes-file`; do not place multiline content in a shell-built string.
+
+`npm run release:app -- --output NEW_FOLDER` creates a separate prebuilt user candidate with a checksum-verified Node runtime. Verify its exact ZIP with `npm run release:app:smoke -- --directory NEW_FOLDER`. Source and desktop assets have distinct inventories and checks; the website is never copied into the tracker build. Signing and native platform receipts remain required before consumer claims.

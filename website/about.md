@@ -1,6 +1,6 @@
 # Built for your job search.
 
-Tawdheef (توظيف) means employment in Arabic. It is a free, open-source app to apply for jobs with your agent and keep track of applications and replies.
+Tawdheef (توظيف) means employment in Arabic. It is a free, open-source app to find jobs that fit your CV and build career profiles for future opportunities, even when no suitable job is open.
 
 Created and personally maintained by [Ahmed AlDhraif](https://www.linkedin.com/in/ahmedaldhraif). This is an independent project, with its source on [GitHub](https://github.com/ahmedaldhraif/tawdheef).
 
@@ -8,9 +8,9 @@ Created and personally maintained by [Ahmed AlDhraif](https://www.linkedin.com/i
 
 ## One place to work
 
-Run Tawdheef on your computer with Codex or Claude Code. The app keeps your records, country packs add researched companies and careers links, and the skill teaches your agent the workflow. MCP and CLI tools use the same records as the screen.
+Run Tawdheef on your computer with Codex or Claude Code. The app keeps your records, country packs add researched companies and careers links, and the skill teaches your agent the workflow. Its built-in CLI and local stdio MCP server use the same records as the screen.
 
-You choose where to apply. Sign-ins, CAPTCHAs and some application steps may need you.
+Choose companies and the actions you want, then press Run. Your agent can apply to matching jobs and create or complete career profiles where available. Profiles, CV uploads and applications are tracked separately. Sign-ins, CAPTCHAs and some application steps may need you.
 
 ## Your CV, ready for your agent
 

@@ -9,38 +9,48 @@ export default {
     license: "بترخيص MIT",
     release: "الإصدار"
   },
+  commandRows: [
+    { request: "اقرأ سياق التطبيق المحلي", tool: "get_agent_context" },
+    { request: "اعرض الأدوات المتاحة", tool: "get_capabilities" },
+    { request: "اعرض أدلة الدول لديّ", tool: "list_directories" },
+    { request: "اعرض شركات هذا الدليل", tool: "list_companies" },
+    { request: "اقرأ مصادر هذه الشركة", tool: "get_company" },
+    { request: "راجع تقارير اتصالات مساعدي", tool: "get_native_client_status" },
+    { request: "تحقق من خطوة الإعداد التالية", tool: "get_setup_status" },
+    { request: "راجع تقدمي المسجّل", tool: "get_report" }
+  ],
   cvShortcut: "أنشئ سيرتك الذاتية أو اربطها",
   start: {
     title: "ابدأ من هنا",
-    body: "حمّل التطبيق، ودع مساعدك يجهّزه، ثم اربط سيرتك الذاتية.",
-    requirement: "لبدء Run، تحتاج إلى Codex أو Claude Code وسيرة مرتبطة على Tabbio.",
+    body: "حمّل التطبيق واربط مساعدك الحالي، ثم استخدم أدوات سيرتك وحساباتك لديه. تصف هذه الخطوات معاينة 0.2؛ تحقّق من الإصدار المختار.",
+    requirement: "يسلّم Run العمل إلى تطبيق Codex أو Claude Code الحالي. يقرأ ذلك العميل سيرة Tabbio الحقيقية المصرّح بها قبل المطابقة أو التقديم.",
     researchAlternative: "استكشف بيانات الشركات أولًا",
     download: "حمّل التطبيق",
     repository: "عرض المشروع أو نسخه من GitHub",
     steps: [
       {
         title: "افتح مجلد التطبيق",
-        body: "فك ضغط ملف المصدر وافتح مجلده في Codex أو Claude Code بعد تثبيت مساعدك وتسجيل الدخول إليه."
+        body: "فك ضغط التطبيق كاملاً، أو افتح مجلد المصدر في تطبيق Codex أو Claude Code الذي تستخدمه بالفعل."
       },
       {
         title: "اربط مساعدك",
-        body: "انسخ طلب الإعداد إلى مساعدك، أو نفّذ أوامر Codex التالية في مجلد التطبيق."
+        body: "انسخ طلب الإعداد إلى تطبيق مساعدك الحالي، أو نفّذ أوامر Codex التالية في مجلد نسخة المصدر."
       },
       {
         title: "أنشئ سيرتك الذاتية أو اربطها",
         body: "أنشئ سيرتك الرقمية المجانية على Tabbio، أو اربط السيرة التي لديك."
       }
     ],
-    nodeRequirement: "يلزم Node.js 24 أو أحدث.",
+    nodeRequirement: "تحتاج نسخة المصدر إلى Node.js 26 LTS أو Node 24 المحدّث؛ وحزمة التطبيق تتضمن Node.",
     cliIntro: "لإعداد Codex من سطر الأوامر:",
     claudeAlternative: "إذا كنت تستخدم Claude Code، استبدل الأمر الثاني بهذا الأمر:",
     cliNote: "تجهّز هذه الأوامر التطبيق، وتربط أدوات MCP المحلية، وتثبّت مهارة سير العمل.",
     setupPrompt: "انسخ طلب الإعداد",
     cvCreate: "أنشئ سيرتك مجانًا",
     cvConnect: "اربط سيرتك الذاتية",
-    cvPath: "في Tawdheef، افتح الاتصالات (Connections) ← سيرتك الذاتية (Your CV) ← Tabbio CV، ثم أكمل تسجيل الدخول.",
-    cvCheck: "اختر مساعدك واستخدم التحقق من الاتصالات (Check connections).",
-    cvReadNote: "يستخدم مساعدك سيرتك المرتبطة عند بدء Run."
+    cvPath: "افتح Connections ← Tabbio CV، وانسخ طلب الإعداد وأكمل تسجيل الدخول في تطبيق مساعدك.",
+    cvCheck: "أعد استخدام اتصال Tabbio MCP في مساعدك وافحص السيرة الفعلية هناك.",
+    cvReadNote: "ينسخ Run طلباً لمحادثتك الحالية. تقارير الاتصال المؤرخة ليست تحققاً مستقلاً من الخدمة."
   },
   guideGroups: {
     Start: "ابدأ من هنا",
