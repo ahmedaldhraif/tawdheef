@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createServer } from "node:http";
+import { DatabaseSync } from "node:sqlite";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { openStore } from "../server/store.mjs";
@@ -16,6 +17,7 @@ import {
   machineError,
 } from "../server/mcp.mjs";
 import { backgroundCommand } from "../scripts/background.mjs";
+import { main as runCli } from '../bin/apply-tracker.mjs';
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const run = promisify(execFile);
@@ -23,151 +25,58 @@ const temp = () => mkdtemp(join(tmpdir(), "apply-tracker-machine-"));
 const unpack = (result) =>
   result.structuredContent || JSON.parse(result.content[0].text);
 
-test('managed operator capability discovery matches its actual scoped MCP catalog', async () => {
-  const dataDir = await temp(); const store = openStore({ dataDir, seed: false });
-  store.createDirectory({ id: 'operator', name: 'Operator' });
-  const companyId = store.addCompanies('operator', [{ name: 'Fixture' }]).ids[0];
-  const active = store.startManagedRun({ directoryId: 'operator', assistant: 'codex', mode: 'send_and_submit', explicit: true });
-  store.beginRunTarget(active.id, companyId);
-  const client = new Client({ name: 'scoped-fixture', version: '1' });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'server', 'mcp.mjs')], env: { ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: '65532', APPLY_TRACKER_OPERATOR_RUN: active.id, APPLY_TRACKER_OPERATOR_COMPANY: companyId }, stderr: 'pipe' });
+test('general CLI fails closed for scoped monitoring and retired roles before opening data', async () => {
+  const dataDir = await temp(), keys = ['APPLY_TRACKER_DATA', 'APPLY_TRACKER_MONITOR', 'APPLY_TRACKER_MONITOR_ASSISTANT', 'APPLY_TRACKER_OPERATOR_RUN', 'APPLY_TRACKER_OPERATOR_COMPANY', 'APPLY_TRACKER_DIAGNOSTIC', 'APPLY_TRACKER_DIAGNOSTIC_RECEIPT'];
+  const saved = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   try {
-    await client.connect(transport);
-    const names = (await client.listTools()).tools.map(t => t.name);
-    const capabilities = unpack(await client.callTool({ name: 'get_capabilities', arguments: {} })).data;
-    assert.deepEqual(capabilities.toolNames, names); assert.ok(!names.includes('start_run')); assert.ok(!names.includes('update_settings'));
-    assert.ok(!names.includes('get_setup_status')); assert.equal(capabilities.setupTool, undefined);
-    assert.ok(names.includes('prepare_form_submission')); assert.ok(capabilities.nativeAdapters.email.includes('icloud-mail'));
-    const context = unpack(await client.callTool({ name: 'get_agent_context', arguments: {} })).data;
-    assert.equal(context.operatorScope.companyId, companyId); assert.ok(!context.workflow.join(' ').includes('start_run'));
-    assert.equal(context.setup, undefined);
-    store.updateRun(active.id, { status: 'cancelled' });
-    assert.equal((await client.callTool({ name: 'get_company', arguments: { id: companyId } })).isError, true);
-  } finally { await client.close(); store.close(); await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }); }
+    for (const key of keys) delete process.env[key];
+    process.env.APPLY_TRACKER_DATA = dataDir;
+    for (const role of [{ APPLY_TRACKER_MONITOR: '1', APPLY_TRACKER_MONITOR_ASSISTANT: 'codex' }, { APPLY_TRACKER_MONITOR_ASSISTANT: 'codex' }, { APPLY_TRACKER_OPERATOR_RUN: 'old-run', APPLY_TRACKER_OPERATOR_COMPANY: 'old-company' }, { APPLY_TRACKER_DIAGNOSTIC: '1' }, { APPLY_TRACKER_DIAGNOSTIC_RECEIPT: 'old-receipt' }]) {
+      Object.assign(process.env, role);
+      for (const command of [['tools'], ['call', 'start_native_run', '--json', '{}'], ['background', 'start']]) await assert.rejects(runCli(command), /configured restricted stdio MCP/);
+      for (const key of Object.keys(role)) delete process.env[key];
+    }
+    await assert.rejects(readFile(join(dataDir, 'tracker.sqlite')), { code: 'ENOENT' });
+  } finally {
+    for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+    await rm(dataDir, { recursive: true, force: true, maxRetries: 5 });
+  }
 });
 
-test("real stdio MCP shares persistent records and distinguishes preparation from confirmed submission", async () => {
+test("real Native stdio MCP shares records while retired adapter environment cannot expose provider actions", async () => {
   const dataDir = await temp();
-  const env = Object.fromEntries(
-    Object.entries({ ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_CONNECTION_MODE: 'local-adapters' }).filter(
-      ([, value]) => value !== undefined,
-    ),
-  );
-  const client = new Client({ name: "local-contract-test", version: "1.0.0" });
-  const transport = new StdioClientTransport({
-    command: process.execPath,
-    args: [join(root, "server", "mcp.mjs")],
-    env,
-    stderr: "pipe",
-  });
+  const seed = openStore({ dataDir, seed: false });
+  seed.close();
+  // A disposable old-version fixture, not the user's database or an application write path.
+  const legacyDb = new DatabaseSync(join(dataDir, 'tracker.sqlite'));
+  const originalSettings = legacyDb.prepare('SELECT payload FROM settings WHERE id = ?').get('main').payload;
+  const savedSettings = JSON.stringify({ ...JSON.parse(originalSettings), connectionMode: 'local-adapters' });
+  legacyDb.prepare('UPDATE settings SET payload = ? WHERE id = ?').run(savedSettings, 'main'); legacyDb.close();
+  const client = new Client({ name: 'local-contract-test', version: '1' });
+  const env = { ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_CONNECTION_MODE: 'local-adapters', APPLY_TRACKER_CLIENT: 'codex', APPLY_TRACKER_PORT: '65532' };
+  const transport = new StdioClientTransport({ command: process.execPath, args: [join(root, 'server/mcp.mjs')], env, stderr: 'pipe' });
   try {
     await client.connect(transport);
-    const catalog = await client.listTools();
-    assert.match(client.getInstructions(), /^Start with get_agent_context/);
-    assert.equal(
-      catalog.tools.find((tool) => tool.name === "get_company").annotations
-        .readOnlyHint,
-      true,
-    );
-    assert.equal(
-      catalog.tools.find((tool) => tool.name === "send_application_email")
-        .annotations.readOnlyHint,
-      false,
-    );
-    assert.equal(
-      unpack(await client.callTool({ name: "get_capabilities", arguments: {} }))
-        .data.localOnly,
-      true,
-    );
-    assert.ok(catalog.tools.some((tool) => tool.name === "start_run"));
-    assert.ok(catalog.tools.some((tool) => tool.name === "list_runs"));
-    assert.ok(
-      catalog.tools.some((tool) => tool.name === "get_connection_tools"),
-    );
-    assert.ok(
-      !catalog.tools.some((tool) => tool.name === "call_connection_tool"),
-    );
-    const call = async (name, args) =>
-      unpack(await client.callTool({ name, arguments: args }));
-    const directory = (
-      await call("create_directory", { name: "Fixture employers", flag: "🧪" })
-    ).data;
-    const imported = (
-      await call("add_companies", {
-        directoryId: directory.id,
-        records: [
-          {
-            name: "Fixture Company",
-            careersUrl: "https://example.org/careers",
-            sourceFields: { evidence: "fixture only" },
-          },
-        ],
-      })
-    ).data;
+    const catalog = (await client.listTools()).tools, names = catalog.map(tool => tool.name);
+    assert.match(client.getInstructions(), /actual Codex or Claude Code client owns/);
+    assert.equal(names.length, 69);
+    for (const name of ['get_cv', 'send_application_email', 'configure_connection', 'get_connection_tools', 'create_calendar_event', 'save_monitor', 'set_monitor_status', 'update_run']) assert.ok(!names.includes(name), name);
+    const call = async (name, args = {}) => unpack(await client.callTool({ name, arguments: args }));
+    const capabilities = (await call('get_capabilities')).data;
+    assert.equal(capabilities.mode, 'native'); assert.equal(capabilities.connectionOwner, 'native-client'); assert.deepEqual(capabilities.toolNames, names);
+    const directory = (await call('create_directory', { name: 'Fixture employers', flag: '🧪' })).data;
+    const imported = (await call('add_companies', { directoryId: directory.id, records: [{ name: 'Fixture Company', careersUrl: 'https://example.test/careers', sourceFields: { evidence: 'fixture only' } }] })).data;
     const companyId = imported.ids[0];
-    const prepared = await call("log_application", {
-      companyId,
-      role: "Engineer",
-      status: "prepared",
-      method: "email",
-    });
-    assert.equal(prepared.data.status, "prepared");
-    assert.equal(
-      (await call("get_company", { id: companyId })).data.status,
-      "not_started",
-    );
-    const unauthorized = await call("start_run", {
-      directoryId: directory.id,
-      companyIds: [companyId],
-      explicit: false,
-      mode: "send_and_submit",
-    });
-    assert.equal(unauthorized.ok, false);
-    const active = (
-      await call("start_run", {
-        directoryId: directory.id,
-        companyIds: [companyId],
-        explicit: true,
-        mode: "send_and_submit",
-      })
-    ).data;
-    const noReceipt = await call("log_application", {
-      companyId,
-      runId: active.id,
-      role: "Engineer",
-      status: "applied",
-      method: "email",
-    });
-    assert.equal(noReceipt.ok, false);
-    const applied = await call("log_application", {
-      companyId,
-      runId: active.id,
-      role: "Engineer",
-      status: "applied",
-      method: "email",
-      evidence: "fixture-message-1",
-    });
-    assert.equal(applied.data.status, "applied");
+    const prepared = await call('log_application', { companyId, role: 'Engineer', status: 'prepared', method: 'email' });
+    assert.equal(prepared.ok, false, 'Even a prepared action needs its original Native Run identity.');
+    assert.equal((await call('start_run', { directoryId: directory.id, explicit: false, mode: 'send_and_submit' })).ok, false);
     const reader = openStore({ dataDir });
-    try {
-      assert.equal(reader.getCompany(companyId).status, "applied");
-      assert.equal(reader.listApplications(companyId).length, 2);
-      assert.equal(
-        reader.getCompany(companyId).sourceFields.evidence,
-        "fixture only",
-      );
-    } finally {
-      reader.close();
-    }
-  } finally {
-    await client.close();
-    await rm(dataDir, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 200,
-    });
-  }
+    try { assert.equal(reader.getCompany(companyId).status, 'not_started'); assert.equal(reader.listApplications(companyId).length, 0); assert.equal(reader.getCompany(companyId).sourceFields.evidence, 'fixture only'); assert.equal(reader.getSettings().connectionMode, 'native'); }
+    finally { reader.close(); }
+    const preservedDb = new DatabaseSync(join(dataDir, 'tracker.sqlite'), { readOnly: true });
+    try { assert.equal(preservedDb.prepare('SELECT payload FROM settings WHERE id = ?').get('main').payload, savedSettings, 'Retirement does not rewrite stored settings.'); }
+    finally { preservedDb.close(); }
+  } finally { await client.close(); await rm(dataDir, { recursive: true, force: true, maxRetries: 5 }); }
 });
 
 test("CLI structured input updates the same local record without changing source evidence", async () => {
@@ -324,7 +233,7 @@ test("detached background runner serves its own instance and stops without an AI
 test("agent import previews before commit, exports privately without overwriting, and shares directory symbols", async () => {
   const dataDir = await temp(),
     store = openStore({ dataDir, seed: false });
-  const tools = buildTools(store, { mode: 'local-adapters' }),
+  const tools = buildTools(store, { assistant: 'codex' }),
     call = (name, args = {}) =>
       tools.find((tool) => tool.name === name).handler(args);
   try {
@@ -377,150 +286,8 @@ test("agent import previews before commit, exports privately without overwriting
     const icons = await call("list_directory_symbols", { category: "folders" });
     assert.ok(icons.items.some((icon) => icon.value === "icon:folder"));
     const context = await call("get_capabilities");
-    assert.ok(context.toolNames.includes("send_application_email"));
+    assert.ok(context.toolNames.includes("prepare_native_email"));
   } finally {
-    await closeToolConnections(store);
-    store.close();
-    await rm(dataDir, {
-      recursive: true,
-      force: true,
-      maxRetries: 5,
-      retryDelay: 200,
-    });
-  }
-});
-
-test("agent provider operations use one app connection owner and explicit report delivery", async () => {
-  const dataDir = await temp(),
-    store = openStore({ dataDir, seed: false }),
-    requests = [];
-  const oldPort = process.env.APPLY_TRACKER_PORT;
-  const server = createServer(async (request, response) => {
-    let raw = "";
-    for await (const part of request) raw += part;
-    requests.push({
-      method: request.method,
-      url: request.url,
-      body: raw ? JSON.parse(raw) : null,
-    });
-    response.setHeader("Content-Type", "application/json");
-    const report = {
-      generatedAt: new Date().toISOString(),
-      applied: 0,
-      replies: 0,
-      interviews: 0,
-      followUps: [],
-      needsYou: [],
-      errors: 0,
-      delivery: { status: "sent", messageId: "fixture-report" },
-    };
-    const result =
-      request.url === "/api/health"
-        ? { ok: true, app: "apply-tracker" }
-        : request.url === "/api/agent-config"
-          ? {
-              mcpServers: {
-                "apply-tracker": { env: { APPLY_TRACKER_DATA: dataDir } },
-              },
-            }
-          : request.url === "/api/connections"
-            ? [{ kind: "email", configured: true, status: "connected" }]
-            : request.url === "/api/connections/email/connect"
-              ? { kind: "email", status: "connected" }
-              : request.url === "/api/connections/email/tools"
-                ? [
-                    {
-                      name: "fixture.read",
-                      description: "Read recorded threads",
-                      inputSchema: { type: "object" },
-                    },
-                    {
-                      name: "fixture.send",
-                      description: "Send a message",
-                      inputSchema: { type: "object" },
-                    },
-                  ]
-                : request.url === "/api/refresh"
-                  ? { checked: 1, updated: 0, status: "checked" }
-                  : request.url === "/api/reports"
-                    ? report
-                    : request.url === "/api/runs/fixture-run/send-email"
-                      ? {
-                          status: "needs_user",
-                          application: { deliveryStatus: "unknown" },
-                        }
-                      : { ok: true };
-    response.end(JSON.stringify(result));
-  });
-  await new Promise((accept) => server.listen(0, "127.0.0.1", accept));
-  process.env.APPLY_TRACKER_PORT = String(server.address().port);
-  const tools = buildTools(store, { mode: 'local-adapters' }),
-    call = (name, args = {}) =>
-      tools.find((tool) => tool.name === name).handler(args);
-  try {
-    assert.equal((await call("get_agent_context")).app, "running");
-    assert.equal(
-      (await call("connect_connection", { kind: "email" })).status,
-      "connected",
-    );
-    const catalog = await call("get_connection_tools", {
-      kind: "email",
-      search: "read",
-      limit: 1,
-    });
-    assert.equal(catalog.items[0].name, "fixture.read");
-    assert.equal(catalog.total, 1);
-    assert.equal((await call("refresh_replies")).checked, 1);
-    store.updateSettings({
-      emailReports: true,
-      reportEmail: "fixture@example.test",
-    });
-    const local = await call("generate_report");
-    assert.equal(local.delivery.status, "local");
-    assert.equal(requests.filter((r) => r.url === "/api/reports").length, 0);
-    assert.equal(
-      (await call("generate_report", { sendEmail: true })).delivery.status,
-      "sent",
-    );
-    await assert.rejects(
-      call("generate_report", { sendEmail: true, since: "2026-01-01" }),
-      /saved reporting window/,
-    );
-    assert.equal(requests.filter((r) => r.url === "/api/reports").length, 1);
-    const sent = await call("send_application_email", {
-      runId: "fixture-run",
-      companyId: "fixture-company",
-      role: "Engineer",
-      to: "jobs@example.test",
-      subject: "Fixture",
-      body: "Fixture only",
-    });
-    assert.equal(sent.status, "needs_user");
-    assert.equal(sent.application.deliveryStatus, "unknown");
-    assert.ok(
-      requests.some(
-        (r) =>
-          r.url === "/api/runs/fixture-run/send-email" &&
-          r.body.runId === "fixture-run",
-      ),
-    );
-    await assert.rejects(
-      readFile(join(dataDir, "connections.private.json"), "utf8"),
-      (error) => error.code === "ENOENT",
-    );
-    const cache = {
-      fetchedAt: new Date().toISOString(),
-      result: { content: [{ type: "text", text: "x".repeat(1500) }] },
-    };
-    await writeFile(join(dataDir, "cv-cache.json"), JSON.stringify(cache));
-    const cv = await call("get_cv", { maxChars: 500 });
-    assert.equal(cv.text.length, 500);
-    assert.equal(cv.nextOffset, 500);
-    assert.equal(requests.filter((r) => r.url === "/api/cv/read").length, 0);
-  } finally {
-    if (oldPort === undefined) delete process.env.APPLY_TRACKER_PORT;
-    else process.env.APPLY_TRACKER_PORT = oldPort;
-    await new Promise((accept) => server.close(accept));
     await closeToolConnections(store);
     store.close();
     await rm(dataDir, {
@@ -557,21 +324,21 @@ test("agent proxies refuse a different database and errors include actionable ma
   await new Promise((accept) => server.listen(0, "127.0.0.1", accept));
   process.env.APPLY_TRACKER_PORT = String(server.address().port);
   try {
-    const tool = buildTools(store, { mode: 'local-adapters' }).find(
-      (tool) => tool.name === "refresh_replies",
+    const tool = buildTools(store, { assistant: 'codex' }).find(
+      (tool) => tool.name === "start_native_run",
     );
-    await assert.rejects(tool.handler({}), (error) => {
+    await assert.rejects(tool.handler({ directoryId: "fixture", explicit: true, mode: "send_and_submit" }), (error) => {
       const result = machineError(error);
       assert.equal(result.code, "WRONG_DATA_DIRECTORY");
       assert.equal(result.retryable, false);
       assert.match(result.nextStep, /APPLY_TRACKER_DATA/);
       return true;
     });
-    assert.ok(!requests.includes("/api/refresh"));
+    assert.ok(!requests.includes("/api/native/runs"));
     const company = store.createDirectory({ name: "Revision fixture" });
     const id = store.addCompanies(company.id, [{ name: "Fixture" }]).ids[0];
     store.updateCompany(id, { notes: "first" });
-    const update = buildTools(store, { mode: 'local-adapters' }).find(
+    const update = buildTools(store, { assistant: 'codex' }).find(
       (tool) => tool.name === "update_company",
     );
     await assert.rejects(

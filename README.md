@@ -10,11 +10,11 @@ A free, open-source job-search app for you and your AI assistant. Find jobs that
 
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
-**Your actual AI client owns the connections.** Native mode is the default: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in Native mode.
+**Your actual AI client owns the connections.** Native connections: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in the app.
 
 The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the public source-download links below remain unchanged. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
 
-The production core has six direct dependencies for the local server, MCP, validation and file formats. Mail/calendar SDKs are developer dependencies and optional private add-ons for explicit `local-adapters` compatibility. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
+The production core has six direct dependencies for the local server, MCP, validation and file formats. App-managed mail/calendar SDKs and adapter execution code have been removed. External connections belong to your actual client. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
@@ -125,7 +125,7 @@ Connect accounts in your actual Codex/Claude client. **Connections** in Tawdheef
 | Password manager | Your client's supported workflow; Tawdheef never reads its vault or stores career passwords. |
 | Codex / Claude Code | The client you actually use, connected to Tawdheef's local MCP tools. |
 
-Default Native mode needs no app-owned OAuth registration or separate model API key. Existing app adapters/CLI workers remain available only after explicitly choosing advanced `local-adapters` compatibility mode. Their credentials/data are preserved and are not inspected by Native bootstrap. [Account setup](docs/CONNECTIONS.md) · [Optional compatibility integrations](docs/INTEGRATIONS.md).
+Native connections need no app-owned OAuth registration or separate model API key. App-managed adapters and assistant workers have been retired. Their historical credentials/data remain preserved and unused. [Account setup](docs/CONNECTIONS.md) · [Client integrations](docs/INTEGRATIONS.md).
 
 ## What the agent reads
 

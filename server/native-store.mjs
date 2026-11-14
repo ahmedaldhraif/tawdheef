@@ -219,7 +219,7 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       return tx(() => {
         require(getStore().getSettings().connectionMode === 'native', 'Switch to native connection mode before starting a native Run.');
         assistant(input.assistant);
-        require(!getStore().listRuns().some(run => run.status === 'running'), 'Stop the current Run before starting another native Run.');
+        require(!getStore().listRuns().some(run => run.native && run.status === 'running'), 'Stop the current Run before starting another native Run.');
         const companyIds = getStore().remainingCompanies(input).map(company => company.id);
         require(companyIds.length, 'No unfinished companies match this selection.');
         const run = getStore().startRun({ ...input, companyIds }, { transaction: false });

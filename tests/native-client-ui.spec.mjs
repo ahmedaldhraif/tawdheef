@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const observedAt = '2026-11-14T07:00:00Z';
 const unknownClient = assistant => ({ assistant, mode: 'native', clientReported: true, independentlyVerified: false, primaryEmail: null, capabilities: Object.fromEntries(['cv', 'email', 'calendar', 'browser', 'computer', 'passwordManager'].map(kind => [kind, { status: 'unknown', observedAt: null, provider: '' }])) });
@@ -69,6 +70,14 @@ test.afterEach(async ({ page }) => {
 });
 async function openTracker(page) { await page.goto('/'); await expect(page.locator('.company-name').first()).toBeVisible(); }
 async function openConnections(page) { await openTracker(page); await page.getByRole('button', { name: 'Connections', exact: true }).click(); return page.getByRole('dialog'); }
+async function expectReadableCategories(dialog) {
+  expect(await dialog.locator('.connection-category-row').evaluateAll(rows => rows.every(row => {
+    const name = row.querySelector('.connection-category-name'), value = row.querySelector('.connection-category-value');
+    const range = document.createRange(); range.selectNodeContents(name);
+    const label = range.getBoundingClientRect(), status = value.getBoundingClientRect();
+    return getComputedStyle(row).direction === 'rtl' ? label.left >= status.right : label.right <= status.left;
+  }))).toBe(true);
+}
 async function capture(page, name) {
   if (process.env.TAWDHEEF_CAPTURE_UI !== '1') return;
   const folder = join(process.cwd(), 'outputs', 'native-client-ui-review-20261114');
@@ -135,6 +144,26 @@ test('Tabbio CV uses native MCP guidance and keeps an optional local original fi
   await dialog.locator('.cv-original-file > summary').click();
   await expect(dialog.getByLabel('CV file', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('textbox', { name: /token|secret|password/i })).toHaveCount(0);
+});
+
+test('the original CV control saves exact local bytes and rejects a bad replacement without connecting a provider', async ({ page, request }) => {
+  const original = Buffer.from('%PDF-1.7\nSynthetic original for isolated interface verification.\n%%EOF\n');
+  await page.route('**/api/cv/file', route => route.continue());
+  const dialog = await openConnections(page);
+  await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
+  await dialog.locator('.cv-original-file > summary').click();
+  const input = dialog.getByLabel('CV file', { exact: true });
+  await input.setInputFiles({ name: 'Synthetic original.pdf', mimeType: 'application/pdf', buffer: original });
+  await expect(dialog.locator('.cv-original-file').getByRole('status')).toContainText('Synthetic original.pdf');
+  const saved = await (await request.get('/api/cv/file')).json();
+  expect(saved.sha256).toBe(createHash('sha256').update(original).digest('hex'));
+  expect(saved.contentVerified).toBe(false);
+  expect(saved.source).toBe('user_selected_file');
+  await input.setInputFiles({ name: 'bad replacement.pdf', mimeType: 'application/pdf', buffer: Buffer.from('not a PDF') });
+  await expect(dialog.locator('.cv-original-file').getByRole('alert')).toBeVisible();
+  expect(await (await request.get('/api/cv/file')).json()).toEqual(saved);
+  expect(page.__nativeRequests).toEqual([]);
+  expect(page.__nativeWrites).toEqual([]);
 });
 
 test('native run needs no CLI and waits for the existing client with selected actions and a revocable Stop', async ({ page }) => {
@@ -211,9 +240,10 @@ test('a saved local calendar ID does not masquerade as a calendar reported by th
   await expect(panel.getByRole('button', { name: 'Copy schedule request', exact: true })).toBeDisabled();
 });
 
-test('native connections remain usable at 320px without exposing advanced adapters by default', async ({ page }) => {
+test('native connections remain usable at 320px without exposing adapter controls', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 760 });
   const dialog = await openConnections(page);
+  await expectReadableCategories(dialog);
   await capture(page, 'en-connections-320');
   await expect(dialog.getByRole('combobox', { name: 'Connections managed by', exact: true })).toBeHidden();
   await dialog.getByRole('button', { name: 'Calendar — Unknown', exact: true }).click();
@@ -231,6 +261,7 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(dialog.locator('.connection-category-row')).toHaveCount(6);
   await expect(dialog.getByRole('button', { name: 'البريد — غير معروف', exact: true })).toBeVisible();
+  await expectReadableCategories(dialog);
   await capture(page, `ar-connections-${width}`);
   await dialog.getByRole('button', { name: 'البريد — غير معروف', exact: true }).click();
   await dialog.locator('[data-connection-provider="gmail"]').click();
@@ -239,6 +270,13 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   await expect(dialog.getByRole('button', { name: 'تم نسخ طلب الإعداد', exact: true })).toBeVisible();
   await capture(page, `ar-provider-${width}`);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await dialog.getByRole('button', { name: 'رجوع', exact: true }).click();
+  await dialog.getByRole('button', { name: 'العودة إلى الاتصالات', exact: true }).click();
+  await dialog.getByRole('button', { name: /^سيرة Tabbio الذاتية —/ }).click();
+  await dialog.locator('.cv-original-file > summary').click();
+  await expect(dialog.locator('.cv-original-file')).toContainText('ملف السيرة الذاتية الأصلي للرفع');
+  await expect(dialog.getByLabel('ملف السيرة الذاتية', { exact: true })).toBeVisible();
+  expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   await dialog.getByRole('button', { name: 'تم', exact: true }).click();
   await page.locator('.monitor-summary').getByRole('button', { name: 'المتابعة', exact: true }).click();
   const settings = page.getByRole('dialog', { name: 'المتابعة', exact: true });
@@ -251,15 +289,29 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test('local adapter compatibility requires the explicit advanced mode choice and can return to native', async ({ page }) => {
-  await page.route('**/api/setup-status?*', route => route.fulfill({ json: { assistant: 'codex', verified: false, ready: false, steps: [], setupPrompt: 'Fixture legacy setup only.' } }));
+test('saved legacy mode cannot expose adapters or change the actual client ownership', async ({ page }) => {
+  page.__nativeMode = 'local-adapters';
   const dialog = await openConnections(page);
-  await dialog.locator('.native-connection-advanced > summary').click();
-  await dialog.getByRole('combobox', { name: 'Connections managed by', exact: true }).selectOption('local-adapters');
-  await expect(dialog.getByRole('button', { name: 'Check connections', exact: true })).toBeVisible();
-  await dialog.locator('.native-connection-advanced > summary').click();
-  await dialog.getByRole('combobox', { name: 'Connections managed by', exact: true }).selectOption('native');
-  await expect(dialog.getByRole('button', { name: 'Check connections', exact: true })).toHaveCount(0);
-  await expect(dialog.getByRole('button', { name: 'Email — Unknown', exact: true })).toBeVisible();
-  expect(page.__nativeWrites.map(item => item.input)).toEqual([{ connectionMode: 'local-adapters' }, { connectionMode: 'native' }]);
+  await expect(dialog.locator('.connection-category-row')).toHaveCount(6);
+  await expect(dialog.getByText('Advanced compatibility', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByRole('combobox', { name: 'Connections managed by', exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Email — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Gmail', exact: true }).click();
+  await expect(dialog.getByText('Connect your email in your assistant. Tawdheef keeps the recorded outcomes.', { exact: true })).toBeVisible();
+  await expect(dialog.locator('input[type="password"]')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /Sign in/ })).toHaveCount(0);
+  expect(page.__nativeWrites).toEqual([]);
+});
+
+test('a retained legacy running record stays inert and cannot claim the Native Run controls', async ({ page }) => {
+  page.__nativeRun = { id: 'old-managed-record', managed: true, retired: true, runnable: false, directoryId: 'uae', status: 'running', completed: 1, total: 2, assistant: 'codex' };
+  await openTracker(page);
+  await expect(page.locator('.run-banner')).toHaveCount(0);
+  await expect(page.locator('.heading-actions').getByRole('button', { name: 'View progress', exact: true })).toHaveCount(0);
+  const run = page.locator('.heading-actions').getByRole('button', { name: /^Run on/ });
+  await expect(run).toBeEnabled();
+  await run.click();
+  await expect(page.getByRole('dialog', { name: 'Run', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Copy run request', exact: true })).toHaveCount(0);
+  expect(page.__nativeWrites).toEqual([]);
 });

@@ -4,7 +4,7 @@ Keep the original private data directory. Back up SQLite with its consistent onl
 
 Compare directory IDs and counts, confirmed snapshot totals, saved settings and run history before and after opening a disposable migration copy. New defaults are additive. Native connection ownership does not delete compatibility credentials, change their accounts or prove that the actual client has signed in.
 
-The default Native app loads no provider sessions or managed assistant runner. Existing app-owned vacancy rules keep their scope and results. Their API states `executionOwner:local-adapters` and `runnable:false` in Native mode. Recurring application permission is paused at restart; a new explicit Run is required for unfinished submissions. Native Updates uses the actual client's own selected read-only tools and supported local schedule, with dated reported status and real check evidence kept separately.
+The Native-only app loads no provider sessions or managed assistant runner. Existing app-owned vacancy rules keep their scope and results. Their API states `executionOwner:local-adapters` and `runnable:false` and is retired. Recurring application permission is never executed; a new explicit Run is required for unfinished submissions. Native Updates uses the actual client's own selected read-only tools and supported local schedule, with dated reported status and real check evidence kept separately.
 
 Test profile work independently of applications; a previously applied company can still need a career profile. Verify shared-company duplicate protection across packs, unknown submission recovery, the restricted monitoring catalog, keyboard and unsaved-edit behavior, paginated run history and hidden-tab polling. Automated checks use synthetic accounts and receipts. An upgrade check never sends an email, applies, creates a real profile, writes a calendar event or enables a schedule.
 
@@ -29,3 +29,5 @@ single active app at its existing launch path. Keep its external data path and
 project configuration. Verify served asset hashes and the actual MCP catalog,
 not only a health endpoint, version label or folder name. A later static-asset
 copy invalidates the archive's claim to describe the complete installed build.
+
+Uncertain pre-Native forms can be reconciled through explicit `reconcile_historical_submission` after inspecting their exact original outcome. Historical email recovery also requires saved original provider/account provenance. If the old version did not save that identity, the intent remains Needs you; never clear it using the current mailbox or resend blindly. No compatibility credentials are reopened for recovery.

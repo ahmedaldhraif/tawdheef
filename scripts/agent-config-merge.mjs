@@ -50,7 +50,7 @@ async function existingFile(root, path) {
   try { return await readFile(path, 'utf8'); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
-const conflict = path => new Error(`Keep your existing ${path}. Its Tawdheef entry is unowned or was edited. ${path === '.mcp.json' || path === '.codex/config.toml' ? 'Export the needed entries with npm run setup -- --export-config agent-config --include playwright and merge only missing entries using docs/AGENT-GUIDE.md#connect-once.' : 'Compare it with the installed Tawdheef guidance and merge your changes before trying again.'} No setup files were changed.`);
+const conflict = path => new Error(`Keep your existing ${path}. Its Tawdheef entry is unowned or was edited. ${path === '.mcp.json' || path === '.codex/config.toml' ? 'Export the needed entries with npm run setup -- --export-config agent-config and merge only missing entries using docs/AGENT-GUIDE.md#connect-once.' : 'Compare it with the installed Tawdheef guidance and merge your changes before trying again.'} No setup files were changed.`);
 
 function outsideHasManagedEntry(text, names) {
   // Deliberately conservative: inline/dotted/quoted ambiguous TOML requires review.

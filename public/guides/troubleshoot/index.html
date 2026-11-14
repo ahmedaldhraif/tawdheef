@@ -7,11 +7,11 @@ npm run doctor</code></pre></div>
 <p>The prebuilt app includes Node and its interface; extract the complete folder and open its launcher. Source users need <a href="https://nodejs.org/en/download">Node.js 24 or newer</a>, then <code>npm start</code>; first source launch needs internet for dependencies. On Windows, if PowerShell blocks <code>npm.ps1</code>, use <code>npm.cmd start</code> or <strong>Start Tawdheef.cmd</strong> without changing the system execution policy. Publisher warnings and signed-download availability are separate from local setup; do not disable system security.</p>
 <p>If another app is using the port, keep the exact error and ask your setup agent to identify it. Do not start a second tracker against a different data folder.</p>
 <h2 id="the-assistant-is-installed-but-run-cannot-use-it">The assistant is installed but Run cannot use it</h2>
-<p>Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The optional compatibility CLI runner is a separate Advanced mode.</p>
+<p>Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The app does not launch assistant subprocesses.</p>
 <h2 id="the-cv-is-connected-but-cannot-be-read">The CV is connected but cannot be read</h2>
 <p>Open <strong>Connections → Tabbio CV</strong>, copy its setup request and check the actual Tabbio tool in the selected client. Complete sign-in/consent there. Never guess a CV ID or tool name. Report fresh source metadata only after a real read; <strong>Unknown</strong> can mean missing or stale metadata rather than a disconnected account.</p>
 <h2 id="browser-forms-or-email-are-unavailable">Browser forms or email are unavailable</h2>
-<p>Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record <strong>Needs you</strong>. Passwords remain in your browser/password manager. App-owned adapters require an explicit Advanced compatibility choice and <code>npm run setup -- --local-adapters</code>; they are not the default solution.</p>
+<p>Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record <strong>Needs you</strong>. Passwords remain in your browser/password manager. App-managed adapters are retired.</p>
 <p>A site’s CAPTCHA or login may need you even after setup is ready. Check an uncertain submission for a receipt before trying again.</p>
 <h2 id="a-pack-import-looks-incomplete">A pack import looks incomplete</h2>
 <p>Extract the ZIP first and read <code>manifest.json</code> → <code>files.imports</code>. Import every listed CSV part into the same chosen tab. Review warnings instead of replacing the existing directory or dropping records to make the count fit.</p>
@@ -57,7 +57,7 @@ This creates project-only settings for Tawdheef&#39;s local **stdio MCP server**
 
 The app also has its own CLI: `node bin/apply-tracker.mjs help`. The screen, CLI and MCP use the same local records. MCP lets a compatible local agent call tools directly; the CLI supports terminal agents and scripts. [See the tool reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md).
 
-External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-owned provider adapters and browser bridges require an explicit **Advanced compatibility** choice and `--local-adapters`; they are excluded from the ordinary app runtime. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
+External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-managed provider adapters and browser bridges have been removed. External tools and sign-in belong to the actual client. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
 
 ## CV
 
@@ -165,13 +165,7 @@ The commands create project-only MCP settings and install the Tawdheef skill. Th
 
 Reuse the actual client&#39;s supported browser/computer tools and authorized sessions. In **Connections → Browser &amp; computer use**, copy its setup request. The client checks availability; a browser check does not prove OS computer control. Unsupported tools and sign-in become **Needs you**.
 
-No browser engine is installed into Tawdheef by default. The optional app-owned compatibility path is separate:
-
-```sh
-npm run setup -- --local-adapters --browser
-```
-
-Choose that path only when you explicitly want local adapters. Native **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
+Tawdheef includes no browser engine or app-managed adapters. **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
 
 ## Install just the skill
 
@@ -334,7 +328,7 @@ If another app is using the port, keep the exact error and ask your setup agent 
 
 ## The assistant is installed but Run cannot use it
 
-Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The optional compatibility CLI runner is a separate Advanced mode.
+Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The app does not launch assistant subprocesses.
 
 ## The CV is connected but cannot be read
 
@@ -342,7 +336,7 @@ Open **Connections → Tabbio CV**, copy its setup request and check the actual 
 
 ## Browser forms or email are unavailable
 
-Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-owned adapters require an explicit Advanced compatibility choice and `npm run setup -- --local-adapters`; they are not the default solution.
+Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-managed adapters are retired.
 
 A site’s CAPTCHA or login may need you even after setup is ready. Check an uncertain submission for a receipt before trying again.
 

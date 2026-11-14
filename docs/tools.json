@@ -142,7 +142,7 @@
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": true,
+        "idempotentHint": false,
         "openWorldHint": false
       }
     },
@@ -406,7 +406,7 @@
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": true,
+        "idempotentHint": false,
         "openWorldHint": false
       }
     },
@@ -517,9 +517,9 @@
         "additionalProperties": false
       },
       "annotations": {
-        "readOnlyHint": false,
+        "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -921,7 +921,7 @@
     },
     {
       "name": "get_cv_file",
-      "description": "Inspect metadata for an original CV file explicitly selected in Connections. Does not return file contents, verify CV facts or manufacture a PDF from cached JSON.",
+      "description": "Inspect metadata for an original CV file explicitly selected in Connections. Does not return contents, read a provider, verify CV facts or manufacture a PDF.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -947,7 +947,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -972,7 +972,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -998,7 +998,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -1026,7 +1026,7 @@
     },
     {
       "name": "remove_directory_pack",
-      "description": "Detach a pack from a directory while retaining company and application history. Saved monitoring rules keep their snapshotted targets; pause separately when requested.",
+      "description": "Detach a pack from a directory while retaining company and application history. Does not alter saved history or start any work.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1052,7 +1052,7 @@
     },
     {
       "name": "list_monitors",
-      "description": "List saved monitoring rules, scope, mode, expiry and last/next checks. Reading never enables a rule.",
+      "description": "Read preserved historical app-owned monitoring rules. They are inert; current monitoring belongs to the actual client.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1066,152 +1066,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
-        "openWorldHint": false
-      }
-    },
-    {
-      "name": "save_monitor",
-      "description": "Create or revise a monitor only as requested. Scope snapshots companies and list filters. Defaults are disabled, notify-only. enabled:true requires explicit:true. mode:apply needs explicit recurring-application authorization and future expiresAt. Pack updates cannot widen scope.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "expectedRevision": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "directoryId": {
-            "type": "string"
-          },
-          "companyIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1
-          },
-          "search": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "attention": {
-            "type": "string"
-          },
-          "companyTypes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "locations": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string"
-          },
-          "assistant": {
-            "type": "string",
-            "enum": [
-              "codex",
-              "claude-code"
-            ]
-          },
-          "frequency": {
-            "type": "string",
-            "enum": [
-              "daily",
-              "weekly"
-            ]
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "notify",
-              "apply"
-            ]
-          },
-          "criteria": {
-            "type": "object",
-            "properties": {
-              "roles": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "locations": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "notes": {
-                "type": "string"
-              }
-            },
-            "required": [],
-            "additionalProperties": false
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "explicit": {
-            "type": "boolean"
-          },
-          "expiresAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "directoryId"
-        ],
-        "additionalProperties": false
-      },
-      "annotations": {
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "idempotentHint": false,
-        "openWorldHint": false
-      }
-    },
-    {
-      "name": "set_monitor_status",
-      "description": "Pause or explicitly enable a saved monitor. Enabling needs the user’s request, explicit:true and the current expectedRevision from list_monitors; recurring applications need an unexpired apply rule. Pausing revokes its active attempt.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "explicit": {
-            "type": "boolean"
-          },
-          "expectedRevision": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "id",
-          "enabled"
-        ],
-        "additionalProperties": false
-      },
-      "annotations": {
-        "readOnlyHint": false,
-        "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -1252,7 +1107,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -1283,7 +1138,7 @@
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": false,
+        "idempotentHint": true,
         "openWorldHint": false
       }
     },
@@ -1701,7 +1556,7 @@
     },
     {
       "name": "get_run",
-      "description": "Read a compact Native Run before acting. Use list_native_targets for bounded target pages.",
+      "description": "Read a compact Native Run before acting. Use list_native_targets for bounded target pages. Older runs are inert history.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1723,7 +1578,7 @@
     },
     {
       "name": "list_runs",
-      "description": "List compact local Run summaries; never dumps full target queues.",
+      "description": "List compact local Run summaries; older app-owned runs are inert history. Never dumps full target queues.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -2336,6 +2191,187 @@
       }
     },
     {
+      "name": "reconcile_historical_submission",
+      "description": "Record an explicitly requested inspected receipt or verified non-delivery for an unresolved stopped pre-Native intent. Preserve every original identity field; never sends, creates authority or reassigns missing mailbox provenance. Native intents must use their original Native receipt tools. Missing original email account stays Needs you.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "explicit": {
+            "type": "boolean",
+            "const": true
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "companyId": {
+                "type": "string"
+              },
+              "runId": {
+                "type": "string"
+              },
+              "idempotencyKey": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "form"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "enum": [
+                  "application",
+                  "cv_share",
+                  "account",
+                  "profile",
+                  "cv_upload",
+                  "talent_pool"
+                ]
+              },
+              "role": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "companyId",
+              "runId",
+              "idempotencyKey",
+              "method",
+              "purpose",
+              "role",
+              "createdAt"
+            ],
+            "additionalProperties": false
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "not_sent"
+            ]
+          },
+          "evidence": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "sourceRead": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "native_browser",
+                  "native_email"
+                ]
+              },
+              "url": {
+                "type": "string"
+              },
+              "sourceId": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "accountId": {
+                "type": "string"
+              },
+              "observedAt": {
+                "type": "string"
+              },
+              "evidence": {
+                "type": "string",
+                "maxLength": 4000
+              }
+            },
+            "required": [
+              "method",
+              "observedAt",
+              "evidence"
+            ],
+            "additionalProperties": false
+          },
+          "receipt": {
+            "type": "object",
+            "properties": {
+              "providerMessageId": {
+                "type": "string"
+              },
+              "threadId": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "accountId": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "sentAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "providerMessageId",
+              "provider",
+              "accountId",
+              "to",
+              "subject",
+              "sentAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "explicit",
+          "identity",
+          "outcome",
+          "evidence",
+          "sourceRead"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "get_registration_context",
       "description": "Read only fresh client-reported primary email and existing local company progress. Reuse existing career accounts with their original login. Passwords stay in the actual browser/password manager.",
       "inputSchema": {
@@ -2401,7 +2437,7 @@
     },
     {
       "name": "update_settings",
-      "description": "Update requested local preferences. Changing connectionMode is owned by the running app so optional provider services close or start consistently. No external connection is created.",
+      "description": "Update requested local preferences. Native client connections remain in the actual selected client.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -2446,7 +2482,7 @@
     },
     {
       "name": "get_integrations",
-      "description": "Read Native client setup recipes without inspecting private legacy bridge configuration or authenticating accounts.",
+      "description": "Read local Native setup metadata without inspecting credentials or authenticating accounts.",
       "inputSchema": {
         "type": "object",
         "properties": {},

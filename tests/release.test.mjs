@@ -8,7 +8,6 @@ import JSZip from 'jszip';
 import { checkPublicSource, sourceArchive, isPublicSource } from '../scripts/release-files.mjs';
 import { configureAgent } from '../scripts/agent-setup.mjs';
 import { buildFingerprint, ensureBuild } from '../scripts/build.mjs';
-import { INTEGRATIONS } from '../server/integrations.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'tawdheef-release-test-'));
@@ -57,32 +56,13 @@ test('agent setup is project-local, previewable, idempotent and preserves custom
   await assert.rejects(configureAgent('both', options), /No setup files were changed/);
   assert.equal(await readFile(join(root, '.mcp.json'), 'utf8'), '{"custom":"keep me"}');
 });
-test('explicit compatibility browser setup creates both client entries and preserves conflicting files', async t => {
-  const root = await fixture(t), browser = INTEGRATIONS.find(item => item.id === 'playwright');
-  for (const folder of ['scripts', 'server', 'skills/tawdheef', 'node_modules/@playwright/mcp']) await mkdir(join(root, folder), { recursive: true });
-  for (const file of ['scripts/agent-setup.mjs', 'scripts/installed-app.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
-  await writeFile(join(root, 'skills/tawdheef/SKILL.md'), 'isolated skill fixture');
-  await writeFile(join(root, 'node_modules/@playwright/mcp/package.json'), JSON.stringify({ name: browser.package, version: browser.version }));
-  await writeFile(join(root, 'node_modules/@playwright/mcp/cli.js'), '// Package discovery fixture; no browser is launched.');
-  const dataDir = join(root, 'private data'), env = { ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: '4018' };
-  const run = flags => spawnSync(process.execPath, [join(root, 'scripts/agent-setup.mjs'), 'both', '--local-adapters', '--browser', '--json', ...flags], { cwd: root, env, encoding: 'utf8', windowsHide: true });
-  const preview = run(['--check']); assert.equal(preview.status, 0, preview.stderr);
-  assert.deepEqual(JSON.parse(preview.stdout).included, ['apply-tracker', 'playwright']);
-  await assert.rejects(readFile(join(root, '.mcp.json')), { code: 'ENOENT' });
-  const configured = run([]); assert.equal(configured.status, 0, configured.stderr);
-  const json = JSON.parse(await readFile(join(root, '.mcp.json'), 'utf8'));
-  assert.deepEqual(Object.keys(json.mcpServers), ['apply-tracker', 'playwright']);
-  assert.equal(json.mcpServers.playwright.command, process.execPath);
-  assert.ok(json.mcpServers.playwright.args.includes(join(dataDir, 'browser-profile')));
-  const toml = await readFile(join(root, '.codex/config.toml'), 'utf8');
-  assert.match(toml, /\[mcp_servers\.playwright\]/);
-  assert.match(JSON.parse(configured.stdout).nextStep, /get_setup_status/);
-  await writeFile(join(root, '.mcp.json'), '{"custom":"keep browser settings"}');
-  const conflict = run([]); assert.equal(conflict.status, 1);
-  assert.match(conflict.stderr, /--include playwright/);
-  assert.equal(await readFile(join(root, '.mcp.json'), 'utf8'), '{"custom":"keep browser settings"}');
-  assert.equal(await readFile(join(root, '.codex/config.toml'), 'utf8'), toml);
+test('retired browser setup cannot modify client settings', async t => {
+  const root = await fixture(t);
+  const before = '{"custom":"keep browser settings"}'; await writeFile(join(root, '.mcp.json'), before);
+  await assert.rejects(configureAgent('both', { root, mode: 'local-adapters', include: ['playwright'] }), /retired/);
+  assert.equal(await readFile(join(root, '.mcp.json'), 'utf8'), before);
 });
+
 test('agent setup CLI runs through a linked project path', async t => {
   const root = await fixture(t), project = join(root, 'project'), linked = join(root, 'linked-project');
   for (const folder of ['scripts', 'server', 'skills/tawdheef']) await mkdir(join(project, folder), { recursive: true });

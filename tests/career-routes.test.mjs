@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import * as sqlite from 'node:sqlite';
 import { openStore } from '../server/store.mjs';
-import { guardOperatorCall, operatorPrompt } from '../server/operator-contract.mjs';
 import { nativeRunRequest } from '../server/native-guidance.mjs';
 
 const profiles = { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false };
@@ -88,16 +87,6 @@ test('one-time Career profile column migration preserves later hide, directory m
   store = openStore({ dataDir, seed: false });
   assert.deepEqual(store.listDirectories()[0].columns, ['name', 'status']);
   assert.ok(store.createDirectory({ id: 'new-directory', name: 'New directory' }).columns.includes('progress'));
-});
-
-test('compatibility operator allows evidenced route edits but cannot change milestones or another company', () => {
-  const run = { id: 'run', managed: true, status: 'running', activeCompanyId: 'employer', companyIds: ['employer'], actions: profiles };
-  const store = { getRun: () => run }, scope = { runId: 'run', companyId: 'employer' };
-  const input = { id: 'employer', patch: { expectedRevision: 1, careersPageStatus: 'needs_check', profileSupport: 'unknown', routeEvidence: 'Synthetic blocked public page.' } };
-  assert.equal(guardOperatorCall(store, 'update_company', input, scope), input);
-  assert.throws(() => guardOperatorCall(store, 'update_company', { id: 'other', patch: input.patch }, scope), /assigned company/);
-  assert.throws(() => guardOperatorCall(store, 'update_company', { id: 'employer', patch: { profile_created: true } }, scope), /log_application/);
-  assert.match(operatorPrompt(run, 'employer'), /blocked page is needs_check, never proof of absence/);
 });
 
 test('optional contact hint persists only explicit edits and never becomes a Native account identity', async t => {

@@ -60,18 +60,4 @@ messages, calendar writes, startup changes or schedules. Run separately saves
 explicit actions/scope and copies a handoff into this existing conversation.
 No app-started model/CLI queue is part of the native workflow.
 
-Only an explicit Connections → Advanced compatibility → Tawdheef local adapters
-choice enables the older provider forms/CLI runner. That mode has separate
-local credentials, optional dependencies, Check connections and an optional
-explicit CLI model fixture test. Keep that proof separate from native Desktop
-or provider access; do not run models during a passive status read. See
-CONNECTIONS.md before using it; never choose compatibility automatically to
-bypass a native-client restriction.
-
-The CLI is node bin/apply-tracker.mjs; help lists the live contract. Use JSON
-input files for structured writes. The stdio MCP is node server/mcp.mjs;
-stdout is protocol only. Keep its data path and port identical to the app.
-Do not create another private-data folder/provider owner to bypass an error.
-Follow docs/MONITORING.md only when read-only native monitoring is requested.
-It needs the saved assistant/scope/revision and dedicated workspace; copying
-instructions or reporting a task ID does not verify an external schedule.
+App-managed adapter setup is retired. Existing private settings and historical records remain preserved and unused. External tools and authentication belong to the actual Codex or Claude Code client.

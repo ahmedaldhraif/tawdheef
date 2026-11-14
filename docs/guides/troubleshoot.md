@@ -21,7 +21,7 @@ If another app is using the port, keep the exact error and ask your setup agent 
 
 ## The assistant is installed but Run cannot use it
 
-Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The optional compatibility CLI runner is a separate Advanced mode.
+Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The app does not launch assistant subprocesses.
 
 ## The CV is connected but cannot be read
 
@@ -29,7 +29,7 @@ Open **Connections → Tabbio CV**, copy its setup request and check the actual 
 
 ## Browser forms or email are unavailable
 
-Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-owned adapters require an explicit Advanced compatibility choice and `npm run setup -- --local-adapters`; they are not the default solution.
+Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-managed adapters are retired.
 
 A site’s CAPTCHA or login may need you even after setup is ready. Check an uncertain submission for a receipt before trying again.
 

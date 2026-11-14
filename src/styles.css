@@ -2132,44 +2132,17 @@ td {
     font-size: 11px;
   }
 }
-.assistant-setup {
-  margin: 22px 0 18px;
-}
-.connection-groups { display: grid; gap: 22px; margin: 22px 0 12px; }
-.connection-groups h3 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
-.connection-group-hint { margin: 0 0 10px; color: #62626b; font-size: 13px; line-height: 1.5; }
 .provider-rows { border: 1px solid #dedee3; border-radius: 12px; overflow: hidden; background: #fff; }
 .provider-row { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 14px 16px; border: 0; border-radius: 0; background: #fff; color: #252525; text-align: start; box-shadow: none; }
 .provider-row + .provider-row { border-top: 1px solid #ededf0; }
 @media (hover: hover) and (pointer: fine) { .provider-row:hover { background: #f5f5f7; } }
 .provider-row-name { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: normal; font-size: 14px; }
-.provider-row-state { color: #2463b5; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
-.provider-row-state.connected { color: #62626b; }
 .provider-row > svg { color: #86868b; flex-shrink: 0; }
 .text-button { border: 0; padding-inline: 0; color: #62626b; background: transparent; font-size: 13px; }
-.calendar-provider-title { display: flex; align-items: center; gap: 12px; margin: 20px 0 12px; font-size: 18px; }
-.calendar-actions { border-top: 1px solid #dedee3; margin-top: 24px; padding-top: 12px; }
-.calendar-events { list-style: none; padding: 0; margin: 16px 0; }
-.calendar-events li { display: grid; gap: 4px; padding: 10px 0; border-bottom: 1px solid #ededf0; font-size: 13px; }
-.calendar-events li span { color: #62626b; }
-.calendar-provider-title strong,
-.calendar-account,
-.calendar-events strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 html[dir="rtl"] .connection-chevron {
   transform: rotate(180deg);
 }
-.client-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-@media (max-width: 520px) { .provider-row { gap: 10px; padding: 13px 12px; } .provider-row-name { font-size: 13px; } .provider-row-state { font-size: 12px; } }
-.assistant-setup > p,
-.connection-help {
-  font-size: 13px;
-  line-height: 1.65;
-  color: #686873;
-  margin: 8px 0 15px;
-}
+@media (max-width: 520px) { .provider-row { gap: 10px; padding: 13px 12px; } .provider-row-name { font-size: 13px; } }
 .column-update {
   display: inline-flex;
   align-items: center;
@@ -2288,70 +2261,6 @@ html[dir="rtl"] .connection-chevron {
 .brand-mark {
   max-width: none;
 }
-.client-tabs {
-  display: flex;
-  gap: 6px;
-  margin: 16px 0 12px;
-  border-bottom: 1px solid #e7e7ed;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-}
-.client-tabs button {
-  flex-shrink: 0;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  min-height: 38px;
-  padding: 8px 13px;
-  color: #6b6b76;
-  font-size: 13px;
-}
-.client-tabs button[aria-selected="true"] {
-  border-bottom-color: #35353f;
-  color: #252525;
-}
-.client-hint {
-  margin: 0 0 10px !important;
-}
-.connection-readiness {
-  padding: 15px 0 3px;
-  border-top: 1px solid #e7e7ed;
-  border-bottom: 1px solid #e7e7ed;
-  margin: 19px 0;
-}
-.connection-state {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: #326b47;
-}
-.connection-capabilities {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.connection-capabilities li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 0;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.connection-capabilities strong {
-  font-weight: 500;
-  color: #686873;
-  text-align: end;
-}
-.connection-help {
-  font-size: 12px;
-}
-.setup-instructions {
-  margin-top: 17px;
-}
 
 /* Press feedback is immediate for touch and keyboard; repeated work never waits
    for a transition. Hover feedback above is reserved for a precise pointer. */
@@ -2413,7 +2322,6 @@ a:active {
   .update-status,
   .selection-toolbar select,
   .selection-toolbar button,
-  .client-tabs button,
   .status-filters button,
   .dialog input:not([type="checkbox"]):not([type="file"]),
   .dialog select,
@@ -2499,47 +2407,17 @@ a:active {
   }
 }
 
-.assistant-choices { display: flex; gap: 8px; margin: 12px 0 20px; }
-.assistant-choices button { flex: 1; min-height: 48px; justify-content: flex-start; flex-wrap: wrap; }
-.assistant-choices button[aria-pressed="true"] { border-color: #252525; box-shadow: 0 0 0 1px #252525; }
-.assistant-choices small { color: #62626b; font-weight: 400; }
-.assistant-provider-row { display: flex; align-items: center; gap: 10px; }
-.assistant-provider-row label { display: flex; flex: 1; flex-direction: row; align-items: center; gap: 12px; min-height: 44px; margin: 0; cursor: pointer; font-size: 14px; min-width: 0; }
-.dialog .assistant-provider-row input[type="radio"] { width: 16px; height: 16px; min-height: 16px; max-width: 16px; flex: 0 0 16px; margin: 0; padding: 0; border: 0; accent-color: #252525; }
-.assistant-setup-link { border: 0; background: transparent; color: #2962b8; font-size: 13px; padding: 0; min-height: 44px; flex-shrink: 0; }
-.assistant-setup-link.connected { color: #23734b; }
-.connection-agent-help { margin-top: 22px; border-top: 1px solid #dedee3; padding-top: 10px; }
-.connection-agent-help summary { cursor: pointer; padding: 10px 0; font-size: 13px; color: #62626b; }
-.connection-agent-help .field-hint { margin: 8px 0 12px; }
-.connection-agent-help pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.65; max-height: 220px; overflow: auto; }
-.connections-check-result { margin: 0 0 22px; padding: 12px 0; border-block: 1px solid #dedee3; }
-.connections-check-result strong { font-size: 14px; }
-.connections-check-result.ready strong { color: #23734b; }
-.connections-check-result p { margin: 6px 0 0; color: #62626b; font-size: 13px; line-height: 1.6; }
-@media (max-width: 540px) {
-  .assistant-provider-row { padding-inline: 12px; gap: 6px; }
-  .assistant-provider-row label { gap: 8px; font-size: 13px; }
-  .assistant-setup-link { font-size: 12px; }
-  .connection-agent-help summary { min-height: 44px; }
-}
 .run-current { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
 .dialog-footer:has(.settings-dialog-footer) { flex: 0 0 auto; }
 .settings-dialog-footer { padding: 14px 24px; background: #fff; border-top: 1px solid #ededf1; }
 .settings-dialog-footer .form-actions { margin: 0; padding: 0; border: 0; }
 .settings-dialog-footer .form-error { margin: 0 0 12px; max-height: 20dvh; overflow-y: auto; }
-.assistant-setup-intro { display: flex; gap: 12px; align-items: center; margin: 20px 0; font-size: 13px; line-height: 1.6; }
-.assistant-setup-intro .provider-logo { flex-shrink: 0; }
-.assistant-setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.assistant-copy-fallback { margin-top: 20px; }
 .settings-preferences .form-row { margin-top: 12px; }
-.settings-update-row { display: flex; align-items: flex-end; gap: 10px; }
-#settings-form .settings-update-row > label { flex: 1; min-width: 0; margin-bottom: 0; }
-.settings-update-row > button { min-height: 40px; white-space: nowrap; }
 #settings-form .advanced { padding: 0; }
 #settings-form .advanced > summary { padding: 12px; min-height: 44px; }
 #settings-form .advanced[open] { padding: 0 12px 12px; }
 #settings-form .advanced[open] > summary { margin-inline: -12px; }
-@media (max-width: 460px) { .settings-update-row > button { min-height: 44px; } }
+
 .run-targets { list-style: none; padding: 0; max-height: 320px; overflow: auto; border-block: 1px solid #dedee3; }
 .run-targets li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
 .run-targets small { grid-column: 1 / -1; color: #62626b; }

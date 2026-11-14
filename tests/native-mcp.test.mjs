@@ -36,6 +36,7 @@ async function fixture(t) {
       if (stop) return response(store.stopNativeRun({ runId: decodeURIComponent(stop[1]) }));
       if (url.pathname === '/api/native/email/prepare') return response(store.prepareNativeEmail(body));
       if (url.pathname === '/api/native/email/resolve') return response(store.resolveNativeEmail(body));
+      if (url.pathname === '/api/history/reconcile') return response(store.reconcileHistoricalSubmission(body));
       if (url.pathname === '/api/monitoring/check') return response(store.beginNativeMonitoringCheck(body));
       if (url.pathname === '/api/monitoring/observations') return response(store.recordNativeMonitoringCheck(body));
       if (url.pathname === '/api/discovery/prepare') return response(store.prepareJobDiscovery(body));
@@ -88,9 +89,9 @@ test('Native SDK exposes normalized evidenced route findings and profile-only el
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 70); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
-  for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'save_monitor', 'set_monitor_status', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
-  for (const name of ['check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
+  assert.equal(names.length, 69); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
+  for (const name of ['save_monitor', 'set_monitor_status', 'check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
   for (const name of ['get_cv', 'configure_connection', 'connect_connection', 'get_connection_tools', 'refresh_replies', 'send_application_email', 'list_calendars', 'create_calendar_event']) assert.ok(!names.includes(name), name);
   const context = await call(client, 'get_agent_context'), capabilities = await call(client, 'get_capabilities');
   assert.equal(context.connectionOwner, 'native-client'); assert.equal(capabilities.mode, 'native');
@@ -217,4 +218,50 @@ test('Native discovery records unavailable tools as a source blocker without inv
   const missingProof = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
   const falseSuccess = await client.callTool({ name: 'record_job_discovery', arguments: { id: missingProof.id, token: missingProof.token, status: 'checked', complete: true, observations: [] } });
   assert.equal(falseSuccess.isError, true); assert.equal(store.listRuns().length, 0);
+});
+
+test('retired managed roles fail closed instead of inheriting the Native action catalog', async t => {
+  const { store } = await fixture(t);
+  for (const role of [{ APPLY_TRACKER_OPERATOR_RUN: 'old-run', APPLY_TRACKER_OPERATOR_COMPANY: 'alpha' }, { APPLY_TRACKER_OPERATOR_COMPANY: 'alpha' }, { APPLY_TRACKER_DIAGNOSTIC: '1' }]) {
+    Object.assign(process.env, role);
+    assert.throws(() => createMcpServer(store), /retired.*Native project settings/);
+    for (const key of Object.keys(role)) delete process.env[key];
+  }
+});
+
+test('historical schedules and results remain readable without schedule execution tools', async t => {
+  const { store, connect } = await fixture(t);
+  const rule = store.saveMonitoringRule({ directoryId: 'fixture', companyIds: ['alpha'], assistant: 'codex', name: 'Historical fixture', enabled: false });
+  const client = await connect(), names = (await client.listTools()).tools.map(tool => tool.name);
+  assert.ok(!names.includes('save_monitor')); assert.ok(!names.includes('set_monitor_status')); assert.ok(!names.includes('check_monitor'));
+  const rules = await call(client, 'list_monitors', { directoryId: 'fixture' });
+  assert.equal(rules.find(item => item.id === rule.id).name, 'Historical fixture');
+  assert.deepEqual(await call(client, 'get_monitor_results', { ruleId: rule.id }), store.getMonitoringResults({ ruleId: rule.id }));
+  assert.equal(store.listMonitoringRules({ directoryId: 'fixture' }).length, 1);
+});
+
+test('Native reports and preferences remain local and cannot reactivate provider ownership', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const report = await call(client, 'generate_report');
+  assert.equal(report.delivery.status, 'local'); assert.equal(requests.length, 0);
+  assert.equal((await client.callTool({ name: 'generate_report', arguments: { sendEmail: true } })).isError, true);
+  assert.equal((await client.callTool({ name: 'update_settings', arguments: { patch: { connectionMode: 'local-adapters' } } })).isError, true);
+  assert.equal(requests.length, 0, 'No external action or provider proxy is attempted.');
+  await call(client, 'update_settings', { patch: { timezone: 'Asia/Dubai' } });
+  assert.equal(store.getSettings().timezone, 'Asia/Dubai');
+});
+
+test('ordinary Native SDK can record explicitly inspected historical form outcomes without reviving sending authority', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const run = store.startRun({ directoryId: 'fixture', companyIds: ['alpha'], explicit: true, mode: 'send_and_submit' });
+  const form = store.prepareFormSubmission({ runId: run.id, companyId: 'alpha', role: 'Engineer', url: 'https://careers.example.com/original' }).application;
+  store.updateRun(run.id, { status: 'cancelled' });
+  const identity = Object.fromEntries(['companyId', 'runId', 'idempotencyKey', 'method', 'purpose', 'role', 'url', 'createdAt'].map(key => [key, form[key]]));
+  const input = { id: form.id, explicit: true, identity, outcome: 'confirmed', evidence: 'Synthetic original confirmation inspected.', sourceRead: { method: 'native_browser', url: form.url, observedAt: new Date().toISOString(), evidence: 'Synthetic exact original form outcome inspected.' } };
+  assert.equal((await client.callTool({ name: 'reconcile_historical_submission', arguments: { ...input, explicit: false } })).isError, true);
+  const saved = await call(client, 'reconcile_historical_submission', input);
+  assert.equal(saved.application.deliveryStatus, 'confirmed'); assert.equal(saved.maySend, false); assert.equal(store.getRun(run.id).status, 'cancelled');
+  assert.equal(requests.at(-1).path, '/api/history/reconcile'); assert.equal(requests.at(-1).body.assistant, 'codex');
+  const monitor = await connect('codex', true);
+  assert.ok(!(await monitor.listTools()).tools.some(tool => tool.name === 'reconcile_historical_submission'));
 });

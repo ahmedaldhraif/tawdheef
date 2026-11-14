@@ -5,7 +5,6 @@ const initialStatus = () => ({ lastCheckAt: null, lastSuccessAt: null, unreadCou
 const prompt = 'Create a local daily fixture monitoring schedule. Read only the selected companies and tracked email threads. Never apply, send messages or create calendar events.';
 
 test.beforeEach(async ({ page, request }) => {
-  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__monitorConfig = initialConfig(); page.__monitorStatus = initialStatus();
   page.__monitorUpdates = [];
   page.__monitorWrites = []; page.__monitorErrors = []; page.__unexpectedMonitorWrites = [];
@@ -20,7 +19,7 @@ test.beforeEach(async ({ page, request }) => {
   });
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'local-adapters'; boot.runs = [];
+    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'native'; boot.runs = [];
     return route.fulfill({ response, json: boot });
   });
   await page.route('**/api/monitoring', route => {
@@ -119,20 +118,20 @@ test('calendar monitoring requires an explicitly selected calendar and stays blo
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: false, profiles: false, email: false, calendar: true } };
   const { panel } = await openSettings(page);
   await expect(panel).toContainText('Needs you');
-  await expect(panel).toContainText('Choose a calendar to monitor.');
+  await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
   await expect(panel.getByRole('button', { name: 'Copy schedule request', exact: true })).toBeDisabled();
   expect(page.__monitorWrites).toEqual([]);
 });
 
-test('calendar discovery runs only after Choose a calendar and records its selected ID', async ({ page }) => {
+test('calendar monitoring uses only IDs reported by the selected actual client', async ({ page }) => {
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: false, profiles: false, email: false, calendar: true } };
-  let calendarReads = 0;
-  await page.route('**/api/calendar/calendars', route => { calendarReads++; return route.fulfill({ json: { calendars: [{ id: 'fixture-calendar', name: 'Fixture interviews' }] } }); });
+  await page.route('**/api/bootstrap', async route => {
+    const response = await route.fetch(), boot = await response.json();
+    boot.nativeClient = { assistant: 'codex', capabilities: { calendar: { status: 'reported', calendarIds: ['fixture-calendar'] } } };
+    return route.fulfill({ response, json: boot });
+  });
   const { panel } = await openSettings(page);
-  expect(calendarReads).toBe(0);
-  await panel.getByRole('button', { name: 'Choose a calendar', exact: true }).click();
   await expect(panel.getByRole('combobox', { name: 'Calendar', exact: true })).toBeVisible();
-  expect(calendarReads).toBe(1);
   await panel.getByRole('combobox', { name: 'Calendar', exact: true }).selectOption('fixture-calendar');
   await expect(panel).toContainText('Calendar events in the next 14 days.');
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();

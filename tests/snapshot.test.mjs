@@ -6,7 +6,6 @@ import { join, resolve } from 'node:path';
 import { directorySnapshot, snapshotWeekStart } from '../server/snapshot.mjs';
 import { openStore } from '../server/store.mjs';
 import { buildTools } from '../server/mcp.mjs';
-import { OPERATOR_TOOLS } from '../server/operator-contract.mjs';
 
 const current = '2026-11-13T12:00:00.000Z';
 const companies = [
@@ -160,7 +159,6 @@ test('snapshot scope and pagination validation fail closed through store and rea
   const tools = buildTools(store);
   const tool = tools.find(item => item.name === 'get_snapshot');
   assert.deepEqual(tool.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
-  assert.equal(OPERATOR_TOOLS.includes('get_snapshot'), false);
   assert.deepEqual(await tool.handler({ directoryId: 'fixture' }), store.snapshot({ directoryId: 'fixture' }));
   await assert.rejects(tool.handler({ directoryId: 'fixture', limit: '20' }));
   assert.equal(store.snapshot({ directoryId: 'fixture', offset: '0', limit: '20' }).limit, 20);

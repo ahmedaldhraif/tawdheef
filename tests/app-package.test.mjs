@@ -6,8 +6,7 @@ import { join } from 'node:path';
 import { appAssets, copyAppAssets } from '../scripts/app-assets.mjs';
 import { ensureBuild } from '../scripts/build.mjs';
 import { appSourceFile, APP_TARGETS } from '../scripts/package-app.mjs';
-import { selectedIntegrations } from '../scripts/setup.mjs';
-import { integrationPresets } from '../server/integrations.mjs';
+import { setup } from '../scripts/setup.mjs';
 import { runtimeEnvironment } from '../scripts/runtime-env.mjs';
 import { coreInstalled } from '../scripts/runtime-check.mjs';
 
@@ -44,16 +43,10 @@ test('prebuilt launch never requires Vite and fails clearly for incomplete or mi
   await writeFile(join(root, 'tawdheef-app.json'), JSON.stringify({ ...marker, version: '2.0.0' }));
   await assert.rejects(ensureBuild({ directory: root }), /Invalid app package/);
 });
-test('basic setup selects no optional integrations and unsupported bridges are nonblocking', async t => {
-  assert.deepEqual(selectedIntegrations({}), []);
-  assert.deepEqual(selectedIntegrations({ browser: true }), ['playwright']);
-  assert.deepEqual(selectedIntegrations({ integration: 'outlook-mcp' }), ['outlook-mcp']);
-  assert.deepEqual(selectedIntegrations({ login: 'tabbio', tabbio: true }), ['tabbio']);
-  const root = await fixture(t);
-  const presets = await integrationPresets({ root, dataDir: join(root, 'private'), platform: 'win32', arch: 'arm64' });
-  assert.equal(presets.find(item => item.id === 'google-cli').supported, false);
-  assert.equal(presets.find(item => item.id === 'playwright').supported, true);
+test('retired setup options fail before installing tools or signing in', async () => {
+  for (const option of ['--local-adapters', '--browser', '--all', '--login', '--integration']) await assert.rejects(setup([option]), /External connections belong/);
 });
+
 test('user distribution keeps domain tools and setup guidance separate from development and marketing', () => {
   for (const file of ['directories/catalog.json', 'directories/pack.schema.json', 'directories/record.schema.json', 'directories/kuwait/pack.json', 'directories/kuwait/GUIDE.md', 'directories/kuwait/CHANGELOG.md']) assert.equal(appSourceFile(file), true, file);
   for (const file of ['server/store.mjs', 'src/company-types.js', 'scripts/agent-setup.mjs', 'skills/tawdheef/SKILL.md', 'docs/FIRST-RUN.md', 'data/uae-directory.json']) assert.equal(appSourceFile(file), true, file);

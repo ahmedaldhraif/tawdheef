@@ -18,7 +18,7 @@ export function MonitoringSummary({ config, status, error, open, t = value => va
   </div>;
 }
 
-export default function MonitoringPanel({ config, onChange, status, updates = [], onAcknowledge, onOpenCompany, safeHref, onCopyRequest, onUseCurrentScope, onChooseCalendar, onCopyCalendarRequest, onOpenConnections, scopeLabel, preferredAssistant, connectionMode = 'native', calendars = [], pending = false, t = value => value }) {
+export default function MonitoringPanel({ config, onChange, status, updates = [], onAcknowledge, onOpenCompany, safeHref, onCopyRequest, onUseCurrentScope, onCopyCalendarRequest, onOpenConnections, scopeLabel, preferredAssistant, calendars = [], pending = false, t = value => value }) {
   const headingId = useId(), calendarHintId = useId();
   const [copying, setCopying] = useState(false), [copied, setCopied] = useState(false), [fallback, setFallback] = useState(''), [error, setError] = useState('');
   const [acknowledging, setAcknowledging] = useState(null), acknowledgePending = useRef(false);
@@ -26,12 +26,11 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
   const [calendarRequestCopied, setCalendarRequestCopied] = useState(false), [calendarRequestFallback, setCalendarRequestFallback] = useState('');
   if (!config) return <section className="settings-section monitoring-panel"><h3>{t('Monitoring')}</h3><p className="field-hint">{t('Loading monitoring settings…')}</p></section>;
   const assistant = (config.assistant || preferredAssistant) === 'claude-code' ? 'claude-code' : 'codex';
-  const nativeMode = connectionMode !== 'local-adapters';
   const name = assistant === 'codex' ? 'Codex' : 'Claude Code';
   const channels = config.channels || {}, scope = config.scope || {};
   const busy = pending || copying || choosingCalendar || acknowledging !== null;
   const hasChannels = CHANNELS.some(([id]) => channels[id] === true);
-  const calendarMissing = channels.calendar === true && (!scope.calendarIds?.length || nativeMode && !scope.calendarIds.every(id => calendars.some(calendar => calendar.id === id)));
+  const calendarMissing = channels.calendar === true && (!scope.calendarIds?.length || !scope.calendarIds.every(id => calendars.some(calendar => calendar.id === id)));
   const lastCheck = timeLabel(status?.lastCheckAt), lastSuccess = timeLabel(status?.lastSuccessAt);
   const earlierSuccess = lastSuccess && Date.parse(status.lastSuccessAt) < Date.parse(status?.lastCheckAt);
   const unread = Number.isInteger(status?.unreadCount) && status.unreadCount >= 0 ? status.unreadCount : null;
@@ -43,14 +42,12 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
   function update(patch) { clearRequestFeedback(); onChange?.({ ...config, ...patch, assistant: preferredAssistant || assistant }); }
   function updateScope() { clearRequestFeedback(); onUseCurrentScope?.(); }
   async function chooseCalendar() {
-    if (busy || !(nativeMode ? onCopyCalendarRequest : onChooseCalendar)) return;
+    if (busy || !onCopyCalendarRequest) return;
     setChoosingCalendar(true); setError(''); setCalendarError(false);
     try {
-      if (nativeMode) {
-        const value = await onCopyCalendarRequest(), prompt = typeof value === 'string' ? value : value?.prompt;
-        if (typeof prompt !== 'string' || !prompt.trim()) throw new Error(t('The setup request could not be prepared. Try again.'));
-        try { await navigator.clipboard.writeText(prompt); setCalendarRequestCopied(true); } catch { setCalendarRequestFallback(prompt); }
-      } else await onChooseCalendar();
+      const value = await onCopyCalendarRequest(), prompt = typeof value === 'string' ? value : value?.prompt;
+      if (typeof prompt !== 'string' || !prompt.trim()) throw new Error(t('The setup request could not be prepared. Try again.'));
+      try { await navigator.clipboard.writeText(prompt); setCalendarRequestCopied(true); } catch { setCalendarRequestFallback(prompt); }
     }
     catch (failure) { setCalendarError(true); setError(t(failure.message || 'Calendars could not be loaded. Check your connection and try again.')); }
     finally { setChoosingCalendar(false); }
@@ -88,7 +85,7 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
       <div className="monitoring-channels">{CHANNELS.map(([id, label]) => <label className="checkbox-label" key={id}><input type="checkbox" checked={channels[id] === true} aria-describedby={id === 'calendar' && calendarMissing ? calendarHintId : undefined} onChange={event => update({ channels: { ...channels, [id]: event.target.checked } })} />{t(label)}</label>)}</div>
       <div className="monitoring-scope"><span>{t('Scope')}: {scopeSummary}</span>{onUseCurrentScope && <button type="button" className="text-button" onClick={updateScope}>{t('Use current list')}</button>}</div>
       {channels.calendar === true && calendars.length > 0 && <label className="monitoring-calendar">{t('Calendar')}<select value={scope.calendarIds?.[0] || ''} onChange={event => update({ scope: { ...scope, calendarIds: event.target.value ? [event.target.value] : [] } })}><option value="">{t('Choose a calendar')}</option>{calendars.map(calendar => <option key={calendar.id} value={calendar.id}>{calendar.name || calendar.summary || calendar.id}</option>)}</select></label>}
-      {calendarMissing && <p id={calendarHintId} className="field-hint monitoring-needs-you">{t('Needs you')}: {t(nativeMode ? 'Ask your assistant to report a calendar you choose.' : 'Choose a calendar to monitor.')}{(nativeMode ? onCopyCalendarRequest : onChooseCalendar) && calendars.length === 0 && <button type="button" className="text-button" onClick={chooseCalendar}>{t(choosingCalendar ? 'Preparing request…' : nativeMode ? calendarRequestCopied ? 'Calendar request copied' : 'Copy calendar request' : 'Choose a calendar')}</button>}{onOpenConnections && (!(nativeMode ? onCopyCalendarRequest : onChooseCalendar) || calendarError) && <button type="button" className="text-button" onClick={() => onOpenConnections('calendar')}>{t('Open Calendar in Connections')}</button>}</p>}
+      {calendarMissing && <p id={calendarHintId} className="field-hint monitoring-needs-you">{t('Needs you')}: {t('Ask your assistant to report a calendar you choose.')}{onCopyCalendarRequest && calendars.length === 0 && <button type="button" className="text-button" onClick={chooseCalendar}>{t(choosingCalendar ? 'Preparing request…' : calendarRequestCopied ? 'Calendar request copied' : 'Copy calendar request')}</button>}{onOpenConnections && (!onCopyCalendarRequest || calendarError) && <button type="button" className="text-button" onClick={() => onOpenConnections('calendar')}>{t('Open Calendar in Connections')}</button>}</p>}
       {calendarRequestFallback && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={calendarRequestFallback} onFocus={event => event.target.select()} /></label>}
       {channels.calendar === true && !calendarMissing && <p className="field-hint">{t('Calendar events in the next 14 days.')}</p>}
       <div className="form-row monitoring-cadence"><label>{t('Frequency')}<select value={config.frequency || 'daily'} onChange={event => update({ frequency: event.target.value })}>{[['hourly', 'Hourly'], ['daily', 'Daily'], ['weekly', 'Weekly']].map(([value, label]) => <option key={value} value={value}>{t(label)}</option>)}</select></label>{config.frequency !== 'hourly' && <label>{t('Time')}<input type="time" value={config.time || '09:00'} onChange={event => update({ time: event.target.value })} /></label>}</div>

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function fixture(page, { failFirst = false, holdFirst = false } = {}) {
   let run = {
-    id: 'polling-fixture', directoryId: 'uae', directoryName: 'UAE', managed: true,
+    id: 'polling-fixture', directoryId: 'uae', directoryName: 'UAE', native: true,
     assistant: 'codex', total: 42, completed: 7, appliedCount: 0,
     activeCompanyId: 'polling-company', currentName: 'Polling company', status: 'running',
     targets: [{ companyId: 'polling-company', name: 'Polling company', status: 'working' }],

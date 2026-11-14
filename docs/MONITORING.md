@@ -98,8 +98,4 @@ Turning monitoring off revokes new checks; also review/disable its native task.
 A changed scope, revision or assistant requires updating that existing task.
 Never duplicate tasks or change settings to revive stale scope.
 
-**Advanced compatibility → Tawdheef local adapters** is a separate optional
-mode. Its local provider reader owns mail/calendar sessions and its legacy
-reply/report clocks. It is not started by default native mode. Keep its local
-reply checks manual when native email monitoring owns the work. Enabling
-monitoring never enables report email delivery or application runs.
+Older app-owned rules and results remain readable as retired history. They do not execute. Read-only schedules belong to the actual selected client.

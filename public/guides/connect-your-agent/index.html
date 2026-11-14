@@ -9,12 +9,10 @@
 <p>The commands create project-only MCP settings and install the Tawdheef skill. They preserve custom files. If a conflict appears, export entries with <code>npm run setup -- --export-config agent-config</code>, then review and merge them using the <a href="https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md#connect-once">manual connection guide</a>. Add <code>--tabbio</code> to the agent command only when you want to add direct Tabbio MCP to that client. Accept its normal OAuth and trust prompts.</p>
 <h2 id="add-browser-tools-when-needed">Add browser tools when needed</h2>
 <p>Reuse the actual client&#39;s supported browser/computer tools and authorized sessions. In <strong>Connections → Browser &amp; computer use</strong>, copy its setup request. The client checks availability; a browser check does not prove OS computer control. Unsupported tools and sign-in become <strong>Needs you</strong>.</p>
-<p>No browser engine is installed into Tawdheef by default. The optional app-owned compatibility path is separate:</p>
-<div class="guide-code"><button class="copy" type="button" data-copy="connect-your-agent-code-14" aria-label="Copy code">Copy</button><pre id="connect-your-agent-code-14" dir="ltr"><code>npm run setup -- --local-adapters --browser</code></pre></div>
-<p>Choose that path only when you explicitly want local adapters. Native <strong>Run</strong> prepares a scoped request for the existing chat and never launches another model or CLI subprocess.</p>
+<p>Tawdheef includes no browser engine or app-managed adapters. <strong>Run</strong> prepares a scoped request for the existing chat and never launches another model or CLI subprocess.</p>
 <h2 id="install-just-the-skill">Install just the skill</h2>
 <p>If the app is already connected and you only need its workflow guidance:</p>
-<div class="guide-code"><button class="copy" type="button" data-copy="connect-your-agent-code-18" aria-label="Copy code">Copy</button><pre id="connect-your-agent-code-18" dir="ltr"><code>npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef</code></pre></div>
+<div class="guide-code"><button class="copy" type="button" data-copy="connect-your-agent-code-16" aria-label="Copy code">Copy</button><pre id="connect-your-agent-code-16" dir="ltr"><code>npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef</code></pre></div>
 <p>A skill alone does not install the app or connect an account. In Codex, refer to <code>$tawdheef</code>; in Claude Code, use <code>/tawdheef</code>.</p>
 <h2 id="expected-result">Expected result</h2>
 <p>Your client can call <code>get_agent_context</code> and <code>get_capabilities</code>. Tawdheef records that local tool use separately from the client&#39;s dated external-access reports. It does not independently verify model access or provider sign-in. Check the actual CV before making matching decisions.</p></div><a class="guide-next" href="/guides/connect-your-cv/"><span>Next guide</span><strong>Create or connect your CV <span aria-hidden="true">→</span></strong></a><div class="guide-related"><span>Related guides</span><a href="/guides/use-the-skill/">Set up Tawdheef with your agent</a><a href="/guides/connect-your-cv/">Create or connect your CV</a><a href="/guides/troubleshoot/">Fix a setup or run problem</a></div><div class="guide-source"><a href="https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md">Read or improve this guide on GitHub</a></div></article><aside class="guide-page-contents"><span>On this page</span><nav aria-label="On this page"><a href="#connect-this-project">Connect this project</a><a href="#add-browser-tools-when-needed">Add browser tools when needed</a><a href="#install-just-the-skill">Install just the skill</a><a href="#expected-result">Expected result</a></nav></aside></div></main><footer class="site-footer"><span>By <a href="https://ahmedaldhraif.com"><bdi dir="ltr">Ahmed AlDhraif</bdi></a></span><div class="links"><a href="/about/">About</a><a href="/skills/">Skills</a><a href="/guides/">All guides</a><a href="https://github.com/ahmedaldhraif/tawdheef">GitHub</a><a href="/examples/">Company research</a><a href="/directories/#contribute">Contribute</a><a href="/brand/">Brand</a><a href="/policies/#privacy">Privacy</a><a href="/policies/">Project policies</a><a href="/downloads/LICENSE.txt" lang="en">MIT</a><button type="button" class="site-theme-system" data-theme-system>Use device theme</button></div></footer></div><dialog id="docs-search" class="docs-search" aria-labelledby="docs-search-title"><div class="docs-search-top"><label id="docs-search-title" for="docs-search-input">Search skills and guides</label><button type="button" class="docs-search-close" aria-label="Close search">Esc</button></div><div class="docs-search-field"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input type="search" id="docs-search-input" placeholder="Try setup, CV or directory packs" autocomplete="off" autocapitalize="off" spellcheck="false"/></div><p id="docs-search-status" role="status"></p><div class="docs-search-results"><a href="/skills/" data-docs-search="Overview Set up Tawdheef, connect your CV and get on with your job search. skills install npx setup CLI MCP overview"><strong>Overview</strong><span>Set up Tawdheef, connect your CV and get on with your job search.</span></a><a href="/guides/use-the-skill/" data-docs-search="Set up Tawdheef with your agent Download the free app, connect Codex or Claude Code and your CV, then find matching jobs and build career profiles. # Set up Tawdheef with your agent
@@ -58,7 +56,7 @@ This creates project-only settings for Tawdheef&#39;s local **stdio MCP server**
 
 The app also has its own CLI: `node bin/apply-tracker.mjs help`. The screen, CLI and MCP use the same local records. MCP lets a compatible local agent call tools directly; the CLI supports terminal agents and scripts. [See the tool reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md).
 
-External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-owned provider adapters and browser bridges require an explicit **Advanced compatibility** choice and `--local-adapters`; they are excluded from the ordinary app runtime. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
+External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-managed provider adapters and browser bridges have been removed. External tools and sign-in belong to the actual client. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
 
 ## CV
 
@@ -166,13 +164,7 @@ The commands create project-only MCP settings and install the Tawdheef skill. Th
 
 Reuse the actual client&#39;s supported browser/computer tools and authorized sessions. In **Connections → Browser &amp; computer use**, copy its setup request. The client checks availability; a browser check does not prove OS computer control. Unsupported tools and sign-in become **Needs you**.
 
-No browser engine is installed into Tawdheef by default. The optional app-owned compatibility path is separate:
-
-```sh
-npm run setup -- --local-adapters --browser
-```
-
-Choose that path only when you explicitly want local adapters. Native **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
+Tawdheef includes no browser engine or app-managed adapters. **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
 
 ## Install just the skill
 
@@ -335,7 +327,7 @@ If another app is using the port, keep the exact error and ask your setup agent 
 
 ## The assistant is installed but Run cannot use it
 
-Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The optional compatibility CLI runner is a separate Advanced mode.
+Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The app does not launch assistant subprocesses.
 
 ## The CV is connected but cannot be read
 
@@ -343,7 +335,7 @@ Open **Connections → Tabbio CV**, copy its setup request and check the actual 
 
 ## Browser forms or email are unavailable
 
-Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-owned adapters require an explicit Advanced compatibility choice and `npm run setup -- --local-adapters`; they are not the default solution.
+Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-managed adapters are retired.
 
 A site’s CAPTCHA or login may need you even after setup is ready. Check an uncertain submission for a receipt before trying again.
 

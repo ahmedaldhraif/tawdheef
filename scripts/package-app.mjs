@@ -61,14 +61,14 @@ async function addRuntime(directory, platform, arch) {
     const zip = await JSZip.loadAsync(bytes);
     for (const entry of Object.values(zip.files)) {
       const file = entry.name.slice(prefix.length + 1);
-      if (entry.dir || !entry.name.startsWith(prefix + '/') || !(file === 'node.exe' || file === 'LICENSE' || file.startsWith('node_modules/npm/'))) continue;
+      if (entry.dir || !entry.name.startsWith(prefix + '/') || !(file === 'node.exe' || file === 'LICENSE')) continue;
       if (file.split('/').some(part => part === '..')) throw new Error('Invalid runtime archive path.');
       const target = join(directory, 'runtime', file); await mkdir(dirname(target), { recursive: true }); await writeFile(target, await entry.async('nodebuffer'));
     }
   } else {
     const archivePath = join(unpack, archive); await writeFile(archivePath, bytes);
     await run('tar', ['-xzf', archivePath, '-C', unpack], ROOT);
-    for (const file of ['bin/node', 'lib/node_modules/npm', 'LICENSE']) {
+    for (const file of ['bin/node', 'LICENSE']) {
       const target = join(directory, 'runtime', file); await mkdir(dirname(target), { recursive: true });
       await cp(join(unpack, prefix, file), target, { recursive: true, dereference: true });
     }
@@ -110,7 +110,7 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   await buildNativeLauncher({ root, folder: packageFolder, version: pkg.version, platform, arch });
   const signature = await signDesktop({ folder: packageFolder, codeRoot: folder, layout, platform });
   await writeFile(join(packageFolder, 'signing-verification.json'), JSON.stringify(signature, null, 2) + '\n');
-  await writeFile(join(packageFolder, 'OPEN-ME.txt'), `Tawdheef\n\nExtract the whole folder, then open ${platform === 'darwin' ? 'Tawdheef.app' : platform === 'win32' ? 'Tawdheef.exe' : 'start-tawdheef.sh'}. Node is included; no npm install or build is needed. The interface opens in your browser.\n\nOpen Connections to choose Codex or Claude Code. Copy the setup request into your existing client. Its own supported tools handle Tabbio CV, email, calendar, browser/computer and password-manager access. Tawdheef keeps local guidance and results; it does not run another model or require a separate CLI by default. Optional app-owned adapters are under Advanced compatibility.\n\nNative Windows/Mac launchers preserve APPLY_TRACKER_DATA or an adjacent existing .local. New native installations store data in your user application-data folder; assistant settings live in its workspace subfolder. Nothing migrates automatically. Keep the same data path when updating.\n\n${signature.signed ? 'Platform signing was verified during packaging; retain the separate verification receipt and verify the extracted download.' : 'This is an unsigned candidate. Do not disable operating-system security to run it.'}\n`);
+  await writeFile(join(packageFolder, 'OPEN-ME.txt'), `Tawdheef\n\nExtract the whole folder, then open ${platform === 'darwin' ? 'Tawdheef.app' : platform === 'win32' ? 'Tawdheef.exe' : 'start-tawdheef.sh'}. Node is included; no npm install or build is needed. The interface opens in your browser.\n\nOpen Connections to choose Codex or Claude Code. Copy the setup request into your existing client. Its own supported tools handle Tabbio CV, email, calendar, browser/computer and password-manager access. Tawdheef keeps local guidance and results; it does not run another model or require a separate assistant CLI. External connections stay in the actual client.\n\nNative Windows/Mac launchers preserve APPLY_TRACKER_DATA or an adjacent existing .local. New native installations store data in your user application-data folder; assistant settings live in its workspace subfolder. Nothing migrates automatically. Keep the same data path when updating.\n\n${signature.signed ? 'Platform signing was verified during packaging; retain the separate verification receipt and verify the extracted download.' : 'This is an unsigned candidate. Do not disable operating-system security to run it.'}\n`);
   const zip = new JSZip(); const files = await directoryFiles(packageFolder); let unpackedBytes = 0;
   for (const file of files) {
     if (platform === 'darwin') { unpackedBytes += (await lstat(join(packageFolder, file))).size; continue; }
@@ -136,7 +136,7 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
 }
 if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2); const index = args.indexOf('--output');
-  if (args.includes('--help')) console.log('Build a local user package: npm run release:app -- --output NEW_FOLDER\nBuild on each target OS/architecture. Bundles verified Node 26 LTS, npm, runtime dependencies and the prebuilt interface. Nothing is published.');
+  if (args.includes('--help')) console.log('Build a local user package: npm run release:app -- --output NEW_FOLDER\nBuild on each target OS/architecture. Bundles verified Node 26 LTS, runtime dependencies and the prebuilt interface. Nothing is published.');
   else if (index < 0 || !args[index + 1] || args.some((arg, i) => i !== index && i !== index + 1)) { console.error('Use --output NEW_FOLDER.'); process.exitCode = 1; }
   else packageApp({ output: args[index + 1] }).then(result => console.log(JSON.stringify(result, null, 2))).catch(error => { console.error(error.message); process.exitCode = 1; });
 }

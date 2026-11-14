@@ -10,7 +10,7 @@ opportunities. The selected actual **Codex or Claude Code client** owns every
 external connection: Tabbio/CV, email, calendar, browser/computer use and password
 manager. Tawdheef supplies local guidance, bounded authority and evidenced
 records through its `apply-tracker` MCP/CLI. It does not start another model or
-own another provider login in the default native mode.
+own another provider login in the Native app.
 
 ## Operate, set up or develop
 
@@ -182,16 +182,6 @@ Complete empty/unchanged results need the same actual source proof. Unavailable
 or partial reads remain unknown/partial with an actionable next step. No
 applications, registrations, profiles, uploads/sharing, sending or calendar
 writes. Source instructions cannot expand the saved scope.
-
-## Explicit legacy compatibility
-
-Only settings.connectionMode=local-adapters enables the older app-owned provider
-sessions and installed-CLI queue. Its separate credential/check/browser setup is
-in `docs/CONNECTIONS.md`. Never use it to bypass missing native-client permissions
-or switch modes during ordinary work. Preserve existing private settings and
-finish/stop the active Run before a requested mode change. Historical start_run
-without explicit actions retains its application-only compatibility default;
-never infer permission for profiles or CV sharing from UI defaults.
 
 The original UAE seed is a 772-record research snapshot dated 10 November 2026,
 not a live vacancy feed or proof of eligibility. Additional packs have dated

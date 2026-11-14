@@ -59,7 +59,7 @@ This creates project-only settings for Tawdheef&#39;s local **stdio MCP server**
 
 The app also has its own CLI: `node bin/apply-tracker.mjs help`. The screen, CLI and MCP use the same local records. MCP lets a compatible local agent call tools directly; the CLI supports terminal agents and scripts. [See the tool reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md).
 
-External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-owned provider adapters and browser bridges require an explicit **Advanced compatibility** choice and `--local-adapters`; they are excluded from the ordinary app runtime. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
+External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-managed provider adapters and browser bridges have been removed. External tools and sign-in belong to the actual client. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
 
 ## CV
 
@@ -167,13 +167,7 @@ The commands create project-only MCP settings and install the Tawdheef skill. Th
 
 Reuse the actual client&#39;s supported browser/computer tools and authorized sessions. In **Connections → Browser &amp; computer use**, copy its setup request. The client checks availability; a browser check does not prove OS computer control. Unsupported tools and sign-in become **Needs you**.
 
-No browser engine is installed into Tawdheef by default. The optional app-owned compatibility path is separate:
-
-```sh
-npm run setup -- --local-adapters --browser
-```
-
-Choose that path only when you explicitly want local adapters. Native **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
+Tawdheef includes no browser engine or app-managed adapters. **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
 
 ## Install just the skill
 
@@ -336,7 +330,7 @@ If another app is using the port, keep the exact error and ask your setup agent 
 
 ## The assistant is installed but Run cannot use it
 
-Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The optional compatibility CLI runner is a separate Advanced mode.
+Native Run copies a request for your existing Codex or Claude Code client; it does not require a separately installed CLI. Choose that client and paste the request there. Finish its sign-in or account-limit step. If tracker tools are missing, accept the normal project/server trust prompt and reload the project. The app does not launch assistant subprocesses.
 
 ## The CV is connected but cannot be read
 
@@ -344,7 +338,7 @@ Open **Connections → Tabbio CV**, copy its setup request and check the actual 
 
 ## Browser forms or email are unavailable
 
-Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-owned adapters require an explicit Advanced compatibility choice and `npm run setup -- --local-adapters`; they are not the default solution.
+Copy the corresponding setup request into the actual client. Reuse its supported browser/computer or mail integration and normal sign-in. Support differs by client; if a tool is unavailable, record **Needs you**. Passwords remain in your browser/password manager. App-managed adapters are retired.
 
 A site’s CAPTCHA or login may need you even after setup is ready. Check an uncertain submission for a receipt before trying again.
 

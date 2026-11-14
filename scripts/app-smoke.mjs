@@ -79,6 +79,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       assert.equal(response.status, 302); assert.equal(response.headers.get('location'), `https://www.tawdheef.com${path}`);
     }
     for (const optional of ['@azure/msal-node', '@googleapis/gmail', '@googleapis/calendar', '@microsoft/microsoft-graph-client', 'imapflow', 'nodemailer', 'tsdav']) await assert.rejects(access(join(root, 'node_modules', optional)), { code: 'ENOENT' }, `${optional} must remain outside the ordinary runtime`);
+    for (const retired of ['server/connections.mjs', 'server/agent-runner.mjs', 'server/scheduler.mjs', 'server/local-adapter-services.mjs', 'runtime/node_modules/npm', 'runtime/lib/node_modules/npm']) await assert.rejects(access(join(root, retired)), { code: 'ENOENT' }, `${retired} must remain outside the Native-only download`);
     const before = await (await http('/api/background')).json();
     await run([], { launcher: true }); const after = await (await http('/api/background')).json(); assert.equal(before.pid, after.pid);
     for (let pass = 0; pass < 2; pass++) await run(['scripts/agent-setup.mjs', 'both']);

@@ -29,13 +29,7 @@ The commands create project-only MCP settings and install the Tawdheef skill. Th
 
 Reuse the actual client's supported browser/computer tools and authorized sessions. In **Connections → Browser & computer use**, copy its setup request. The client checks availability; a browser check does not prove OS computer control. Unsupported tools and sign-in become **Needs you**.
 
-No browser engine is installed into Tawdheef by default. The optional app-owned compatibility path is separate:
-
-```sh
-npm run setup -- --local-adapters --browser
-```
-
-Choose that path only when you explicitly want local adapters. Native **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
+Tawdheef includes no browser engine or app-managed adapters. **Run** prepares a scoped request for the existing chat and never launches another model or CLI subprocess.
 
 ## Install just the skill
 

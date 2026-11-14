@@ -1,8 +1,8 @@
-import { integrationStatus, runGws } from '../server/integrations.mjs';
+import { integrationStatus } from '../server/integrations.mjs';
 import { isDirectInvocation } from './is-direct.mjs';
 
 export async function doctor(options = {}) {
-  const mode = options.mode || (options.probe ? 'local-adapters' : 'native');
+  const mode = 'native';
   const report = await integrationStatus({ ...options, mode });
   let setup;
   if (report.app.running && report.app.sameDataDirectory) {
@@ -14,23 +14,13 @@ export async function doctor(options = {}) {
       }
     } catch { /* The existing runtime report remains useful during an upgrade. */ }
   }
-  if (options.probe === true) {
-    const google = report.integrations.find(item => item.id === 'google-cli');
-    if (google.ready) {
-      try {
-        const status = await runGws(['auth', 'status'], options);
-        google.authentication = status.auth_method && status.auth_method !== 'none' ? 'credentials_present' : 'sign_in_required';
-        google.authenticationVerified = false;
-      } catch { google.authentication = 'check_failed'; }
-    }
-  }
   return {
     ...report,
     ...(setup ? { setup } : {}),
     nextSteps: [
       ...(!report.runtime.supported ? ['Install Node.js 24 or newer, then run setup again.'] : []),
       ...(!report.app.running ? ['Run npm start to open the local tracker.'] : !report.app.sameDataDirectory ? ['The running tracker uses a different data folder. Match APPLY_TRACKER_DATA and the port before starting a Run.'] : []),
-      ...(setup ? [`${setup.nextStep.title}: ${setup.nextStep.detail}`] : [mode === 'native' ? 'Use Connections to copy a setup request into your existing Codex or Claude Code client. Its own tools handle external accounts and browser access.' : 'Open Connections to choose optional local adapter accounts. Your agent can follow docs/FIRST-RUN.md.']),
+      ...(setup ? [`${setup.nextStep.title}: ${setup.nextStep.detail}`] : ['Use Connections to copy a setup request into your existing Codex or Claude Code client. Its own tools handle external accounts and browser access.']),
     ],
     note: 'Installed tools and saved credentials do not prove account access or a successful send. No email, application or sign-in was started by this check.',
   };
@@ -38,11 +28,11 @@ export async function doctor(options = {}) {
 
 if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2);
-  if (args.some(arg => !['--probe', '--json'].includes(arg))) {
-    process.stderr.write('Use node scripts/doctor.mjs [--probe] [--json].\n');
+  if (args.some(arg => !['--json'].includes(arg))) {
+    process.stderr.write('Use node scripts/doctor.mjs [--json].\n');
     process.exitCode = 1;
   } else {
-    doctor({ probe: args.includes('--probe') }).then(report => {
+    doctor().then(report => {
       process.stdout.write(`${JSON.stringify({ ok: report.runtime.supported, data: report }, null, 2)}\n`);
       if (!report.runtime.supported) process.exitCode = 1;
     }).catch(() => { process.stderr.write('Setup could not be checked. Verify the local data directory and run npm run setup.\n'); process.exitCode = 1; });

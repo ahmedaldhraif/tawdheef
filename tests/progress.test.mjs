@@ -4,7 +4,6 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { openStore } from '../server/store.mjs';
-import { createScheduler } from '../server/scheduler.mjs';
 
 async function fixture(t) {
   const dataDir = await mkdtemp(join(tmpdir(), 'tawdheef-progress-'));
@@ -126,41 +125,4 @@ test('old explicit activity preserves lost milestones but ordinary status and im
   assert.equal(store.report({ since: '2026-11-12T00:00:00Z' }).accountsCreated, 1);
   assert.throws(() => store.report({ since: 'bad-date' }), /valid report start/);
   assert.deepEqual(store.updateDirectory('fixture', { columns: ['name', 'type', 'progress'] }).columns, ['name', 'type', 'progress']);
-});
-
-test('emailed reports include real progress counts even with zero job applications', async t => {
-  const { store, companyId, clock } = await fixture(t);
-  store.logApplication({ companyId, event: 'account_created' });
-  store.logApplication({ companyId, event: 'profile_created', evidence: 'Profile saved' });
-  store.logApplication({ companyId, event: 'cv_uploaded' });
-  store.updateSettings({ emailReports: true, reportEmail: 'fixture@example.test', timezone: 'UTC' });
-  let body;
-  const scheduler = createScheduler({ store, clock, connections: { async callMapped(kind, action, input) { body = input.body; return { structuredContent: { sent: true, messageId: 'report-only-fixture' } }; } } });
-  const report = await scheduler.generateReport();
-  assert.equal(report.delivery.status, 'sent');
-  assert.match(body, /Applications sent: 0/);
-  assert.match(body, /Companies with accounts created: 1/);
-  assert.match(body, /Companies with profiles created: 1/);
-  assert.match(body, /Companies with CVs uploaded: 1/);
-  assert.match(body, /Companies sent a CV: 0/);
-});
-
-test('scheduled refresh reads confirmed CV-only threads without marking a job application', async t => {
-  const { store, companyId, setTime, clock } = await fixture(t);
-  const run = start(store, [companyId], { sendCvEmails: true });
-  store.logApplication({ companyId, runId: run.id, event: 'cv_sent', method: 'email', role: 'General CV', to: 'careers@example.test', threadId: 'cv-thread', evidence: { providerMessageId: 'cv-confirmation' } });
-  setTime('2026-11-13T09:00:00Z');
-  const scheduler = createScheduler({ store, clock, connections: { async callMapped(kind, action, input) {
-    assert.equal(action, 'readThread'); assert.equal(input.threadId, 'cv-thread');
-    return { structuredContent: { replies: [{ id: 'cv-reply', threadId: 'cv-thread', from: 'careers@example.test', body: 'Your profile is saved.', receivedAt: '2026-11-13T08:30:00Z' }] } };
-  } } });
-  assert.equal((await scheduler.refresh()).updated, 1);
-  assert.equal((await scheduler.refresh()).updated, 0);
-  assert.equal(store.listApplications(companyId)[0].status, 'replied');
-  assert.equal(store.getCompany(companyId).status, 'ready');
-  assert.equal(store.getCompany(companyId).progress.cv_sent, 1);
-  assert.equal(store.getCompany(companyId).progress.applied, 0);
-  assert.equal(store.report().applied, 0);
-  assert.equal(store.report().replies, 1);
-  assert.ok(store.remainingCompanies({ directoryId: 'fixture' }).some(item => item.id === companyId));
 });

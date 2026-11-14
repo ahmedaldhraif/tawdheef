@@ -98,14 +98,7 @@ The computer, client and Tawdheef must be available. Monitoring does not apply,
 create profiles, upload/share CVs, send messages or change calendars.
 See [MONITORING.md](MONITORING.md).
 
-## Advanced compatibility
 
-Only an explicit **Connections → Advanced compatibility → Tawdheef local
-adapters** choice enables the older app-owned OAuth/bridge forms and CLI-runner
-workflow. Existing private settings remain preserved. This mode has its own
-provider registrations, credentials, checks and optional dependencies; it is not
-needed for native-client setup. See [CONNECTIONS.md](CONNECTIONS.md).
+## Upgrading older installations
 
-Setup never grants application, sending or scheduling authority. End with what
-was actually observed and one concrete Needs you step when blocked. Do not ask
-for passwords, OAuth tokens, master keys or recovery codes in a chat or record.
+App-managed provider adapters and the managed assistant runner have been retired. Existing tracking, settings, private credential files and historical rules/results are preserved. These saved credentials and rules are inert: Tawdheef does not read their sessions or run their actions. Configure external connections in the actual Codex or Claude Code client. Do not copy tokens, passwords or vault contents into Tawdheef.

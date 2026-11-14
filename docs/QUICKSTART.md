@@ -120,18 +120,6 @@ updates were recorded. Monitoring never authorizes sending, applications,
 profiles, CV sharing or calendar writes. Local reports remain available.
 See [MONITORING.md](MONITORING.md).
 
-## Optional local-adapter compatibility
-
-Only choose **Connections → Advanced compatibility → Tawdheef local adapters**
-if you deliberately want the older app-owned providers and CLI runner. This
-mode uses separate local credentials and optional adapter packages; it is not
-required by the default workflow. Its forms, checks, browser installation,
-provider registration and background clocks are documented in
-[CONNECTIONS.md](CONNECTIONS.md) and [INTEGRATIONS.md](INTEGRATIONS.md).
-Switching modes preserves private settings; stop an active Run first.
-Do not install optional bridges or a browser engine just to use native-client
-connections.
-
 ## Back up or update
 
 Stop the app with `npm run background:stop` and close tracker MCP processes
