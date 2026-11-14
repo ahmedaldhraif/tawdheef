@@ -26,11 +26,20 @@ body:
       description: Add public evidence links and a few real organisation names. Distinguish employers, agencies, portals and programmes. No inferred contacts or eligibility.
     validations:
       required: true
+  - type: input
+    id: checked-date
+    attributes:
+      label: Source check date or research period
+      placeholder: "YYYY-MM-DD or a dated research period"
+    validations:
+      required: true
   - type: textarea
     id: files
     attributes:
-      label: Prepared files or reuse terms
-      description: If available, link the CSV or a pull request with pack.json and public source.json. Note where the data came from, its reuse terms and required attribution. Do not attach personal tracking exports or account data.
+      label: Sources, reuse terms and prepared files
+      description: Note where the data came from, reuse terms and required attribution; say unknown if not established. Public access alone is not permission to redistribute. If available, link a CSV or PR with pack.json and public source.json. No tracking exports or account data.
+    validations:
+      required: true
   - type: checkboxes
     id: public-data
     attributes:

@@ -1,24 +1,32 @@
 # Contribute directory data
 
-Any country or industry is welcome. You can fix one entry or contribute a whole pack.
+Any country or industry is welcome. You do not need to code: start with one public source and one useful change. Initial research is by Ahmed AlDhraif; community contributions are welcome.
 
-The initial research is by Ahmed AlDhraif. Contributions are welcome from anyone; you do not need to write app code.
+## Make your first contribution
 
-Start on GitHub:
+1. Choose [fix or enrich an entry](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml), [add a company](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=add-company.yml), or [propose a country or industry pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml).
+2. Include the country/pack, organisation, public source URL and date checked. For an existing entry, copy its stable record `id` from the pack's `index.json` if you can; a public record link or organisation URL also helps a maintainer find it. The pack ID and your local tracker row ID are different identifiers.
+3. Explain what the source confirms and what remains unknown. Submit the form; a maintainer reviews it and may ask for clarification. No pull request or complete national directory is required.
 
-- [Correct directory data](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml).
-- [Propose a new country or industry pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml).
-- [Browse the country packs](https://github.com/ahmedaldhraif/tawdheef/tree/main/directories).
+Use the same **Directory data** form for a broken link, duplicate, missing sector/location or newly published recruitment route. A new company can have only a verified website; leave an unknown careers link or email blank. Do not infer ownership, nationality eligibility or a vacancy.
+
+For app problems or ideas, use [Bug report](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=bug.yml) or [Feature request](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=feature.yml). Issues are public. For sensitive data or rights concerns, follow [SECURITY.md](../SECURITY.md) without reposting the sensitive material. Read the [data and reuse policy](policies/DATA.md) before attaching a dataset.
+
+## What happens after review
+
+Accepted changes are incorporated into the reviewed public `source.json`, keeping stable source IDs and relevant evidence. A maintainer rebuilds the pack and publishes a new download when it is ready; submitting or merging a correction does not by itself replace existing release assets. Review and publication have no guaranteed deadline.
+
+To receive a published update, download the pack version linked from its README, extract it, and preview importing all its CSV parts into your existing directory. Review warnings before committing. Updates are not pushed into local trackers in the background and must preserve private application history and tracking. Importing never starts a run.
 
 For CSV review material, download the actual pack ZIP from its folder's README
 release link and extract it first. Generated CSV files are release assets, not
 the files to edit in Git.
 
-## Fix one entry
-
-Open a **Directory data** issue. Include the country, organisation, existing record ID if known, proposed change and a public source link. Add the date you checked it. No coding needed.
+## Submit a pull request or corrected CSV
 
 For a pull request, edit the affected record in `directories/<pack-id>/source.json`. This reviewed public JSON is the editing source. Keep its `id` and existing `sourceFields` evidence. Record the correction, supporting URL and date without deleting the original evidence.
+
+For a new organisation in an existing pack, add one researched record to that same file, following its schema and source-role values. Give it a unique stable source `id`; do not reuse a local tracker ID or renumber existing records. If unsure, submit an issue instead and let the maintainer assign the ID. Update the source record count when adding or removing a record.
 
 If a CSV is easier, submit the corrected rows with those same IDs, public source URLs, the date checked and a note explaining each change. They can be reviewed and incorporated into the public source JSON before rebuilding the pack.
 

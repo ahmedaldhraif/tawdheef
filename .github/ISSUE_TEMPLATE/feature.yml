@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a practical improvement to the app, setup, packs or guides
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: "Describe one task you want to make easier. No code or proposed design is required. Use synthetic examples and leave out CVs, mailbox contents, tracking exports and account details."
+  - type: textarea
+    id: task
+    attributes:
+      label: What are you trying to do?
+      description: Who needs this and where in the workflow does it happen?
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What gets in the way today?
+      description: Describe the current steps or workaround and the result you need.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Optional. A concrete example helps, but the underlying need is enough.

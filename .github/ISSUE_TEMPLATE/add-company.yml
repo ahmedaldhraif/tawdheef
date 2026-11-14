@@ -1,0 +1,59 @@
+name: Add a company
+description: Share a missing organisation from any country, with a public source
+title: "[Company] "
+body:
+  - type: markdown
+    attributes:
+      value: "One organisation is enough; no coding needed. Employers, agencies, portals and programmes are welcome when clearly identified. Issues are public. Do not include private contacts, CVs, tracking or account data. Submission does not mean the organisation is already in a published pack."
+  - type: input
+    id: country
+    attributes:
+      label: Country and location
+      placeholder: "Country; city or region if known"
+    validations:
+      required: true
+  - type: input
+    id: organisation
+    attributes:
+      label: Organisation name
+    validations:
+      required: true
+  - type: dropdown
+    id: source-role
+    attributes:
+      label: What kind of organisation or source is this?
+      options:
+        - Employer
+        - Recruitment agency
+        - Job board or portal
+        - Programme
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Public source links
+      description: Link the organisation's website and its published careers or recruitment route if available. Explain what each page confirms. A website alone is fine if the recruitment route is unknown; do not invent an email or vacancy.
+      placeholder: "Official URL:\nCareers or recruitment URL, if published:\nWhat the sources confirm:"
+    validations:
+      required: true
+  - type: input
+    id: checked-date
+    attributes:
+      label: Date checked
+      placeholder: "YYYY-MM-DD"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Other details or known gaps
+      description: Optional sector, missing information, reuse notes or a possible existing duplicate. Link supporting evidence for any additional fact.
+  - type: checkboxes
+    id: public-data
+    attributes:
+      label: Public data only
+      options:
+        - label: This submission contains public organisation information, not private applicant or account data.
+          required: true

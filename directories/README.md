@@ -88,9 +88,21 @@ packs; run the full build when starting from canonical sources alone.
 
 ## Add a country or correct a source
 
-Start with the [blank contribution template](_template/README.md) and
-[pack definition schema](pack.schema.json). Follow the
-[directory contribution guide](../docs/DIRECTORY-CONTRIBUTING.md).
+No coding needed: [fix or enrich a record](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml),
+[add a company](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=add-company.yml),
+or [propose a country or industry pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml).
+Include the country/pack, organisation, stable source `id` if known, public source
+URL and date checked. One well-sourced entry is enough to start.
+
+For a pull request, edit the current pack's `source.json`; use the
+[blank contribution template](_template/README.md) and
+[pack definition schema](pack.schema.json) for a new pack. Follow the
+[directory contribution guide](../docs/DIRECTORY-CONTRIBUTING.md) for review and validation.
+
+Accepted changes reach downloads when a maintainer publishes the rebuilt pack.
+To receive them locally, download that pack version and preview importing its
+CSV parts into the same tab. Corrections do not automatically sync into existing
+trackers; imports must preserve application history and private tracking.
 
 Preserve stable source IDs, actual hyperlink destinations, source roles, earlier
 public evidence and missing-data notes. Include new evidence URLs, the research
