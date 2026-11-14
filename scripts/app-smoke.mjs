@@ -65,6 +65,9 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     const started = performance.now(); await run([], { launcher: true }); const firstLaunchMs = performance.now() - started;
     for (const path of ['/', '/api/health', '/favicon.svg', '/site.webmanifest', '/brand/app-icon-192.png', '/brands/claude-code.png']) assert.equal((await http(path)).status, 200, path);
     const boot = await (await http('/api/bootstrap')).json(); assert.equal(boot.directories.find(item => item.id === 'uae').count, 772);
+    assert.equal(boot.settings.connectionMode, 'native'); assert.deepEqual(boot.connections, []);
+    assert.equal(boot.nativeClient.capabilities.email.status, 'unknown');
+    for (const optional of ['@azure/msal-node', '@googleapis/gmail', '@googleapis/calendar', '@microsoft/microsoft-graph-client', 'imapflow', 'nodemailer', 'tsdav']) await assert.rejects(access(join(root, 'node_modules', optional)), { code: 'ENOENT' }, `${optional} must remain outside the ordinary runtime`);
     const before = await (await http('/api/background')).json();
     await run([], { launcher: true }); const after = await (await http('/api/background')).json(); assert.equal(before.pid, after.pid);
     for (let pass = 0; pass < 2; pass++) await run(['scripts/agent-setup.mjs', 'both']);
@@ -72,9 +75,9 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     assert.equal(await realpath(claude.mcpServers['apply-tracker'].command), await realpath(node));
     for (const path of ['.local', '.codex', '.mcp.json', '.tawdheef-setup']) await assert.rejects(access(join(root, path)), { code: 'ENOENT' }, `${path} must remain outside the immutable app`);
     client = new Client({ name: 'isolated-app-smoke', version: manifest.version });
-    await client.connect(new StdioClientTransport({ command: node, args: [join(root, 'server/mcp.mjs')], cwd: root, env, stderr: 'pipe' }));
-    const tools = await client.listTools(); assert.ok(tools.tools.some(tool => tool.name === 'get_agent_context'));
-    const context = await client.callTool({ name: 'get_agent_context', arguments: {} }); assert.equal(JSON.parse(context.content.find(item => item.type === 'text').text).ok, true);
+    await client.connect(new StdioClientTransport({ command: claude.mcpServers['apply-tracker'].command, args: claude.mcpServers['apply-tracker'].args, cwd: root, env: { ...env, ...claude.mcpServers['apply-tracker'].env }, stderr: 'pipe' }));
+    const tools = await client.listTools(); assert.ok(tools.tools.some(tool => tool.name === 'get_native_client_status')); assert.ok(!tools.tools.some(tool => tool.name === 'send_application_email' || tool.name === 'get_cv'));
+    const context = JSON.parse((await client.callTool({ name: 'get_agent_context', arguments: {} })).content.find(item => item.type === 'text').text); assert.equal(context.ok, true); assert.equal(context.data.mode, 'native'); assert.equal(context.data.connectionOwner, 'native-client');
     const dataPathChecks = ['explicit external private data and assistant workspace'];
     if (process.platform === 'win32') {
       await client.close(); client = null;
@@ -98,7 +101,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       dataPathChecks.push('adjacent legacy portable data reused without migration');
     }
     const report = { ok: true, archive: basename(archive), sha256: archiveSha256, platform: process.platform, arch: process.arch, node: version, version: manifest.version, firstLaunchMs: Math.round(firstLaunchMs), tools: tools.tools.length,
-      checks: ['exact ZIP extracted to a Unicode path with spaces', 'bundled runtime', 'native platform launcher or Linux script', 'prebuilt offline startup', 'one background process', 'external private data and assistant workspace', 'repeat setup for both clients', 'real stdio MCP discovery and context'],
+      checks: ['exact ZIP extracted to a Unicode path with spaces', 'bundled runtime', 'native platform launcher or Linux script', 'prebuilt offline startup', 'native default without optional mail/cloud SDKs', 'one background process', 'external private data and assistant workspace', 'repeat setup for both clients', 'real stdio MCP discovery and context'],
       dataPathChecks, liveAssistantCalls: false, liveAccountActions: false, osSigningVerified: signature.osSigningVerified, signing: signature };
     if (signature.signed) await verifyDesktopSigning({ folder, codeRoot: root, layout });
     if (output) await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });

@@ -21,7 +21,7 @@ Keep private CVs, tracking, account details and credentials out of public issues
 
 Read `AGENTS.md` for operation boundaries and `docs/REPOSITORY.md` for the code map. Read `DESIGN.md` before interface changes. Use the relevant installed development skills on demand.
 
-Use Node.js 26 LTS (26.13.1 is the release target) and Vite 8.3.8 from the lockfile. Patched Node 24 remains a source compatibility target. Run `npm ci`, then `npm run dev`. This retains the bundler's native platform bindings; mailbox/browser bridges are separate explicit installs. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
+Use Node.js 26 LTS (26.13.1 is the release target) and Vite 8.3.8 from the lockfile. Patched Node 24 remains a source compatibility target. Run `npm ci`, then `npm run dev`. Developer dependencies include the bundler's native platform bindings and optional provider SDK fixtures; heavy provider SDKs are excluded from production-core installs. Native mode uses the actual Codex or Claude Code client's external connections. The legacy adapter workspace requires explicit `npm run setup -- --local-adapters`; it never writes dependencies into a packaged app. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
 
 Before proposing a change:
 

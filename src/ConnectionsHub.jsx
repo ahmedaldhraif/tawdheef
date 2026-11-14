@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Copy, KeyRound, Mail, Monitor, RefreshCw } from 'lucide-react';
 import ProviderLogo from './ProviderLogo.jsx';
+import NativeConnectionsHub from './NativeConnectionsHub.jsx';
+import { ConnectionModeControl } from './NativeConnectionPanel.jsx';
 import './connections-compact.css';
 import './agent-readiness.css';
 
@@ -8,7 +10,11 @@ import './agent-readiness.css';
 // so returning with Back places keyboard users where they left the list.
 let returningView = null;
 
-export default function ConnectionsHub({ connections = [], settings, restoreNavigation = false, onSettingsChange, onNextStep, onTestAgent, onCopyCapabilityRequest, open, close, Modal, t, api }) {
+export default function ConnectionsHub(props) {
+  return props.settings?.connectionMode === 'local-adapters' ? <LocalConnectionsHub {...props} /> : <NativeConnectionsHub {...props} />;
+}
+
+function LocalConnectionsHub({ connections = [], settings, restoreNavigation = false, onSettingsChange, onNextStep, onTestAgent, onCopyCapabilityRequest, open, close, Modal, t, api }) {
   const rowsRef = useRef(new Map());
   const restoredView = useRef(restoreNavigation ? returningView : null);
   const [pane, setPane] = useState(() => restoredView.current?.pane || 'main');
@@ -184,5 +190,6 @@ export default function ConnectionsHub({ connections = [], settings, restoreNavi
       {capabilityFallback && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={capabilityFallback} onFocus={event => event.target.select()} /></label>}
     </div>}
     {['main', 'assistant'].includes(pane) && <div className="connection-setup-request"><button type="button" className="text-button" disabled={!report || pending} onClick={copy}><Copy size={15} />{t(copied ? 'Setup request copied' : 'Copy setup request')}</button>{showPrompt && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={setupRequest} onFocus={event => event.target.select()} /></label>}</div>}
+    {pane === 'main' && <ConnectionModeControl mode="local-adapters" disabled={pending} t={t} onChange={connectionMode => (onSettingsChange ? onSettingsChange({ connectionMode }) : api('/settings', 'PATCH', { connectionMode })).catch(failure => setError(failure.message))} />}
   </Modal>;
 }

@@ -184,6 +184,41 @@ test('concurrent preflights cannot launch over a live assistant whose terminatio
   assert.equal(executions, 1);
 });
 
+test('closing revokes pending discovery/readiness and rejects future starts without creating a Run', async t => {
+  for (const phase of ['discovery', 'readiness']) {
+    let release, entered, calls = 0, readinessCalls = 0, observedSignal;
+    const gate = new Promise(resolve => { release = resolve; }), ready = new Promise(resolve => { entered = resolve; });
+    const { runner, start, store } = await fixture(t, async () => { calls++; return { status: 'finished' }; }, 1, {
+      discover: async () => { if (phase === 'discovery') { entered(); await gate; } return [{ id: 'codex', installed: true, command: process.execPath, args: [] }]; },
+      checkReady: async (_executable, { signal }) => { readinessCalls++; observedSignal = signal; if (phase === 'readiness') { entered(); await gate; } },
+    });
+    const pending = start(); await ready;
+    await runner.close();
+    if (phase === 'readiness') assert.equal(observedSignal.aborted, true, 'service preflight receives revocation before it can proceed to another check');
+    release(); await assert.rejects(pending, /runner was closed/);
+    await assert.rejects(start(), /runner was closed/);
+    assert.equal(calls, 0); assert.equal(store.listRuns().length, 0);
+    assert.equal(readinessCalls, phase === 'readiness' ? 1 : 0);
+  }
+});
+
+test('closing during integration discovery/configuration revokes the pump before any assistant launch', async t => {
+  for (const phase of ['presets', 'configuration']) {
+    let release, entered, calls = 0;
+    const gate = new Promise(resolve => { release = resolve; }), ready = new Promise(resolve => { entered = resolve; });
+    const { runner, start, store } = await fixture(t, async () => { calls++; return { status: 'finished' }; }, 1, {
+      presets: async () => { if (phase === 'presets') { entered(); await gate; } return []; },
+      makeConfig: async () => { if (phase === 'configuration') { entered(); await gate; } return { mcpServers: { 'apply-tracker': { command: process.execPath, args: [], env: {} } } }; },
+    });
+    const run = await start(); await ready;
+    const closing = runner.close();
+    assert.equal(store.getRun(run.id).status, 'cancelled');
+    release(); await closing;
+    assert.equal(calls, 0); assert.equal(store.getRun(run.id).targets[0].status, 'needs_you');
+    await assert.rejects(start(), /runner was closed/);
+  }
+});
+
 test('reconciling a form receipt preserves an interview status and its next action', async t => {
   const { store, ids } = await fixture(t, async () => ({ status: 'finished' }));
   const run = store.startRun({ companyIds: [ids[0]], mode: 'send_and_submit', explicit: true });

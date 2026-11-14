@@ -72,7 +72,7 @@ export function createAgentCheck({ store, port, discover = discoverAssistants, e
         fixtureStore = openStore({ dataDir, seed: false, clock });
         await writeFile(join(cwd, 'AGENTS.md'), 'This empty disposable project is only for the two-tool Tawdheef readiness test. Follow the explicit diagnostic prompt. Do not read or change anything else.\n', { mode: 0o600 });
         const receipt = join(dataDir, 'agent-model-proof.json');
-        const config = await makeConfig({ dataDir, port, include: [] });
+        const config = await makeConfig({ dataDir, port, mode: 'native', assistant, include: [] });
         const configured = config?.mcpServers?.['apply-tracker'];
         if (!configured) throw new Error('Missing fixture tool configuration.');
         // Include only this fixture server. Native client sandbox and permission rules remain intact.

@@ -172,7 +172,7 @@ test('list, preview and start share all filters across pages and selection never
 
 test('machine list and Run tools expose the same explicit scope, rejecting invalid filters', async t => {
   const { store, companyId } = await fixture(t);
-  const tools = buildTools(store), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
+  const tools = buildTools(store, { mode: 'local-adapters' }), call = (name, input) => tools.find(tool => tool.name === name).handler(input);
   const filters = { directoryId: 'test', search: 'Fixture', status: 'not_started', attention: '', companyTypes: ['private'], locations: ['location:dubai'] };
   const list = await call('list_companies', filters), preview = await call('preview_run', filters);
   assert.equal(list.remainingCount, preview.count); assert.equal(preview.listScopeVersion, 1); assert.equal(preview.runActionsVersion, 1);

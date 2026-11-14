@@ -10,14 +10,15 @@ import { findNpmCli } from './npm-cli.mjs';
 import { runtimeEnvironment } from './runtime-env.mjs';
 import { coreInstalled } from './runtime-check.mjs';
 import { defaultDataDir } from './app-paths.mjs';
+import { PROVIDER_DEPENDENCIES, providerAddonDirectory, providerDependenciesStatus, ensureProviderAddonDirectory } from '../server/provider-dependencies.mjs';
 
-const usage = `Tawdheef setup\n\n  npm run setup                         Install missing source dependencies and build the tracker\n  npm run setup -- --all                Install all supported optional integrations and Chromium\n  npm run setup -- --browser            Install only Playwright MCP and Chromium\n  npm run setup -- --tabbio             Download Tabbio CLI into private local tools\n  npm run setup -- --integration ID     Install only google-cli, outlook-mcp, playwright or tabbio\n  npm run setup -- --login google-cli   Sign in to the isolated Google CLI mailbox\n  npm run setup -- --login tabbio       Sign in to the external Tabbio CLI\n  npm run setup -- --login outlook-mcp  Sign in to the optional Microsoft mail bridge\n  npm run setup -- --export-config DIR [--include playwright,tabbio,outlook-mcp]\n  npm run setup -- --check              Check readiness without installing or signing in\n\nPrebuilt app packages never rebuild or install developer tools. No sign-in runs unless --login is supplied. Client settings are never changed.\n`;
+const usage = `Tawdheef setup\n\n  npm run setup                         Install missing source dependencies and build the local tracker\n  npm run setup -- --check              Read local readiness without sign-in\n  npm run agent -- codex --tabbio       Explicitly add direct Tabbio MCP to the actual native client\n  npm run agent -- claude-code          Configure the actual Claude Code project\n  npm run setup -- --export-config DIR [--include tabbio]\n\nExternal Tabbio, email, calendar, browser and password-manager connections belong to the actual client. Native mode installs no external bridges by default and configuration never proves account access.\n\nLegacy compatibility only (explicit --local-adapters):\n  npm run setup -- --local-adapters     Install pinned local mail/calendar SDKs in private add-ons\n  npm run setup -- --local-adapters --browser\n  npm run setup -- --local-adapters --integration google-cli|outlook-mcp|tabbio\n  npm run setup -- --local-adapters --all\n  npm run setup -- --local-adapters --login google-cli|outlook-mcp|tabbio\n\nPrebuilt apps never rebuild/install developer tools. Client settings are changed only by the separate explicitly requested agent command, project-only.\n`;
 
 function parse(argv) {
   const options = {};
   for (let index = 0; index < argv.length; index++) {
     const value = argv[index];
-    if (['--all', '--browser', '--tabbio', '--check', '--no-build', '--quiet', '--help'].includes(value)) options[value.slice(2)] = true;
+    if (['--local-adapters', '--all', '--browser', '--tabbio', '--check', '--no-build', '--quiet', '--help'].includes(value)) options[value.slice(2)] = true;
     else if (['--export-config', '--include', '--login', '--integration'].includes(value)) {
       const argument = argv[++index];
       if (!argument || argument.startsWith('--')) throw new Error(`${value} needs a value.`);
@@ -42,6 +43,11 @@ export function selectedIntegrations(options) {
   ])];
 }
 
+export function localAdapterInstallPlan(dataDir) {
+  const directory = providerAddonDirectory(dataDir);
+  return { directory, packages: Object.entries(PROVIDER_DEPENDENCIES).map(([name, version]) => `${name}@${version}`) };
+}
+
 function run(command, args, options = {}) {
   return new Promise((accept, reject) => {
     const child = spawn(command, args, { cwd: INTEGRATIONS_ROOT, shell: false, windowsHide: true, stdio: 'inherit', ...options, env: runtimeEnvironment(options.env || process.env) });
@@ -56,7 +62,7 @@ async function npmCommand(args) {
 
 async function installBrowser(dataDir) {
   const browser = (await integrationPresets({ dataDir })).find(item => item.id === 'playwright');
-  if (!browser.ready) throw new Error('Playwright MCP is missing. Run npm run setup -- --browser.');
+  if (!browser.ready) throw new Error('Playwright MCP is missing. Run npm run setup -- --local-adapters --browser.');
   const mcpEntry = browser.entry;
   const require = createRequire(mcpEntry);
   const playwrightManifest = require.resolve('playwright/package.json');
@@ -67,7 +73,7 @@ export async function setup(argv = process.argv.slice(2)) {
   const options = parse(argv);
   if (options.help) { process.stdout.write(usage); return; }
   if (Number(process.versions.node.split('.')[0]) < 24) throw new Error('Install Node.js 26 LTS before running Tawdheef.');
-  if (options.check) return doctor({ probe: true });
+  if (options.check) return doctor({ probe: false });
   const dataDir = defaultDataDir(INTEGRATIONS_ROOT);
   const prebuilt = await exists(join(INTEGRATIONS_ROOT, 'tawdheef-app.json'));
   const installed = await coreInstalled(INTEGRATIONS_ROOT, prebuilt);
@@ -75,6 +81,12 @@ export async function setup(argv = process.argv.slice(2)) {
   // Bundler platform bindings are optional npm packages but required to build.
   // App bridges live only in the explicitly selected private integration prefix.
   if (!installed) await npmCommand(['ci', '--no-fund', '--no-audit']);
+  if (!options['local-adapters'] && (options.all || options.browser || options.tabbio || options.integration || options.login)) throw new Error('External connections belong in your actual Codex/Claude Code client. Use npm run agent -- codex --tabbio for explicitly selected direct Tabbio MCP. Legacy app-owned tools require --local-adapters.');
+  if (options['local-adapters'] && !(await providerDependenciesStatus({ dataDir })).ready) {
+    const plan = localAdapterInstallPlan(dataDir);
+    const prefix = await ensureProviderAddonDirectory({ dataDir, root: INTEGRATIONS_ROOT });
+    await npmCommand(['install', '--prefix', prefix, '--save-exact', '--omit=dev', '--no-fund', '--no-audit', ...plan.packages]);
+  }
   const selected = selectedIntegrations(options);
   for (const id of selected) {
     const current = (await integrationPresets({ dataDir })).find(item => item.id === id);
@@ -99,9 +111,9 @@ export async function setup(argv = process.argv.slice(2)) {
     await run(item.command, item.loginArgs, { env: { ...process.env, ...item.env } });
   }
   let exported;
-  if (options['export-config']) exported = await exportClientConfig(options['export-config'], { dataDir, include: options.include ? options.include.split(',').filter(Boolean) : [] });
+  if (options['export-config']) exported = await exportClientConfig(options['export-config'], { dataDir, mode: options['local-adapters'] ? 'local-adapters' : 'native', include: options.include ? options.include.split(',').filter(Boolean) : [] });
   else if (options.include) throw new Error('--include is used with --export-config DIR.');
-  return { ...await doctor({ probe: true }), ...(exported ? { exported } : {}), nextStep: 'Run npm start. Open Connect email or Connect Tabbio for account setup. For coding agents, export or copy the generated MCP configuration.' };
+  return { ...await doctor({ probe: options['local-adapters'] === true }), mode: options['local-adapters'] ? 'local-adapters' : 'native', ...(exported ? { exported } : {}), nextStep: options['local-adapters'] ? 'Optional local adapters are available. Account sign-in still requires your explicit selection.' : 'Open your selected Codex/Claude Code client. Let it inspect and set up its own Tabbio, email, calendar, browser and password-manager tools. Tawdheef stores local guidance and recorded results; configuration alone does not verify accounts.' };
 }
 
 if (isDirectInvocation(import.meta.url)) {

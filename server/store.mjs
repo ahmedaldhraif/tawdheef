@@ -11,6 +11,7 @@ import { normalizeRunActions, assertRunPurpose, buildRunBrief, EMAIL_PURPOSES, F
 import { createCompanyQuery } from './company-query.mjs';
 import { defaultDataDir } from '../scripts/app-paths.mjs';
 import { createMonitoringStore } from './monitoring-store.mjs';
+import { createNativeStore } from './native-store.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -215,6 +216,7 @@ export function openStore({
     reportEmail: "",
     language: "en",
     preferredAssistant: "codex",
+    connectionMode: "native",
     cvLink: "",
     cvText: "",
     lastRefreshAt: null,
@@ -298,6 +300,7 @@ export function openStore({
     return rows.filter(company => ['not_started', 'ready'].includes(company.status) && !submitted.has(company.id));
   }
   const monitoring = createMonitoringStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError });
+  const native = createNativeStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError, usage: attemptUsage, saveCompany });
   const store = {
     dataDir,
     close() {
@@ -759,7 +762,7 @@ export function openStore({
       const c = store.getCompany(input.companyId),
         r = store.getRun(input.runId);
       requireValue(
-        !c.archived && r.status === "running" && r.companyIds.includes(c.id) && (!r.managed || r.activeCompanyId === c.id),
+        !c.archived && r.status === "running" && r.companyIds.includes(c.id) && ((!r.managed && !r.native) || r.activeCompanyId === c.id),
         "Start an explicit run for this company before submitting.",
       );
       const purpose = input.purpose ?? 'application';
@@ -777,7 +780,7 @@ export function openStore({
         remaining: null,
       };
     },
-    beginEmailSend(input = {}) {
+    beginEmailSend(input = {}, { transaction = true } = {}) {
       record(input);
       stringFields(input, [
         "companyId",
@@ -788,7 +791,7 @@ export function openStore({
         "body",
         "purpose",
       ]);
-      return tx(() => {
+      const begin = () => {
         const c = store.getCompany(input.companyId),
           r = store.getRun(input.runId);
         const purpose = input.purpose ?? 'application';
@@ -801,7 +804,7 @@ export function openStore({
         const prior = apps.find((a) => a.idempotencyKey === key);
         if (prior) return { application: prior, reused: true };
         requireValue(
-          !c.archived && r.status === "running" && r.companyIds.includes(c.id) && (!r.managed || r.activeCompanyId === c.id),
+          !c.archived && r.status === "running" && r.companyIds.includes(c.id) && ((!r.managed && !r.native) || r.activeCompanyId === c.id),
           "Start an explicit run for this company before sending.",
         );
         requireValue(
@@ -842,10 +845,11 @@ export function openStore({
         );
         activity("email_send_started", role || "Application email", c.id);
         return { application: a, reused: false };
-      });
+      };
+      return transaction ? tx(begin) : begin();
     },
-    finishEmailSend(applicationId, { deliveryStatus, receipt, notes } = {}) {
-      return tx(() => {
+    finishEmailSend(applicationId, { deliveryStatus, receipt, notes } = {}, { transaction = true } = {}) {
+      const finish = () => {
         const a = read("applications", applicationId);
         requireValue(a && a.deliveryStatus, "Email intent not found.");
         requireValue(
@@ -901,7 +905,8 @@ export function openStore({
           { applicationId: a.id },
         );
         return a;
-      });
+      };
+      return transaction ? tx(finish) : finish();
     },
     logApplication(input = {}) {
       record(input);
@@ -972,6 +977,10 @@ export function openStore({
           known.includes(status),
           "Use a supported application event.",
         );
+        if (previous?.nativePlan) {
+          for (const field of ['evidence', 'threadId', 'providerMessageId']) if (Object.hasOwn(input, field)) requireValue(JSON.stringify(input[field] ?? null) === JSON.stringify(previous[field] ?? null), 'Keep the original native email receipt identity. Use resolve_native_email to inspect and resolve its original mailbox receipt.');
+          if (['applied', 'cv_sent'].includes(status)) requireValue(previous.deliveryStatus === 'confirmed', 'Resolve the native email with its actual original-account receipt before logging a confirmed send.');
+        }
         const eventPurpose = { applied: 'application', cv_sent: 'cv_share', account_created: 'account', profile_created: 'profile', cv_uploaded: 'cv_upload', talent_pool_joined: 'talent_pool' }[status];
         if (previous?.idempotencyKey && eventPurpose) {
           requireValue(eventPurpose === (previous.purpose || 'application'), 'Keep the original submission purpose. Create a separate intent for a different action; do not relabel its receipt.');
@@ -984,11 +993,12 @@ export function openStore({
             r &&
               r.status === "running" &&
               r.companyIds.includes(c.id) &&
-              (!r.managed || r.activeCompanyId === c.id) &&
+              ((!r.managed && !r.native) || r.activeCompanyId === c.id) &&
               Date.parse(r.expiresAt) > currentMs(),
             "Start an explicit run for this company before recording a submission.",
           );
           requirePurpose(r, eventPurpose);
+          if (r.native && (input.method || previous?.method) === 'email' && ['applied', 'cv_sent'].includes(status)) requireValue(previous?.nativePlan && previous.deliveryStatus === 'confirmed', 'Use prepare_native_email and resolve_native_email for native-client email outcomes.');
         }
         if (status === "applied" || status === "cv_sent") {
           requireValue(
@@ -1150,7 +1160,10 @@ export function openStore({
       });
     },
     runSummaries() {
-      return store.listRuns().slice(0, 10).map(({ targets, companyIds, brief, ...run }) => ({ ...run, total: companyIds.length, appliedCount: targets?.filter(t => t.status === 'applied').length || 0, directoryName: read('directories', run.directoryId)?.name || '', currentName: targets?.find(t => t.companyId === run.activeCompanyId)?.name || '' }));
+      return store.listRuns().slice(0, 10).map(({ targets, companyIds, brief, ...run }) => {
+        if (run.native) { const compact = store.getNativeRun({ runId: run.id }); return { ...compact, appliedCount: compact.outcomes.applicationsSent }; }
+        return { ...run, total: companyIds.length, appliedCount: targets?.filter(t => t.status === 'applied').length || 0, directoryName: read('directories', run.directoryId)?.name || '', currentName: targets?.find(t => t.companyId === run.activeCompanyId)?.name || '' };
+      });
     },
     startRun(input = {}, { transaction = true } = {}) {
       record(input);
@@ -1340,6 +1353,7 @@ export function openStore({
         "reportEmail",
         "language",
         "preferredAssistant",
+        "connectionMode",
         "cvLink",
         "cvText",
       ]);
@@ -1374,6 +1388,7 @@ export function openStore({
             `${key} must be text or empty.`,
           );
       const s = store.getSettings();
+      if (patch.connectionMode !== undefined && patch.connectionMode !== s.connectionMode) requireValue(!store.listRuns().some(run => run.status === 'running' && (run.native || run.managed)), 'Stop the active Run before changing connection mode.');
       for (const key of Object.keys(defaults))
         if (key in patch) s[key] = patch[key];
       requireValue(
@@ -1407,6 +1422,7 @@ export function openStore({
         "Choose English or Arabic.",
       );
       requireValue(['codex', 'claude-code'].includes(s.preferredAssistant), 'Choose Codex or Claude Code as the preferred assistant.');
+      requireValue(['native', 'local-adapters'].includes(s.connectionMode), 'Choose native or local-adapters connection mode.');
       try {
         new Intl.DateTimeFormat("en", { timeZone: s.timezone }).format();
       } catch {
@@ -1498,6 +1514,7 @@ export function openStore({
     },
     addActivity: activity,
     ...monitoring,
+    ...native,
   };
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");

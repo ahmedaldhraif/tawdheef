@@ -87,6 +87,8 @@ jobs:
       - run: npx playwright install webkit
       - name: Verify core tracker flows in the Safari browser engine
         run: npm run test:ui -- tests/ui.spec.mjs tests/run-filters-ui.spec.mjs tests/setup-ui.spec.mjs tests/agent-monitoring-ui.spec.mjs --grep "opens the real|search finds|inline note and status|mobile keeps|filter the list first|future-only actions|failed and stale Run|Email and Calendar reveal|a model check requires|monitoring is opt-in|saving monitoring preserves|narrow monitoring controls|Arabic tracker"
+      - name: Verify native client connections and handoffs in Safari
+        run: npm run test:ui -- tests/native-client-ui.spec.mjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

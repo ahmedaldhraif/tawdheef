@@ -50,9 +50,11 @@ async function fakeRun(page, directory) {
   await page.route('**/api/runs/guided-fixture-run', route => route.fulfill({ json: run }));
   return () => submitted;
 }
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__filterErrors = [];
   page.on('pageerror', error => page.__filterErrors.push(error.message));
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
 test.afterEach(async ({ page }) => expect(page.__filterErrors).toEqual([]));
@@ -166,7 +168,7 @@ test('Run includes every filtered company across pages and applies search and st
 test('future-only actions are explicit, all off disables Run, and the assistant is remembered', async ({ page, request }) => {
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = 'claude-code';
+    boot.settings.preferredAssistant = 'claude-code'; boot.settings.connectionMode = 'local-adapters';
     return route.fulfill({ response, json: boot });
   });
   const directory = await openFixture(page, request, 'Guided future only');

@@ -62,10 +62,12 @@ async function createDirectory(page, name, flag = null) {
   await expect(page.locator('h1')).toContainText(name);
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.__runtimeErrors = errors;
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
   await page.route('**/*', route => {
     const url = new URL(route.request().url());
     return ['127.0.0.1', 'localhost'].includes(url.hostname) ? route.continue() : route.abort();
@@ -409,7 +411,7 @@ test('Run chooses an installed assistant, shows real queue state and stops witho
 test('active run stays visible across directories and summary keeps confirmed count while details load', async ({ page, request }) => {
   const created = await request.post('/api/directories', { data: { name: 'Other run tab' } }); expect(created.ok()).toBeTruthy();
   const summary = { id: 'progress-fixture', directoryId: 'uae', directoryName: 'UAE', managed: true, assistant: 'codex', total: 40, completed: 30, appliedCount: 3, activeCompanyId: 'company-30', currentName: 'Current company', status: 'running' };
-  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(); const body = await response.json(); body.runs = [summary]; await route.fulfill({ json: body }); });
+  await page.route('**/api/bootstrap', async route => { const response = await route.fetch(); const body = await response.json(); body.settings.connectionMode = 'local-adapters'; body.runs = [summary]; await route.fulfill({ json: body }); });
   await page.route('**/api/runs/progress-fixture', route => route.fulfill({ status: 503, json: { error: 'Fixture details unavailable' } }));
   await openTracker(page); await page.getByRole('tab', { name: /Other run tab/ }).click();
   await expect(page.locator('.run-banner')).toContainText('UAE'); await expect(page.locator('.run-banner')).toContainText('Current company');
@@ -629,6 +631,7 @@ test('mobile Connections keeps touch controls and OAuth fields readable without 
   const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
+    await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'local-adapters'; return route.fulfill({ response, json: boot }); });
     await openTracker(page);
     const trigger = page.getByRole('button', { name: 'Connections', exact: true });
     expect((await trigger.boundingBox()).height).toBeGreaterThanOrEqual(44);
@@ -652,6 +655,7 @@ test('mobile Connections keeps touch controls and OAuth fields readable without 
 test('changing calendars ignores an older pending event response', async ({ page }) => {
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(); const boot = await response.json();
+    boot.settings.connectionMode = 'local-adapters';
     boot.connections = [...boot.connections.filter(item => item.kind !== 'calendar'), { kind: 'calendar', adapter: 'google-calendar', provider: 'google-calendar', configured: true, status: 'connected', account: 'fixture-calendar@example.test' }];
     await route.fulfill({ response, json: boot });
   });

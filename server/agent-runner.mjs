@@ -142,7 +142,10 @@ export function executeAssistant({ executable, args, prompt, cwd, env, signal, t
 }
 
 export function createAgentRunner({ store, port, discover = discoverAssistants, execute = executeAssistant, makeConfig = createClientConfig, presets = integrationPresets, checkReady = async () => {} }) {
-  let active = null, starting = false;
+  let active = null, starting = false, closed = false, preflight = null;
+  const assertOpen = signal => {
+    if (closed || signal?.aborted) throw new AppError('The local-adapter runner was closed. Use the selected connection mode and start a fresh explicit Run.');
+  };
   const ownedProcess = join(store.dataDir, 'agent-process.json');
   const processAlive = pid => { if (!Number.isSafeInteger(pid) || pid <= 0) return false; try { process.kill(pid, 0); return true; } catch (e) { return e.code !== 'ESRCH'; } };
   // App restart never resumes sending without a fresh explicit Run.
@@ -155,9 +158,11 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
     try {
       const cwd = join(store.dataDir, 'agent-work');
       await mkdir(cwd, { recursive: true, mode: 0o700 });
+      assertOpen(signal);
       await writeFile(join(cwd, 'AGENTS.md'), 'Operate Tawdheef through its scoped MCP tools. Never change application source, configuration or private files. Follow the explicit company prompt.\n', { mode: 0o600 });
+      assertOpen(signal);
       for (const target of run.targets) {
-        if (signal.aborted || store.getRun(run.id).status !== 'running') break;
+        if (closed || signal.aborted || store.getRun(run.id).status !== 'running') break;
         const companyId = target.companyId;
         store.beginRunTarget(run.id, companyId);
         const latestCompany = store.getCompany(companyId);
@@ -167,13 +172,15 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
         let result;
         try {
           const available = await presets({ dataDir: store.dataDir, port });
+          assertOpen(signal);
           const browser = available.find(p => p.id === 'playwright' && p.ready && p.browserInstalled);
-          const config = await makeConfig({ dataDir: store.dataDir, port, include: browser ? ['playwright'] : [] });
+          const config = await makeConfig({ dataDir: store.dataDir, port, mode: 'local-adapters', assistant: run.assistant, include: browser ? ['playwright'] : [] });
+          assertOpen(signal);
           Object.assign(config.mcpServers['apply-tracker'].env, { APPLY_TRACKER_OPERATOR_RUN: run.id, APPLY_TRACKER_OPERATOR_COMPANY: companyId });
           if (run.assistant === 'codex') config.mcpServers['apply-tracker'].enabled_tools = OPERATOR_TOOLS;
           result = await execute({ executable: executable.command, args: [...executable.args, ...launchArguments(run.assistant, config.mcpServers, cwd)], prompt: operatorPrompt(run, companyId), cwd, env: { ...process.env, APPLY_TRACKER_DATA: store.dataDir, APPLY_TRACKER_PORT: String(port) }, signal, onSpawn: pid => writeFile(ownedProcess, JSON.stringify({ pid, runId: run.id }), { mode: 0o600 }) });
           if (!result.terminationUnconfirmed) await unlink(ownedProcess).catch(error => { if (error.code !== 'ENOENT') throw error; });
-        } catch { result = { status: 'failed', reason: 'The assistant tools could not start. Check Connections and try again.' }; }
+        } catch { result = closed || signal.aborted ? { status: 'stopped', reason: 'Stopped. Inspect any open application before a fresh Run.' } : { status: 'failed', reason: 'The assistant tools could not start. Check Connections and try again.' }; }
         const applications = store.listApplications(companyId);
         const current = applications.filter(a => a.runId === run.id);
         const uncertain = applications.some(a => ['sending', 'unknown'].includes(a.deliveryStatus) || /uncertain submission/i.test(a.notes || ''));
@@ -197,23 +204,29 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
     assistants,
     preview: input => store.previewRun(input),
     async start(input) {
+      assertOpen();
       if (active || starting) throw new AppError('A run is already starting or working. Stop it before starting another.');
       starting = true;
+      const controller = new AbortController(); preflight = controller;
       try {
       if (input.explicit !== true || input.mode !== 'send_and_submit') throw new AppError('Press Run explicitly to authorize applications.');
       let previousProcess;
       try { previousProcess = JSON.parse(await readFile(ownedProcess, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw new AppError('Check the previous assistant process before starting another Run.'); }
+      assertOpen(controller.signal);
       if (previousProcess && processAlive(previousProcess.pid)) throw new AppError(`The previous assistant process (${previousProcess.pid}) may still be running. Close it before starting another Run.`);
       const executable = (await discover()).find(a => a.id === input.assistant && a.installed);
+      assertOpen(controller.signal);
       if (!executable) throw new AppError('Install and sign in to your chosen assistant, then press Run again.');
-      await checkReady(executable);
+      await checkReady(executable, { signal: controller.signal });
+      assertOpen(controller.signal);
       if (active) throw new AppError('A run is already working.');
       try { const owner = JSON.parse(await readFile(ownedProcess, 'utf8')); if (processAlive(owner.pid)) throw new AppError('The previous assistant is still running. Close it before another Run.'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-      const run = store.startManagedRun(input), controller = new AbortController();
+      assertOpen(controller.signal);
+      const run = store.startManagedRun(input);
       active = { id: run.id, controller, done: null };
       active.done = work(run, executable, controller.signal);
       return run;
-      } finally { starting = false; }
+      } finally { if (preflight === controller) preflight = null; starting = false; }
     },
     async stop(id) {
       const run = store.getRun(id);
@@ -221,7 +234,7 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
       if (active?.id === id) { const running = active; running.controller.abort(); await running.done; }
       return store.getRun(id);
     },
-    async close() { if (active) await this.stop(active.id); },
+    async close() { closed = true; preflight?.abort(); if (active) await this.stop(active.id); },
     async settled() { await active?.done; },
   };
 }

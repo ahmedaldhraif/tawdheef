@@ -3,40 +3,40 @@ import { resolve } from "node:path";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { openStore, ROOT, STATUSES, AppError } from "./store.mjs";
 import { parseDirectory } from "./import.mjs";
-import { ConnectionManager } from "./connections.mjs";
-import { createScheduler } from "./scheduler.mjs";
 import {
   backgroundStatus,
   installBackground,
   uninstallBackground,
 } from "../scripts/background.mjs";
-import { sendEmailForRun, reconcileApplicationEmail } from "./email-send.mjs";
-import { readConnectedCv } from "./cv-read.mjs";
 import { createClientConfig, integrationStatus, integrationPresets } from './integrations.mjs';
-import { calendarAction } from './calendar.mjs';
-import { createAgentRunner, checkAssistantAuthentication } from './agent-runner.mjs';
-import { createSetupStatus } from './setup-status.mjs';
-import { createMonitoring } from './monitoring.mjs';
 import { monitoringRecipe, capabilityRecipe, registrationContext } from './client-guidance.mjs';
 import { saveCvArtifact, getCvArtifactStatus, stageCvArtifact, MAX_CV_ARTIFACT_BYTES } from './cv-artifacts.mjs';
 import { assertRunPurpose } from '../src/run-actions.js';
-import { createAgentCheck } from './agent-check.mjs';
+import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus } from './native-guidance.mjs';
+import { createLocalAdapterOwner } from './local-adapter-owner.mjs';
 
 const port = Number(process.env.APPLY_TRACKER_PORT || 4000);
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
   throw new Error("Choose a port between 1024 and 65535.");
 const baseUrl = `http://127.0.0.1:${port}`;
 const store = openStore();
-const connections = new ConnectionManager({ dataDir: store.dataDir, baseUrl });
-const setupStatus = createSetupStatus({ store, connections, port });
-const scheduler = createScheduler({ store, connections, baseUrl });
-const monitoring = createMonitoring({ store, connections });
-const agentCheck = createAgentCheck({ store, port });
-const agentRunner = createAgentRunner({ store, port, checkReady: async executable => {
-  await checkAssistantAuthentication(executable);
-  try { await readConnectedCv({ store, connections }); }
-  catch { throw new AppError('Connect your Tabbio CV in Connections and check that it can be read, then press Run.'); }
+const nativeMode = () => store.getSettings().connectionMode !== 'local-adapters';
+const adapterOwner = createLocalAdapterOwner({ isNative: nativeMode, ErrorType: AppError, loadFactory: async () => {
+  const { createLocalAdapterServices } = await import('./local-adapter-services.mjs');
+  return () => createLocalAdapterServices({ store, port, baseUrl });
 } });
+const localAdapters = () => adapterOwner.get();
+const deferred = key => new Proxy({}, { get: (_target, method) => (...args) => localAdapters().then(services => services[key][method](...args)) });
+const connections = deferred('connections'), agentRunner = deferred('agentRunner'), agentCheck = deferred('agentCheck'), scheduler = deferred('scheduler'), monitoring = deferred('monitoring');
+const setupStatus = input => nativeMode() ? nativeSetupStatus({ store, ...input }) : localAdapters().then(services => services.setupStatus(input));
+const nativeRun = input => { const result = store.startNativeRun(input); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; };
+const runView = id => { const run = store.getRun(id); return run.native ? { ...store.getNativeRun({ runId: id }), targets: store.listNativeTargets({ runId: id, limit: 20 }).items } : run; };
+const stopRun = id => {
+  const run = store.getRun(id);
+  if (run.native) return store.stopNativeRun({ runId: id });
+  if (!run.managed) return run.status === 'running' ? store.updateRun(id, { status: 'cancelled' }) : run;
+  return agentRunner.stop(id);
+};
 const app = express();
 app.disable("x-powered-by");
 app.use((req, res, next) => {
@@ -92,24 +92,41 @@ app.get(
   "/api/agent-config",
   wrap(async req => {
     const include = req.query.include ? String(req.query.include).split(',') : [];
-    const config = await createClientConfig({ dataDir: store.dataDir, port, include });
+    const config = await createClientConfig({ dataDir: store.dataDir, port, include, mode: nativeMode() ? 'native' : 'local-adapters', assistant: req.query.assistant || store.getSettings().preferredAssistant });
     return { mcpServers: config.mcpServers };
   }),
 );
-app.get('/api/integrations', wrap(() => integrationStatus({ dataDir: store.dataDir, port })));
-app.get('/api/integrations/presets', wrap(() => integrationPresets({ dataDir: store.dataDir, port })));
+app.get('/api/integrations', wrap(() => integrationStatus({ dataDir: store.dataDir, port, mode: nativeMode() ? 'native' : 'local-adapters' })));
+app.get('/api/integrations/presets', wrap(() => nativeMode() ? [] : integrationPresets({ dataDir: store.dataDir, port })));
 app.get('/api/setup-status', wrap(req => setupStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
 app.post('/api/setup-status/check', wrap(req => setupStatus({ ...req.body, verify: true })));
+app.get('/api/native/client', wrap(req => store.getNativeClientStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
+app.post('/api/native/client/report', wrap(req => store.reportNativeConnection(req.body)));
+app.get('/api/native/connection-request', wrap(req => nativeConnectionRequest({ store, ...req.query })));
+app.post('/api/native/runs', wrap(req => nativeRun(req.body)));
+app.post('/api/native/runs/:id/request', wrap(req => nativeRunRequest({ store, runId: req.params.id })));
+app.post('/api/native/runs/:id/claim', wrap(req => store.claimNativeTarget({ ...req.body, runId: req.params.id })));
+app.post('/api/native/runs/:id/finish', wrap(req => store.finishNativeTarget({ ...req.body, runId: req.params.id })));
+app.post('/api/native/runs/:id/claim/check', wrap(req => store.getNativeClaim({ ...req.body, runId: req.params.id })));
+app.post('/api/native/email/prepare', wrap(req => store.prepareNativeEmail(req.body)));
+app.post('/api/native/email/resolve', wrap(req => store.resolveNativeEmail(req.body)));
 app.get('/api/assistant-check', wrap(req => agentCheck.get({ assistant: req.query.assistant || store.getSettings().preferredAssistant })));
 app.post('/api/assistant-check', wrap(req => agentCheck.verify(req.body)));
 app.get('/api/agent-capabilities/recipe', wrap(req => capabilityRecipe({ assistant: req.query.assistant || store.getSettings().preferredAssistant, kind: req.query.kind })));
-app.get('/api/registration-context', wrap(req => registrationContext({ store, connections, companyId: req.query.companyId })));
+app.get('/api/registration-context', wrap(async req => {
+  if (!nativeMode()) return registrationContext({ store, connections: (await localAdapters()).connections, companyId: req.query.companyId });
+  const client = store.getNativeClientStatus({ assistant: req.query.assistant || store.getSettings().preferredAssistant });
+  return { primaryEmail: client.primaryEmail, emailSource: client.primaryEmail ? 'native_client_report' : null, clientReported: true, independentlyVerified: false,
+    company: req.query.companyId ? store.getCompany(req.query.companyId) : null,
+    instructions: 'Reuse existing career accounts and their original login. For a new registration use only this fresh observed main email. If missing, check the actual client mailbox identity. Passwords stay in the browser/password manager; sign-in and identity prompts become Needs you.' };
+}));
 app.get('/api/monitoring', wrap(() => store.getMonitoring()));
 app.patch('/api/monitoring', wrap(req => store.configureMonitoring(req.body)));
 app.post('/api/monitoring/scope', wrap(req => store.snapshotMonitoringScope(req.body)));
 app.post('/api/monitoring/recipe', wrap(req => monitoringRecipe({ store, ...req.body })));
-app.post('/api/monitoring/check', wrap(req => monitoring.check(req.body)));
+app.post('/api/monitoring/check', wrap(req => nativeMode() ? store.beginNativeMonitoringCheck(req.body) : monitoring.check(req.body)));
 app.post('/api/monitoring/observations', wrap(req => {
+  if (nativeMode()) return store.recordNativeMonitoringCheck(req.body);
   const check = store.getMonitoringCheck({ id: req.body.id, token: req.body.token });
   if (!['jobs', 'profiles'].includes(check.source.kind)) throw new AppError('Connected mail/calendar observations are recorded by the local provider reader.');
   return monitoring.record(req.body);
@@ -127,19 +144,21 @@ app.post('/api/cv/file/prepare', wrap(req => {
   const { runId, companyId, purpose } = req.body || {};
   if (purpose !== 'cv_upload') throw new AppError('Prepare a CV file only for an authorized CV-upload step.');
   const run = store.getRun(runId);
+  if (run.native) store.getNativeClaim({ runId, companyId, assistant: req.body.assistant, claimToken: req.body.claimToken });
   if (run.explicit !== true || run.mode !== 'send_and_submit' || run.status !== 'running' || Date.parse(run.expiresAt) <= Date.now() || !run.companyIds.includes(companyId) || (run.managed && run.activeCompanyId !== companyId)) throw new AppError('Use the current company in an active explicitly authorized run.');
   assertRunPurpose(run, purpose);
   return stageCvArtifact({ dataDir: store.dataDir, runId, companyId });
 }));
-app.get('/api/calendar/calendars', wrap(() => calendarAction(connections, 'listCalendars')));
-app.post('/api/calendar/events', wrap(req => calendarAction(connections, 'listEvents', req.body)));
-app.post('/api/calendar/event', wrap(req => calendarAction(connections, 'createEvent', req.body)));
+app.get('/api/calendar/calendars', wrap(async () => (await localAdapters()).calendar('listCalendars')));
+app.post('/api/calendar/events', wrap(async req => (await localAdapters()).calendar('listEvents', req.body)));
+app.post('/api/calendar/event', wrap(async req => (await localAdapters()).calendar('createEvent', req.body)));
 app.get(
   "/api/bootstrap",
-  wrap(() => ({
+  wrap(async () => ({
     directories: store.listDirectories(),
     settings: store.getSettings(),
-    connections: connections.list(),
+    connections: nativeMode() ? [] : (await localAdapters()).connections.list(),
+    nativeClient: nativeMode() ? store.getNativeClientStatus() : null,
     statuses: STATUSES,
     runs: store.runSummaries(),
     reports: store.listReports().slice(0, 5),
@@ -214,19 +233,19 @@ app.post(
 );
 app.post(
   "/api/runs",
-  wrap((req) => store.startRun(req.body)),
+  wrap((req) => nativeMode() ? nativeRun(req.body).run : store.startRun(req.body)),
 );
 app.get('/api/assistants', wrap(() => agentRunner.assistants()));
-app.post('/api/run-preview', wrap(req => agentRunner.preview(req.body)));
-app.post('/api/run', wrap(req => agentRunner.start(req.body)));
-app.post('/api/runs/:id/stop', wrap(req => agentRunner.stop(req.params.id)));
+app.post('/api/run-preview', wrap(req => store.previewRun(req.body)));
+app.post('/api/run', wrap(req => nativeMode() ? nativeRun(req.body) : agentRunner.start(req.body)));
+app.post('/api/runs/:id/stop', wrap(req => stopRun(req.params.id)));
 app.get(
   "/api/runs/:id",
-  wrap((req) => store.getRun(req.params.id)),
+  wrap((req) => runView(req.params.id)),
 );
 app.patch(
   "/api/runs/:id",
-  wrap((req) => req.body.status === 'cancelled' ? agentRunner.stop(req.params.id) : store.getRun(req.params.id).managed ? Promise.reject(new AppError('The queue owns progress. Use Stop to stop it.')) : store.updateRun(req.params.id, req.body)),
+  wrap((req) => req.body.status === 'cancelled' ? stopRun(req.params.id) : (store.getRun(req.params.id).managed || store.getRun(req.params.id).native) ? Promise.reject(new AppError('The queue owns progress. Use Stop to stop it.')) : store.updateRun(req.params.id, req.body)),
 );
 app.get(
   "/api/settings",
@@ -234,7 +253,11 @@ app.get(
 );
 app.patch(
   "/api/settings",
-  wrap((req) => store.updateSettings(req.body)),
+  wrap(async req => {
+    const before = nativeMode(), settings = store.updateSettings(req.body);
+    await adapterOwner.modeChanged(before);
+    return settings;
+  }),
 );
 app.get(
   "/api/activity",
@@ -247,7 +270,7 @@ app.get(
 app.get('/api/snapshot', wrap(req => store.snapshot(req.query)));
 app.post(
   "/api/reports",
-  wrap(() => scheduler.generateReport()),
+  wrap(() => nativeMode() ? store.saveReport(store.report()) : scheduler.generateReport()),
 );
 app.post(
   "/api/refresh",
@@ -255,7 +278,7 @@ app.post(
 );
 app.get(
   "/api/connections",
-  wrap(() => connections.list()),
+  wrap(() => nativeMode() ? [] : connections.list()),
 );
 app.put(
   "/api/connections/:kind",
@@ -288,12 +311,13 @@ app.get("/api/connections/:kind/oauth/callback", async (req, res) => {
 });
 app.post(
   "/api/cv/read",
-  wrap(() => readConnectedCv({ store, connections })),
+  wrap(async () => (await localAdapters()).readCv()),
 );
-app.post('/api/applications/:id/reconcile-email', wrap(req => reconcileApplicationEmail({ store, connections, applicationId: req.params.id })));
+app.post('/api/applications/:id/reconcile-email', wrap(async req => (await localAdapters()).reconcileEmail(req.params.id)));
 app.get(
   "/api/cv",
   wrap(() => {
+    if (nativeMode()) throw new AppError('Read the actual CV through your Codex or Claude Code connection. Tawdheef does not cache the native CV.');
     const p = resolve(store.dataDir, "cv-cache.json");
     return existsSync(p)
       ? JSON.parse(readFileSync(p, "utf8"))
@@ -304,12 +328,7 @@ app.get(
 app.post(
   "/api/runs/:id/send-email",
   wrap(async (req) => {
-    return sendEmailForRun({
-      store,
-      connections,
-      runId: req.params.id,
-      input: req.body,
-    });
+    return (await localAdapters()).sendEmail(req.params.id, req.body);
   }),
 );
 app.get(
@@ -383,19 +402,18 @@ app.use((error, req, res, next) => {
     ),
   });
 });
+store.recoverNativeRuns();
+if (!nativeMode()) await localAdapters();
 const server = app.listen(port, "127.0.0.1", () => {
   console.log(`Apply Tracker is running locally at ${baseUrl}`);
-  scheduler.start();
 });
 let shuttingDown = false;
 async function shutdown() {
   if (shuttingDown) return;
   shuttingDown = true;
-  await agentRunner.close();
-  await scheduler.stop();
-  await agentCheck.close();
+  store.recoverNativeRuns();
+  await adapterOwner.close();
   await new Promise((resolve) => server.close(resolve));
-  await connections.close();
   store.close();
   process.exit(0);
 }

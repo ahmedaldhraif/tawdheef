@@ -176,7 +176,7 @@ test('MCP setup uses the matching app owner and doctor offers one next step with
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port; process.env.APPLY_TRACKER_PORT = String(port);
   try {
-    const tool = buildTools(store).find(item => item.name === 'get_setup_status');
+    const tool = buildTools(store, { mode: 'local-adapters' }).find(item => item.name === 'get_setup_status');
     assert.equal(tool.annotations.readOnlyHint, true);
     assert.equal((await tool.handler({})).ready, false);
     await tool.handler({ verify: true, assistant: 'claude-code' });

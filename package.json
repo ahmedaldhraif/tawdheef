@@ -34,21 +34,11 @@
     "background:status": "node scripts/background.mjs status"
   },
   "dependencies": {
-    "@azure/msal-node": "7.2.2",
-    "@googleapis/calendar": "20.2.0",
-    "@googleapis/gmail": "22.1.0",
-    "@microsoft/microsoft-graph-client": "3.0.7",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "csv-parse": "^7.0.3",
     "express": "^5.1.0",
     "fast-xml-parser": "^5.12.0",
-    "google-auth-library": "11.3.4",
-    "ical.js": "2.2.1",
-    "imapflow": "2.11.0",
     "jszip": "^3.10.2",
-    "nodemailer": "10.5.0",
-    "postal-mime": "4.2.1",
-    "tsdav": "2.5.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -58,7 +48,17 @@
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "vite": "8.3.8"
+    "vite": "8.3.8",
+    "@azure/msal-node": "7.2.2",
+    "@googleapis/calendar": "20.2.0",
+    "@googleapis/gmail": "22.1.0",
+    "@microsoft/microsoft-graph-client": "3.0.7",
+    "google-auth-library": "11.3.4",
+    "ical.js": "2.2.1",
+    "imapflow": "2.11.0",
+    "nodemailer": "10.5.0",
+    "postal-mime": "4.2.1",
+    "tsdav": "2.5.0"
   },
   "overrides": {
     "exceljs": {

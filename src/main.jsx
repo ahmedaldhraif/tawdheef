@@ -366,6 +366,38 @@ const AR = {
   "Paste CSV": "لصق CSV",
   "Review import": "مراجعة الاستيراد",
   "Add to directory": "إضافة إلى الدليل",
+  "Advanced compatibility": "التوافق المتقدم",
+  "Unknown": "غير معروف",
+  "Back": "رجوع",
+  "Connections managed by": "إدارة الاتصالات عبر",
+  "My Codex or Claude Code client": "تطبيق Codex أو Claude Code الذي أستخدمه",
+  "Tawdheef local adapters": "موصلات توظيف المحلية",
+  "Client reported": "بحسب إفادة المساعد",
+  "Tracker used": "تم استخدام أدوات المتابعة",
+  "Observed": "رُصد في",
+  "Reported": "أُفيد في",
+  "Use Codex": "استخدام Codex",
+  "Use Claude Code": "استخدام Claude Code",
+  "Browser": "المتصفح",
+  "Computer use": "التحكم بالكمبيوتر",
+  "Connect Tabbio MCP in your assistant to use your real CV.": "اربط Tabbio MCP في تطبيق مساعدك لاستخدام سيرتك الذاتية الفعلية.",
+  "Create a CV in Tabbio": "إنشاء سيرة ذاتية في Tabbio",
+  "Connect your email in your assistant. Tawdheef keeps the recorded outcomes.": "اربط بريدك في تطبيق مساعدك. يحتفظ توظيف بالنتائج المسجلة.",
+  "Connect your calendar in your assistant and report the calendars you choose.": "اربط تقويمك في تطبيق مساعدك، ودعه يسجل التقاويم التي تختارها.",
+  "Website passwords stay in your browser or password manager. Your assistant uses the access you allow.": "تبقى كلمات مرور المواقع في متصفحك أو مدير كلمات المرور. يستخدم مساعدك الصلاحيات التي تسمح بها.",
+  "Connect this local tracker to your existing assistant. Continue in the client you already use.": "اربط تطبيق المتابعة المحلي بمساعدك، وتابع في التطبيق الذي تستخدمه بالفعل.",
+  "Setup happens in your assistant.": "يتم الإعداد في تطبيق مساعدك.",
+  "Waiting for assistant": "بانتظار المساعد",
+  "The run request could not be prepared. Try again.": "تعذّر تجهيز طلب التشغيل. حاول مجدداً.",
+  "Run request copied": "تم نسخ طلب التشغيل",
+  "Copy run request": "نسخ طلب التشغيل",
+  "Paste the run request into your existing": "ألصق طلب التشغيل في محادثتك الحالية مع",
+  "chat. Keep Tawdheef open to record progress.": "واترك توظيف مفتوحاً لتسجيل التقدم.",
+  "Stop any remaining work in your assistant.": "أوقف أي عمل متبقٍ في تطبيق مساعدك أيضاً.",
+  "Note (optional)": "ملاحظة (اختياري)",
+  "Ask your assistant to report a calendar you choose.": "اطلب من مساعدك تسجيل تقويم تختاره.",
+  "Calendar request copied": "تم نسخ طلب التقويم",
+  "Copy calendar request": "نسخ طلب التقويم",
 };
 const formatDate = (value) => {
   const date = value ? new Date(value) : null;
@@ -554,7 +586,7 @@ function App() {
     );
     return () => clearTimeout(timer);
   }, [loadRows]);
-  const runningManagedRun = boot?.runs?.find(r => r.managed && r.status === 'running');
+  const runningManagedRun = boot?.runs?.find(r => (r.managed || r.native === true) && r.status === 'running');
   const hasActiveRun = Boolean(runningManagedRun);
   const updateRun = useCallback(run => {
     const { targets, companyIds, brief, ...fields } = run;
@@ -824,8 +856,8 @@ function App() {
             </button>
           </div>
         )}
-        {(runningManagedRun || boot.runs.find(r => r.managed && r.directoryId === active)) && (() => {
-          const run = runningManagedRun || boot.runs.find(r => r.managed && r.directoryId === active);
+        {(runningManagedRun || boot.runs.find(r => (r.managed || r.native === true) && r.directoryId === active)) && (() => {
+          const run = runningManagedRun || boot.runs.find(r => (r.managed || r.native === true) && r.directoryId === active);
           return <RunProgress run={run} open={() => setModal({ type: 'run', run })} stop={() => perform('stop-run', async () => { updateRun(await api(`/runs/${run.id}/stop`, 'POST')); await refresh(); })} />;
         })()}
         {directory && <DirectorySnapshot
@@ -1381,6 +1413,7 @@ function App() {
       )}
       {modal?.type === "settings" && (
         <SettingsDialog
+          clientStatus={boot.nativeClient}
           draftRef={settingsDraft}
           monitoringScope={runScope}
           onOpenConnections={() => setModal({ type: 'connections' })}
@@ -1424,15 +1457,19 @@ function App() {
           }}
         />
       )}
-      {modal?.type === 'connections' && <ConnectionsHub api={api} connections={boot.connections} settings={boot.settings} restoreNavigation={modal.restoreNavigation === true}
+      {modal?.type === 'connections' && <ConnectionsHub api={api} connections={boot.connections} settings={boot.settings} clientStatus={boot.nativeClient} restoreNavigation={modal.restoreNavigation === true}
+        onCopyConnectionRequest={(kind, options = {}) => api(`/native/connection-request?${new URLSearchParams({ kind, assistant: options.assistant || boot.settings.preferredAssistant || 'codex', ...(options.provider ? { provider: options.provider } : {}) })}`)}
         onSettingsChange={async patch => { const saved = await api('/settings', 'PATCH', patch); await loadBoot(); return saved; }}
         onTestAgent={assistant => api('/assistant-check', 'POST', { assistant, explicit: true })}
         onCopyCapabilityRequest={kind => api(`/agent-capabilities/recipe?kind=${encodeURIComponent(kind)}&assistant=${boot.settings.preferredAssistant || 'codex'}`)}
         onNextStep={action => action === 'directory' ? setModal(null) : action === 'schedule' ? setModal({ type: 'settings' }) : undefined}
         Modal={Modal} t={t} close={() => setModal(null)} open={(kind, provider) => setModal(kind === 'ai' ? { type: 'ai', client: provider } : { type: 'connection', kind, provider })} />}
-      {modal?.type === 'connection' && modal.kind === 'calendar' && <CalendarPanel conn={boot.connections.find(c => c.kind === 'calendar')} provider={modal.provider} api={api} updated={loadBoot} close={() => setModal(null)} back={() => setModal({ type: 'connections', restoreNavigation: true })} notify={notify} Modal={Modal} t={t} safeHref={safeHref} />}
-      {modal?.type === "connection" && modal.kind !== 'calendar' && (
+      {modal?.type === 'connection' && modal.kind === 'calendar' && boot.settings.connectionMode === 'local-adapters' && <CalendarPanel conn={boot.connections.find(c => c.kind === 'calendar')} provider={modal.provider} api={api} updated={loadBoot} close={() => setModal(null)} back={() => setModal({ type: 'connections', restoreNavigation: true })} notify={notify} Modal={Modal} t={t} safeHref={safeHref} />}
+      {modal?.type === "connection" && (modal.kind !== 'calendar' || boot.settings.connectionMode !== 'local-adapters') && (
         <ConnectionPanel
+          settings={boot.settings}
+          clientStatus={boot.nativeClient}
+          onCopyConnectionRequest={(kind, options = {}) => api(`/native/connection-request?${new URLSearchParams({ kind, assistant: options.assistant || boot.settings.preferredAssistant || 'codex', ...(options.provider ? { provider: options.provider } : {}) })}`)}
           api={api}
           Modal={Modal}
           safeHref={safeHref}
@@ -1455,6 +1492,7 @@ function App() {
       )}
       {modal?.type === "run" && directory && (
         <RunDialog
+          connectionMode={boot.settings.connectionMode}
           preferredAssistant={boot.settings.preferredAssistant}
           onChangeAssistant={() => setModal({ type: 'connections' })}
           t={t}
@@ -1470,6 +1508,11 @@ function App() {
           api={api}
           Modal={Modal}
           stopped={refresh}
+          onStartNative={async (instructions, assistant, actions) => {
+            const value = await api('/native/runs', 'POST', { assistant, ...runScope, actions, instructions, mode: 'send_and_submit', explicit: true });
+            await refresh(); return value;
+          }}
+          onCopyHandoff={run => api(`/native/runs/${encodeURIComponent(run.id)}/request`, 'POST', {})}
           start={async (instructions, assistant, actions) => {
             const r = await api("/run", "POST", {
               assistant,
@@ -1953,6 +1996,7 @@ function ImportDialog({ t, directory, close, save }) {
   );
 }
 function SettingsDialog({
+  clientStatus,
   t,
   settings,
   close,
@@ -1987,6 +2031,7 @@ function SettingsDialog({
   }
 
   const [v, setV] = useState(draftRef?.current?.values || { ...settings });
+  const nativeMode = settings.connectionMode !== 'local-adapters';
   const [monitor, setMonitor] = useState(draftRef?.current?.monitor || null), [monitorStatus, setMonitorStatus] = useState(null), [monitorError, setMonitorError] = useState(''), [monitorUpdates, setMonitorUpdates] = useState([]), [calendars, setCalendars] = useState([]);
   const savedMonitor = useRef(null);
   useEffect(() => {
@@ -2059,15 +2104,16 @@ function SettingsDialog({
         }}
       >
         <>
-            <MonitoringPanel config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
+            <MonitoringPanel connectionMode={settings.connectionMode} config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
               onChange={value => { setMonitor(value); if (value.enabled && value.channels.email) setV(previous => ({ ...previous, refreshFrequency: 'manual' })); }}
               onUseCurrentScope={async () => { setActionBusy('scope'); setMonitorError(''); try { const value = await api('/monitoring/scope', 'POST', monitoringScope); setMonitor(previous => ({ ...previous, scope: { ...value.scope, calendarIds: previous.scope.calendarIds } })); } catch (error) { setMonitorError(error.message); } finally { setActionBusy(''); } }}
-              onChooseCalendar={async () => { setActionBusy('calendars'); try { const result = await api('/calendar/calendars'); const items = result.calendars || result.items || result.data?.calendars; if (!Array.isArray(items)) throw new Error('Open Calendar in Connections and check its access.'); setCalendars(items); } finally { setActionBusy(''); } }}
-              calendars={calendars} onOpenConnections={onOpenConnections} onOpenCompany={onOpenCompany}
+              onChooseCalendar={async () => { if (nativeMode) return; setActionBusy('calendars'); try { const result = await api('/calendar/calendars'); const items = result.calendars || result.items || result.data?.calendars; if (!Array.isArray(items)) throw new Error('Open Calendar in Connections and check its access.'); setCalendars(items); } finally { setActionBusy(''); } }}
+              onCopyCalendarRequest={() => api(`/native/connection-request?kind=calendar&assistant=${encodeURIComponent(monitor?.assistant || settings.preferredAssistant)}`)}
+              calendars={nativeMode ? clientStatus?.assistant === monitor?.assistant && clientStatus?.capabilities?.calendar?.status === 'reported' ? (clientStatus.capabilities.calendar.calendarIds || []).map(id => ({ id, name: id })) : [] : calendars} onOpenConnections={onOpenConnections} onOpenCompany={onOpenCompany}
               onAcknowledge={async update => { await api(`/monitoring/updates/${encodeURIComponent(update.id)}/ack`, 'POST', { expectedRevision: update.revision }); const [value, updates] = await Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]); setMonitorStatus(value.status); setMonitorUpdates(updates.items || []); }}
               onCopyRequest={async () => { const config = await saveMonitor(); return api('/monitoring/recipe', 'POST', { configurationRevision: config.revision, assistant: config.assistant }); }} />
             {monitorError && <p className="form-error" role="alert">{monitorError}</p>}
-            <details className="advanced"><summary>{t('Local reply checks')}</summary>
+            {!nativeMode && <><details className="advanced"><summary>{t('Local reply checks')}</summary>
             <p className="field-hint">{t('For all directories.')}</p>
             <section className="settings-section">
               <div className="settings-update-row">
@@ -2174,7 +2220,7 @@ function SettingsDialog({
                   />
                 </label>
               )}
-            </section>
+            </section></>}
             <details className="updates-report advanced">
               <summary>{t('Latest report')}</summary>
               {latestReport ? (
@@ -2225,7 +2271,7 @@ function SettingsDialog({
                 <FileText />
                 {actionBusy === "report"
                   ? "Generating…"
-                  : settings.emailReports
+                  : !nativeMode && settings.emailReports
                     ? "Generate & email report"
                     : t("Generate report")}
               </button>

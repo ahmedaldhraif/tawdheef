@@ -21,7 +21,8 @@ function setupReport(assistant = 'codex', { verified = false, ready = false } = 
   };
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__pageErrors = [];
   page.__unexpectedWrites = [];
   page.__preferredAssistant = 'codex';
@@ -40,7 +41,7 @@ test.beforeEach(async ({ page }) => {
   });
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = page.__preferredAssistant;
+    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'local-adapters';
     boot.runs = [];
     boot.connections = boot.connections.map(connection => ({ ...connection, status: 'disconnected', configured: false }));
     await route.fulfill({ response, json: boot });
@@ -371,7 +372,7 @@ for (const width of [320, 1440]) test(`Arabic tracker connections, CV upload and
   await page.setViewportSize({ width, height: width === 320 ? 740 : 960 });
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.language = 'ar'; boot.settings.preferredAssistant = 'codex'; boot.runs = [];
+    boot.settings.language = 'ar'; boot.settings.preferredAssistant = 'codex'; boot.settings.connectionMode = 'local-adapters'; boot.runs = [];
     boot.connections = boot.connections.map(item => ({ ...item, status: 'disconnected', configured: false }));
     return route.fulfill({ response, json: boot });
   });

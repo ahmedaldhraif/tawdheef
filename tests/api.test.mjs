@@ -51,7 +51,12 @@ before(async () => {
     if (child.exitCode !== null) throw new Error(`Fixture server exited: ${serverOutput}`);
     try {
       const { response, result } = await json('/api/health');
-      if (response.ok && result.instanceId === 'http-fixture-instance') return;
+      if (response.ok && result.instanceId === 'http-fixture-instance') {
+        // These fixtures exercise the explicitly selected compatibility contracts.
+        // Default native ownership is covered separately in native-api.test.mjs.
+        await json('/api/settings', { method: 'PATCH', body: { connectionMode: 'local-adapters' } });
+        return;
+      }
     } catch { /* Wait until the isolated local server is listening. */ }
     await new Promise(accept => setTimeout(accept, 100));
   }

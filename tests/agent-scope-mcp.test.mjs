@@ -15,7 +15,7 @@ import { MONITOR_TOOLS } from '../server/monitoring.mjs';
 
 const execute = promisify(execFile);
 const unpack = result => result.structuredContent || JSON.parse(result.content[0].text);
-const environmentKeys = ['APPLY_TRACKER_DATA', 'APPLY_TRACKER_PORT', 'APPLY_TRACKER_OPERATOR_RUN', 'APPLY_TRACKER_OPERATOR_COMPANY', 'APPLY_TRACKER_MONITOR', 'APPLY_TRACKER_MONITOR_ASSISTANT', 'APPLY_TRACKER_DIAGNOSTIC', 'APPLY_TRACKER_DIAGNOSTIC_RECEIPT'];
+const environmentKeys = ['APPLY_TRACKER_CONNECTION_MODE', 'APPLY_TRACKER_CLIENT', 'APPLY_TRACKER_DATA', 'APPLY_TRACKER_PORT', 'APPLY_TRACKER_OPERATOR_RUN', 'APPLY_TRACKER_OPERATOR_COMPANY', 'APPLY_TRACKER_MONITOR', 'APPLY_TRACKER_MONITOR_ASSISTANT', 'APPLY_TRACKER_DIAGNOSTIC', 'APPLY_TRACKER_DIAGNOSTIC_RECEIPT'];
 
 async function fixture(t) {
   const prefix = join(tmpdir(), 'tawdheef-mcp-roles-'), root = await mkdtemp(prefix), dataDir = join(root, 'data');
@@ -36,7 +36,7 @@ async function fixture(t) {
   };
   async function connect(role = {}) {
     for (const key of environmentKeys.filter(key => !['APPLY_TRACKER_DATA', 'APPLY_TRACKER_PORT'].includes(key))) delete process.env[key];
-    Object.assign(process.env, role);
+    Object.assign(process.env, { APPLY_TRACKER_CONNECTION_MODE: 'local-adapters', ...role });
     const server = createMcpServer(store), client = new Client({ name: 'isolated-role-fixture', version: '1' });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport); await client.connect(clientTransport); clients.push(client);
@@ -178,11 +178,9 @@ test('native --monitor setup creates only a dedicated scoped fixture workspace a
   for (const name of files) { const target = join(project, name); await mkdir(dirname(target), { recursive: true }); await copyFile(new URL('../' + name, import.meta.url), target); }
   await mkdir(ordinary); await writeFile(join(ordinary, '.mcp.json'), '{"custom":"preserve ordinary configuration"}');
   const env = { ...process.env, APPLY_TRACKER_DATA: dataDir, TAWDHEEF_WORKSPACE: ordinary };
-  await assert.rejects(execute(process.execPath, [join(project, 'scripts/agent-setup.mjs'), 'both', '--monitor', '--json'], { cwd: project, env, windowsHide: true }), /Choose only the selected monitoring assistant/);
-  const result = await execute(process.execPath, [join(project, 'scripts/agent-setup.mjs'), 'codex', '--monitor', '--json'], { cwd: project, env, windowsHide: true });
+  const result = await execute(process.execPath, [join(project, 'scripts/agent-setup.mjs'), 'both', '--monitor', '--json'], { cwd: project, env, windowsHide: true });
   const setup = JSON.parse(result.stdout), workspace = join(dataDir, 'monitoring-workspace'); assert.equal(setup.workspace, workspace); assert.equal(setup.accountConnected, false); assert.match(setup.nextStep, /did not create a schedule/);
   assert.ok((await readFile(join(workspace, '.codex/config.toml'), 'utf8')).includes('APPLY_TRACKER_MONITOR_ASSISTANT = "codex"'));
-  await execute(process.execPath, [join(project, 'scripts/agent-setup.mjs'), 'claude-code', '--monitor', '--json'], { cwd: project, env, windowsHide: true });
   const config = JSON.parse(await readFile(join(workspace, '.mcp.json'), 'utf8')); assert.deepEqual(Object.keys(config.mcpServers), ['apply-tracker']); assert.equal(config.mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR, '1'); assert.equal(config.mcpServers['apply-tracker'].env.APPLY_TRACKER_MONITOR_ASSISTANT, 'claude-code'); assert.equal(config.mcpServers['apply-tracker'].env.APPLY_TRACKER_DATA, dataDir);
   assert.match(await readFile(join(workspace, 'AGENTS.md'), 'utf8'), /Never apply/); assert.equal(await readFile(join(workspace, 'CLAUDE.md'), 'utf8'), '@AGENTS.md\n');
   assert.equal(await readFile(join(ordinary, '.mcp.json'), 'utf8'), '{"custom":"preserve ordinary configuration"}');

@@ -63,19 +63,26 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
     const url = new URL(safeUrl(value)); url.hash = '';
     return url.href;
   };
-  function browserSourceRead(value, check) {
-    object(value, ['method', 'url', 'observedAt', 'evidence'], 'browser source evidence');
-    require(value.method === 'native_browser' && ['jobs', 'profiles'].includes(check.source.kind), 'Use native_browser evidence only for a saved jobs/profile source.');
-    const url = pageUrl(value.url), expected = [pageUrl(check.source.url), ...(check.pageUrl ? [check.pageUrl] : [])];
-    require(expected.includes(url), 'Browser evidence must identify the exact saved source or its server-observed final page URL.');
-    const parsed = new URL(url);
-    require(![...parsed.searchParams.keys()].some(key => /^(?:access[_-]?token|refresh[_-]?token|id[_-]?token|token|password|api[_-]?key|secret|client[_-]?secret|authorization|cookie|session(?:[_-]?(?:id|token))?)$/i.test(key)), 'Keep credentials and session tokens out of browser evidence.');
+  function sourceReadEvidence(value, check) {
+    object(value, ['method', 'url', 'sourceId', 'provider', 'accountId', 'observedAt', 'evidence'], 'native source evidence');
+    require(value.method === ({ jobs: 'native_browser', profiles: 'native_browser', email: 'native_email', calendar: 'native_calendar' })[check.source.kind], 'Use the native read method for this saved source kind.');
+    let identity;
+    if (['jobs', 'profiles'].includes(check.source.kind)) {
+      const url = pageUrl(value.url), expected = [pageUrl(check.source.url), ...(check.pageUrl ? [check.pageUrl] : [])];
+      require(expected.includes(url), 'Browser evidence must identify the exact saved source or its server-observed final page URL.');
+      const parsed = new URL(url);
+      require(![...parsed.searchParams.keys()].some(key => /^(?:access[_-]?token|refresh[_-]?token|id[_-]?token|token|password|api[_-]?key|secret|client[_-]?secret|authorization|cookie|session(?:[_-]?(?:id|token))?)$/i.test(key)), 'Keep credentials and session tokens out of browser evidence.');
+      identity = { url };
+    } else {
+      require(value.sourceId === check.source.id && value.provider === check.provider && value.accountId === check.accountId && check.provider && check.accountId, 'Native read evidence must match the exact saved source, provider and original account.');
+      identity = { sourceId: check.source.id, provider: check.provider, accountId: check.accountId };
+    }
     string(value.observedAt, 'browser observation timestamp', 100);
     const observed = Date.parse(value.observedAt), tolerance = 5 * 60_000;
     require(/T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(value.observedAt) && Number.isFinite(observed) && observed >= Date.parse(check.startedAt) - tolerance && observed <= Math.min(Date.parse(check.expiresAt) + tolerance, Date.parse(now()) + tolerance), 'Use a fresh browser observation from this check lease, within five minutes of clock tolerance.');
     require(typeof value.evidence === 'string' && value.evidence.trim() && value.evidence.length <= 4000 && !value.evidence.includes('\0'), 'Supply browser source evidence from 1 to 4,000 characters.');
     require(!/\bbearer\s+\S+|\b(?:password|api[_ -]?key|secret|token|access[_ -]?token|refresh[_ -]?token|id[_ -]?token|client[_ -]?secret|authorization|cookie|session(?:[_ -]?(?:id|token))?)["']?\s*[:=]/i.test(value.evidence), 'Keep credentials and session tokens out of browser evidence.');
-    return { method: 'native_browser', url, observedAt: new Date(observed).toISOString(), evidence: value.evidence.trim(), clientReported: true };
+    return { method: value.method, ...identity, observedAt: new Date(observed).toISOString(), evidence: value.evidence.trim(), clientReported: true };
   }
   const json = (value, label) => {
     require(plain(value), `${label} must be a JSON object.`);
@@ -287,12 +294,13 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
       } catch (error) { if (ownTransaction) db.exec('ROLLBACK'); throw error; }
     },
     beginMonitoringCheck(input = {}) {
-      object(input, ['configurationRevision', 'assistant', 'source', 'provider', 'accountId', 'leaseMs']);
+      object(input, ['configurationRevision', 'assistant', 'source', 'provider', 'accountId', 'leaseMs', 'native']);
       return tx(() => {
         const current = config();
         require(input.configurationRevision === current.revision, 'Use the current monitoring configuration revision.', 409);
         require(input.assistant === current.assistant, 'Use the assistant selected in monitoring settings.');
         const source = sourceFor(current, input.source);
+        require(input.native === undefined || typeof input.native === 'boolean', 'Native read ownership must be true or false.');
         const provider = string(input.provider ?? source.provider ?? '', 'provider identity', 200, true), accountId = string(input.accountId ?? source.accountId ?? '', 'account identity', 2048, true);
         if (source.kind === 'email') {
           require(!source.provider || source.provider === provider, 'Keep the original tracked email provider.');
@@ -307,7 +315,7 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
         for (const check of previous.filter(check => check.status === 'running')) { check.status = 'expired'; check.finishedAt = now(); saveCheck(check); }
         const token = randomBytes(32).toString('base64url');
         const prior = previous.find(check => check.status === 'checked' && check.provider === provider && check.accountId === accountId && (!['jobs', 'profiles'].includes(source.kind) || check.source.url === source.url));
-        const check = { id: `monitor_${randomUUID()}`, sourceKey, configurationRevision: current.revision, assistant: current.assistant, source, provider, accountId, startedAt: now(), expiresAt: new Date(Date.parse(now()) + leaseMs).toISOString(), status: 'running', tokenHash: hash(token), cursor: prior?.cursor ?? null };
+        const check = { id: `monitor_${randomUUID()}`, sourceKey, configurationRevision: current.revision, assistant: current.assistant, source, provider, accountId, startedAt: now(), expiresAt: new Date(Date.parse(now()) + leaseMs).toISOString(), status: 'running', tokenHash: hash(token), cursor: input.native ? null : prior?.cursor ?? null, ...(input.native ? { native: true, executionOwner: 'native-client' } : {}) };
         saveCheck(check);
         return { check: publicCheck(check), token, reused: false };
       });
@@ -329,7 +337,8 @@ export function createMonitoringStore({ db, getStore, tx, activity, now, ErrorTy
         require(['checked', 'partial', 'unknown', 'error'].includes(input.status), 'Choose checked, partial, unknown or error for this source check.');
         require(input.complete === undefined || typeof input.complete === 'boolean', 'Complete must be true or false.');
         const status = input.status === 'checked' && input.complete === false ? 'partial' : input.status;
-        const sourceRead = input.sourceRead === undefined ? null : browserSourceRead(input.sourceRead, check);
+        const sourceRead = input.sourceRead === undefined ? null : sourceReadEvidence(input.sourceRead, check);
+        if (check.native && status === 'checked') require(sourceRead && input.complete === true, 'A completed native check needs fresh client sourceRead evidence and complete:true.');
         if (sourceRead && status === 'checked') require(input.complete === true, 'Confirm complete:true for a completed browser source read.');
         for (const [key, maximum] of [['provider', 200], ['accountId', 2048]]) if (input[key] !== undefined) {
           string(input[key], `${key} identity`, maximum);

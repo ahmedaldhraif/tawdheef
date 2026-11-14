@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
-const quickStart = 'npm run setup -- --browser\nnpm run agent -- codex --browser\nnpm start';
+const quickStart = 'npm start\nnpm run agent -- codex';
 const guideSlugs = ['use-the-skill', 'connect-your-agent', 'connect-your-cv', 'use-directory-packs', 'apply-to-jobs', 'replies-and-reports', 'troubleshoot', 'for-agents'];
 const publishedTools = JSON.parse(readFileSync(new URL('../docs/tools.json', import.meta.url), 'utf8')).tools;
 
@@ -133,7 +133,7 @@ test('real agent GIF runs automatically onscreen and respects visibility and red
   await expect(image).toHaveAttribute('src', gif);
 });
 
-test('Skills copies the install command and all three setup commands exactly', async ({ page }) => {
+test('Skills copies the install command and both native source-setup commands exactly', async ({ page }) => {
   await captureClipboard(page);
   await page.goto('/skills/');
   await page.locator('[data-copy="skills-install"]').click();

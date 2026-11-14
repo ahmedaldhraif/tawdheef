@@ -4,7 +4,8 @@ const initialConfig = () => ({ revision: 0, enabled: false, assistant: 'codex', 
 const initialStatus = () => ({ lastCheckAt: null, lastSuccessAt: null, unreadCount: 0, activeChecks: 0, externalScheduleStatus: 'unknown', nextRunAt: null });
 const prompt = 'Create a local daily fixture monitoring schedule. Read only the selected companies and tracked email threads. Never apply, send messages or create calendar events.';
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { connectionMode: 'local-adapters' } })).ok()).toBe(true);
   page.__monitorConfig = initialConfig(); page.__monitorStatus = initialStatus();
   page.__monitorUpdates = [];
   page.__monitorWrites = []; page.__monitorErrors = []; page.__unexpectedMonitorWrites = [];
@@ -19,7 +20,7 @@ test.beforeEach(async ({ page }) => {
   });
   await page.route('**/api/bootstrap', async route => {
     const response = await route.fetch(), boot = await response.json();
-    boot.settings.preferredAssistant = page.__preferredAssistant; boot.runs = [];
+    boot.settings.preferredAssistant = page.__preferredAssistant; boot.settings.connectionMode = 'local-adapters'; boot.runs = [];
     return route.fulfill({ response, json: boot });
   });
   await page.route('**/api/monitoring', route => {

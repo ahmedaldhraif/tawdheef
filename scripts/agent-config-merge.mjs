@@ -88,6 +88,10 @@ function mergeClaude(existing, desired, ownership, names) {
   catch { throw conflict('.mcp.json'); }
   if (!current || typeof current !== 'object' || Array.isArray(current) || current.mcpServers !== undefined && (!current.mcpServers || typeof current.mcpServers !== 'object' || Array.isArray(current.mcpServers))) throw conflict('.mcp.json');
   const servers = { ...(current.mcpServers || {}) }, entries = { ...(ownership?.entries || {}) };
+  for (const name of ownership?.included || []) if (!names.includes(name)) {
+    if (!Object.hasOwn(servers, name) || entries[name] !== entryHash(servers[name])) throw conflict('.mcp.json');
+    delete servers[name]; delete entries[name];
+  }
   for (const name of names) {
     if (Object.hasOwn(servers, name) && entryHash(servers[name]) !== entryHash(desired[name]) && entries[name] !== entryHash(servers[name])) throw conflict('.mcp.json');
     if (!Object.hasOwn(servers, name) && entries[name]) throw conflict('.mcp.json');
@@ -96,12 +100,13 @@ function mergeClaude(existing, desired, ownership, names) {
   return { content: JSON.stringify({ ...current, mcpServers: servers }, null, 2) + '\n', ownership: { entries, included: names } };
 }
 
-export async function planAgentSetup({ root, clients, config, skills, manifest }) {
+export async function planAgentSetup({ root, clients, config, clientConfigs = {}, skills, manifest }) {
   const next = structuredClone(manifest), files = [];
   for (const client of clients) {
     const path = join(root, client === 'codex' ? '.codex/config.toml' : '.mcp.json');
-    const existing = await existingFile(root, path), names = Object.keys(config.mcpServers);
-    const merged = client === 'codex' ? mergeCodex(existing, config.codexToml, manifest.clients[client], names) : mergeClaude(existing, config.mcpServers, manifest.clients[client], names);
+    const selected = clientConfigs[client] || config;
+    const existing = await existingFile(root, path), names = Object.keys(selected.mcpServers);
+    const merged = client === 'codex' ? mergeCodex(existing, selected.codexToml, manifest.clients[client], names) : mergeClaude(existing, selected.mcpServers, manifest.clients[client], names);
     next.clients[client] = merged.ownership;
     files.push({ path, previous: existing, content: merged.content });
   }

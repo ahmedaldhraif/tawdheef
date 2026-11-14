@@ -47,16 +47,16 @@ try {
     const response = await fetch(base + path); assert.equal(response.status, 200, path);
   }
   client = new Client({ name: 'release-verifier', version: pkg.version });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [join(checkout, 'server/mcp.mjs')], env, cwd: checkout, stderr: 'pipe' });
+  const generated = JSON.parse(await readFile(join(checkout, '.mcp.json'), 'utf8')).mcpServers['apply-tracker'];
+  const transport = new StdioClientTransport({ command: generated.command, args: generated.args, env: { ...env, ...generated.env }, cwd: checkout, stderr: 'pipe' });
   await client.connect(transport);
   const tools = await client.listTools();
   const catalog = JSON.parse(await readFile(join(checkout, 'docs/tools.json'), 'utf8'));
   assert.deepEqual(tools.tools.map(tool => tool.name).sort(), catalog.tools.map(tool => tool.name).sort());
   const response = await client.callTool({ name: 'get_agent_context', arguments: {} });
   const context = JSON.parse(response.content.find(item => item.type === 'text').text);
-  assert.equal(context.ok, true); assert.equal(context.data.app, 'running');
+  assert.equal(context.ok, true); assert.equal(context.data.mode, 'native'); assert.equal(context.data.connectionOwner, 'native-client');
   assert.equal(context.data.directories.find(directory => directory.id === 'uae').count, 772);
-  assert.equal(resolve(context.data.dataDir), resolve(dataDir));
   const before = Date.now(); run(join(checkout, 'scripts/start.mjs'), ['--no-open']);
   const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds without optional bridges', 'project MCP setup for both clients', 'repeat setup preserves files', 'working app and icons', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
   await writeFile(join(release, 'smoke-verification.json'), JSON.stringify(result, null, 2) + '\n');

@@ -4,11 +4,11 @@ Find matching jobs and build career profiles, including when no suitable job is 
 
 ## Install
 
-Download Tawdheef from [GitHub Releases](https://github.com/ahmedaldhraif/tawdheef/releases) and extract the app's source ZIP.
+Download the package matching your OS/architecture from [GitHub Releases](https://github.com/ahmedaldhraif/tawdheef/releases), when available. Extract the whole folder and open its launcher. Prebuilt packages include Node and the interface. Read the release's signing status; a preview is not a signed distribution.
 
 [app-download]: #
 
-Open the extracted folder in your installed, signed-in **Codex or Claude Code**. You need [Node.js 24 or newer](https://nodejs.org/en/download); your agent can guide you if it is missing.
+The source ZIP is an alternative: open it in your existing **Codex or Claude Code** client. Source users need [Node.js 24 or newer](https://nodejs.org/en/download); the agent can guide setup. The native workflow below describes the 0.2 preview; inspect the selected release's actual version and capabilities.
 
 ## Agent
 
@@ -16,41 +16,40 @@ Copy [the setup request](https://github.com/ahmedaldhraif/tawdheef/blob/main/doc
 
 [setup-prompt]: #
 
-Complete sign-ins and account choices in **Connections**. Accept your assistant's project/server trust prompt when shown, then use **Check connections**.
+Choose the assistant in **Connections** and paste **Copy setup request** into that existing client. Sign-in, consent, Tabbio CV, mail, calendar, browser/computer tools and password-manager access belong to the actual client. Accept its normal project/server trust prompts. Tawdheef records dated reports and local tracker tool use without independently verifying external access.
 
 Use the local Codex or Claude Code client; ChatGPT and Claude web chats do not read the app's local MCP settings.
 
 ### If you prefer the terminal
 
-Run these from the extracted folder to install browser tools, connect Codex and start the app:
+For the source edition, run these from the extracted folder to start the app and connect Codex:
 
 ```sh
-npm run setup -- --browser
-npm run agent -- codex --browser
 npm start
+npm run agent -- codex
 ```
 
 For Claude Code, replace the second command with:
 
 ```sh
-npm run agent -- claude-code --browser
+npm run agent -- claude-code
 ```
 
 This creates project-only settings for Tawdheef's local **stdio MCP server** and installs the skill. Existing custom settings are preserved; follow the reported merge instructions if they conflict. Reopen the project or start a new chat so your assistant loads the tools.
 
 The app also has its own CLI: `node bin/apply-tracker.mjs help`. The screen, CLI and MCP use the same local records. MCP lets a compatible local agent call tools directly; the CLI supports terminal agents and scripts. [See the tool reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md).
 
-`npm run setup -- --all` also installs the separate Tabbio CLI. It is optional for this setup. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md) for connection details.
+External tools are reused in the chosen client. Add `--tabbio` to its agent command only when you want a direct Tabbio MCP entry. App-owned provider adapters and browser bridges require an explicit **Advanced compatibility** choice and `--local-adapters`; they are excluded from the ordinary app runtime. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md).
 
 ## CV
 
 1. [Create your free CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=setup&utm_campaign=live_cv) on Tabbio, or use your existing account. Add and review your real experience, education and skills.
-2. In Tawdheef, open **Connections → Your CV → Tabbio CV → Connect** and complete sign-in.
-3. Choose your assistant in **Connections**, then use **Check connections**. It checks the assistant's sign-in and reads your connected CV.
+2. Open **Connections → Tabbio CV → Copy setup request** and paste it into the selected client.
+3. Reuse or configure that client's Tabbio connection, complete sign-in/consent there and read the real CV. Report only source/update metadata to Tawdheef.
 
-A readable connected CV is required before Run. You can browse directories and track records without it. See [Create or connect your CV](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-cv.md) if the read needs attention.
+A real readable CV is required for matching decisions. You can browse and track records without one. See [Create or connect your CV](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-cv.md) if access needs attention.
 
-Your agent can make the same final check with `get_setup_status`, using `verify:true` and the chosen assistant. For the CLI, save this as `.local/setup-check.json`, replacing `codex` with `claude-code` if needed:
+Your agent can inspect local setup status with `get_setup_status`. Native `verify:true` still performs no model/CLI/provider check; the actual client checks its tools and reports observations. For a local status read, save this as `.local/setup-check.json`, replacing `codex` with `claude-code` if needed:
 
 ```json
 {"verify":true,"assistant":"codex"}
@@ -64,7 +63,7 @@ node bin/apply-tracker.mjs call get_setup_status --input-file .local/setup-check
 
 Use your configured private data folder if you changed `APPLY_TRACKER_DATA`.
 
-To use Tabbio's separate CLI, you can optionally run `npm run setup -- --login tabbio` and complete its sign-in. Follow the [official Tabbio connection guide](https://www.tabbio.com/en/mcp). Tawdheef reads your connected CV; editing or publishing it through Tabbio is a separate connection and request.
+Follow the [official Tabbio connection guide](https://www.tabbio.com/en/mcp) for the actual client tools. Native Tawdheef does not own another Tabbio session or cache the CV. Editing, publishing, visibility changes and sharing each require the corresponding user request.
 
 ## Workflow
 
@@ -72,7 +71,7 @@ Choose the bundled UAE directory or [add a country pack](https://github.com/ahme
 
 Matching jobs and career profiles are selected by default. Your agent checks vacancies against your CV. When no suitable job is open, it can create or complete a career account, fill your profile and upload your CV where supported. You can change these choices before starting; CV-only emails are optional and off by default.
 
-Career profiles, CV uploads and confirmed job applications are recorded separately. [Read the run guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md).
+Press Run, then paste its copied request into the existing client chat. Tawdheef waits for that client and launches no second model or CLI. Career profiles, CV uploads and confirmed applications remain separate. Stop revokes new tracker authority; stop any remaining task in the client too. [Read the run guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md).
 
 ## Use
 
@@ -114,6 +113,6 @@ Setup and skill installation do not authorise applications, profiles or CV shari
 
 ## Privacy
 
-Tracking data and credentials stay in your local app folder. Connected AI, CV and email services process data under their own permissions and terms. Enter private credentials in Connections, not in chat or public issues.
+Tracking records stay in the private local data folder. Native provider credentials and browser/password-manager sessions stay with the actual client/provider. AI, CV and mail services still process online requests under their own permissions and terms; local-first does not mean those services work offline. Never paste credentials into tracker records, chat or public issues.
 
 Tawdheef is free; your assistant account and connected services may have their own costs. [Read the privacy guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/policies/PRIVACY.md).

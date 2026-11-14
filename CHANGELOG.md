@@ -6,10 +6,12 @@
 - Windows and Mac native launchers around the local browser interface, with external private data and assistant workspaces.
 - Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
 - Faster SQL-backed company filtering and paging, incremental edit refreshes and one visibility-aware run reader.
-- Project-only Codex/Claude setup with ownership checks and backups; provider access failures stop the queue with an actionable reason.
-- Six familiar connection categories, a shared assistant choice and an optional explicit model-access test using an empty fixture.
+- Native Codex/Claude connections by default: the actual client owns CV, mail, calendar, browser/computer and password-manager tools. Tawdheef keeps local guidance, scope and results, with no default model/CLI subprocess or second provider session owner.
+- Project-only setup with ownership checks/backups and optional direct Tabbio MCP. Six familiar connection categories distinguish dated client reports from observed tracker tool use.
+- Claim-scoped native run handoffs, durable native email plans and original-account receipt reconciliation. Stop revokes authority without claiming to kill an external chat.
+- Optional app-owned adapters, CLI runner and disposable model check remain under Advanced compatibility; their ten mail/cloud SDKs are excluded from ordinary runtime dependencies.
 - Native Codex/Claude local monitoring requests with a separate read-only workspace, saved source scope, deduplicated updates and actionable Needs you outcomes. Copying a request never claims a schedule is active.
-- Compact per-company agent context, exact bounded CV excerpts and numeric usage observations; original PDF/DOCX staging for authorized uploads and verified primary-email registration guidance.
+- Compact local records, original PDF/DOCX staging for authorized uploads and fresh observed main-email registration guidance. Native CV facts remain in the client's own connection.
 - Separate optional publisher signing/notarization workflow. Local operation requires no developer account; unsigned previews remain labelled unsigned.
 
 ## 0.1.2 — guides and product walkthrough

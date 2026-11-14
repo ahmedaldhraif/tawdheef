@@ -57,7 +57,7 @@ test('agent setup is project-local, previewable, idempotent and preserves custom
   await assert.rejects(configureAgent('both', options), /No setup files were changed/);
   assert.equal(await readFile(join(root, '.mcp.json'), 'utf8'), '{"custom":"keep me"}');
 });
-test('agent setup browser flag creates both real client entries and preserves conflicting files', async t => {
+test('explicit compatibility browser setup creates both client entries and preserves conflicting files', async t => {
   const root = await fixture(t), browser = INTEGRATIONS.find(item => item.id === 'playwright');
   for (const folder of ['scripts', 'server', 'skills/tawdheef', 'node_modules/@playwright/mcp']) await mkdir(join(root, folder), { recursive: true });
   for (const file of ['scripts/agent-setup.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
@@ -65,7 +65,7 @@ test('agent setup browser flag creates both real client entries and preserves co
   await writeFile(join(root, 'node_modules/@playwright/mcp/package.json'), JSON.stringify({ name: browser.package, version: browser.version }));
   await writeFile(join(root, 'node_modules/@playwright/mcp/cli.js'), '// Package discovery fixture; no browser is launched.');
   const dataDir = join(root, 'private data'), env = { ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: '4018' };
-  const run = flags => spawnSync(process.execPath, [join(root, 'scripts/agent-setup.mjs'), 'both', '--browser', '--json', ...flags], { cwd: root, env, encoding: 'utf8', windowsHide: true });
+  const run = flags => spawnSync(process.execPath, [join(root, 'scripts/agent-setup.mjs'), 'both', '--local-adapters', '--browser', '--json', ...flags], { cwd: root, env, encoding: 'utf8', windowsHide: true });
   const preview = run(['--check']); assert.equal(preview.status, 0, preview.stderr);
   assert.deepEqual(JSON.parse(preview.stdout).included, ['apply-tracker', 'playwright']);
   await assert.rejects(readFile(join(root, '.mcp.json')), { code: 'ENOENT' });

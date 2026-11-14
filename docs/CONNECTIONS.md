@@ -1,36 +1,112 @@
-# Local connections
+# Connections in your actual client
 
-The app supports native Gmail/Outlook/iCloud mail, separate Google/Outlook Calendar OAuth, and iCloud Calendar through CalDAV. Open **Connections** for provider rows and account setup. Each user owns their registrations and account sign-in; this repository has no shared keys. Native adapters provide normalized mappings automatically. See [QUICKSTART.md](QUICKSTART.md) and [INTEGRATIONS.md](INTEGRATIONS.md) for real setup steps, scopes and the optional Google CLI/Outlook MCP/Tabbio/browser tools.
+The default **native** mode keeps every external connection in the selected
+Codex or Claude Code client: Tabbio MCP/CV, email, calendar, browser/computer use
+and the password manager. Tawdheef stores local guidance, selected scope,
+non-secret reference metadata and evidenced outcomes. It does not create another
+provider OAuth session or launch another model during native Run.
 
-Connections shows account actions, credential fields and observed status. **Copy setup request** copies the setup task for the person to paste into the selected assistant; technical explanations belong in these guides. Native OAuth fields stay under **One-time setup**, and custom endpoints or mappings stay under **Advanced setup**. Enter secrets only in the private local form or a private input file, never in an assistant chat. Only one mailbox and one calendar connection are active at a time; their permissions remain separate.
+Connections keeps six familiar rows. **Assistant** chooses the client once.
+**Tabbio CV** offers a create-CV link and a request to connect Tabbio MCP in that
+client. **Email** and **Calendar** show provider choices, then a copyable setup
+request. **Browser & computer use** checks those capabilities separately.
+**Passwords** uses the person's existing supported browser/password manager.
+Paste each requested setup task into the existing client conversation; sign-in,
+trust, unlock and consent happen through that client's supported flow.
 
-The app's Run needs a readable connected CV and a signed-in assistant. Email and calendar are optional. Use **Check connections** to verify assistant sign-in and a fresh CV read; a saved connection or installed executable alone is not proof of readiness. The check does not send applications, create career profiles, send email or create calendar events. A successful CV read confirms access, not the accuracy of its contents.
+The native panels contain no tracker OAuth or password fields. The user never
+needs to send secrets in a chat. An actual client may require its own supported
+provider setup, account plan, app integration or approval; Tawdheef cannot grant
+or bypass that access.
 
-The separate **Test Codex / Test Claude Code** button runs one explicitly requested model task through that assistant's CLI against an empty disposable tracker. Actual calls to `get_agent_context` and `get_capabilities` establish the fixture proof. It may consume client quota; it does not read real CV/mail, browse employers, send, submit or create a task. Only status, timestamps and available numeric usage are retained. Connection readiness, this point-in-time CLI model proof and native Desktop schedule availability are separate observations.
+## What connection status proves
+
+`get_native_client_status` returns the selected assistant's capability reports.
+`report_native_connection` saves only bounded non-secret observations after an
+actual client check: available/needs_you/unknown, observation time, provider/account
+identity, CV reference/update metadata or selected calendar IDs. Available is
+shown as **Client reported**, not independently verified Connected. Reports age
+out after 24 hours; an expired report remains Unknown with its observation date.
+A configured URL, saved username or report alone is not fresh provider access.
+
+Actual `get_agent_context`/`get_capabilities` use is recorded separately as
+**Tracker used**. It proves a local tracker tool call was observed, not an AI
+model response, native browser/computer control, provider sign-in or a schedule.
+The default Run does not require an installed assistant CLI or a CLI model test.
+
+Use a fresh check in the actual client before acting. If a provider, trust rule,
+identity prompt or missing tool blocks access, record one actionable **Needs you**
+step. Checking a connection authorizes no applications, profiles, CV sharing,
+messages, calendar writes or schedules.
 
 ## Primary email and career credentials
 
-`get_registration_context` returns the observed address of the currently connected mailbox. Use that address for a new career account; if absent, connect the person's intended mailbox or record Needs you. A mailbox connection does not sign into a career portal. Reuse an existing career account and its original email even if the connected mailbox has changed. Never create another mailbox or change an existing account's login to make a run proceed.
+New career registrations use the fresh main account email actually observed
+through the selected client's email tools. Never derive it from CV text or a
+configured username. Reuse existing career accounts and their original login,
+even when the current main mailbox differs. Do not create a mailbox or change
+an account email to make a Run proceed.
 
-Use the selected client's supported browser/password manager to generate, save and fill credentials. The **Passwords** setup request helps inspect available support without exporting a vault; tracker configuration does not prove access. The person handles unlock, sign-in and approval. Tawdheef is not a password vault: do not put passwords, master keys or recovery codes in records, prompts, logs or a copied schedule. A non-secret manager reference and login email may accompany confirmed account evidence.
+Website passwords stay in the person's supported browser or password manager.
+The person handles unlock, consent and identity prompts. Never export a vault,
+request a master password, or put career passwords/recovery codes in tracker
+records, prompts or logs. A non-secret manager reference and actual login email
+may accompany confirmed account evidence.
 
-## Original CV file
+## Native Run, email and submission evidence
 
-Select the person's original PDF or DOCX, at most 10 MB, under **Your CV** for file-upload forms. Tawdheef stores exact private bytes with a SHA256 and sanitized filename. Format and integrity checks do not verify the CV's facts or remove active content. Connected `readCV` content remains the source for matching; an arbitrary provider response/link is not evidence that an original upload is downloadable.
+Run snapshots the explicitly selected actions and company scope, then copies a
+request to the existing client. The app waits; the client claims one saved target
+at a time and uses its own authorized external tools. Form submissions still
+require `prepare_form_submission` immediately before final Submit and a real
+confirmation before resolution. Account/profile/CV milestones remain separate
+from job applications.
 
-`get_cv_file` reads metadata. `prepare_cv_attachment` requires an active authorized run, current company and `purpose:"cv_upload"`; it stages the exact file under the private browser output folder. The browser performs the actual upload and the normal form-intent/receipt rules still apply. Missing or changed files require the person; never generate a replacement CV or invent a download/share URL.
+For native mail, reserve the active company/send with `prepare_native_email`,
+inspect `maySend`, send through the actual client only when authorized, then use
+`resolve_native_email` with the actual provider receipt. An unknown result must
+be inspected against the original send intent; never invent a fresh key to
+bypass an unresolved outcome. A draft, filled form, saved record or opened page
+is not proof that anything was sent or submitted.
 
-The current `send_application_email` input has no attachment argument. A selected/staged file is not an email attachment. Use only actual supported body content or an existing authorized link; never claim a file was sent from local staging alone.
+**Stop** revokes Tawdheef authority. Stop remaining work in the actual client too;
+the tracker cannot terminate another application's task.
 
-## Browser access and monitoring
+## Optional original CV file
 
-**Browser & computer use** can copy a request to inspect the selected client's supported tools and test only a blank page. A browser smoke check does not establish OS computer control, an employer login or password-manager access. Keep client/provider approval rules intact.
+Under **Tabbio CV → Original CV for uploads**, save the original PDF or DOCX,
+at most 10 MB, for sites that require a file. This optional local convenience
+stores exact private bytes with a SHA256 and sanitized filename. It does not
+verify CV facts or remove active content. Readable CV facts come directly from
+the actual client's authorized Tabbio/CV source.
 
-For saved read-only updates, use [Monitoring](MONITORING.md). The native desktop client owns the local schedule; Connections and copied requests do not create it or independently verify it.
+`get_cv_file` reads metadata. `prepare_cv_attachment` stages an existing file only
+for an active authorized company/action. The actual client must have supported
+file access and perform the authorized upload. Staging is not an upload or an
+email attachment; missing files, tool limitations and client path restrictions
+require the person. Never generate a replacement or invent a share/download URL.
 
-## Custom MCP connections
+## Browser, calendar and monitoring
 
-The following sections describe custom MCP connections, which remain available under Advanced. Native providers use the same private storage and single-owner background process. Native account sign-in uses one-time state and PKCE; calendar grants are separate from mail. iCloud requires an Apple app-specific password; no main account password belongs in the app.
+A browser test does not prove OS computer control, employer sign-in or password
+manager access. The setup request asks the actual client to inspect supported
+tools and use only a blank page for its browser check. Preserve its normal
+permissions and approval boundaries.
+
+Calendar choices come from actual client-reported calendar IDs, not a tracker
+provider reader. In [Monitoring](MONITORING.md), `check_updates` returns a bounded
+`readRequest`; the actual client performs that exact read and returns fresh
+`sourceRead` evidence and source-backed observations. Mail is limited to tracked
+threads in their original provider/account; calendar reads use the selected ID
+and at most the next 14 days. Missing/incomplete reads remain unknown/partial,
+even when they produced no update records. No applications, registrations,
+profile/CV changes, sending or calendar writes are authorized by monitoring.
+The native client owns any separately requested local schedule. Saving settings,
+copying instructions and recorded task reports do not independently verify it.
+
+## Advanced compatibility: local adapters
+
+The remainder of this guide applies only after an explicit Connections → Advanced compatibility → Tawdheef local adapters choice. These older app-owned providers and custom MCP bridges have separate local credentials. Existing private settings are preserved, but no native-client connection is automatically shared with this mode. App-owned Google/Microsoft sign-in uses state and PKCE; calendar grants are separate from mail. App-owned iCloud access uses an Apple app-specific password, never the main account password.
 
 The tracker connects to an MCP server supplied by the user. Gmail and Outlook
 are mailbox labels, not bundled provider credentials. An existing connection in

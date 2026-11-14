@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { importProviderDependency } from '../provider-dependencies.mjs';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -199,20 +200,20 @@ function publicError(error, operation) {
     : 'Gmail could not complete this request. Check your connection and sign in again if needed.');
 }
 
-async function defaultOAuthClient(options) {
-  const { OAuth2Client } = await import('google-auth-library');
+async function defaultOAuthClient(options, dataDir) {
+  const { OAuth2Client } = await importProviderDependency('google-auth-library', { dataDir });
   return new OAuth2Client(options);
 }
 
-async function defaultGmailClient(auth) {
-  const { gmail } = await import('@googleapis/gmail');
+async function defaultGmailClient(auth, dataDir) {
+  const { gmail } = await importProviderDependency('@googleapis/gmail', { dataDir });
   return gmail({ version: 'v1', auth });
 }
 
 /** Private native adapter. Browser opening and application authorization belong to the local manager/domain. */
 export function createGmailProvider({
-  config = {}, auth = {}, redirectUrl, saveAuth = async () => {},
-  createOAuthClient = defaultOAuthClient, createGmailClient = defaultGmailClient,
+  config = {}, auth = {}, dataDir, redirectUrl, saveAuth = async () => {},
+  createOAuthClient = options => defaultOAuthClient(options, dataDir), createGmailClient = auth => defaultGmailClient(auth, dataDir),
   now = Date.now,
 } = {}) {
   let saved = clone(auth);

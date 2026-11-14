@@ -8,7 +8,11 @@ A free, open-source job-search app for you and your AI assistant. Find jobs that
 
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
+**Your actual AI client owns the connections.** Native mode is the default: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in Native mode.
+
 The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the public source-download links below remain unchanged. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
+
+The production core has six direct dependencies for the local server, MCP, validation and file formats. Mail/calendar SDKs are developer dependencies and optional private add-ons for explicit `local-adapters` compatibility. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
@@ -24,16 +28,16 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 
 1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.
 2. Open the folder in your installed, signed-in **Codex or Claude Code** and paste the setup request below. You only need one assistant, plus [Node.js 24+](https://nodejs.org/en/download).
-3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or connect your existing one in **Connections**. Complete your own sign-ins and use **Check connections**.
-4. Filter or select companies, then press **Run**. Matching jobs and career profiles start selected; change either choice before starting. Your agent checks for suitable roles and, when none is found, creates or completes a career profile where available.
+3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or connect the actual CV in your chosen client's supported tools. Connections shows dated client reports and setup requests; sign-in and credentials stay in that client.
+4. Filter/select companies, choose actions and press **Run**. Continue its handoff in your actual client. Matching jobs and profiles start selected; CV-only emails stay off unless selected. The client claims one company at a time and records real outcomes.
 
 Paste this into your assistant:
 
-> Set up Tawdheef in this folder using AGENTS.md and docs/FIRST-RUN.md. Preserve my settings and data, help me connect my CV, and guide me through the sign-ins that need me. Check that my chosen assistant and CV are ready. Do not start a job-search run or enable schedules during setup.
+> Set up Tawdheef in this folder using AGENTS.md and docs/FIRST-RUN.md. Preserve my settings and data. Use my actual Codex/Claude client's own CV, email, calendar and browser tools; keep credentials there. Inspect and report only observed connection metadata. Do not start a job-search run or enable schedules during setup.
 
 Your agent handles local installation and configuration. You handle account sign-in and consent. Email and calendar are optional; add them when needed. [Full setup guide](docs/FIRST-RUN.md).
 
-The app is free; your AI client and connected providers may have their own costs or limits. You can browse directories and track applications without Tabbio. **Run requires a connected Tabbio CV.**
+The app is free; your AI client and providers may have their own costs or limits. You can browse and track without a CV connection. Before acting on a Run, the actual client must read your real CV and relevant preferences. An unreported connection is unknown, not proof of disconnection; the app does not require a separate CLI/model probe to create a Native handoff.
 
 ## Built-in CLI + local MCP
 
@@ -46,7 +50,7 @@ node bin/apply-tracker.mjs help
 node bin/apply-tracker.mjs call list_directories
 ```
 
-`AGENTS.md` teaches the shared workflow; `CLAUDE.md` imports it for Claude Code. The CLI and MCP expose validated operations for setup, directories, runs, progress, connections and reports. Your assistant supplies the AI and browser tools. [Agent guide and configuration](docs/AGENT-GUIDE.md) · [Tool schemas](docs/tools.json) · [Repository structure](docs/REPOSITORY.md).
+`AGENTS.md` teaches the shared workflow; `CLAUDE.md` imports it for Claude Code. CLI/MCP expose local guidance, metadata, scopes, claims, intents, receipts and reports. The actual client supplies every external connection and tool. [Agent guide](docs/AGENT-GUIDE.md) · [Tool schemas](docs/tools.json) · [Repository structure](docs/REPOSITORY.md).
 
 ## Guides and tools
 
@@ -76,12 +80,11 @@ Download a pack, choose a directory in the app, then use **List options → Impo
 Prefer commands? With Node.js 24+, run these in the downloaded folder:
 
 ```sh
-npm run setup -- --browser
-npm run agent -- codex --browser
 npm start
+npm run agent -- codex
 ```
 
-For Claude Code, replace the second command with `npm run agent -- claude-code --browser`. Open the folder in that client, accept its trust prompt and start a new chat. Setup installs the browser tools and skill, and creates project-only MCP settings. Custom settings are preserved; conflicting files are not overwritten. Sign in and connect your CV in the app. [Existing settings and other clients](docs/AGENT-GUIDE.md).
+For Claude Code, use `npm run agent -- claude-code`. Open the folder in that client, accept project trust and start a chat. Setup creates project-only Tawdheef MCP/skill settings while preserving custom entries. Use the client's supported external tools and complete their sign-ins there. No tracker-managed browser/provider installation is required for Native mode. [Existing settings and other clients](docs/AGENT-GUIDE.md).
 
 To open the app again, use `npm start` or double-click **Start Tawdheef.cmd** on Windows. No Docker, hosted tracker account or model API key is needed.
 
@@ -100,17 +103,17 @@ A skill alone does not install the app, connect MCP tools, authenticate accounts
 
 ## Connect your accounts
 
-Open **Connections** in the app. Every person uses their own accounts; no credentials are included in this repository.
+Connect accounts in your actual Codex/Claude client. **Connections** in Tawdheef displays dated reports and copyable requests. Reports are client-reported, not independent authentication proof; passwords/tokens/raw CVs do not belong in them.
 
 | Connection | What you need |
 | --- | --- |
-| Gmail / Google Calendar | Your Google Desktop OAuth registration, then sign-in. Calendar consent is separate. |
-| Outlook / Outlook Calendar | Your Microsoft public-client OAuth registration, then sign-in. |
-| iCloud Mail / Calendar | Your Apple Account email and app-specific password; no developer registration. |
-| Tabbio CV | Your authorized Tabbio connection. Required for Run; browsing the directory works without it. |
-| Codex / Claude Code | Your installed client and its own account. |
+| Email / Calendar | The actual client's authorized mail/calendar tools and observed account/calendar metadata. |
+| Tabbio CV / original file | The client's authorized source, with source metadata saved in Tawdheef. An original local PDF/DOCX may optionally be selected and stored privately for exact-byte staging. |
+| Browser / Computer | The client's supported read/form/upload tools and their normal approvals. |
+| Password manager | Your client's supported workflow; Tawdheef never reads its vault or stores career passwords. |
+| Codex / Claude Code | The client you actually use, connected to Tawdheef's local MCP tools. |
 
-This release has no shared publisher OAuth registration. Enter credentials only in the local connection form. [Account setup](docs/CONNECTIONS.md) · [Optional integrations](docs/INTEGRATIONS.md).
+Default Native mode needs no app-owned OAuth registration or separate model API key. Existing app adapters/CLI workers remain available only after explicitly choosing advanced `local-adapters` compatibility mode. Their credentials/data are preserved and are not inspected by Native bootstrap. [Account setup](docs/CONNECTIONS.md) · [Optional compatibility integrations](docs/INTEGRATIONS.md).
 
 ## What the agent reads
 
@@ -122,19 +125,21 @@ For local operation, read [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), the [f
 
 The snapshot above each directory shows **Applications sent**, **Career profiles** and **Emails sent**. Choose **All time** or **This week**, then click a number to see its records. Profiles count companies with a completed career profile; email totals count confirmed messages. An email application can appear in both applications and emails, so these are separate outcomes rather than a combined total. The same read-only snapshot is available through CLI and MCP as `get_snapshot`.
 
-Filter the list by city, company type or status, or check specific companies, then press **Run**. The app works through all matching unfinished companies across every page, or the checked companies that also match, with no app count cap. It launches your chosen Codex or Claude Code assistant for each company. Individual blockers are recorded and the queue moves on. **View progress** names the current company; **Stop** cancels further work. A new Run retries unfinished companies and skips confirmed applications or completed tracking statuses. Unknown email/form submissions must be inspected before another attempt.
+Filter by city/type/status or select companies, then press **Run**. Native Run saves all matching unfinished targets across every page, without a count cap, and provides a handoff to your actual client. It launches no subprocess. The client claims one target, records an outcome and continues. Progress shows the current company and actual saved receipts. Stop revokes local authority; also stop the client task if needed. Restart/expiry require a fresh explicit Run. Unknown email/form intents survive and must be inspected before any retry.
 
 Matching jobs and career profiles are selected by default. If no suitable role is found, the profile choice lets your agent register an account, complete your profile, upload your CV or join an offered talent pool. Existing accounts are reused. CV-only emails are a separate option, off by default. Only a confirmed application is marked **Applied**; accounts, profiles and CV progress have their own records and report counts.
 
-Sign-in, CAPTCHA and provider approvals may need you. LinkedIn application actions stay manual. Scheduled work never starts applications, creates career profiles or sends follow-ups. Existing local reply/report schedules use the background app and can run while the assistant is closed and the computer is awake.
+Sign-in, CAPTCHA and provider approvals may need you. LinkedIn actions stay manual. Scheduled work never starts applications, creates profiles, shares CVs, sends follow-ups or changes calendars. App-owned legacy reply/report timers are optional compatibility features.
 
 **Settings → Monitoring** prepares selected read-only careers/profile updates, tracked replies and calendar reads for a local native Codex/Claude Desktop task. Copy its request into that client and inspect the actual task. The computer, native client and local tracker must be available. A copied request or reported task ID does not prove the schedule is running. [Monitoring setup and status](docs/MONITORING.md).
 
-For new career accounts, your agent uses the observed connected primary mailbox and reuses existing accounts with their original login. Credentials stay in your supported browser/password manager. Select an original PDF/DOCX in **Connections → Your CV** for browser file uploads; readable CV content and the original file are separate. **Check connections** checks prerequisites; the optional **Test Codex / Test Claude Code** runs one small, isolated model/MCP proof and may use your assistant quota.
+The actual client reads selected careers/profile pages, original-account tracked threads and selected calendars, then records dated evidence. The app performs no external read in Native mode. For new accounts, use only the reported actual mailbox address; existing accounts keep their login. CV facts/original files and career credentials remain in client-owned tools. Native email reserves one immutable send plan; the client sends once and reports the real original-account receipt. Source/capability reports never prove an application independently.
+
+You may optionally select your own original PDF/DOCX locally for a claimed upload. Tawdheef stages its exact bytes without opening a CV-provider connection; the actual client performs the upload. Staging is not upload/application evidence or CV fact verification.
 
 ## Local storage and costs
 
-Tawdheef's original code is free and MIT licensed. Your AI client, model usage and connected providers may have separate costs or limits. Private data stays in the configured local folder: `.local/` for a source checkout, or per-user application data for native apps. Keep it out of Git and releases. The app binds to loopback; it is not a hosted mobile account. Connected services still communicate online. Credentials rely on local filesystem permissions rather than encryption by the tracker.
+Tawdheef's original code is free and MIT licensed. Client/model/provider costs and limits still apply. Private scopes, metadata, send intents and outcomes stay in `.local/` for source checkouts or per-user native app data. Keep them out of Git/releases. The app binds to loopback. Native credentials remain in the actual client; preserved optional compatibility credentials rely on local filesystem permissions rather than tracker encryption.
 
 Stop with `npm run background:stop`. Check readiness with `npm run doctor`. See the [quickstart](docs/QUICKSTART.md) for backups, updates and optional browser tools.
 

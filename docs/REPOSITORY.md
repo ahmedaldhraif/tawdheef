@@ -1,12 +1,16 @@
 # How Tawdheef is organized
 
-There is one app and one local database. You and your agent use the same records.
+There is one app and one local database. You and your agent use the same records. Native mode is the default: the actual Codex/Claude client owns every external connection and tool.
 
 ```text
-You use the screen ────────┐
-                          ├─ validated domain operations ─ SQLite in .local/
-Your agent uses MCP / CLI ┘
-                          └─ running local app ─ your authorized providers
+You use the screen ─────────┐
+                           ├─ local coordinator/domain tools ─ SQLite
+Your actual AI client ─MCP─┘
+         │
+         └─ its own CV/mail/calendar/browser/computer/password-manager tools
+
+Optional explicit local-adapters mode:
+local app ─ adapter/OAuth sessions ─ authorized providers
 ```
 
 ## What teaches an agent?
@@ -32,25 +36,30 @@ You do not need another `agent.md`, a prompt for every company, or an embedded m
 | --- | --- |
 | `src/` | React screen, tables, panels, accessible controls. |
 | `server/store.mjs` | Shared SQLite records, validation and revisions. |
-| `server/index.mjs` | Loopback web server and provider session owner. |
+| `server/index.mjs` | Loopback screen/API and single local authority coordinator. Native bootstrap does not instantiate or inspect external provider connections. Compatibility providers load only after explicit local-adapters selection. |
 | `server/mcp.mjs` | Shared tool definitions and stdio MCP transport, with separate operator, monitor and diagnostic catalogs. |
 | `server/snapshot.mjs` | Directory snapshot counts and paginated evidence, shared by the screen, CLI and MCP. |
 | `bin/apply-tracker.mjs` | CLI over those same definitions; every tool supports `call TOOL --input-file FILE`. |
-| `server/providers/` | Gmail, Outlook, iCloud Mail, calendars and local bridge adapters. |
-| `server/agent-runner.mjs`, `server/operator-contract.mjs` | One assistant subprocess per company, durable queue outcomes and scoped operating tools. |
-| `server/setup-status.mjs` | Connection readiness shared by the Connections panel, CLI and MCP, with explicit sign-in/CV verification. |
-| `server/agent-context.mjs`, `server/assistant-usage.mjs`, `server/agent-check.mjs` | Source-bound candidate excerpts, numeric CLI usage and explicitly requested disposable model/MCP proof. |
-| `server/cv-artifacts.mjs` | Private exact-byte original CV storage and run-scoped browser staging; no CV generation or content verification. |
-| `server/monitoring.mjs`, `server/monitoring-store.mjs`, `server/client-guidance.mjs` | Revision-bound monitoring sources/evidence, native-task requests and observed registration identity. The native client owns the monitoring clock. |
-| `server/scheduler.mjs` | Separate legacy tracked-thread refreshes and reports while the computer is awake. |
-| `server/email-send.mjs`, `server/calendar.mjs` | Guarded provider actions and recovery. |
+| `server/native-store.mjs` | Dated client capability metadata, normalized Native targets/claims, durable send plans/receipts and Native monitoring read requests/results. No external I/O. |
+| `server/native-client.mjs`, `server/native-guidance.mjs` | Native handoff/setup guidance and local domain facade. The actual client supplies external tools, sign-in and model access. |
+| `server/native-mcp-tools.mjs` | Actor-bound Native tool catalog, local-coordinator proxy writes and claim checks. |
+| `server/providers/` | Optional compatibility Gmail/Outlook/iCloud/calendar/bridge adapters; these are not Native client connections. |
+| `server/agent-runner.mjs`, `server/operator-contract.mjs` | Explicit compatibility CLI subprocess queue and scoped operating tools. Native Run does not launch this runner. |
+| `server/setup-status.mjs` | Local setup/readiness and dated Native reports; independent compatibility verification is separate. |
+| `server/agent-context.mjs`, `server/assistant-usage.mjs`, `server/agent-check.mjs` | Compact context, allowlisted usage metadata and optional compatibility model/MCP proof. Native context does not fetch/cache raw CVs. |
+| `server/cv-artifacts.mjs` | Optional explicit user-selected original-file metadata/storage/staging in either mode, bound to a claimed upload. No provider CV cache or fact verification; the actual client performs sharing/uploading. |
+| `server/monitoring-store.mjs` | Revision-bound sources, tokens, namespaces, freshness/evidence validation and paginated updates. Jobs use SQL count/page projection rather than repeated full source decoding. |
+| `server/monitoring.mjs`, `server/monitoring-source.mjs` | Compatibility-only app-owned bounded provider/public-page reads. Native monitoring returns precise read requests and performs no external read. |
+| `server/client-guidance.mjs` | Native task requests and registration identity derived from actual dated mailbox metadata. The actual client owns its clock. |
+| `server/scheduler.mjs` | Optional compatibility tracked-thread/report timers. No Native internal scheduler. |
+| `server/email-send.mjs`, `server/calendar.mjs` | Guarded compatibility provider actions and recovery. Native clients perform their own external actions. |
 | `data/uae-directory.json` | Original public research seed, never the user's tracking database. |
 | `directories/` | Shareable directory packs and provenance. |
 | `scripts/` | Launch, explicit agent setup, doctor, packaging and verification. |
 | `docs/` | Setup, provider details, agent guide and generated tool schemas. |
 | `website/`, `public/` | Separate public website, local artwork and downloadable assets. |
 | `tests/`, `.github/` | Automated checks and draft-release workflow. |
-| `.local/` | Private tracking, OAuth tokens, provider caches and logs. Never commit or publish. |
+| `.local/` / native per-user app data | Private tracking, client-reported metadata, intents/results; preserved compatibility credentials/caches if explicitly configured. Never commit or publish. |
 
 The public product is **Tawdheef**. `apply-tracker` remains the stable internal CLI/MCP identifier for compatibility.
 
@@ -67,14 +76,16 @@ node bin/apply-tracker.mjs call TOOL_NAME --input-file arguments.json
 
 The contract covers setup checks, directories, companies, statuses/notes, imports/exports, runs, application evidence, email, calendar, CV reads/files, registration context, monitoring, connections, settings, snapshots, activity and reports. See [`tools.json`](tools.json) for the generated schemas and `get_capabilities` for the catalog actually exposed in the current role. Background lifecycle and installation use local CLI commands, not provider tools. Browser form filling comes from the user's agent/computer tools; LinkedIn actions remain manual.
 
-Only the running local app owns provider sessions. The CLI/MCP can edit offline records, but live provider operations proxy to the app with a matching private-data directory. Local records and connected online services are distinct.
+In Native mode all provider sessions belong to the actual client. The running app coordinates claim/send authority and validated local records only. Native writes needing fresh authority proxy to its loopback API with matching private data. Capability reports are dated/client-reported, not independent authentication proof. Minimal CV metadata and observed mailbox email do not grant account access.
+
+Only explicit local-adapters compatibility mode makes the running app a provider-session owner. Its live adapter operations proxy to that owner; Native never creates a second adapter session or silently falls back to app credentials.
 
 ## A normal first conversation
 
-For a new installation, start with the single setup prompt in [FIRST-RUN.md](FIRST-RUN.md). `get_setup_status` exposes the readiness behind the Connections panel's **Check connections** action. The agent reads these files directly; the app keeps account setup in Connections. After setup, try:
+For a new installation, start with [FIRST-RUN.md](FIRST-RUN.md). Call get_agent_context/get_capabilities, inspect the actual client's own tools, then report dated availability through report_native_connection. The app displays those reports and copyable requests; sign-in/credentials remain in the client. After setup, try:
 
 > Read AGENTS.md, call get_agent_context and get_capabilities, and help me shortlist suitable companies in the UAE directory. Use my authorized CV and ask for any missing role or location preferences. Do not send or submit anything.
 
-For an application run, the person explicitly names or selects the targets. The agent checks scope, acts through authorized tools and logs real evidence. Scheduled refreshes never start new applications.
+For a Native Run the person explicitly selects targets/actions. The app saves scope and provides a handoff, without launching another model process. The actual client claims one target, acts through its own authorized tools and records real receipts. Normalized target rows keep progress updates local and compact; target statuses are separate from confirmed outcome counts. Stop/expiry/app restart revoke authority without erasing ambiguous intents. Native monitoring can only read saved sources and report evidence; it never starts applications or external writes.
 
 Client conventions: [OpenAI MCP configuration](https://learn.chatgpt.com/docs/extend/mcp#connect-codex-to-an-mcp-server), [Claude Code project MCP](https://code.claude.com/docs/en/mcp#project-scope), [Claude instruction imports](https://code.claude.com/docs/en/memory).

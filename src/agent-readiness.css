@@ -18,6 +18,11 @@
 .connection-capability-owner { display: flex; align-items: center; gap: 10px; }
 .connection-capability > button { min-height: 44px; }
 .connection-capability > label { margin-top: 14px; }
+.native-capability-status p { margin-bottom: 8px; }
+.native-capability-status .connection-checked-at { display: block; margin-top: 4px; }
+.native-create-cv { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 10px; }
+.native-connection-advanced { margin-top: 16px; }
+.native-connection-content .cv-original-file { margin-top: 18px; }
 [dir="rtl"] .connection-category-row > svg:last-child,
 [dir="rtl"] .connections-provider-picker .connection-chevron,
 [dir="rtl"] .connections-assistant-picker .assistant-setup-link > svg,

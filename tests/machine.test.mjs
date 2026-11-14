@@ -49,7 +49,7 @@ test('managed operator capability discovery matches its actual scoped MCP catalo
 test("real stdio MCP shares persistent records and distinguishes preparation from confirmed submission", async () => {
   const dataDir = await temp();
   const env = Object.fromEntries(
-    Object.entries({ ...process.env, APPLY_TRACKER_DATA: dataDir }).filter(
+    Object.entries({ ...process.env, APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_CONNECTION_MODE: 'local-adapters' }).filter(
       ([, value]) => value !== undefined,
     ),
   );
@@ -324,7 +324,7 @@ test("detached background runner serves its own instance and stops without an AI
 test("agent import previews before commit, exports privately without overwriting, and shares directory symbols", async () => {
   const dataDir = await temp(),
     store = openStore({ dataDir, seed: false });
-  const tools = buildTools(store),
+  const tools = buildTools(store, { mode: 'local-adapters' }),
     call = (name, args = {}) =>
       tools.find((tool) => tool.name === name).handler(args);
   try {
@@ -454,7 +454,7 @@ test("agent provider operations use one app connection owner and explicit report
   });
   await new Promise((accept) => server.listen(0, "127.0.0.1", accept));
   process.env.APPLY_TRACKER_PORT = String(server.address().port);
-  const tools = buildTools(store),
+  const tools = buildTools(store, { mode: 'local-adapters' }),
     call = (name, args = {}) =>
       tools.find((tool) => tool.name === name).handler(args);
   try {
@@ -557,7 +557,7 @@ test("agent proxies refuse a different database and errors include actionable ma
   await new Promise((accept) => server.listen(0, "127.0.0.1", accept));
   process.env.APPLY_TRACKER_PORT = String(server.address().port);
   try {
-    const tool = buildTools(store).find(
+    const tool = buildTools(store, { mode: 'local-adapters' }).find(
       (tool) => tool.name === "refresh_replies",
     );
     await assert.rejects(tool.handler({}), (error) => {
@@ -571,7 +571,7 @@ test("agent proxies refuse a different database and errors include actionable ma
     const company = store.createDirectory({ name: "Revision fixture" });
     const id = store.addCompanies(company.id, [{ name: "Fixture" }]).ids[0];
     store.updateCompany(id, { notes: "first" });
-    const update = buildTools(store).find(
+    const update = buildTools(store, { mode: 'local-adapters' }).find(
       (tool) => tool.name === "update_company",
     );
     await assert.rejects(

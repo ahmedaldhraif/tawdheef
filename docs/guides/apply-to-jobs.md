@@ -4,15 +4,15 @@ Choose companies and press **Run**. Your Codex or Claude Code agent looks for jo
 
 ## Before you start
 
-Have a readable connected CV, a signed-in assistant and a directory with records. Browser tools support website forms. A connected mailbox is needed for email applications and reply checks; it is optional for browser forms.
+Have a real readable CV, a working Codex or Claude Code client and a directory with records. External CV, browser/computer, mail and password-manager access belongs to that actual client. Only supported, authorized tools can be used; Tawdheef does not create those permissions.
 
 ## Choose the work
 
-1. Open **Connections → Check connections** and resolve any required next step.
+1. Choose your assistant in **Connections**. Copy setup requests into that existing client to check the access you need.
 2. Choose a directory. Use the list's **City**, **Company type** and **Status** filters to narrow it. Check individual companies if you want a smaller scope.
 3. Open **Run**. It includes all matching unfinished companies across every page, or only the matching companies you checked. Review the count and actions. Use **Add a note** for role or work-location preferences.
-4. Press **Run** to authorise the selected actions for those companies.
-5. Use **View progress** to see the current company, outcomes and next actions. Use **Stop** when you want to end further work; completed results remain recorded.
+4. Press **Run** to authorize those selected actions, then paste **Copy run request** into your existing client chat. The app waits for that client; it launches no second model or CLI.
+5. Use **View progress** to see the current company, outcomes and next actions. **Stop** revokes new tracker actions; stop any remaining task in the client too. Existing results and uncertain intents remain recorded.
 
 The two main actions are selected by default:
 
@@ -33,4 +33,4 @@ The queue continues after individual blockers or errors, with no app-imposed com
 
 You see real progress for each company: an account created, a profile completed, a CV uploaded, an application confirmed, or a clear **Needs you** item. A career profile is useful even without an open job; it is recorded separately from a job application. The optional **Progress** column and reports show these outcomes separately.
 
-Scheduled reply checks and reports update existing work. They do not start new applications, create profiles or send CVs.
+Native scheduled checks read selected existing sources through the client's own tools. They do not start applications, create profiles, upload/share CVs, send messages or change calendars.

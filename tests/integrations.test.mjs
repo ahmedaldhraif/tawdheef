@@ -10,7 +10,7 @@ async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'apply-tracker-integrations-'));
   const dataDir = join(root, 'private data');
   await mkdir(dataDir);
-  return { root, dataDir, port: 4018 };
+  return { root, dataDir, port: 4018, mode: 'local-adapters' };
 }
 
 async function installFixture(item, options) {

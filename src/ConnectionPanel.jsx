@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import ProviderLogo from './ProviderLogo.jsx';
 import CvFileControl from './CvFileControl.jsx';
+import NativeConnectionPanel from './NativeConnectionPanel.jsx';
 
 const TABBIO_URL = "https://server.tabbio.com/api/mcp";
 const parseObject = (value, label) => {
@@ -22,7 +23,11 @@ const parseObject = (value, label) => {
   return parsed;
 };
 
-export default function ConnectionPanel({
+export default function ConnectionPanel(props) {
+  return (props.connectionMode || props.settings?.connectionMode) === 'local-adapters' ? <LocalConnectionPanel {...props} /> : <NativeConnectionPanel {...props} />;
+}
+
+function LocalConnectionPanel({
   kind,
   conn,
   t,
