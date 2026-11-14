@@ -72,7 +72,7 @@ export function createCompanyQuery(db, statuses) {
     snapshotVersion = observedVersion;
     companies = new Map(); facets = new Map(); ranks = new Set();
     db.exec('DELETE FROM tracker_company_places; DELETE FROM tracker_company_query;');
-    for (const row of db.prepare('SELECT rowid AS source_order,id,directory_id,payload FROM companies ORDER BY rowid').all()) project(row, directories.get(row.directory_id));
+    for (const row of db.prepare('SELECT rowid AS source_order,id,directory_id,payload FROM companies ORDER BY rowid').iterate()) project(row, directories.get(row.directory_id));
     changedCompanies.clear();
     rememberTemporaryWrites();
   }
