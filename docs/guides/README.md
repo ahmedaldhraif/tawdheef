@@ -4,6 +4,10 @@ English | [العربية](../i18n/ar/guides/README.md)
 
 Tawdheef has one installable skill and eight practical guides. The website’s **Skills** overview at `/skills/` brings them together, with the skill command and a Get started action for the local app. These Markdown guides also work directly on GitHub.
 
+Want company leads first? [Try public research before installing](../examples/README.md)
+with the free country packs, or fill a [job-search brief](../examples/job-search-brief.md).
+Then return here when you want personal CV matching and tracking.
+
 ## Install the skill
 
 ```sh

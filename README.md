@@ -16,6 +16,16 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 
 [English guides](docs/guides/README.md) · [الأدلة بالعربية](docs/i18n/ar/guides/README.md)
 
+## Choose your starting point
+
+| I want to… | Start here |
+| --- | --- |
+| Find companies first | [Browse country packs](directories/README.md) or [try public company research](docs/examples/README.md). No app installation or connected CV needed. |
+| Apply and track with my agent | [Set up Tawdheef](docs/guides/use-the-skill.md), then create or connect your CV and check readiness. |
+| Improve the app or data | [Fix a detail, add a company, share a pack or contribute code](CONTRIBUTING.md). |
+
+[Fill a job-search brief](docs/examples/job-search-brief.md) · [جرّب البحث عن الشركات بالعربية](docs/i18n/ar/examples/README.md)
+
 ## Start here
 
 1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.

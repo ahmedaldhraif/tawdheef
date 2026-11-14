@@ -1,16 +1,16 @@
 {
-  "date": "2026-11-13",
-  "positioning": "Tawdheef | Auto Job Apply & Application Tracker",
-  "qualifier": "Free, open-source software is visible in the supporting sentence; no separate badge.",
+  "date": "2026-11-14",
+  "positioning": "Tawdheef | Find matching jobs. Build career profiles.",
+  "qualifier": "Free and open source in the supporting sentence; keep the approved centered hero and existing brand assets.",
   "category": "Auto Job Apply & Application Tracker",
   "heroHierarchy": [
-    "Centered headline: Auto-apply to jobs. Track your applications.",
-    "One paragraph: Free, open-source software for you and your ChatGPT or Claude agent, with original marks inline.",
-    "One black Get the free app primary action to the setup guide and a plain See how it works link.",
+    "Centered headline: Find matching jobs. Build career profiles.",
+    "A free, open-source job-search app for you and your Codex or Claude Code agent, with original marks inline and the local CLI/MCP context.",
+    "One clear Get the free app primary action to setup and a plain See how it works link.",
     "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork.",
     "Actual local tracker product view."
   ],
-  "heroDecision": "The owner approved explicit auto-apply and application-tracking positioning. The exact category stays in naming/search context; natural sentences lead the centered hero. Retain one paragraph, no badge, separate audience row, stacked client captions, Founder of Tabbio line or duplicate central ta mark. Auto-apply is a user-started run through the person's own local agent and authorized connections; no universal, unattended or guaranteed-success claim. This is an owner decision, not measured conversion evidence.",
+  "heroDecision": "The owner approved matching jobs and career profiles as the two main purposes, including useful profiles when no suitable vacancy is open. Keep local CLI/MCP and Codex/Claude Code setup clear. Only an explicit Run authorizes selected actions; profile outcomes stay separate from confirmed applications. This is positioning, not measured conversion evidence.",
   "entryPoints": [
     "Ahmed AlDhraif's personal GitHub and content",
     "Real country directory packs and their sources",
@@ -20,7 +20,7 @@
   "funnel": [
     {
       "stage": "Discover",
-      "value": "A clear auto-apply and tracking promise, actual product view and sourced country packs",
+      "value": "A clear matching-jobs and career-profiles promise, real product preview and sourced public country packs",
       "cta": "Get the free app → setup guide"
     },
     {
@@ -63,10 +63,10 @@
   },
   "repositoryStrategy": {
     "intended": "ahmedaldhraif/tawdheef",
-    "current": "Public at https://github.com/ahmedaldhraif/tawdheef; v0.1.1 public preview is live. New website/source documentation is separate from the existing versioned release assets.",
+    "current": "Public at https://github.com/ahmedaldhraif/tawdheef. Read website/config.json releaseTag and verify its assets before linking a download. Website/source updates do not replace an existing release ZIP.",
     "readmeOrder": [
       "Approved auto-apply/tracking descriptor, free/open-source promise and actual screenshot",
-      "GitHub release → local agent setup → free Tabbio CV → connect/verify → chosen Run",
+      "Choose a starting point: public country research without an app/CV account, a practical example, or local app setup followed by CV connection and a chosen Run",
       "Concise Guides, agent reference and About navigation",
       "Current country packs with source dates and contribution links",
       "Canonical first-run request and optional manual/client setup",
@@ -90,7 +90,7 @@
       "local-first",
       "open-source"
     ],
-    "downloadPolicy": "Use direct GitHub Release assets from website/config.json releaseTag. This source prepares v0.1.2 with on-site guides and an example-data walkthrough. Use explicit prerelease URLs, rather than /releases/latest."
+    "downloadPolicy": "Use direct GitHub Release assets from website/config.json releaseTag. Preserve explicit prerelease URLs rather than assuming /releases/latest includes them. Verify new platform artifacts before promoting them."
   },
   "contentIdeas": [
     "Show an actual shortlist workflow with public demo records, without claiming submissions",
@@ -104,13 +104,13 @@
     "websiteTracking": "No pixels or analytics library included",
     "outboundTabbio": "Readable UTM parameters distinguish website, skill, setup, directory and GitHub visits",
     "futureMeasures": [
-      "Source downloads",
-      "Successful local setup (explicit opt-in only)",
-      "Skill installs when a public package exists",
-      "Directory contributions",
-      "Tabbio signup attribution if the destination supports it with consent"
+      "Published source and pack asset downloads, kept separate from unique users",
+      "Successful local setup only if deliberately introduced with explicit opt-in",
+      "Skill install aggregates only where actually available; not unique people",
+      "Reviewed and merged directory contributions",
+      "Tabbio visits distinguished from signups or completed CVs, only if the destination supports attribution"
     ],
-    "currentResults": "Unknown; no production performance claim"
+    "currentResults": "Unknown; no conversion, adoption, ranking or AI citation claim. Downloads and visits do not prove setup, CV creation or applications."
   },
   "publishChecklist": [
     "Create and review the public repository on Ahmed's account",
@@ -130,20 +130,24 @@
     "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep drafts/uploads/talent pools distinct from applied."
   },
   "informationArchitecture": {
-    "decision": "Owner-approved Guides, About and actual-product walkthrough, inspired by reviewed documentation patterns. The skill is one of nine guides rather than a separate top-level destination. Preserve the centered hero, approved wording, brand assets and GitHub-first setup.",
-    "home": "Keep the simple marketing promise, real product view, walkthrough, free Tabbio CV path and country packs. The walkthrough uses real UI without invented account or application state.",
+    "decision": "Skills is the main overview for one installable skill and eight task guides. Keep detailed setup in /guides/use-the-skill/. Preserve the approved hero and GitHub-first downloads.",
+    "home": "Keep the approved simple promise, real product preview, compact agent-install demonstration, contextual Tabbio CV step, public country packs and contribution routes. No invented account or application state.",
     "routes": [
+      {
+        "path": "/skills/",
+        "purpose": "Canonical overview, skill install command, app Get started and eight task guides. This page must not redirect."
+      },
       {
         "path": "/guides/",
         "purpose": "Choose a task with a short description and clear next step."
       },
       {
         "path": "/get-started/",
-        "purpose": "Canonical installation and first-run journey: GitHub download/clone, local agent setup, CV, check, chosen Run."
+        "purpose": "Permanent redirect to /guides/use-the-skill/, preserving existing section anchors."
       },
       {
         "path": "/guides/get-started/",
-        "purpose": "Guide entry to canonical setup; reuse the same source or direct readers to /get-started/ rather than maintaining conflicting instructions."
+        "purpose": "Permanent redirect to /guides/use-the-skill/, preserving existing section anchors."
       },
       {
         "path": "/guides/connect-your-agent/",
@@ -151,7 +155,7 @@
       },
       {
         "path": "/guides/use-the-skill/",
-        "purpose": "Canonical human skill guide: installation, actual client invocation, workflow and instructions-versus-tools/authentication boundaries."
+        "purpose": "Canonical app setup and skill guide, CLI/MCP connection, CV setup and readiness; standalone skill installation is secondary."
       },
       {
         "path": "/guides/connect-your-cv/",
@@ -182,22 +186,52 @@
         "purpose": "Verified human purpose, name meaning, independent Ahmed attribution and separate Tabbio relationship; canonical body website/about.md."
       }
     ],
-    "existingDestinations": "Preserve Directories, GitHub, About and policies; place the actual skill in Guides, remove top-level Skills navigation and redirect legacy /skills/ and /skills/tawdheef/ to /guides/use-the-skill/.",
+    "existingDestinations": "Keep Skills as the main overview, All guides as the eight-task index, Directories, GitHub, About and policies. Preserve existing URLs and redirect only legacy setup/detail routes to the canonical setup guide.",
     "contentContract": "Guides distinguish instructions from tools, installation from authentication and evidence from intent. Explain what the person provides, what is saved, what requires consent and where to go next.",
-    "releaseBoundary": "The live v0.1.1 release assets remain versioned snapshots. New website/source documentation can ship through reviewed GitHub changes without implying old ZIPs were replaced.",
+    "releaseBoundary": "Use website/config.json releaseTag and real published assets. Public source and website updates do not change immutable release downloads or prove domain deployment.",
     "evidenceLimit": "Reference patterns and owner approval are design inputs, not conversion, adoption, ranking or citation evidence.",
-    "guideCount": 9,
+    "guideCount": 8,
     "skillPresentation": {
       "canonical": "/guides/use-the-skill/",
       "source": "docs/guides/use-the-skill.md",
       "legacyRoutes": [
-        "/skills/",
-        "/skills/tawdheef/"
+        "/skills/tawdheef/",
+        "/get-started/",
+        "/guides/get-started/"
       ],
-      "legacyBehavior": "Redirect both to the canonical guide.",
-      "navigation": "Guides contains the skill; no separate top-level Skills item.",
+      "legacyBehavior": "Redirect legacy detail/setup routes to the canonical guide; preserve anchors. /skills/ remains a separate overview.",
+      "navigation": "Skills is the main entry; All guides lists eight task articles. There is one installable skill.",
       "artwork": "Use the original approved /brand/mark.svg beside the guide heading, preserving the Arabic Grid proportions and two square dots. Never substitute a typed ta glyph.",
-      "behaviorBoundary": "This changes marketing navigation and documentation, not tracker application-run behavior or provider permissions."
+      "behaviorBoundary": "This changes marketing navigation and documentation, not tracker application-run behavior or provider permissions.",
+      "overview": "/skills/"
     }
+  },
+  "entryJourneys": {
+    "publicResearch": [
+      "Public country pack or README",
+      "Read the research example and fill a private role/location brief",
+      "Inspect sourced company leads",
+      "Set up the app and connect a CV when personal matching is useful"
+    ],
+    "localApp": [
+      "README or Skills",
+      "Canonical app setup guide",
+      "Connections and CV readiness",
+      "Reviewed shortlist",
+      "Explicitly chosen Run"
+    ],
+    "contribute": [
+      "Company record or pack",
+      "Relevant GitHub form or contribution guide",
+      "Maintainer review",
+      "Published pack update",
+      "Download and preview import"
+    ]
+  },
+  "research": {
+    "reviewDate": "2026-11-14",
+    "strategy": "docs/marketing/OPEN-SOURCE-GROWTH.md",
+    "firstResult": "docs/examples/README.md",
+    "principle": "Public useful data first; personal CV matching and optional separate services when relevant. Reuse canonical instructions rather than add duplicate agent files."
   }
 }
