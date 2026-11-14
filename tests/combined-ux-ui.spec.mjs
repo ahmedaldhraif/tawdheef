@@ -202,6 +202,14 @@ test('Native Email saves an optional local contact hint without changing reporte
   await expect(edit).toContainText('Add contact email');
   await edit.click();
   const hint = panel.getByRole('textbox', { name: 'Contact email (optional)', exact: true });
+  await hint.fill('discarded-hint@example.test');
+  await hint.press('Escape');
+  await expect(panel).toBeVisible();
+  await expect(edit).toBeFocused();
+  await expect(edit).toContainText('Add contact email');
+  expect((await json(request, '/api/settings')).applicationEmail).toBe('');
+  expect(writes).toEqual([]);
+  await edit.click();
   await hint.fill('local-hint@example.test');
   await hint.press('Enter');
   await expect(edit).toContainText('local-hint@example.test');
@@ -597,6 +605,7 @@ for (const language of ['en', 'ar']) for (const width of [320, 1440]) {
     await expect(hint).toBeInViewport();
     await capture('email-hint', panel);
     await hint.press('Escape');
+    await expect(panel).toBeVisible();
     await panel.getByRole('button', { name: labels.close, exact: true }).click();
     expect((await json(request, '/api/settings')).applicationEmail).toBe('');
   });
