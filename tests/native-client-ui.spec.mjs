@@ -107,7 +107,7 @@ test('email setup copies a request to the chosen actual client without showing O
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Setup request copied', exact: true })).toBeVisible();
   await capture(page, 'en-provider-1440');
-  expect(await page.evaluate(() => window.__nativeClipboard)).toContain('claude-code email gmail');
+  await expect.poll(() => page.evaluate(() => window.__nativeClipboard)).toContain('claude-code email gmail');
   expect(page.__nativeRequests.at(-1)).toMatchObject({ assistant: 'claude-code', kind: 'email', provider: 'gmail' });
   expect(page.__nativeWrites).toEqual([{ path: 'settings', input: { preferredAssistant: 'claude-code' } }]);
 });
@@ -140,7 +140,7 @@ test('Tabbio CV uses native MCP guidance and keeps an optional local original fi
   await expect(dialog.getByRole('link', { name: 'Create a CV in Tabbio', exact: true })).toHaveAttribute('href', 'https://www.tabbio.com/en');
   await expect(dialog).toContainText('Connect Tabbio MCP in your assistant');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
-  expect(page.__nativeRequests.at(-1)).toMatchObject({ assistant: 'codex', kind: 'cv' });
+  await expect.poll(() => page.__nativeRequests.at(-1)).toMatchObject({ assistant: 'codex', kind: 'cv' });
   await dialog.locator('.cv-original-file > summary').click();
   await expect(dialog.getByLabel('CV file', { exact: true })).toBeVisible();
   await expect(dialog.getByRole('textbox', { name: /token|secret|password/i })).toHaveCount(0);
@@ -179,7 +179,7 @@ test('native run needs no CLI and waits for the existing client with selected ac
   await expect(dialog.getByRole('button', { name: 'Run request copied', exact: true })).toBeVisible();
   const input = page.__nativeWrites.find(item => item.path === 'run').input;
   expect(input).toMatchObject({ assistant: 'codex', explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } });
-  expect(await page.evaluate(() => window.__nativeClipboard)).toContain('Fixture explicit native run request');
+  await expect.poll(() => page.evaluate(() => window.__nativeClipboard)).toContain('Fixture explicit native run request');
   await dialog.getByRole('button', { name: 'Stop run', exact: true }).click();
   await expect(dialog).toContainText('Run stopped');
   expect(page.__nativeWrites.filter(item => item.path === 'stop')).toHaveLength(1);

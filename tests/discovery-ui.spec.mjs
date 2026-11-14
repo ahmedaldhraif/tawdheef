@@ -101,7 +101,7 @@ test('job detail keeps stale assessment and original CV provenance, literal sour
   await expect(dialog.getByRole('link', { name: 'Open posting', exact: true })).toHaveAttribute('href', 'https://careers.example.test/jobs/1');
   await dialog.getByRole('button', { name: 'Copy review request', exact: true }).click(); await expect(dialog.getByRole('button', { name: 'Review request copied', exact: true })).toBeVisible();
   expect(page.__recipe).toMatchObject({ assistant: 'claude-code', jobId: 'job-1', directoryId: page.__directory.id });
-  expect(await page.evaluate(() => window.__discoveryClipboard)).toContain('No applications authorized');
+  await expect.poll(() => page.evaluate(() => window.__discoveryClipboard)).toContain('No applications authorized');
   expect(page.__calls.every(call => call.method === 'GET')).toBe(true);
 });
 

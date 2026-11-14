@@ -84,7 +84,7 @@ test('homepage copies the skill install command and links to actual app setup', 
   await expect(page.locator('#quick-cli').locator('xpath=ancestor::details')).toHaveCount(0);
   await expectPasteDemo(page, request);
   await page.locator('#quick-setup [data-copy]').click();
-  expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+  await expect.poll(() => page.evaluate(() => window.__copied)).toBe(installCommand);
   await page.getByRole('link', { name: 'Set up the app', exact: true }).click();
   await expect(page).toHaveURL(/\/skills\/#get-started$/);
   await expect(page.locator('#get-started')).toBeVisible();
@@ -137,10 +137,10 @@ test('Skills copies the install command and both native source-setup commands ex
   await captureClipboard(page);
   await page.goto('/skills/');
   await page.locator('[data-copy="skills-install"]').click();
-  expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+  await expect.poll(() => page.evaluate(() => window.__copied)).toBe(installCommand);
   await expect(page.locator('[data-copy="skills-install"]')).toHaveText('Copied');
   await page.locator('[data-copy="skills-quick-cli"]').click();
-  expect(await page.evaluate(() => window.__copied)).toBe(quickStart);
+  await expect.poll(() => page.evaluate(() => window.__copied)).toBe(quickStart);
   await expect(page.locator('#copy-status')).toHaveText('Copied to clipboard');
 });
 
@@ -329,7 +329,7 @@ for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) 
     else expect(layering.fieldCenter).toBeGreaterThan(layering.heroCenter);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
     await page.locator('[data-copy="skills-install"]').click();
-    expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+    await expect.poll(() => page.evaluate(() => window.__copied)).toBe(installCommand);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(field).not.toBeVisible();
