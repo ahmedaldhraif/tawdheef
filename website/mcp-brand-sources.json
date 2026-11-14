@@ -7,5 +7,10 @@
   "bytes": 1095,
   "sha256": "f6f33e24e95846f9ae2582ab72c4eae7beec5ec52c13d767d9f342bf639dd3e6",
   "preservation": "Original standalone protocol-symbol SVG bytes, unmodified: white protocol symbol on a black rounded-square canvas.",
-  "rights": "Model Context Protocol mark; used only to identify protocol support. Availability does not imply endorsement."
+  "rights": "Model Context Protocol mark; used only to identify protocol support. Availability does not imply endorsement.",
+  "displayVariant": {
+    "file": "public/brands/mcp-mark.svg",
+    "derivedFrom": "public/brands/mcp-original.svg",
+    "changes": "Removed favicon background rectangle; changed symbol strokes to black. Original path geometry retained. CSS inverts the transparent mark to white in dark mode."
+  }
 }

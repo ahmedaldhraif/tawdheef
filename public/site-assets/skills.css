@@ -37,3 +37,22 @@ html[data-docs-theme=dark] .skills-command-field{opacity:.24}
 .skills-cv-step{scroll-margin-top:96px}
 .docs-page .guide-nav-group a:has(.nav-cv-brand){gap:8px}.nav-cv-brand{flex:none;object-fit:contain}.skills-cv-shortcut{display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;margin:24px 0 4px}.skills-cv-shortcut img{display:block;width:100px;height:auto}.skills-cv-shortcut a{display:inline-flex;align-items:center;min-height:44px;font-size:14px;color:var(--docs-ink)}.skills-cv-step{border-top:1px solid var(--docs-line);padding-top:24px}.skills-cv-step .skills-step-number{top:30px}.skills-cv-brand{display:inline-flex;align-items:center;min-height:44px;margin-bottom:10px}.skills-cv-brand img{width:144px;height:35px;object-fit:contain}.skills-cv-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}.skills-cv-actions .button{margin:0;background:#6035ff;border-color:#6035ff;color:#fff}.skills-cv-actions .button.secondary{background:transparent;color:var(--docs-ink);border-color:var(--docs-line);box-shadow:none}.skills-guide-art{height:100px;box-shadow:none}.skills-guide-brand{display:flex;align-items:center;justify-content:center;gap:16px;max-width:100%;padding:8px}.skills-guide-brand-tabbio img{width:144px;max-width:100%;height:auto}.skills-guide-brand-agents img{width:32px;height:32px;object-fit:contain}.skills-guide-brand-flags{display:grid;grid-template-columns:repeat(3,26px);gap:12px}.skills-guide-brand-flags img{width:26px;height:18px;object-fit:cover}.skills-guide-command{font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;padding:12px;text-align:center;color:var(--docs-ink);overflow-wrap:anywhere}.skills-meta{margin-top:14px}
 @media(max-width:600px){.skills-cv-shortcut{gap:6px 14px;margin-top:20px}.skills-cv-shortcut a{font-size:14px}.skills-cv-brand img{width:132px;height:auto}.skills-cv-actions{gap:10px}.skills-cv-actions .button{font-size:12px;padding-inline:13px}.skills-guide-art{height:90px}.skills-guide-brand-tabbio img{width:112px}.skills-guide-command{font-size:12px;padding:7px}}
+
+/* Decorative command stream: two identical groups keep the loop continuous. */
+.skills-command-field{overflow:hidden}
+.skills-command-track{animation:skills-command-scroll 28s linear infinite}
+@keyframes skills-command-scroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+html[data-docs-theme=dark] .skills-command-field{opacity:.38}
+@media(prefers-reduced-motion:reduce){.skills-command-track{animation:none}}
+
+/* Workflow illustrations are decorative, not nested controls. */
+.skills-run-preview{display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border-radius:9px;border:1px solid #7778;background:linear-gradient(175deg,#666,#343434 48%,#242424);box-shadow:inset 0 1px 0 #ffffff50,0 3px 6px #0002;color:#fff;font-size:12px;font-weight:600}
+.skills-reply-preview,.skills-protocol-preview{display:flex;align-items:center;gap:22px;color:var(--docs-muted)}
+.skills-provider-pair{display:flex;gap:12px;align-items:center}
+.skills-guide-art .skills-provider-pair img{width:28px;height:28px;object-fit:contain}
+.skills-check-preview{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--docs-muted)}
+.skills-check-preview code{font:11px ui-monospace,Consolas,monospace}
+.skills-guide-art .skills-protocol-preview img{width:32px;height:32px}
+.skills-protocol-line{width:28px;height:1px;background:var(--docs-line)}
+
+.skills-community{max-width:620px;margin-top:20px;font-size:13px;color:var(--docs-muted)}.skills-community a{color:inherit;text-decoration-color:var(--docs-line);text-underline-offset:4px}

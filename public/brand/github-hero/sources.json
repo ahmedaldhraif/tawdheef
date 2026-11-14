@@ -1,0 +1,15 @@
+{
+  "generator": "scripts/branding/export-github-hero.py",
+  "artwork": [
+    "../wordmark-latin-purple.svg",
+    "../wordmark-arabic-purple.svg"
+  ],
+  "agent": "Original native studio body, square left eye and single right code eye from scripts/branding/mascot.mjs",
+  "rendering": "Pillow + fontTools + aggdraw; local vector rendering only",
+  "purpose": "Decorative GitHub identity animation. No live job progress or account status.",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "reducedMotion": "Separate still PNGs in the README picture element"
+}

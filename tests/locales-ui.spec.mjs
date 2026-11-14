@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const quickStart = 'npm start\nnpm run agent -- codex';
-const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
+const quickStart = 'npm run agent -- codex';
+const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef';
 const anchors = {
   'use-the-skill': ['install', 'agent', 'if-you-prefer-the-terminal', 'cv', 'workflow', 'use', 'already-connected-install-just-the-skill', 'prompts', 'permissions', 'privacy'],
   'connect-your-agent': ['connect-this-project', 'manual-project-connection', 'add-browser-tools-when-needed', 'install-just-the-skill', 'expected-result'],

@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
-const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
-const quickStart = 'npm start\nnpm run agent -- codex';
+const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef';
+const quickStart = 'npm run agent -- codex';
 const guideSlugs = ['use-the-skill', 'connect-your-agent', 'connect-your-cv', 'use-directory-packs', 'apply-to-jobs', 'replies-and-reports', 'troubleshoot', 'for-agents'];
 const publishedTools = JSON.parse(readFileSync(new URL('../docs/tools.json', import.meta.url), 'utf8')).tools;
 
@@ -49,7 +49,7 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   }
   await page.goto('/skills/');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://www.tawdheef.com/skills/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Find matching jobs\.\s*Build career profiles\./);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName('Find matching jobs. Build career profiles.');
   const cards = page.locator('.skills-guide-card');
   await expect(cards).toHaveCount(8);
   expect((await cards.evaluateAll(links => links.map(link => link.getAttribute('href')))).sort())
@@ -88,7 +88,7 @@ test('homepage copies the skill install command and links to actual app setup', 
   await page.getByRole('link', { name: 'Set up the app', exact: true }).click();
   await expect(page).toHaveURL(/\/skills\/#get-started$/);
   await expect(page.locator('#get-started')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Download the app', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef\/releases\/download\/v[\d.]+\/tawdheef-[\d.]+-source.zip$/);
+  await expect(page.getByRole('link', { name: 'Get current source', exact: true })).toHaveAttribute('href', /github.com\/ahmedaldhraif\/tawdheef-auto-apply-jobs\/archive\/refs\/heads\/main.zip$/);
 });
 
 test('real agent GIF runs automatically onscreen and respects visibility and reduced motion', async ({ page }) => {

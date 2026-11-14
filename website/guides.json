@@ -5,8 +5,13 @@
     "description": "Download the free app, connect Codex or Claude Code and your CV, then find matching jobs and build career profiles.",
     "category": "Start",
     "source": "docs/guides/use-the-skill.md",
-    "related": ["connect-your-agent", "connect-your-cv", "troubleshoot"],
-    "next": "connect-your-agent"
+    "related": [
+      "connect-your-agent",
+      "connect-your-cv",
+      "troubleshoot"
+    ],
+    "next": "connect-your-agent",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "connect-your-agent",
@@ -14,8 +19,13 @@
     "description": "Connect the local tracker tools, install the workflow skill and verify the assistant you want Run to use.",
     "category": "Start",
     "source": "docs/guides/connect-your-agent.md",
-    "related": ["use-the-skill", "connect-your-cv", "troubleshoot"],
-    "next": "connect-your-cv"
+    "related": [
+      "use-the-skill",
+      "connect-your-cv",
+      "troubleshoot"
+    ],
+    "next": "connect-your-cv",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "connect-your-cv",
@@ -23,8 +33,13 @@
     "description": "Create a free digital CV on Tabbio or connect your existing account, then check that Tawdheef can read it.",
     "category": "Start",
     "source": "docs/guides/connect-your-cv.md",
-    "related": ["use-the-skill", "connect-your-agent", "troubleshoot"],
-    "next": "use-directory-packs"
+    "related": [
+      "use-the-skill",
+      "connect-your-agent",
+      "troubleshoot"
+    ],
+    "next": "use-directory-packs",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "use-directory-packs",
@@ -32,8 +47,13 @@
     "description": "Download a free country pack from GitHub, extract it and import every CSV part into your chosen tab.",
     "category": "Use",
     "source": "docs/guides/use-directory-packs.md",
-    "related": ["connect-your-cv", "for-agents", "apply-to-jobs"],
-    "next": "apply-to-jobs"
+    "related": [
+      "connect-your-cv",
+      "for-agents",
+      "apply-to-jobs"
+    ],
+    "next": "apply-to-jobs",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "apply-to-jobs",
@@ -41,8 +61,13 @@
     "description": "Choose companies and let your assistant apply to suitable jobs or build career profiles for future opportunities.",
     "category": "Use",
     "source": "docs/guides/apply-to-jobs.md",
-    "related": ["connect-your-cv", "use-directory-packs", "replies-and-reports"],
-    "next": "replies-and-reports"
+    "related": [
+      "connect-your-cv",
+      "use-directory-packs",
+      "replies-and-reports"
+    ],
+    "next": "replies-and-reports",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "replies-and-reports",
@@ -50,8 +75,13 @@
     "description": "Review tracked replies, save a local report and choose optional schedules without starting new applications.",
     "category": "Use",
     "source": "docs/guides/replies-and-reports.md",
-    "related": ["apply-to-jobs", "troubleshoot", "use-directory-packs"],
-    "next": null
+    "related": [
+      "apply-to-jobs",
+      "troubleshoot",
+      "use-directory-packs"
+    ],
+    "next": null,
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "troubleshoot",
@@ -59,8 +89,13 @@
     "description": "Find the next fix for startup, assistant sign-in, CV reads, browser tools, email setup or incomplete pack imports.",
     "category": "Fix",
     "source": "docs/guides/troubleshoot.md",
-    "related": ["use-the-skill", "connect-your-agent", "connect-your-cv"],
-    "next": "connect-your-agent"
+    "related": [
+      "use-the-skill",
+      "connect-your-agent",
+      "connect-your-cv"
+    ],
+    "next": "connect-your-agent",
+    "reviewedAt": "2026-11-15"
   },
   {
     "slug": "for-agents",
@@ -68,7 +103,12 @@
     "description": "Read the local tool contract, discover public packs and record actual outcomes within the requested scope.",
     "category": "Reference",
     "source": "docs/guides/for-agents.md",
-    "related": ["connect-your-agent", "use-directory-packs", "apply-to-jobs"],
-    "next": "use-directory-packs"
+    "related": [
+      "connect-your-agent",
+      "use-directory-packs",
+      "apply-to-jobs"
+    ],
+    "next": "use-directory-packs",
+    "reviewedAt": "2026-11-15"
   }
 ]

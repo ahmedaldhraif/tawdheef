@@ -9,7 +9,7 @@ The app is free; your client and connected services may have their own costs.
 ## Get the app
 
 Use a platform app or `tawdheef-VERSION-source.zip` from the
-[GitHub releases](https://github.com/ahmedaldhraif/tawdheef/releases).
+[GitHub releases](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases).
 Extract the complete app before opening its launcher. App packages contain Node
 and the browser interface; see [desktop release status](DESKTOP-RELEASE.md).
 A country directory ZIP contains research data, not the app.
@@ -18,8 +18,8 @@ For a source checkout, install [Node.js 26 LTS](https://nodejs.org/en/download)
 (patched Node 24 also works), then run:
 
 ```sh
-git clone https://github.com/ahmedaldhraif/tawdheef.git
-cd tawdheef
+git clone https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs.git
+cd tawdheef-auto-apply-jobs
 npm start
 ```
 

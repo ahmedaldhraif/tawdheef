@@ -2,6 +2,7 @@
 
 English | [العربية](../i18n/ar/guides/README.md)
 
+Your actual client owns external connections; Tawdheef keeps the shared local record. Start in Connections and copy the setup request into your client.
 Tawdheef has one installable skill and eight practical guides. The website’s **Skills** overview at `/skills/` brings them together, with the skill command and a Get started action for the local app. These Markdown guides also work directly on GitHub.
 
 Want company leads first? [Try public research before installing](../examples/README.md)
@@ -11,7 +12,7 @@ Then return here when you want personal CV matching and tracking.
 ## Install the skill
 
 ```sh
-npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef
+npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef
 ```
 
 This installs workflow guidance. For the app and its CLI/MCP connection, start with [Set up Tawdheef with your agent](use-the-skill.md). App setup already installs the skill for your chosen client; account sign-ins remain separate.
