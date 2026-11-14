@@ -584,9 +584,9 @@ test('Connections groups real provider logos and calendar setup without claiming
   const hub = page.getByRole('dialog', { name: 'Connections', exact: true });
   await expect(hub.locator('.connection-category-row')).toHaveCount(6);
   await expect(hub.getByText('Connected', { exact: true })).toHaveCount(0);
-  expect(await hub.locator('img.provider-logo').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
+  await expect.poll(() => hub.locator('img.provider-logo').evaluateAll(images => images.length === 2 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
   await hub.getByRole('button', { name: /^Calendar —/ }).click();
-  expect(await page.getByRole('dialog').locator('img.provider-logo').evaluateAll(images => images.length === 3 && images.every(img => img.complete && img.naturalWidth > 0))).toBeTruthy();
+  await expect.poll(() => page.getByRole('dialog').locator('img.provider-logo').evaluateAll(images => images.length === 3 && images.every(img => img.complete && img.naturalWidth > 0 && new URL(img.src).origin === location.origin))).toBeTruthy();
   await page.getByRole('button', { name: 'Google Calendar — Connect', exact: true }).click();
   const calendar = page.getByRole('dialog', { name: 'Connect Google Calendar', exact: true });
   await expect(calendar.getByRole('button', { name: 'Sign in to Google Calendar', exact: true })).toBeVisible();

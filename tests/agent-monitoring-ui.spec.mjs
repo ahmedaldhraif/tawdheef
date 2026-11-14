@@ -80,6 +80,40 @@ test('monitoring is opt-in and copying prepares a native request without claimin
   await expect(panel).toContainText('Creating the schedule happens there.');
 });
 
+for (const clipboardBlocked of [false, true]) {
+  test(`saving monitoring preserves ${clipboardBlocked ? 'manual copy text' : 'copy confirmation'} until the choices change`, async ({ page }) => {
+    await page.addInitScript(({ prompt, clipboardBlocked }) => {
+      const fetch = window.fetch.bind(window);
+      window.fetch = (input, options) => {
+        const url = new URL(typeof input === 'string' ? input : input.url, location.href);
+        if (url.pathname !== '/api/monitoring/recipe') return fetch(input, options);
+        // Resolve immediately after the parent saves, before React commits that save.
+        // Both the returned revision/timezone and copy feedback then land in one batch.
+        window.__immediateMonitorRecipe = JSON.parse(options.body);
+        return Promise.resolve(new Response(JSON.stringify({ prompt, creation: 'requested_only' }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      };
+      if (clipboardBlocked) navigator.clipboard.writeText = async () => { throw new Error('Clipboard unavailable'); };
+    }, { prompt, clipboardBlocked });
+    if (clipboardBlocked) await page.route('**/api/monitoring/scope', route => route.fulfill({ json: { scope: { directoryIds: [], companyIds: ['fixture-company'] } } }));
+    const { panel } = await openSettings(page);
+    await panel.getByRole('checkbox', { name: 'Monitor with Codex', exact: true }).check();
+    await panel.getByRole('checkbox', { name: 'Matching jobs', exact: true }).check();
+    await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
+    if (clipboardBlocked) await expect(panel.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveValue(prompt);
+    else await expect(panel.getByRole('button', { name: 'Schedule request copied', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => window.__immediateMonitorRecipe.configurationRevision)).toBe(page.__monitorConfig.revision);
+    expect(page.__monitorWrites.map(write => write.path)).toEqual(['config']);
+    await expect(panel).toContainText('Creating the schedule happens there.');
+    if (clipboardBlocked) {
+      await panel.getByRole('button', { name: 'Use current list', exact: true }).click();
+      await expect(panel).toContainText('Scope: 1 saved company');
+    } else await panel.getByRole('combobox', { name: 'Frequency', exact: true }).selectOption('weekly');
+    await expect(panel.getByRole('button', { name: 'Copy schedule request', exact: true })).toBeEnabled();
+    await expect(panel.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveCount(0);
+    await expect(panel).not.toContainText('Creating the schedule happens there.');
+  });
+}
+
 test('calendar monitoring requires an explicitly selected calendar and stays blocked without one', async ({ page }) => {
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: false, profiles: false, email: false, calendar: true } };
   const { panel } = await openSettings(page);
@@ -110,11 +144,14 @@ test('changing the preferred assistant does not relabel an existing monitoring o
   page.__monitorConfig = { ...initialConfig(), assistant: 'codex', enabled: true, channels: { jobs: true, profiles: false, email: false, calendar: false } };
   const { panel } = await openSettings(page);
   await expect(panel.getByRole('checkbox', { name: 'Monitor with Codex', exact: true })).toBeChecked();
+  const savedTimezone = (await (await page.request.get('/api/settings')).json()).timezone;
+  await expect(panel.getByText(savedTimezone, { exact: true })).toBeVisible();
   await expect(panel.getByRole('checkbox', { name: 'Monitor with Claude Code', exact: true })).toHaveCount(0);
   expect(page.__monitorWrites).toEqual([]);
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
   await expect(panel.getByRole('button', { name: 'Schedule request copied', exact: true })).toBeVisible();
   expect(page.__monitorConfig.assistant).toBe('codex');
+  expect(page.__monitorConfig.timezone).toBe(savedTimezone);
   expect(page.__monitorWrites.find(write => write.path === 'recipe').input.assistant).toBe('codex');
 });
 

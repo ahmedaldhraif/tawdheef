@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import { Copy } from 'lucide-react';
 import ProviderLogo from './ProviderLogo.jsx';
 import './monitoring-panel.css';
@@ -11,8 +11,6 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
   const [copying, setCopying] = useState(false), [copied, setCopied] = useState(false), [fallback, setFallback] = useState(''), [error, setError] = useState('');
   const [acknowledging, setAcknowledging] = useState(null), acknowledgePending = useRef(false);
   const [choosingCalendar, setChoosingCalendar] = useState(false), [calendarError, setCalendarError] = useState(false);
-  const configKey = JSON.stringify(config);
-  useEffect(() => { setCopied(false); setFallback(''); setError(''); }, [configKey]);
   if (!config) return <section className="settings-section monitoring-panel"><h3>{t('Monitoring')}</h3><p className="field-hint">{t('Loading monitoring settings…')}</p></section>;
   const assistant = (config.assistant || preferredAssistant) === 'claude-code' ? 'claude-code' : 'codex';
   const name = assistant === 'codex' ? 'Codex' : 'Claude Code';
@@ -26,7 +24,10 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
   const active = Number.isInteger(status?.activeChecks) ? status.activeChecks : 0;
   const needsYou = Number.isInteger(status?.needsYouCount) && status.needsYouCount > 0 ? status.needsYouCount : 0;
   const scopeSummary = scopeLabel || (scope.companyIds?.length ? `${scope.companyIds.length} ${t(scope.companyIds.length === 1 ? 'saved company' : 'saved companies')}` : scope.directoryIds?.length ? `${scope.directoryIds.length} ${t(scope.directoryIds.length === 1 ? 'saved directory' : 'saved directories')}` : t('Saved companies'));
-  function update(patch) { onChange?.({ ...config, ...patch, assistant: preferredAssistant || assistant }); }
+  // Copy saves the draft first. That server response must not erase its own result.
+  function clearRequestFeedback() { setCopied(false); setFallback(''); setError(''); }
+  function update(patch) { clearRequestFeedback(); onChange?.({ ...config, ...patch, assistant: preferredAssistant || assistant }); }
+  function updateScope() { clearRequestFeedback(); onUseCurrentScope?.(); }
   async function chooseCalendar() {
     if (busy || !onChooseCalendar) return;
     setChoosingCalendar(true); setError(''); setCalendarError(false);
@@ -65,7 +66,7 @@ export default function MonitoringPanel({ config, onChange, status, updates = []
     <fieldset className="monitoring-options" disabled={busy || !config.enabled}>
       <legend className="sr-only">{t('What to monitor')}</legend>
       <div className="monitoring-channels">{CHANNELS.map(([id, label]) => <label className="checkbox-label" key={id}><input type="checkbox" checked={channels[id] === true} aria-describedby={id === 'calendar' && calendarMissing ? calendarHintId : undefined} onChange={event => update({ channels: { ...channels, [id]: event.target.checked } })} />{t(label)}</label>)}</div>
-      <div className="monitoring-scope"><span>{t('Scope')}: {scopeSummary}</span>{onUseCurrentScope && <button type="button" className="text-button" onClick={onUseCurrentScope}>{t('Use current list')}</button>}</div>
+      <div className="monitoring-scope"><span>{t('Scope')}: {scopeSummary}</span>{onUseCurrentScope && <button type="button" className="text-button" onClick={updateScope}>{t('Use current list')}</button>}</div>
       {channels.calendar === true && calendars.length > 0 && <label className="monitoring-calendar">{t('Calendar')}<select value={scope.calendarIds?.[0] || ''} onChange={event => update({ scope: { ...scope, calendarIds: event.target.value ? [event.target.value] : [] } })}><option value="">{t('Choose a calendar')}</option>{calendars.map(calendar => <option key={calendar.id} value={calendar.id}>{calendar.name || calendar.summary || calendar.id}</option>)}</select></label>}
       {calendarMissing && <p id={calendarHintId} className="field-hint monitoring-needs-you">{t('Needs you')}: {t('Choose a calendar to monitor.')}{onChooseCalendar && calendars.length === 0 && <button type="button" className="text-button" onClick={chooseCalendar}>{t(choosingCalendar ? 'Loading calendars…' : 'Choose a calendar')}</button>}{onOpenConnections && (!onChooseCalendar || calendarError) && <button type="button" className="text-button" onClick={() => onOpenConnections('calendar')}>{t('Open Calendar in Connections')}</button>}</p>}
       {channels.calendar === true && !calendarMissing && <p className="field-hint">{t('Calendar events in the next 14 days.')}</p>}

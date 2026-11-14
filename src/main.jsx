@@ -2059,7 +2059,7 @@ function SettingsDialog({
         }}
       >
         <>
-            <MonitoringPanel config={monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
+            <MonitoringPanel config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
               onChange={value => { setMonitor(value); if (value.enabled && value.channels.email) setV(previous => ({ ...previous, refreshFrequency: 'manual' })); }}
               onUseCurrentScope={async () => { setActionBusy('scope'); setMonitorError(''); try { const value = await api('/monitoring/scope', 'POST', monitoringScope); setMonitor(previous => ({ ...previous, scope: { ...value.scope, calendarIds: previous.scope.calendarIds } })); } catch (error) { setMonitorError(error.message); } finally { setActionBusy(''); } }}
               onChooseCalendar={async () => { setActionBusy('calendars'); try { const result = await api('/calendar/calendars'); const items = result.calendars || result.items || result.data?.calendars; if (!Array.isArray(items)) throw new Error('Open Calendar in Connections and check its access.'); setCalendars(items); } finally { setActionBusy(''); } }}
