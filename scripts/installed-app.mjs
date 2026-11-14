@@ -54,14 +54,28 @@ export async function getInstalledAppLaunch({ sourceRoot, entry, args = process.
   try { pointer = await jsonFile(path, 16 * 1024, 'active-install.json'); }
   catch (error) { if (error.code === 'ENOENT') return null; throw error; }
   const appRoot = absolute(pointer?.appRoot, 'Installed app root');
+  const workspace = absolute(pointer?.workspace, 'Workspace');
+  const dataDir = absolute(pointer?.dataDir, 'Private data directory');
+  const [sourceIdentity, appIdentity, workspaceIdentity] = await Promise.all([realpath(sourceRoot), realpath(appRoot), realpath(workspace)]);
+  if (samePath(appIdentity, sourceIdentity, platform)) fail('The installed app resolves to this source checkout.');
+  if (!samePath(workspaceIdentity, sourceIdentity, platform)) fail('The pointer belongs to a different source workspace.');
+  let dataIdentity;
+  try { dataIdentity = await realpath(dataDir); if (!(await lstat(dataIdentity)).isDirectory()) fail('The existing private data path is not a directory.'); }
+  catch (error) { if (error.code === 'ENOENT') fail('The existing private data directory is missing; review its original location before starting.'); throw error; }
+  // Module URLs may use /private/var while mkdtemp/client settings retain /var.
+  // Compare filesystem identities, then retain the pointer's declared spelling.
+  const launchEnv = { ...env };
+  for (const [key, identity, declared] of [['APPLY_TRACKER_DATA', dataIdentity, dataDir], ['TAWDHEEF_WORKSPACE', workspaceIdentity, workspace]]) {
+    if (!env[key]) continue;
+    try { if (samePath(await realpath(resolve(env[key])), identity, platform)) launchEnv[key] = declared; }
+    catch (error) { if (!['ENOENT', 'ENOTDIR'].includes(error.code)) throw error; }
+  }
   let manifest;
   try { manifest = await jsonFile(join(appRoot, 'tawdheef-app.json'), 64 * 1024, 'Installed app manifest'); }
   catch (error) { if (error.code === 'ENOENT') fail('The pointed-to app manifest is missing; restore the reviewed app before starting.'); throw error; }
-  const spec = installedAppLaunchSpec({ sourceRoot, pointer, manifest, entry, args, env, platform, arch, cwd });
+  // The original strict pure ownership check remains after canonical validation.
+  const spec = installedAppLaunchSpec({ sourceRoot: workspace, pointer, manifest, entry, args, env: launchEnv, platform, arch, cwd });
   if (!spec) return null;
-  if (samePath(await realpath(appRoot), await realpath(sourceRoot), platform)) fail('The installed app resolves to this source checkout.');
-  try { if (!(await lstat(pointer.dataDir)).isDirectory()) fail('The existing private data path is not a directory.'); }
-  catch (error) { if (error.code === 'ENOENT') fail('The existing private data directory is missing; review its original location before starting.'); throw error; }
   for (const [path, label] of [[spec.command, 'Bundled Node runtime'], [spec.args[0], 'Installed entry point']]) {
     try { if (!(await lstat(path)).isFile()) fail(`${label} is missing or is not a regular file.`); }
     catch (error) { if (error.code === 'ENOENT') fail(`${label} is missing; restore the reviewed app before starting.`); throw error; }

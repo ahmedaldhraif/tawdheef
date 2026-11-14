@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, copyFile, link, rm, unlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, copyFile, link, rm, unlink, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,6 +50,36 @@ test('explicit source data, workspace or port requests never redirect to install
     assert.equal(await getInstalledAppLaunch({ ...f, entry: 'server/mcp.mjs', env }), null);
   }
   assert.ok(await getInstalledAppLaunch({ ...f, entry: 'server/mcp.mjs', env: { ...f.env, APPLY_TRACKER_DATA: f.dataDir, TAWDHEEF_WORKSPACE: f.sourceRoot, APPLY_TRACKER_PORT: '4017' } }));
+});
+
+test('canonical module paths accept unchanged pointer aliases and equivalent client environment paths', async t => {
+  const f = await fixture(t), aliases = join(dirname(f.sourceRoot), 'filesystem aliases'); await mkdir(aliases);
+  const sourceAlias = join(aliases, 'source'), appAlias = join(aliases, 'app'), dataAlias = join(aliases, 'data');
+  for (const [target, alias] of [[f.sourceRoot, sourceAlias], [f.appRoot, appAlias], [f.dataDir, dataAlias]]) await symlink(target, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const pointer = { ...f.pointer, appRoot: appAlias, workspace: sourceAlias, dataDir: dataAlias };
+  await writeFile(f.pointerPath, JSON.stringify(pointer)); const before = await readFile(f.pointerPath);
+  const canonicalSource = await realpath(f.sourceRoot), canonicalData = await realpath(f.dataDir);
+  for (const env of [f.env, { ...f.env, APPLY_TRACKER_DATA: canonicalData, TAWDHEEF_WORKSPACE: canonicalSource }, { ...f.env, APPLY_TRACKER_DATA: dataAlias, TAWDHEEF_WORKSPACE: sourceAlias }]) {
+    const spec = await getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs', env });
+    assert.equal(spec.command, join(appAlias, 'runtime', ...(process.platform === 'win32' ? ['node.exe'] : ['bin', 'node'])));
+    assert.equal(spec.options.env.APPLY_TRACKER_DATA, dataAlias); assert.equal(spec.options.env.TAWDHEEF_WORKSPACE, sourceAlias);
+    assert.equal(spec.options.env.APPLY_TRACKER_CLIENT, 'claude-code'); assert.equal(spec.options.env.FIXTURE_PERMISSION, 'unchanged');
+  }
+  const alternate = join(aliases, 'genuinely different data'); await mkdir(alternate);
+  assert.equal(await getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs', env: { ...f.env, APPLY_TRACKER_DATA: alternate } }), null);
+  assert.equal(await getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs', env: { ...f.env, APPLY_TRACKER_DATA: join(aliases, 'not-created alternate') } }), null);
+  assert.equal(await getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs', env: { ...f.env, TAWDHEEF_WORKSPACE: alternate } }), null);
+  const forwarded = spawnSync(process.execPath, [join(canonicalSource, 'scripts/start.mjs'), '--no-open'], { cwd: canonicalSource, env: { ...f.env, APPLY_TRACKER_DATA: canonicalData, TAWDHEEF_WORKSPACE: canonicalSource }, encoding: 'utf8', windowsHide: true, timeout: 10_000 });
+  assert.equal(forwarded.status, 7, forwarded.stderr);
+  const observed = JSON.parse(forwarded.stdout);
+  assert.equal(await realpath(observed.entry), await realpath(join(f.appRoot, 'scripts/start.mjs')));
+  assert.equal(observed.data, dataAlias); assert.equal(observed.workspace, sourceAlias); assert.equal(observed.client, 'claude-code');
+  assert.deepEqual(await readFile(f.pointerPath), before);
+  await writeFile(f.pointerPath, JSON.stringify({ ...pointer, workspace: alternate }));
+  await assert.rejects(getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs' }), /different source workspace/);
+  await writeFile(f.pointerPath, JSON.stringify({ ...pointer, appRoot: sourceAlias }));
+  await assert.rejects(getInstalledAppLaunch({ ...f, sourceRoot: canonicalSource, entry: 'scripts/start.mjs' }), /resolves to this source checkout/);
+  await writeFile(f.pointerPath, before); assert.deepEqual(await readFile(f.pointerPath), before);
 });
 
 test('invalid private pointers and mismatched package metadata fail closed', async t => {
@@ -138,9 +168,10 @@ test('installed agent setup preserves an existing source checkout guidance while
   const pointerBefore = await readFile(f.pointerPath);
   function setup() { return spawnSync(process.execPath, [join(f.sourceRoot, 'scripts/agent-setup.mjs'), 'codex', '--json'], { cwd: f.sourceRoot, env: f.env, encoding: 'utf8', windowsHide: true, timeout: 10_000 }); }
   const first = setup(); assert.equal(first.status, 0, first.stderr); const result = JSON.parse(first.stdout);
-  assert.equal(result.appRoot, f.appRoot); assert.equal(result.workspace, f.sourceRoot); assert.deepEqual(result.clients, ['codex']);
+  assert.equal(await realpath(result.appRoot), await realpath(f.appRoot)); assert.equal(await realpath(result.workspace), await realpath(f.sourceRoot)); assert.deepEqual(result.clients, ['codex']);
   const config = await readFile(join(f.sourceRoot, '.codex/config.toml'), 'utf8');
-  assert.ok(config.includes(`command = ${JSON.stringify(f.executable)}`)); assert.ok(config.includes(JSON.stringify(join(f.appRoot, 'server/mcp.mjs'))));
+  const configuredCommand = JSON.parse(config.match(/^command = (".*")$/m)[1]), configuredArgs = JSON.parse(config.match(/^args = (\[.*\])$/m)[1]);
+  assert.equal(await realpath(configuredCommand), await realpath(f.executable)); assert.deepEqual(await Promise.all(configuredArgs.map(path => realpath(path))), [await realpath(join(f.appRoot, 'server/mcp.mjs'))]);
   assert.match(config, /APPLY_TRACKER_CLIENT = "codex"/); assert.ok(config.includes(JSON.stringify(f.dataDir)));
   assert.equal(await readFile(join(f.sourceRoot, '.agents/skills/tawdheef/SKILL.md'), 'utf8'), 'Synthetic installed Native guidance');
   assert.ok(result.files.every(file => !/AGENTS\.md$|CLAUDE\.md$|[\\/]docs[\\/]/.test(file.path)));
