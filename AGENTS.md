@@ -68,6 +68,20 @@ Native monitoring's clock and every external read belong to the actual client. F
 
 Only inspect application threads relevant to tracked submissions. Re-read the source before changing an application outcome. A tool error is an attention flag, not a rejection. Unknown CV analytics are unknown; do not turn them into zero or attribute a view to a company without source support.
 
+## Read-only job discovery
+
+Use `prepare_job_discovery` and the actual client's public HTTP/browser tools,
+then `record_job_discovery`. Review compact pending jobs and read full details
+only when needed. Compare against the actual current CV; report only its source
+ID and SHA-256 versionHash, then record exact requirement quotes and CV fact
+locators through `record_job_match`. Job/CV/preference changes invalidate older
+assessments. Never invent eligibility, treat a client assessment as independent
+verification, or infer closure from partial/missing/blocked sources. Give one
+actionable Needs you item and continue other readable sources. These read-only
+tools grant no application/profile/CV-sharing authority. The full workflow is
+in [Job discovery](docs/JOB-DISCOVERY.md). Scheduled jobs use the nested discovery
+lease from `check_updates`; its final record also finishes that saved check.
+
 ## Source handling
 
 The bundled UAE data is a 10 November 2026 research snapshot with 772 organisation/source records. Preserve stable source IDs, actual hyperlink destinations, source roles, original evidence and missing-data notes. A published route has not necessarily been tested. Do not infer email addresses, company ownership, nationality eligibility or shared accounts.

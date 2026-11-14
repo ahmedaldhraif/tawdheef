@@ -14,6 +14,7 @@ import { createMonitoringStore } from './monitoring-store.mjs';
 import { createNativeStore } from './native-store.mjs';
 import { createPackStore } from './pack-store.mjs';
 import { createRecurringMonitoringStore } from './recurring-monitor-store.mjs';
+import { createJobDiscoveryStore } from './job-discovery-store.mjs';
 
 const Database = sqlite.Database || sqlite.DatabaseSync;
 
@@ -1596,6 +1597,7 @@ export function openStore({
   };
   Object.assign(store, createPackStore({ db, store, tx, saveCompany, now, activity, AppError }));
   Object.assign(store, createRecurringMonitoringStore({ db, store, clock: () => new Date(clock()) }));
+  Object.assign(store, createJobDiscoveryStore({ db, getStore: () => store, tx, activity, now, ErrorType: AppError }));
   if (seed && !all("directories").length) {
     const seedPath = resolve(ROOT, "data/uae-directory.json");
     if (existsSync(seedPath)) {

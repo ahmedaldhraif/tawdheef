@@ -100,7 +100,8 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       if (value.accountId !== undefined) value.accountId = nativeIdentity({ ...value, kind: input.kind }).accountId;
       if (['email', 'calendar'].includes(input.kind) && input.status === 'available') { const identity = nativeIdentity({ ...value, kind: input.kind }); require(identity.provider && identity.accountId, 'Report the actual provider and observed account identity.'); Object.assign(value, identity); }
       if (input.cv !== undefined) {
-        require(input.kind === 'cv', 'CV metadata belongs only to the CV capability.'); object(input.cv, ['id', 'url', 'label', 'updatedAt', 'primaryEmail']); value.cv = {};
+        require(input.kind === 'cv', 'CV metadata belongs only to the CV capability.'); object(input.cv, ['id', 'url', 'label', 'updatedAt', 'primaryEmail', 'versionHash']); value.cv = {};
+        if (input.cv.versionHash !== undefined) { require(typeof input.cv.versionHash === 'string' && /^[a-fA-F0-9]{64}$/.test(input.cv.versionHash), 'Use a SHA-256 hash of the actual CV source version, never its contents.'); value.cv.versionHash = input.cv.versionHash.toLowerCase(); }
         for (const key of ['id', 'label']) if (input.cv[key] !== undefined) value.cv[key] = text(input.cv[key], `CV ${key}`, 500);
         if (input.cv.url !== undefined) value.cv.url = url(input.cv.url);
         if (input.cv.updatedAt !== undefined) { require(typeof input.cv.updatedAt === 'string' && Number.isFinite(Date.parse(input.cv.updatedAt)), 'Use the observed CV update timestamp.'); value.cv.updatedAt = new Date(input.cv.updatedAt).toISOString(); }
@@ -178,7 +179,14 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       } else if (kind === 'calendar') readRequest = { kind, method: 'native_calendar', sourceId: source.id, calendarId: source.calendarId, timeMin: lease.check.startedAt, timeMax: new Date(Date.parse(lease.check.startedAt) + 14 * 86400000).toISOString(), limit: 100, ...identity };
       else readRequest = { kind, method: 'native_browser', sourceId: source.id, companyId: source.companyId, url: source.url, limit: 100 };
       if (['jobs', 'profiles'].includes(kind) && !source.url) return unknown('Save an actual careers/profile URL before asking the native client to read this source.');
-      return { status: 'needs_observation', check: { ...lease.check, token: lease.token }, readRequest: { ...readRequest, executionOwner: 'native-client', readOnly: true, writesAllowed: false }, reused: false, nextStep: 'Read only this source with your own authorized tools. Report fresh sourceRead evidence and bounded source-backed observations. Do not apply, create profiles, upload/share CVs, send messages, change calendars or start a Run from monitoring.' };
+      if (kind === 'jobs') readRequest.discovery = getStore().prepareMonitoredJobDiscovery({ ...key, assistant: input.assistant });
+      return { status: 'needs_observation', check: { ...lease.check, token: lease.token }, readRequest: { ...readRequest, executionOwner: 'native-client', readOnly: true, writesAllowed: false }, reused: false, nextStep: kind === 'jobs' ? 'Use the nested discovery lease and its exact public feed/browser plan. Record the same read through record_job_discovery; its final batch also completes this saved monitoring check. Review only pending jobs against the current CV and saved preferences. Do not read twice or record a second completion. No applications or external writes are authorized.' : 'Read only this source with your own authorized tools. Report fresh sourceRead evidence and bounded source-backed observations. Do not apply, create profiles, upload/share CVs, send messages, change calendars or start a Run from monitoring.' };
+    },
+    recordNativeJobDiscovery(input = {}) {
+      const scope = getStore().getDiscoveryLeaseScope({ id: input.id, token: input.token, assistant: input.assistant });
+      const result = getStore().recordJobDiscovery(input);
+      if (!scope.monitoringCheckId || result.leaseActive) return result;
+      return { ...result, monitoring: getStore().finishDiscoveredMonitoringCheck({ id: input.id, token: input.token, assistant: input.assistant }) };
     },
     recordNativeMonitoringCheck(input = {}) {
       object(input, ['id', 'token', 'status', 'complete', 'observations', 'sourceRead', 'summary', 'cursor']);

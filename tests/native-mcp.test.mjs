@@ -38,6 +38,10 @@ async function fixture(t) {
       if (url.pathname === '/api/native/email/resolve') return response(store.resolveNativeEmail(body));
       if (url.pathname === '/api/monitoring/check') return response(store.beginNativeMonitoringCheck(body));
       if (url.pathname === '/api/monitoring/observations') return response(store.recordNativeMonitoringCheck(body));
+      if (url.pathname === '/api/discovery/prepare') return response(store.prepareJobDiscovery(body));
+      if (url.pathname === '/api/discovery/record') return response(store.recordNativeJobDiscovery(body));
+      if (url.pathname === '/api/discovery/match') return response(store.recordJobMatch(body));
+      if (url.pathname === '/api/discovery/preferences') return response(store.updateDiscoveryPreferences(body));
       throw new Error(`Unexpected coordinator request: ${url.pathname}`);
     } catch (error) { return { ok: false, status: error.status || 400, json: async () => ({ error: error.message }) }; }
   };
@@ -57,7 +61,7 @@ const ownership = lease => ({ runId: lease.run.id, companyId: lease.target.compa
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 62); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  assert.equal(names.length, 70); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
   for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'save_monitor', 'set_monitor_status', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
   for (const name of ['check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
   for (const name of ['get_cv', 'configure_connection', 'connect_connection', 'get_connection_tools', 'refresh_replies', 'send_application_email', 'list_calendars', 'create_calendar_event']) assert.ok(!names.includes(name), name);
@@ -113,9 +117,9 @@ test('Native MCP email never sends, preserves one exact plan and records a same-
   assert.ok(requests.filter(request => !['/api/health', '/api/agent-config'].includes(request.path)).every(request => /^\/api\/(?:native\/(?:runs|email)|runs\/)/.test(request.path)), 'No provider send endpoint may be called.');
 });
 
-test('Native monitor has nine tools, returns client-owned reads and cannot write external state or another actor evidence', async t => {
+test('Native monitor has fifteen tools, returns client-owned reads and cannot write external state or another actor evidence', async t => {
   const { store, connect, requests } = await fixture(t), monitor = await connect('codex', true);
-  const names = (await monitor.listTools()).tools.map(tool => tool.name); assert.equal(names.length, 9); assert.deepEqual([...names].sort(), [...NATIVE_MONITOR_TOOLS].sort());
+  const names = (await monitor.listTools()).tools.map(tool => tool.name); assert.equal(names.length, 15); assert.deepEqual([...names].sort(), [...NATIVE_MONITOR_TOOLS].sort());
   for (const name of ['start_native_run', 'start_run', 'prepare_native_email', 'resolve_native_email', 'prepare_form_submission', 'prepare_cv_attachment', 'configure_monitoring', 'get_cv', 'create_calendar_event']) assert.equal((await monitor.callTool({ name, arguments: {} })).isError, true);
   await call(monitor, 'report_native_connection', { kind: 'browser', status: 'available', observedAt: new Date().toISOString(), provider: 'actual-client-browser' });
   const config = store.configureMonitoring({ expectedRevision: 1, explicit: true, patch: { enabled: true, channels: { jobs: true }, scope: { companyIds: ['alpha'] } } }).config;
@@ -126,4 +130,52 @@ test('Native monitor has nine tools, returns client-owned reads and cannot write
   const result = await call(monitor, 'record_monitoring_observations', proof); assert.equal(result.check.status, 'checked'); assert.equal(result.check.cursor, null);
   assert.equal((await call(monitor, 'list_updates')).total, 1); assert.equal(store.listRuns().length, 0); assert.equal(store.listApplications().length, 0);
   assert.ok(requests.every(request => ['/api/health', '/api/agent-config', '/api/monitoring/check', '/api/monitoring/observations'].includes(request.path)));
+});
+
+test('Native discovery uses one local coordinator, current CV citations and saved preferences without creating action authority', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const lease = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  assert.equal(lease.readRequest.executionOwner, 'native-client');
+  await call(client, 'record_job_discovery', { id: lease.id, token: lease.token, complete: true, sourceRead: { method: 'native_browser', url: lease.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic complete public posting read.' }, observations: [{ title: 'Engineer', url: 'https://careers.example.com/job/1', description: 'JavaScript experience required.', evidence: 'Synthetic posting content inspected.', status: 'open', contentComplete: true }] });
+  const jobs = await call(client, 'list_discovered_jobs', { review: 'pending' }); assert.equal(jobs.total, 1);
+  const detail = await call(client, 'get_discovered_job', { id: jobs.items[0].id });
+  assert.equal(detail.matchState, 'cv_unknown');
+  const versionHash = 'a'.repeat(64);
+  await call(client, 'report_native_connection', { kind: 'cv', status: 'available', observedAt: new Date().toISOString(), cv: { id: 'synthetic-cv', versionHash } });
+  const match = { jobId: detail.job.id, expectedContentHash: detail.job.contentHash, expectedPreferencesRevision: detail.preferences.revision, cvReference: { sourceId: 'synthetic-cv', versionHash }, decision: 'suitable', requirements: [{ kind: 'required', jobQuote: 'JavaScript experience required.', cvFactRef: 'experience/fixture-role', relation: 'supports' }], reason: 'The client compared the actual cited requirement with the synthetic CV fact.' };
+  const assessed = await call(client, 'record_job_match', match); assert.equal(assessed.matchState, 'current');
+  assert.equal((await call(client, 'list_discovered_jobs', { review: 'pending' })).total, 0);
+  const prefs = await call(client, 'get_discovery_preferences');
+  await call(client, 'update_discovery_preferences', { expectedRevision: prefs.revision, explicit: true, patch: { roles: ['Engineering'], locations: ['Dubai'] } });
+  assert.equal((await call(client, 'get_discovered_job', { id: detail.job.id })).matchState, 'stale');
+  assert.equal((await client.callTool({ name: 'record_job_match', arguments: match })).isError, true);
+  assert.equal(store.listRuns().length, 0); assert.equal(store.listApplications().length, 0);
+  assert.ok(requests.every(request => request.path.startsWith('/api/discovery/') || ['/api/health', '/api/agent-config'].includes(request.path)));
+});
+
+test('Native scheduled discovery cannot borrow manual leases, widen saved sources or change preferences', async t => {
+  const { store, connect } = await fixture(t), full = await connect();
+  store.addCompanies('fixture', [{ id: 'outside', name: 'Outside', careersUrl: 'https://outside.example.com/jobs' }]);
+  const saveJob = companyId => {
+    const lease = store.prepareJobDiscovery({ companyId, assistant: 'codex' });
+    store.recordJobDiscovery({ id: lease.id, token: lease.token, assistant: 'codex', complete: true, sourceRead: { method: 'native_browser', url: lease.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic complete public listing.' }, observations: [{ title: 'Engineer', url: `${new URL(lease.readRequest.url).origin}/job/1`, description: 'JavaScript experience required.', evidence: 'Synthetic posting content inspected.', contentComplete: true, status: 'open' }] });
+    return store.listDiscoveredJobs({ assistant: 'codex', companyIds: [companyId] }).items[0];
+  };
+  const inside = saveJob('alpha'), outside = saveJob('outside');
+  const manual = await call(full, 'prepare_job_discovery', { companyId: 'alpha' });
+  const config = store.configureMonitoring({ expectedRevision: 1, explicit: true, patch: { enabled: true, channels: { jobs: true }, scope: { companyIds: ['alpha'] } } }).config;
+  const monitor = await connect('codex', true);
+  const items = await call(monitor, 'list_discovered_jobs'); assert.deepEqual(items.items.map(item => item.id), [inside.id]);
+  assert.deepEqual((await call(monitor, 'list_discovered_jobs', { companyIds: ['outside'] })).items, []);
+  assert.equal((await monitor.callTool({ name: 'get_discovered_job', arguments: { id: outside.id } })).isError, true);
+  for (const name of ['prepare_job_discovery', 'update_discovery_preferences', 'start_native_run']) assert.equal((await monitor.callTool({ name, arguments: {} })).isError, true);
+  const sourceRead = { method: 'native_browser', url: manual.readRequest.url, observedAt: new Date().toISOString(), evidence: 'Synthetic manual check.' };
+  assert.equal((await monitor.callTool({ name: 'record_job_discovery', arguments: { id: manual.id, token: manual.token, sourceRead, complete: true, observations: [] } })).isError, true);
+  const pending = await call(monitor, 'check_updates', { configurationRevision: config.revision, assistant: 'codex', source: { kind: 'jobs', id: 'alpha' } });
+  const nested = pending.readRequest.discovery; assert.ok(nested.token);
+  const completed = await call(monitor, 'record_job_discovery', { id: nested.id, token: nested.token, sourceRead: { ...sourceRead, url: nested.readRequest.url }, complete: true, observations: [] });
+  assert.equal(completed.monitoring.check.status, 'checked');
+  assert.equal(store.listRuns().length, 0);
+  store.configureMonitoring({ expectedRevision: config.revision, patch: { enabled: false } });
+  assert.equal((await monitor.callTool({ name: 'get_discovery_summary', arguments: {} })).isError, true);
 });

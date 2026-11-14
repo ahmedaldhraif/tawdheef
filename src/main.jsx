@@ -45,6 +45,7 @@ import useRunUpdates from './useRunUpdates.js';
 import CompanyFilters from './CompanyFilters.jsx';
 import CompanyProgress, { PROGRESS_LABELS } from './CompanyProgress.jsx';
 import DirectorySnapshot from './DirectorySnapshot.jsx';
+import DiscoveryPanel, { DISCOVERY_AR, discoveryApi } from './DiscoveryPanel.jsx';
 import DirectoryPacksDialog from './DirectoryPacksDialog.jsx';
 import ConnectionsHub from './ConnectionsHub.jsx';
 import MonitoringPanel from './MonitoringPanel.jsx';
@@ -89,6 +90,7 @@ const FIELDS = {
   followUpAt: "Follow-up",
 };
 const AR = {
+  ...DISCOVERY_AR,
   'Directory packs': 'حزم الأدلة',
   'Browse community packs': 'تصفّح حزم المجتمع',
   'Manage directory packs': 'إدارة حزم الأدلة',
@@ -926,6 +928,7 @@ function App() {
           t={t}
           onOpenCompany={companyId => openDetail({ id: companyId }, null, 'applications')}
         />}
+        {directory && boot.settings.connectionMode !== 'local-adapters' && <DiscoveryPanel directoryId={active} directoryName={directory.name} revision={rowsRevision} assistant={boot.settings.preferredAssistant} t={t} />}
         <div
           className="table-surface"
           id={"directory-" + active}
@@ -1489,6 +1492,7 @@ function App() {
             settingsDraft.current = null;
             setModal(null);
             notify(t("Saved"));
+            await loadRows();
           }}
         />
       )}
@@ -1566,6 +1570,7 @@ function App() {
         <DetailPanel
           key={detail.company.id}
           detail={detail}
+          discovery={{ directoryId: active, directoryName: directory?.name, revision: rowsRevision, assistant: boot.settings.preferredAssistant, enabled: boot.settings.connectionMode !== 'local-adapters' }}
           t={t}
           close={() => {
             detailRequest.current++;
@@ -1865,6 +1870,31 @@ function SettingsDialog({
   const nativeMode = settings.connectionMode !== 'local-adapters';
   const [monitor, setMonitor] = useState(draftRef?.current?.monitor || null), [monitorStatus, setMonitorStatus] = useState(null), [monitorError, setMonitorError] = useState(''), [monitorUpdates, setMonitorUpdates] = useState([]), [calendars, setCalendars] = useState([]);
   const savedMonitor = useRef(null);
+  const [jobPreferences, setJobPreferences] = useState(draftRef?.current?.jobPreferences || null), [preferencesError, setPreferencesError] = useState('');
+  useEffect(() => {
+    let active = true;
+    discoveryApi('/preferences').then(value => {
+      if (!active) return;
+      const preferences = value.preferences || value;
+      setJobPreferences(previous => previous || { revision: preferences.revision, rolesText: (preferences.roles || []).join(', '), locationsText: (preferences.locations || []).join(', '), notes: preferences.notes || '', base: preferences });
+    }).catch(error => { if (active) setPreferencesError(error.message); });
+    return () => { active = false; };
+  }, []);
+  async function saveJobPreferences() {
+    if (!jobPreferences) return;
+    const split = text => [...new Set(text.split(/[,\n،]/).map(value => value.trim()).filter(Boolean))];
+    const patch = { roles: split(jobPreferences.rolesText), locations: split(jobPreferences.locationsText), notes: jobPreferences.notes };
+    const base = jobPreferences.base;
+    if (JSON.stringify(patch) === JSON.stringify({ roles: base.roles || [], locations: base.locations || [], notes: base.notes || '' })) return;
+    try {
+      const value = await discoveryApi('/preferences', 'PATCH', { expectedRevision: jobPreferences.revision, explicit: true, patch });
+      const saved = value.preferences || value;
+      setJobPreferences(previous => ({ ...previous, revision: saved.revision, base: saved }));
+    } catch (error) {
+      if (error.status === 409) throw new Error(t('Preferences changed elsewhere. Your draft is kept. Reopen Settings to compare before saving.'));
+      throw error;
+    }
+  }
   useEffect(() => {
     let active = true;
     Promise.all([api('/monitoring'), api('/monitoring/updates?limit=10')]).then(([value, updates]) => {
@@ -1874,7 +1904,7 @@ function SettingsDialog({
     }).catch(error => { if (active) setMonitorError(error.message); });
     return () => { active = false; };
   }, []);
-  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor }; }, [v, monitor]);
+  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor, jobPreferences }; }, [v, monitor, jobPreferences]);
   async function saveMonitor() {
     if (!monitor || !savedMonitor.current) return monitor;
     const prepared = { ...monitor, timezone: v.timezone };
@@ -1930,11 +1960,20 @@ function SettingsDialog({
           event.preventDefault();
           if (pending) return;
           setSaveBusy(true); setSaveError('');
-          try { await saveMonitor(); await save({ ...v, ...(monitor?.enabled && monitor.channels.email ? { refreshFrequency: 'manual' } : {}) }); } catch (error) { setSaveError(error.message); }
+          try { await saveJobPreferences(); await saveMonitor(); await save({ ...v, ...(monitor?.enabled && monitor.channels.email ? { refreshFrequency: 'manual' } : {}) }); } catch (error) { setSaveError(error.message); }
           finally { setSaveBusy(false); }
         }}
       >
         <>
+            <details className="advanced discovery-preferences"><summary>{t('Job preferences')}</summary>
+              <p className="field-hint">{t('Your assistant uses these preferences with your actual CV.')}</p>
+              {preferencesError ? <p role="alert" className="form-error">{t(preferencesError)}</p> : !jobPreferences ? <p role="status" className="field-hint">{t('Loading job preferences…')}</p> : <>
+                <label>{t('Roles')}<textarea value={jobPreferences.rolesText} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, rolesText: event.target.value }))} /></label>
+                <label>{t('Job locations')}<textarea value={jobPreferences.locationsText} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, locationsText: event.target.value }))} /></label>
+                <p className="field-hint">{t('Separate roles or locations with commas or new lines.')}</p>
+                <label>{t('Job notes')}<textarea value={jobPreferences.notes} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, notes: event.target.value }))} /></label>
+              </>}
+            </details>
             <MonitoringPanel connectionMode={settings.connectionMode} config={monitor ? { ...monitor, timezone: v.timezone } : monitor} status={monitorStatus} updates={monitorUpdates} pending={pending} preferredAssistant={v.preferredAssistant || settings.preferredAssistant} t={t} safeHref={safeHref}
               onChange={value => { setMonitor(value); if (value.enabled && value.channels.email) setV(previous => ({ ...previous, refreshFrequency: 'manual' })); }}
               onUseCurrentScope={async () => { setActionBusy('scope'); setMonitorError(''); try { const value = await api('/monitoring/scope', 'POST', monitoringScope); setMonitor(previous => ({ ...previous, scope: { ...value.scope, calendarIds: previous.scope.calendarIds } })); } catch (error) { setMonitorError(error.message); } finally { setActionBusy(''); } }}
@@ -2192,7 +2231,7 @@ function AIDialog({ t, close, back, initialClient, backLabel = 'Back to connecti
   </Modal>;
 }
 
-function DetailPanel({ detail, t, close, save, archive }) {
+function DetailPanel({ detail, discovery, t, close, save, archive }) {
   const c = detail.company;
   useEffect(() => {
     if (detail.focusField)
@@ -2220,6 +2259,8 @@ function DetailPanel({ detail, t, close, save, archive }) {
         ))}
       </div>
       {tab === "details" ? (
+        <>
+        {discovery?.enabled && <DiscoveryPanel {...discovery} inline companyId={c.id} t={t} />}
         <Form
           t={t}
           close={close}
@@ -2340,6 +2381,7 @@ function DetailPanel({ detail, t, close, save, archive }) {
             </label>
           )}
         </Form>
+        </>
       ) : tab === "applications" ? (
         <>
           <p className="dialog-intro">

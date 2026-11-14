@@ -25,6 +25,7 @@ local app ─ adapter/OAuth sessions ─ authorized providers
 | `CLAUDE.md` | Claude Code's entry point. Imports `AGENTS.md` so both clients follow the same rules. |
 | `docs/FIRST-RUN.md` | One user prompt and a rerunnable setup checklist, including when the user needs to sign in. |
 | `docs/MONITORING.md` | Selected read-only sources, local native-client schedules and the difference between reported task metadata and actual check evidence. |
+| `docs/JOB-DISCOVERY.md` | Client-owned public reads, update-only review, current CV/preference citations and actionable Needs you. |
 | `skills/tawdheef/SKILL.md` | Reusable job-search workflow: shortlist, explicitly apply, review replies. References expand only when needed. |
 | `DESIGN.md` | Rules for developers changing the interface. |
 | `.agents/skills/`, `.claude/skills/` | Emil Kowalski development skills, loaded on demand. The agent setup command also places the Tawdheef skill here for the chosen client. These Markdown files do not add browser runtime weight. |
@@ -40,6 +41,8 @@ You do not need another `agent.md`, a prompt for every company, or an embedded m
 | --- | --- |
 | `src/` | React screen, tables, panels, accessible controls. |
 | `server/store.mjs` | Shared SQLite records, validation and revisions. |
+| `server/ats-discovery.mjs`, `server/job-discovery-store.mjs` | Pure public-feed planning/normalization and additive local job/source/assessment records. No external reader or model. |
+| `server/job-discovery-tools.mjs`, `server/job-discovery-guidance.mjs` | Bounded Native discovery tools and read-only requests for the actual selected client. |
 | `server/index.mjs` | Loopback screen/API and single local authority coordinator. Native bootstrap does not instantiate or inspect external provider connections. Compatibility providers load only after explicit local-adapters selection. |
 | `server/mcp.mjs` | Shared tool definitions and stdio MCP transport, with separate operator, monitor and diagnostic catalogs. |
 | `server/snapshot.mjs` | Directory snapshot counts and paginated evidence, shared by the screen, CLI and MCP. |

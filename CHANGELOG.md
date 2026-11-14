@@ -2,6 +2,7 @@
 
 ## 0.2.0 — local desktop preview
 
+- Native job discovery with bounded public feed plans, meaningful-change reuse, current CV/preference citations and a small Jobs review panel. New, changed and Needs you records remain separate from confirmed applications; source failures retain earlier results.
 - Node 26.13.1 and Vite 8.3.8, a prebuilt tracker-only interface and explicitly selected optional integrations.
 - Windows and Mac native launchers around the local browser interface, with external private data and assistant workspaces.
 - Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
