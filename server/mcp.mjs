@@ -190,6 +190,10 @@ const compactCompany = (c) => ({
       "progress",
       "sourceRole",
       "routeStatus",
+      "careersPageStatus",
+      "profileSupport",
+      "routesCheckedAt",
+      "routeEvidence",
       "website",
       "careersUrl",
       "applyUrl",
@@ -205,6 +209,8 @@ const compactCompany = (c) => ({
   ),
   notes: String(c.notes || "").slice(0, 300),
   ...(String(c.notes || "").length > 300 ? { notesTruncated: true } : {}),
+  routeEvidence: String(c.routeEvidence || '').slice(0, 300),
+  ...(String(c.routeEvidence || '').length > 300 ? { routeEvidenceTruncated: true } : {}),
 });
 
 async function importFile({ filePath, content, filename }) {
@@ -437,6 +443,9 @@ function buildLegacyTools(store) {
     sector: string,
     location: string,
     archived: { type: "boolean" },
+    careersPageStatus: { type: 'string', enum: ['unknown', 'available', 'not_found', 'needs_check'] },
+    profileSupport: { type: 'string', enum: ['unknown', 'available', 'not_offered', 'needs_check'] },
+    routeEvidence: string,
     expectedRevision: { type: "integer", minimum: 1 },
   });
   const boundedReport = (report) => ({
@@ -646,7 +655,7 @@ function buildLegacyTools(store) {
     ],
     [
       "update_company",
-      "Edit contacts, notes, follow-up or status. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
+      "Edit contacts, notes, follow-up, status or verified career-route findings. careersPageStatus and profileSupport require routeEvidence for a new non-unknown finding; blocked sources are needs_check, never proof of absence. Keep route availability separate from actual account/profile/CV milestones. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
       schema({ id: string, patch: companyPatch }, ["id", "patch"]),
       ({ id, patch }) => store.updateCompany(id, patch),
     ],

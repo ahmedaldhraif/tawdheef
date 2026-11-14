@@ -171,8 +171,8 @@ test('reopened native progress copies a handoff with fallback and Stop removes t
 });
 
 test('native monitoring requests calendar IDs from the client without loading local calendar adapters', async ({ page }) => {
-  await openTracker(page); await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await openTracker(page); await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
@@ -185,8 +185,8 @@ test('native monitoring requests calendar IDs from the client without loading lo
 test('a saved local calendar ID does not masquerade as a calendar reported by the native client', async ({ page }) => {
   const config = scheduleConfig(); config.scope.calendarIds = ['old-local-calendar'];
   await page.route('**/api/monitoring', route => route.fulfill({ json: { config, status: monitoringStatus } }));
-  await openTracker(page); await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await openTracker(page); await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Ask your assistant to report a calendar you choose.');
@@ -222,8 +222,8 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   await capture(page, `ar-provider-${width}`);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await dialog.getByRole('button', { name: 'تم', exact: true }).click();
-  await page.getByRole('button', { name: 'الإعدادات', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'الإعدادات', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'المتابعة', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'المتابعة', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   const panel = settings.getByRole('region', { name: 'المتابعة', exact: true });
   await expect(panel).toContainText('اطلب من مساعدك تسجيل تقويم تختاره.');

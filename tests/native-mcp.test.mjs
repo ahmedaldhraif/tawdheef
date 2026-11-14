@@ -58,6 +58,33 @@ async function fixture(t) {
 const startInput = { directoryId: 'fixture', companyIds: ['alpha'], explicit: true, mode: 'send_and_submit', actions: { applyMatchingJobs: true, createProfiles: true, sendCvEmails: false } };
 const ownership = lease => ({ runId: lease.run.id, companyId: lease.target.companyId, claimToken: lease.claimToken });
 
+test('Native SDK exposes normalized evidenced route findings and profile-only eligibility through the shared domain', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  const tools = (await client.listTools()).tools;
+  const fields = tools.find(tool => tool.name === 'update_company').inputSchema.properties.patch.properties;
+  assert.deepEqual(fields.profileSupport.enum, ['unknown', 'available', 'not_offered', 'needs_check']);
+  assert.deepEqual(fields.careersPageStatus.enum, ['unknown', 'available', 'not_found', 'needs_check']);
+  const initial = await call(client, 'get_company', { id: 'alpha' });
+  assert.equal(initial.profileSupport, 'unknown'); assert.equal(initial.routesCheckedAt, null);
+  store.updateSettings({ applicationEmail: 'local-contact-hint@example.test' });
+  assert.equal((await call(client, 'get_registration_context', { companyId: 'alpha' })).primaryEmail, null);
+  const missing = await client.callTool({ name: 'update_company', arguments: { id: 'alpha', patch: { expectedRevision: initial.revision, profileSupport: 'not_offered' } } });
+  assert.equal(missing.isError, true);
+  const updated = await call(client, 'update_company', { id: 'alpha', patch: { expectedRevision: initial.revision, careersPageStatus: 'available', profileSupport: 'not_offered', routeEvidence: 'Synthetic official route offers applications only.' } });
+  const page = await call(client, 'list_companies', { directoryId: 'fixture', search: 'Alpha' });
+  assert.equal(page.items[0].profileSupport, 'not_offered'); assert.equal(page.items[0].routeEvidence, updated.routeEvidence);
+  assert.equal(page.items[0].routesCheckedAt, updated.routesCheckedAt); assert.equal(page.items[0].progress.profile_created, 0);
+  const preview = await call(client, 'preview_run', { directoryId: 'fixture', companyIds: ['alpha'], actions: { applyMatchingJobs: false, createProfiles: true, sendCvEmails: false } });
+  assert.equal(preview.count, 0);
+  assert.equal(store.getCompany('alpha').careersUrl, initial.careersUrl);
+  const fullEvidence = 'Synthetic route evidence. '.repeat(50);
+  await call(client, 'update_company', { id: 'alpha', patch: { expectedRevision: updated.revision, routeEvidence: fullEvidence } });
+  const compact = await call(client, 'list_companies', { directoryId: 'fixture', search: 'Alpha' });
+  assert.equal(compact.items[0].routeEvidence.length, 300); assert.equal(compact.items[0].routeEvidenceTruncated, true);
+  assert.equal((await call(client, 'get_company', { id: 'alpha' })).routeEvidence, fullEvidence.trim());
+  assert.equal(requests.length, 0, 'route tracking and preview need no provider or coordinator action');
+});
+
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);

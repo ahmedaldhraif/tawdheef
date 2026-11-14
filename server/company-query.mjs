@@ -38,6 +38,7 @@ export function createCompanyQuery(db, statuses) {
     const projection = {
       directoryId: company.directoryId,
       archived: Boolean(company.archived),
+      profileSupport: company.profileSupport || 'unknown',
       search: [company.name, company.arabicName, company.sector, company.location, company.notes, company.sourceRole].map(value => String(value || '').toLowerCase()),
       type: classifyCompanyType(company),
       places: companyLocations(company, directory),
@@ -100,7 +101,7 @@ export function createCompanyQuery(db, statuses) {
     refresh();
     return ids.flatMap(id => {
       const company = companies.get(id);
-      return company ? [{ id, directoryId: company.directoryId, status: company.sort.status, archived: company.archived }] : [];
+      return company ? [{ id, directoryId: company.directoryId, status: company.sort.status, archived: company.archived, profileSupport: company.profileSupport }] : [];
     });
   }
   function facetsForIds(ids) {

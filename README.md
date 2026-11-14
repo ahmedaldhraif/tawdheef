@@ -1,5 +1,7 @@
 # Tawdheef · توظيف
 
+[العربية](README.ar.md)
+
 <img src="public/brand/logo-latin-purple.svg" alt="tawdheef.com" width="320" />
 
 **Find matching jobs. Build career profiles.**

@@ -19,6 +19,10 @@ needs to send secrets in a chat. An actual client may require its own supported
 provider setup, account plan, app integration or approval; Tawdheef cannot grant
 or bypass that access.
 
+An optional contact email in the Email detail is a local address hint. It does
+not select a sender, verify a connection or replace the fresh main-account
+identity reported by the actual client. Existing saved values are preserved.
+
 ## What connection status proves
 
 `get_native_client_status` returns the selected assistant's capability reports.

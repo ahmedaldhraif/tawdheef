@@ -55,8 +55,8 @@ test.afterEach(async ({ page }) => {
 
 async function openSettings(page) {
   await page.goto('/'); await expect(page.locator('.company-name').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: 'Monitoring', exact: true });
   await settings.locator('.monitoring-disclosure > summary').click();
   await expect(settings.getByRole('region', { name: 'Monitoring', exact: true })).toBeVisible();
   return { settings, panel: settings.getByRole('region', { name: 'Monitoring', exact: true }) };
@@ -164,9 +164,9 @@ test('only recorded check results show update counts and reported schedules awai
   await expect(panel).not.toContainText('0 unread updates');
   await settings.getByRole('button', { name: 'Cancel', exact: true }).click();
   page.__monitorStatus = { ...initialStatus(), externalScheduleStatus: 'reported', lastCheckAt: '2026-11-14T05:00:00Z', lastSuccessAt: '2026-11-14T05:00:00Z', unreadCount: 2 };
-  await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Settings', exact: true }).locator('.monitoring-disclosure > summary')).toContainText('2 unread updates');
-  await page.getByRole('dialog', { name: 'Settings', exact: true }).locator('.monitoring-disclosure > summary').click();
+  await page.locator('.monitor-summary').getByRole('button', { name: 'Monitoring', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Monitoring', exact: true }).locator('.monitoring-disclosure > summary')).toContainText('2 unread updates');
+  await page.getByRole('dialog', { name: 'Monitoring', exact: true }).locator('.monitoring-disclosure > summary').click();
   panel = page.getByRole('region', { name: 'Monitoring', exact: true });
   await expect(panel).toContainText('Last check:'); await expect(panel).toContainText('2 unread updates');
 });
@@ -223,7 +223,7 @@ test('recent updates show real evidence and Needs you while marking read changes
   expect(page.__monitorWrites.map(item => item.path)).toEqual(['ack']);
 });
 
-test('narrow monitoring controls remain readable with the Settings save action available', async ({ page }, testInfo) => {
+test('narrow monitoring controls remain readable with the Monitoring save action available', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 320, height: 740 });
   page.__monitorConfig = { ...initialConfig(), enabled: true, channels: { jobs: true, profiles: true, email: true, calendar: false } };
   const { panel, settings } = await openSettings(page);

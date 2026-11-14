@@ -1,36 +1,11 @@
-import React from "react";
+import React from 'react';
+import { Linkedin } from 'lucide-react';
 
-const BRANDS = {
-  linkedin: {
-    src: "/brands/linkedin-in-blue.png",
-    width: 635,
-    height: 540,
-  },
-};
-
-/** Original brand assets. The surrounding link supplies the accessible label. */
-export default function BrandIcon({ brand, size = 21, className = "" }) {
-  const asset = BRANDS[brand];
-  if (!asset) return null;
-  const height = Math.max(21, Number(size) || 21);
-  const width = (height * asset.width) / asset.height;
-  return (
-    <img
-      src={asset.src}
-      alt=""
-      aria-hidden="true"
-      className={`brand-mark brand-mark-${brand} ${className}`.trim()}
-      width={width}
-      height={height}
-      draggable="false"
-      style={{
-        display: "inline-block",
-        flexShrink: 0,
-        width,
-        height,
-        objectFit: "contain",
-        verticalAlign: "middle",
-      }}
-    />
-  );
+/** The link supplies the name. Use a complete vector glyph, never a cropped bitmap. */
+export default function BrandIcon({ brand, size = 14, className = '' }) {
+  if (brand !== 'linkedin') return null;
+  const dimension = Math.max(12, Number(size) || 14);
+  return <Linkedin size={dimension} aria-hidden="true" focusable="false"
+    className={`brand-mark brand-mark-linkedin ${className}`.trim()}
+    style={{ width: dimension, height: dimension, flexShrink: 0, display: 'inline-block', verticalAlign: 'middle' }} />;
 }

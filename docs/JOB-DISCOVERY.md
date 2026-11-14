@@ -7,7 +7,7 @@ Tawdheef keeps the local source history and assessments. Copying never starts a
 model, external read, schedule or application.
 
 Public discovery works before connecting a CV. Set optional roles, locations
-and notes under **Settings → Job preferences**. Empty preferences are
+and notes under **Preferences → Job preferences**. Empty preferences are
 unrestricted. Matching needs a current CV read in the actual client.
 
 ## Agent workflow

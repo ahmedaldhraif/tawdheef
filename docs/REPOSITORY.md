@@ -4,6 +4,23 @@ There is one app and one local database. You and your agent use the same records
 
 Tawdheef is one product with three useful entry points: public directory packs for research, the skill and CLI/MCP workflow for an existing Codex or Claude user, and the local tracker for shared progress and evidence. The core user is a job seeker using one of those clients to work across employers. Tabbio is a separate connected CV service. A skill installation is not an app installation, a connected account or permission to act.
 
+## One product, clear entry points
+
+| Part | Purpose and source of truth |
+| --- | --- |
+| Landing page | Explain the product and lead to setup; `website/home.mjs` and its English/Arabic dictionaries. |
+| Skills / Get started | Teach setup and agent workflow; `website/skills.mjs`, `docs/FIRST-RUN.md` and `skills/tawdheef/`. |
+| Guides | Help with a task or recovery; `docs/guides/`, its Arabic counterparts and the guide catalogs. |
+| Local app | Shared directories, Jobs review, Connections, Monitoring and confirmed outcomes; `src/` and validated `server/` operations. |
+| CLI + MCP | Work on those same local records; `bin/`, `server/mcp.mjs` and generated `docs/tools.json`. External connections stay in the actual selected client. |
+| Directory packs | Public evidence, ownership and bounded recruitment guidance; `directories/` sources, pack templates and reviewed manifests. |
+| Tabbio | The person's separate CV service; its authorized connection and capabilities. |
+
+The normal path is landing page → Get started → Connections → review companies
+and jobs → explicitly choose Run actions. Preferences contains language, time
+zone and start-at-sign-in. Monitoring contains read-only schedules and reports.
+Installing a skill or pack never connects an account or starts a Run.
+
 Directory packs retain their version, bounded untrusted guidance and verified shared-company identity. Installing or updating a pack preserves private history and manual edits and never starts a run. Native profile work remains independent of applications, including after a confirmed application. Older app-owned vacancy rules and discoveries stay accessible through the compatibility APIs; Native mode never runs them. Restart revokes unfinished run authority and pauses recurring application rules without opening provider sessions. See [local upgrade checks](LOCAL-UPGRADE.md).
 
 ```text

@@ -70,6 +70,15 @@ Only inspect application threads relevant to tracked submissions. Re-read the so
 
 ## Read-only job discovery
 
+Record career-route findings separately from application outcomes. Use
+`careersPageStatus` and `profileSupport` with an actual `routeEvidence` source or
+reason. A blocked page is `needs_check`, not proof of no careers page or no
+profile option. Keep original URLs as evidence. The store controls
+`routesCheckedAt`; unrelated or identical edits do not make a finding fresh.
+An explicitly evidenced `profileSupport:not_offered` skips profile-only work;
+application and CV-email choices remain independent. Account creation alone
+still does not prove a completed profile or application.
+
 Use `prepare_job_discovery` and the actual client's public HTTP/browser tools,
 then `record_job_discovery`. Review compact pending jobs and read full details
 only when needed. Compare against the actual current CV; report only its source

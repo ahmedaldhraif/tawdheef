@@ -34,7 +34,7 @@ export const DISCOVERY_AR = {
   'CV fact reference': 'مرجع المعلومة في السيرة الذاتية', 'Source evidence': 'أدلة المصدر',
   'Start from first page': 'العودة إلى الصفحة الأولى', 'jobs': 'وظائف',
   'Jobs': 'الوظائف', 'View': 'العرض', 'Back to company': 'العودة إلى الشركة',
-  'Open source': 'فتح المصدر', 'Preparing…': 'جارٍ التحضير…', 'Untitled': 'بلا عنوان',
+  'View source': 'عرض المصدر', 'Preparing…': 'جارٍ التحضير…', 'Untitled': 'بلا عنوان',
   'Preferences changed elsewhere. Your draft is kept. Reopen Settings to compare before saving.': 'تغيّرت التفضيلات في مكان آخر. حُفظت مسودتك. أعد فتح الإعدادات للمقارنة قبل الحفظ.',
 };
 
@@ -179,7 +179,7 @@ export default function DiscoveryPanel({ directoryId, directoryName, companyId, 
           </li>)}</ul>
           <div className="discovery-pagination"><span>{listData.total} {t('jobs')}</span><button type="button" disabled={listBusy || cursors.length < 2} onClick={() => { focusPage.current = true; setCursors(value => value.slice(0, -1)); }}>{t('Previous')}</button><button type="button" disabled={listBusy || !listData.nextCursor} onClick={() => { focusPage.current = true; setCursors(value => [...value, listData.nextCursor]); }}>{t('Next')}</button></div>
         </>}
-        {problems.length > 0 && <section className="discovery-source-problems"><h3>{t('Source needs attention')}</h3><p className="field-hint">{t('Previous jobs are kept when a source cannot be checked.')}</p><ul>{problems.map((problem, index) => <li key={`${problem.companyId}:${index}`}><strong>{problem.companyName}</strong><p>{problem.nextStep || t('Needs you')}</p>{validUrl(problem.sourceUrl) && <a href={validUrl(problem.sourceUrl)} target="_blank" rel="noreferrer">{t('Open source')}</a>}{dateLabel(problem.observedAt) && <time dateTime={problem.observedAt}>{dateLabel(problem.observedAt)}</time>}</li>)}</ul></section>}
+        {problems.length > 0 && <section className="discovery-source-problems"><h3>{t('Source needs attention')}</h3><p className="field-hint">{t('Previous jobs are kept when a source cannot be checked.')}</p><ul>{problems.map((problem, index) => <li key={`${problem.companyId}:${index}`}><strong>{problem.companyName}</strong><p>{problem.nextStep || t('Needs you')}</p>{validUrl(problem.sourceUrl) && <a href={validUrl(problem.sourceUrl)} target="_blank" rel="noreferrer">{t('View source')}</a>}{dateLabel(problem.observedAt) && <time dateTime={problem.observedAt}>{dateLabel(problem.observedAt)}</time>}</li>)}</ul></section>}
         <CopyReview key={scope + assistant} directoryId={directoryId} companyId={companyId} assistant={assistant} t={t} />
       </>}
     </Surface>}

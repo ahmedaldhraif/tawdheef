@@ -298,7 +298,7 @@
     },
     {
       "name": "update_company",
-      "description": "Edit contacts, notes, follow-up or status. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
+      "description": "Edit contacts, notes, follow-up, status or verified career-route findings. careersPageStatus and profileSupport require routeEvidence for a new non-unknown finding; blocked sources are needs_check, never proof of absence. Keep route availability separate from actual account/profile/CV milestones. Read get_company first and supply patch.expectedRevision to avoid overwriting a concurrent edit. This records local state; it never sends an application.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -366,6 +366,27 @@
               },
               "archived": {
                 "type": "boolean"
+              },
+              "careersPageStatus": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "available",
+                  "not_found",
+                  "needs_check"
+                ]
+              },
+              "profileSupport": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "available",
+                  "not_offered",
+                  "needs_check"
+                ]
+              },
+              "routeEvidence": {
+                "type": "string"
               },
               "expectedRevision": {
                 "type": "integer",

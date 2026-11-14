@@ -8,7 +8,7 @@ copying a request does not create a task.
 
 1. Choose your assistant in **Connections**. Copy the needed setup requests into
    that actual client. Reuse its mailbox/calendar and Tabbio CV connections.
-2. Open **Settings → Monitoring**, enable the wanted channels and use
+2. Open **Monitoring**, enable the wanted channels and use
    **Use current list** to save the current filters and selected companies.
    Choose a calendar explicitly when calendar monitoring is enabled.
 3. Save the frequency, time and time zone. Paste **Copy schedule request** into

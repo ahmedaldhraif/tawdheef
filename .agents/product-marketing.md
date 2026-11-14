@@ -1,7 +1,7 @@
 # Tawdheef product marketing context
 
-**Document version:** v15
-**Last updated:** 2026-11-14
+**Document version:** v16
+**Last updated:** 2026-11-15
 **Status:** Initial source-backed implementation; owner can revise wording.
 
 ## Product overview
@@ -226,6 +226,15 @@ No fabricated vacancy counts, placements, star counts, endorsements or
 route is not necessarily tested. Only real submission evidence means applied.
 
 ## Changelog
+
+- v16 (2026-11-15); Owner explicitly coordinated the concurrent contribution
+  and Native-product work into one app. Preserved evidenced career-route
+  findings, profile visibility, contribution links, the approved bilingual
+  wordmarks and LinkedIn vector, while keeping Native connection ownership and
+  Jobs review. Preferences and Monitoring separate personal preferences from
+  read-only schedules/reports. A contact-address hint is not a sender override
+  or proof of connection. Source and installed build must be reconciled before
+  a combined-install claim; no new analytics or growth result is implied.
 
 - v15 (2026-11-14); Owner requested the strongest patterns from 21 adjacent
   repositories. Added local source discovery, meaningful-change reuse,

@@ -28,6 +28,24 @@ function fixture(overrides = {}) {
 }
 const row = (report, id) => report.steps.find(item => item.id === id);
 
+test('Advanced setup binds ready status to the same actual CV snapshot without leaking IDs or changing legacy reads', async () => {
+  const providerReady = () => ({ schemaVersion: 1, status: 'ready', account: { id: 'account_fixture', email: 'cv@example.test', emailVerified: true }, cv: { id: 'cv_fixture', revision: 3, readable: true, ready: true, missingFields: [] }, nextAction: 'none' });
+  const snapshot = { schemaVersion: 1, accountId: 'account_fixture', cvId: 'cv_fixture', revision: '3' };
+  for (const metadata of [undefined, { ...snapshot, cvId: 'other_cv' }, { ...snapshot, accountId: 'other_account' }, { ...snapshot, revision: 4 }, snapshot]) {
+    let statusReads = 0;
+    const f = fixture({ readCv: async () => ({ content: [{ type: 'text', text: 'PRIVATE_SYNTHETIC_CV' }], ...(metadata ? { _meta: { tabbioCvSnapshot: metadata } } : {}) }), readSetupStatus: async () => { statusReads++; return { structuredContent: providerReady() }; } });
+    f.records[0].capabilities = { setupStatus: { available: true } };
+    const passive = await f.check(); assert.equal(statusReads, 0); assert.equal(passive.setupContext.cv.readSelection, 'not_checked');
+    const result = await f.check({ verify: true });
+    assert.equal(result.ready, metadata === snapshot); assert.equal(statusReads, 1);
+    assert.equal(result.setupContext.cv.readSelection, metadata === snapshot ? 'matched' : 'unverified');
+    assert.equal(result.setupContext.cv.nextAction, metadata === snapshot ? 'shortlist' : 'check_connections');
+    assert.doesNotMatch(JSON.stringify(result), /account_fixture|cv_fixture|other_cv|other_account|PRIVATE_SYNTHETIC_CV|tabbioCvSnapshot/);
+  }
+  const legacy = await fixture().check({ verify: true });
+  assert.equal(legacy.ready, true); assert.equal(legacy.setupContext.cv.readSelection, 'not_checked');
+});
+
 test('passive setup reports installation without claiming sign-in or reading CV', async () => {
   const f = fixture(); const report = await f.check({ assistant: 'codex' });
   assert.equal(report.ready, false); assert.equal(report.verified, false);
