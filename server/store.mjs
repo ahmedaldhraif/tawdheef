@@ -1523,7 +1523,9 @@ export function openStore({
       const offset = pageNumber('offset', 0, 0, Number.MAX_SAFE_INTEGER);
       const limit = pageNumber('limit', 20, 1, 100);
       return directorySnapshot({
-        directory, companies: db.prepare('SELECT payload FROM companies WHERE directory_id=?').all(directory.id).map(parse),
+        // Outcomes need company identity/name only. Keep large research source
+        // payloads in SQLite rather than decoding the full directory per refresh.
+        directory, companies: db.prepare('SELECT id,name,directory_id AS directoryId FROM companies WHERE directory_id=?').all(directory.id),
         applications: db.prepare('SELECT a.payload FROM applications a JOIN companies c ON c.id=a.company_id WHERE c.directory_id=?').all(directory.id).map(parse),
         activity: db.prepare('SELECT a.payload FROM activity a JOIN companies c ON c.id=a.company_id WHERE c.directory_id=?').all(directory.id).map(parse).filter(item => !item.applicationId),
         timeZone: store.getSettings().timezone,
