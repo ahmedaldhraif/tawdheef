@@ -72,7 +72,7 @@ test('monitoring is opt-in and copying prepares a native request without claimin
   await panel.getByRole('checkbox', { name: 'Career profiles', exact: true }).check();
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
   await expect(panel.getByRole('button', { name: 'Schedule request copied', exact: true })).toBeVisible();
-  expect(await page.evaluate(() => window.__monitorClipboard)).toBe(prompt);
+  await expect.poll(() => page.evaluate(() => window.__monitorClipboard)).toBe(prompt);
   expect(page.__monitorWrites.map(item => item.path)).toEqual(['config', 'recipe']);
   expect(page.__monitorConfig.channels).toEqual({ jobs: true, profiles: true, email: false, calendar: false });
   await expect(panel).not.toContainText('Schedule active');

@@ -48,7 +48,7 @@ test('assistant choice persists through CV guidance and reloading without model 
   await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
   await expect(dialog).toContainText('Claude Code');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
-  expect(await page.evaluate(() => window.__setupClipboard)).toContain('claude-code');
+  await expect.poll(() => page.evaluate(() => window.__setupClipboard)).toContain('claude-code');
   await page.reload();
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await dialog.getByRole('button', { name: /^Assistant —/ }).click();

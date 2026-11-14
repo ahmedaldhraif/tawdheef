@@ -54,7 +54,7 @@ for (const locale of ['en', 'ar']) for (const resource of resources) for (const 
     const copy = page.locator('main .guide-code .copy');
     await copy.click();
     await expect(copy).toHaveText(ui[locale].copied);
-    expect(await page.evaluate(() => window.__resourceCopied)).toBe(request);
+    await expect.poll(() => page.evaluate(() => window.__resourceCopied)).toBe(request);
     await expect(page.locator('#copy-status')).toHaveText(ui[locale].copiedStatus);
     expect(privateApiRequests, 'Public research must work without bootstrapping private app connections').toEqual([]);
   });

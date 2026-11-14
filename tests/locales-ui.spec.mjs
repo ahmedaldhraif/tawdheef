@@ -58,7 +58,7 @@ test('Arabic landing keeps copyable skill instructions and a paste-only recordin
   await expect(section.getByRole('link',{name:'جهّز التطبيق',exact:true})).toHaveAttribute('href','/ar/skills/#get-started');
   await expect(page.locator('#quick-cli')).toHaveCSS('direction','ltr');
   await section.locator('[data-copy="quick-cli"]').click();
-  expect(await page.evaluate(()=>window.__copied)).toBe(installCommand);
+  await expect.poll(() => page.evaluate(()=>window.__copied)).toBe(installCommand);
   await expect(page.locator('#copy-status')).toHaveText('تم النسخ إلى الحافظة.');
 });
 
@@ -71,7 +71,7 @@ test('Arabic Skills search normalizes hamza and exposes translated search and co
   const install = page.locator('[data-copy="skills-install"]');
   await expect(install).toHaveAccessibleName('نسخ الأمر');
   await install.click();
-  expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+  await expect.poll(() => page.evaluate(() => window.__copied)).toBe(installCommand);
   await expect(install).toHaveText('تم النسخ');
   const trigger = page.getByRole('button', { name: 'ابحث في المهارات والأدلة', exact: true });
   const dialog = page.getByRole('dialog', { name: 'ابحث في المهارات والأدلة' });
