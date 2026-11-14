@@ -113,6 +113,7 @@ test('changing the preferred assistant does not relabel an existing monitoring o
   await expect(panel.getByRole('checkbox', { name: 'Monitor with Claude Code', exact: true })).toHaveCount(0);
   expect(page.__monitorWrites).toEqual([]);
   await panel.getByRole('button', { name: 'Copy schedule request', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Schedule request copied', exact: true })).toBeVisible();
   expect(page.__monitorConfig.assistant).toBe('codex');
   expect(page.__monitorWrites.find(write => write.path === 'recipe').input.assistant).toBe('codex');
 });
