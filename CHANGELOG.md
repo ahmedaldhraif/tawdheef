@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.0 — local desktop preview
+
+- Node 26.13.1 and Vite 8.3.8, a prebuilt tracker-only interface and explicitly selected optional integrations.
+- Windows and Mac native launchers around the local browser interface, with external private data and assistant workspaces.
+- Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
+- Faster SQL-backed company filtering and paging, incremental edit refreshes and one visibility-aware run reader.
+- Native Codex/Claude connections by default: the actual client owns CV, mail, calendar, browser/computer and password-manager tools. Tawdheef keeps local guidance, scope and results, with no default model/CLI subprocess or second provider session owner.
+- Project-only setup with ownership checks/backups and optional direct Tabbio MCP. Six familiar connection categories distinguish dated client reports from observed tracker tool use.
+- Claim-scoped native run handoffs, durable native email plans and original-account receipt reconciliation. Stop revokes authority without claiming to kill an external chat.
+- Optional app-owned adapters, CLI runner and disposable model check remain under Advanced compatibility; their ten mail/cloud SDKs are excluded from ordinary runtime dependencies.
+- Native Codex/Claude local monitoring requests with a separate read-only workspace, saved source scope, deduplicated updates and actionable Needs you outcomes. Copying a request never claims a schedule is active.
+- Compact local records, original PDF/DOCX staging for authorized uploads and fresh observed main-email registration guidance. Native CV facts remain in the client's own connection.
+- Separate optional publisher signing/notarization workflow. Local operation requires no developer account; unsigned previews remain labelled unsigned.
+
 ## 0.1.2 — guides and product walkthrough
 
 - Eight practical guides on the website, generated from the same Markdown available on GitHub.
@@ -12,6 +26,9 @@
 
 - Filter the company list by city and type, then run the matching unfinished companies across every page or just the checked rows.
 - Three Run choices for matching jobs, career profiles and future-opportunity CV emails, with the remembered assistant beside Run.
+- Compact Run confirmation keeps operational instructions in agent documentation and runtime prompts, with only an optional user note on screen.
+- Simplified Connections and Settings, with direct account actions and setup guidance kept in agent docs.
+- The screen recommends both matching-job applications and career profiles; general CV emails remain optional and existing CLI defaults are preserved.
 - One Settings gear for schedules and reports, plus a restrained graphite activity mark while an assistant works.
 - Auto job apply and application tracker positioning across the public site, README and skill.
 - GitHub-first app and pack downloads, with direct release assets for agents.

@@ -31,7 +31,7 @@ If your assistant cannot read the JSON or linked websites, [browse the country p
 ## When you want to continue
 
 - **Keep the list in Tawdheef:** follow [download and import a pack](../guides/use-directory-packs.md). Start with an import preview and review its warnings.
-- **Compare companies with your experience:** [create or connect your CV](../guides/connect-your-cv.md), then use the [connected-CV shortlist prompt](../guides/use-the-skill.md#prompts). Tawdheef uses a readable connected CV before Run.
+- **Compare companies with your experience:** [create or connect your CV](../guides/connect-your-cv.md) in your actual client, then use the [connected-CV shortlist prompt](../guides/use-the-skill.md#prompts). That client must read your real authorized CV before matching or submitting; Tawdheef records the handoff and evidence.
 - **Improve the public data:** [suggest a correction, company or directory](../DIRECTORY-CONTRIBUTING.md). Any country is welcome.
 
 Researching a list or importing a pack does not start applications.

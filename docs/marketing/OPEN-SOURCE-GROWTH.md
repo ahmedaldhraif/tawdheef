@@ -46,7 +46,7 @@ The direct app-setup path stays available for people already ready to use it. In
 
 The approved follow-up also brings these resources into native English/Arabic
 website pages, places public packs before setup and the CV section, and states
-Run's connected-CV requirement before download. [Launch drafts](LAUNCH-KIT.md),
+the actual client's real-CV requirement before matching or acting. [Launch drafts](LAUNCH-KIT.md),
 [pack update notes](../../directories/PACK-UPDATES.md) and a distinct
 [Tabbio integration-page draft](TABBIO-INTEGRATION-PAGE.md) are prepared.
 The owner deferred domain connection on 14 November 2026; no personal post or
@@ -69,14 +69,16 @@ Tabbio page is published by preparing these files.
 
 GitHub's [README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) favors explaining usefulness, getting started, help and maintenance. [Topics](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics) help people discover relevant repositories. Keep topics accurate and the social preview current, rather than adding keyword lists to prose.
 
-## CV sources: a future product decision
+## CV sources and Native ownership
 
-Run currently requires a readable connected Tabbio CV; public research and
-manual tracking remain available without one. A local CV or another connected
-source could make the project more independent. Evaluate those options against
-the same truthful career-data, readiness and action-scope contract before
-implementing one. This is under consideration, not a shipped alternative or
-a promise to remove the current requirement.
+The actual client must read the real authorized CV before matching jobs or
+acting on a Run. Tabbio is the contextual CV route described here; its connection
+belongs to that client. Native handoffs are not gated on a separate tracker CLI/CV
+probe, and client reports are not independent verification. An optional original
+PDF/DOCX can already be selected for exact-byte local staging; that does not
+verify its facts, invent a CV or authorize sharing. Broader CV-source workflows
+remain a product decision to evaluate against the same truthful career-data and
+action-scope contract. Public research and manual tracking remain ungated.
 
 ## Measure useful progress
 
@@ -86,7 +88,7 @@ No live funnel baseline is established. The website currently has no first-party
 | --- | --- | --- |
 | Discovery | Search impressions/index status; aggregate GitHub views and referring sources | Installs or users |
 | Resource use | Pack asset downloads and genuine data feedback | Unique people or app activation |
-| Local activation | Chosen assistant and connected CV pass readiness checks | A confirmed application |
+| Local activation | Local tracker tool use is observed; the actual client checks its real CV/tools and records fresh, dated connection reports | Independent provider verification or a confirmed application |
 | First value | A person reviews useful company leads or a CV-informed shortlist | A sent message or submission |
 | Tabbio | A tagged visit; signup or completed CV only if independently attributable | One another |
 | Contribution | Reviewed/merged public source changes; later published pack notes | An automatically updated local tracker |

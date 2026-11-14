@@ -191,8 +191,8 @@
   },
   {
     "file": "index.html",
-    "bytes": 12585,
-    "sha256": "b3d9e233690ce627ea0c97d7a7ac72bbbb89d6a353cc6b9bbba53dc022734031"
+    "bytes": 12502,
+    "sha256": "90008ac1331e89eaa447898b5f04f2465845503d52424e5d46bc06efdf73542b"
   },
   {
     "file": "logo-arabic-ink.png",
@@ -386,8 +386,8 @@
   },
   {
     "file": "README.txt",
-    "bytes": 2189,
-    "sha256": "7d67acbf0dde25784bfd467126e3e3092e35054b106a0cc67c7583c654f52fe0"
+    "bytes": 2149,
+    "sha256": "2601ce5084bf661206b3c654bdd606674289e50678dd995f3f80221a467225a3"
   },
   {
     "file": "symbol-1024.png",

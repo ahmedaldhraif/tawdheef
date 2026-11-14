@@ -22,7 +22,7 @@ It's a free, open-source app for finding matching jobs, building career profiles
 
 Start with a company directory, use it with Codex or Claude Code, and keep a record of what actually happened. You can explore the public directories before installing anything.
 
-Run currently needs a connected Tabbio CV. Public research and manual tracking work without one. Your AI account and connected services may have separate costs.
+Your actual client reads your real CV through its authorized connections before matching jobs or acting on a Run. Public research and manual tracking work without one. Your AI account and connected services may have separate costs.
 
 Found a missing company? Have a directory for your country? You can help improve it.
 
@@ -36,7 +36,7 @@ Start here: https://github.com/ahmedaldhraif/tawdheef
 
 ابدأ بدليل شركات، واستخدمه مع Codex أو Claude Code، واحتفظ بسجل لما تم فعلًا. ويمكنك استكشاف الأدلة العامة قبل تثبيت التطبيق.
 
-يحتاج Run حاليًا إلى سيرة مرتبطة من Tabbio. أما البحث في الأدلة والمتابعة اليدوية فيعملان دونها. قد تكون لحساب مساعدك والخدمات المرتبطة تكاليف مستقلة.
+يقرأ مساعدك الفعلي سيرتك الحقيقية عبر اتصالاته المصرّح بها قبل مطابقة الوظائف أو تنفيذ Run. أما البحث في الأدلة والمتابعة اليدوية فيعملان دونها. قد تكون لحساب مساعدك والخدمات المرتبطة تكاليف مستقلة.
 
 وجدت شركة ناقصة؟ لديك دليل لدولتك؟ يمكنك المساهمة في تحسينه.
 

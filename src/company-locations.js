@@ -1,16 +1,28 @@
 // Facets are derived from the selected directory's recorded locations, never a global city list.
+import { COUNTRY_CODES } from './directory-symbols.js';
+
 const clean = value => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const key = value => clean(value).normalize('NFKC').toLowerCase();
 const unknown = /^(?:unknown|not (?:specified|established|provided)|unspecified|n\/a|none|-|—)$/i;
 const qualified = /not inferred|not checked|listing|listed|headquarters|operations|scope|unconfirmed/i;
 const address = /\d|\b(?:road|street|st\.?|building|floor|block|office|p\.?\s*o\.?\s*box|near|next to)\b/i;
+const countryCodes = new Set(COUNTRY_CODES);
+const cachedCountryNames = new Map();
+let regionNames;
 
 function countryNames(directory) {
-  const values = [directory?.country];
-  if (/^[a-z]{2}$/i.test(directory?.country || '')) {
-    try { values.push(new Intl.DisplayNames(['en'], { type: 'region' }).of(directory.country.toUpperCase())); } catch { /* Preserve the recorded text if no region label is available. */ }
+  const country = directory?.country;
+  const code = /^[a-z]{2}$/i.test(country || '') ? country.toUpperCase() : null;
+  if (code && cachedCountryNames.has(code)) return cachedCountryNames.get(code);
+  const values = [country];
+  if (code) {
+    try { regionNames ||= new Intl.DisplayNames(['en'], { type: 'region' }); values.push(regionNames.of(code)); } catch { /* Preserve the recorded text if no region label is available. */ }
   }
-  return new Set(values.filter(Boolean).map(key));
+  const names = new Set(values.filter(Boolean).map(key));
+  // Only the finite offline country catalog is cached. Arbitrary imported
+  // country text cannot grow process memory; the private sets never escape.
+  if (countryCodes.has(code)) cachedCountryNames.set(code, names);
+  return names;
 }
 
 export function companyLocations(company = {}, directory = {}) {

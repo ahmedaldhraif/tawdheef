@@ -24,7 +24,7 @@ Published directory changes and actual contribution credit belong in the
 
 Read `AGENTS.md` for operation boundaries and `docs/REPOSITORY.md` for the code map. Read `DESIGN.md` before interface changes. Use the relevant installed development skills on demand.
 
-Use Node.js 24 or newer. Run `npm ci`, then `npm run dev`. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
+Use Node.js 26 LTS (26.13.1 is the release target) and Vite 8.3.8 from the lockfile. Patched Node 24 remains a source compatibility target. Run `npm ci`, then `npm run dev`. Developer dependencies include the bundler's native platform bindings and optional provider SDK fixtures; heavy provider SDKs are excluded from production-core installs. Native mode uses the actual Codex or Claude Code client's external connections. The legacy adapter workspace requires explicit `npm run setup -- --local-adapters`; it never writes dependencies into a packaged app. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
 
 Before proposing a change:
 
@@ -36,7 +36,11 @@ npm run release:check
 
 For interface or launch changes, install the test browser with `npx playwright install chromium`, then run `npm run test:ui`. Tool changes also require `npm run tools:catalog`. New provider behavior needs fixtures for failure, unknown outcomes, account identity and duplicate protection, not an automatic live send.
 
+Role or onboarding changes also need isolated SDK tests for the actual restricted catalog, generated Codex/Claude settings and revoked scope. Monitoring uses the selected native desktop client's local clock; its reported task metadata is not independent scheduler verification. Keep model proof explicitly requested and disposable, and persist only allowlisted numeric/status evidence. Original CV fixtures must remain synthetic and preserve exact bytes; never use a real CV or password vault for tests. See [Monitoring](docs/MONITORING.md) and the generated [tool schemas](docs/tools.json) for the current contract.
+
 Keep changes focused and explain the user-visible result and checks performed. Keep dependencies small. Preserve the shared UI/CLI/MCP validation; do not add a direct-database bypass.
+
+`npm run build` builds only the tracker interface. Build the separate website with `node website/build.mjs` before website/browser checks. Use `npm run benchmark` for disposable synthetic query measurements. Build user packages with `npm run release:app -- --output NEW_FOLDER`, then verify the exact download with `npm run release:app:smoke -- --directory NEW_FOLDER`. Each package must be built and checked on its target OS and architecture.
 
 Never include `.local`, environment files, credentials, cookies, applicant data, real CVs, mailbox contents or client configuration in a pull request. Review screenshots before sharing them. Directory contributions must preserve stable IDs, sources, roles and missing evidence; do not invent contacts or eligibility.
 

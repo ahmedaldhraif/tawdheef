@@ -1,16 +1,16 @@
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { integrationStatus, runGws } from '../server/integrations.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export async function doctor(options = {}) {
-  const report = await integrationStatus(options);
+  const mode = options.mode || (options.probe ? 'local-adapters' : 'native');
+  const report = await integrationStatus({ ...options, mode });
   let setup;
   if (report.app.running && report.app.sameDataDirectory) {
     try {
       const response = await fetch(report.app.url + '/api/setup-status', { redirect: 'error', signal: AbortSignal.timeout(5000) });
       if (response.ok) {
         const value = await response.json();
-        if (Array.isArray(value.steps) && value.nextStep && typeof value.ready === 'boolean') setup = value;
+        if ((Array.isArray(value.steps) || value.connectionMode === 'native') && value.nextStep && typeof value.ready === 'boolean') setup = value;
       }
     } catch { /* The existing runtime report remains useful during an upgrade. */ }
   }
@@ -29,14 +29,14 @@ export async function doctor(options = {}) {
     ...(setup ? { setup } : {}),
     nextSteps: [
       ...(!report.runtime.supported ? ['Install Node.js 24 or newer, then run setup again.'] : []),
-      ...(!report.app.running ? ['Run npm start to open the local tracker and enable provider actions.'] : !report.app.sameDataDirectory ? ['The running tracker uses a different data folder. Match APPLY_TRACKER_DATA and the port before provider actions.'] : []),
-      ...(setup ? [`${setup.nextStep.title}: ${setup.nextStep.detail}`] : ['Open Connections to choose your accounts. Your agent can follow docs/FIRST-RUN.md. Email and calendar are optional.']),
+      ...(!report.app.running ? ['Run npm start to open the local tracker.'] : !report.app.sameDataDirectory ? ['The running tracker uses a different data folder. Match APPLY_TRACKER_DATA and the port before starting a Run.'] : []),
+      ...(setup ? [`${setup.nextStep.title}: ${setup.nextStep.detail}`] : [mode === 'native' ? 'Use Connections to copy a setup request into your existing Codex or Claude Code client. Its own tools handle external accounts and browser access.' : 'Open Connections to choose optional local adapter accounts. Your agent can follow docs/FIRST-RUN.md.']),
     ],
     note: 'Installed tools and saved credentials do not prove account access or a successful send. No email, application or sign-in was started by this check.',
   };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.some(arg => !['--probe', '--json'].includes(arg))) {
     process.stderr.write('Use node scripts/doctor.mjs [--probe] [--json].\n');

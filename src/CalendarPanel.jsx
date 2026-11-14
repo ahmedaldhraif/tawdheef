@@ -84,7 +84,7 @@ export default function CalendarPanel({ conn, provider, api, updated, close, bac
     if (chosen !== 'icloud-calendar' && !clientId.trim() && !(same && conn?.oauthConfigured)) {
       const info = await api('/integrations');
       if (!info.oauth?.[chosen === 'google-calendar' ? 'gmailConfigured' : 'outlookConfigured']) {
-        if (setupRef.current) { setupRef.current.open = true; focusAfterBusy.current = setupRef.current.querySelector('input'); }
+        if (setupRef.current) { setupRef.current.open = true; focusAfterBusy.current = setupRef.current.querySelector('input:not([readonly])'); }
         throw new Error('Add your OAuth client ID in One-time setup, then sign in.');
       }
     }
@@ -103,15 +103,15 @@ export default function CalendarPanel({ conn, provider, api, updated, close, bac
   return <Modal title={`Connect ${name}`} close={close} t={t} pending={busy}>
     <button type="button" className="text-button" disabled={busy} onClick={back}>{backLabel}</button>
     <p className="calendar-provider-title"><ProviderLogo provider={chosen} size={32} decorative /><strong>{name}</strong></p>
-    <p className="dialog-intro">See your upcoming events and add interviews when you ask. Connecting does not create events.</p>
     {connected && <p className="connection-state"><strong>Connected</strong><bdi className="calendar-account">{typeof conn.account === 'string' ? conn.account : conn.account?.email || ''}</bdi></p>}
     {chosen === 'icloud-calendar' ? <>
       <label>Apple Account email<input type="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={username} disabled={busy} onChange={e => { edited.current.username = true; setUsername(e.target.value); }} /></label>
       <label>App-specific password<input type="password" autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={password} disabled={busy} onChange={e => setPassword(e.target.value)} placeholder={same && conn?.hasCredentials ? 'Saved; leave blank to keep' : 'From your Apple Account'} /></label>
-      <p className="connection-help">Create an app-specific password at <a href="https://account.apple.com" target="_blank" rel="noreferrer">account.apple.com</a>. Use that here, rather than your main Apple password.</p>
+      <p className="connection-help"><a href="https://account.apple.com" target="_blank" rel="noreferrer">Create an app-specific password</a></p>
     </> : <details className="advanced" ref={setupRef}>
       <summary>One-time setup</summary>
-      <p className="connection-help">Use your own {chosen === 'google-calendar' ? 'Google Desktop' : 'Microsoft public desktop'} OAuth registration. Calendar access is separate from email. Callback: <code>{window.location.origin}/api/connections/calendar/oauth/callback</code></p>
+      <p className="connection-help"><a href={chosen === 'google-calendar' ? 'https://developers.google.com/identity/protocols/oauth2/native-app' : 'https://learn.microsoft.com/en-us/graph/auth-register-app-v2'} target="_blank" rel="noreferrer">Setup guide</a></p>
+      <label>Redirect URI<input readOnly value={`${window.location.origin}/api/connections/calendar/oauth/callback`} onFocus={event => event.target.select()} /></label>
       <label>OAuth client ID<input value={clientId} disabled={busy} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={e => { edited.current.clientId = true; setClientId(e.target.value); }} /></label>
       {chosen === 'google-calendar' && <>
         <label>Desktop client secret, if supplied<input value={clientSecret} type="password" disabled={busy} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={e => setClientSecret(e.target.value)} placeholder={same && conn?.hasClientSecret ? 'Saved; leave blank to keep' : ''} /></label>
@@ -126,12 +126,12 @@ export default function CalendarPanel({ conn, provider, api, updated, close, bac
       <button type="button" disabled={busy || !calendarId || eventsLoading} onClick={() => void loadEvents()}>{eventsLoading ? 'Loading events…' : 'Show next 30 days'}</button>
       {eventsLoading && <p className="connection-help" role="status">Checking the selected calendar…</p>}
       {events && <ul className="calendar-events" aria-busy={eventsLoading}>{events.length ? events.map(event => <li key={event.id}><strong dir="auto">{event.title || event.summary || '(Untitled)'}</strong><span>{displayEventDate(event)}</span></li>) : <li>No events in this range.</li>}</ul>}
-      {events && <p className="connection-help">Times use this computer’s timezone.{eventsTruncated ? ` Showing the first ${events.length} events. Ask your assistant for a shorter date range to see the rest.` : ''}</p>}
+      {events && <p className="connection-help">Local time.{eventsTruncated ? ` First ${events.length} events shown.` : ''}</p>}
       <details className="advanced"><summary>Add an event</summary>
         <label>Event title<input disabled={busy} maxLength={300} value={form.title} onChange={e => { setForm({ ...form, title: e.target.value }); setEventKey(crypto.randomUUID()); }} /></label>
         <label>Start<input type="datetime-local" disabled={busy} value={form.start} onChange={e => { setForm({ ...form, start: e.target.value }); setEventKey(crypto.randomUUID()); }} /></label>
         <label>End<input type="datetime-local" disabled={busy} value={form.end} onChange={e => { setForm({ ...form, end: e.target.value }); setEventKey(crypto.randomUUID()); }} /></label>
-        <p className="connection-help">Times use this computer’s timezone. This adds an event to your calendar without inviting anyone.</p>
+        <p className="connection-help">Local time. No invitations sent.</p>
         <button disabled={busy || !calendarId || !form.title || !form.start || !form.end} onClick={() => action(async () => { const data = await api('/calendar/event', 'POST', { calendarId, title: form.title, start: new Date(form.start).toISOString(), end: new Date(form.end).toISOString(), explicit: true, idempotencyKey: eventKey }); if (data.status !== 'created') throw new Error('The result is uncertain. Check your calendar before trying again.'); notify('Calendar event created'); })}>Add event to calendar</button>
       </details>
     </section>}

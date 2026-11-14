@@ -1,6 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { PublicClientApplication } from '@azure/msal-node';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { requireProviderDependency } from '../provider-dependencies.mjs';
 
 // All provider results use the same small contract as the tracker's MCP bridges.
 // Neither a draft ID nor Graph's empty 202 response is a sent-mail receipt.
@@ -70,7 +69,7 @@ function validateSend(args) {
  * private bag; callers must never expose it through public connection state.
  * Factories and clock/delay/fetch can be injected for offline provider tests.
  */
-export function createOutlookProvider({ config = {}, auth = {}, redirectUrl, saveAuth = async () => {}, msalFactory = options => new PublicClientApplication(options), graphFactory, externalSession, scopes = SCOPES, fetchImpl = globalThis.fetch, clock = () => Date.now(), delay = ms => new Promise(resolve => setTimeout(resolve, ms)), receiptAttempts = 3 } = {}) {
+export function createOutlookProvider({ config = {}, auth = {}, dataDir, redirectUrl, saveAuth = async () => {}, msalFactory = options => new (requireProviderDependency('@azure/msal-node', { dataDir }).PublicClientApplication)(options), graphFactory, externalSession, scopes = SCOPES, fetchImpl = globalThis.fetch, clock = () => Date.now(), delay = ms => new Promise(resolve => setTimeout(resolve, ms)), receiptAttempts = 3 } = {}) {
   const clientId = config.oauth?.clientId || process.env.APPLY_TRACKER_MICROSOFT_CLIENT_ID;
   const tenant = config.oauth?.tenant || process.env.APPLY_TRACKER_MICROSOFT_TENANT || 'common';
   let pca, graph, profile, sentFolderId, tokenJob, persistJob = Promise.resolve();
@@ -133,7 +132,7 @@ export function createOutlookProvider({ config = {}, auth = {}, redirectUrl, sav
     if (graph) return graph;
     // Graph's default retry middleware can replay POSTs after ambiguous failures.
     // This one-shot SDK transport deliberately has no automatic network retries.
-    graph = graphFactory ? graphFactory({ getAccessToken, fetchImpl }) : Client.initWithMiddleware({
+    graph = graphFactory ? graphFactory({ getAccessToken, fetchImpl }) : requireProviderDependency('@microsoft/microsoft-graph-client', { dataDir }).Client.initWithMiddleware({
       middleware: [{ async execute(context) {
         const headers = new Headers(context.options?.headers || {});
         headers.set('Authorization', `Bearer ${await getAccessToken()}`);

@@ -29,7 +29,7 @@ const socket = createServer(); await new Promise(accept => socket.listen(0, '127
 const port = socket.address().port; await new Promise(accept => socket.close(accept));
 const dataDir = join(checkout, '.local');
 // Do not inherit provider keys or redirect this isolated test to a real mailbox.
-const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(APPLY_TRACKER_|GOOGLE_WORKSPACE_CLI_|MS365_MCP_)/i.test(key)));
+const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(APPLY_TRACKER_|TAWDHEEF_|GOOGLE_WORKSPACE_CLI_|MS365_MCP_)/i.test(key)));
 Object.assign(env, { APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: String(port) });
 function run(file, args = []) {
   const result = spawnSync(process.execPath, [file, ...args], { cwd: checkout, env, stdio: 'inherit', windowsHide: true, timeout: 240_000 });
@@ -43,23 +43,22 @@ try {
   run(join(checkout, 'scripts/agent-setup.mjs'), ['both']);
   run(join(checkout, 'scripts/agent-setup.mjs'), ['both']);
   const base = `http://127.0.0.1:${port}`;
-  for (const path of ['/', '/api/health', '/welcome/', '/downloads/tawdheef-source.zip', '/downloads/uae-directory-pack.zip']) {
+  for (const path of ['/', '/api/health', '/favicon.svg', '/brand/app-icon-192.png']) {
     const response = await fetch(base + path); assert.equal(response.status, 200, path);
-    if (path.endsWith('.zip')) assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
   }
   client = new Client({ name: 'release-verifier', version: pkg.version });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [join(checkout, 'server/mcp.mjs')], env, cwd: checkout, stderr: 'pipe' });
+  const generated = JSON.parse(await readFile(join(checkout, '.mcp.json'), 'utf8')).mcpServers['apply-tracker'];
+  const transport = new StdioClientTransport({ command: generated.command, args: generated.args, env: { ...env, ...generated.env }, cwd: checkout, stderr: 'pipe' });
   await client.connect(transport);
   const tools = await client.listTools();
   const catalog = JSON.parse(await readFile(join(checkout, 'docs/tools.json'), 'utf8'));
   assert.deepEqual(tools.tools.map(tool => tool.name).sort(), catalog.tools.map(tool => tool.name).sort());
   const response = await client.callTool({ name: 'get_agent_context', arguments: {} });
   const context = JSON.parse(response.content.find(item => item.type === 'text').text);
-  assert.equal(context.ok, true); assert.equal(context.data.app, 'running');
+  assert.equal(context.ok, true); assert.equal(context.data.mode, 'native'); assert.equal(context.data.connectionOwner, 'native-client');
   assert.equal(context.data.directories.find(directory => directory.id === 'uae').count, 772);
-  assert.equal(resolve(context.data.dataDir), resolve(dataDir));
   const before = Date.now(); run(join(checkout, 'scripts/start.mjs'), ['--no-open']);
-  const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds', 'project MCP setup for both clients', 'repeat setup preserves files', 'local pages and downloads', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
+  const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds without optional bridges', 'project MCP setup for both clients', 'repeat setup preserves files', 'working app and icons', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
   await writeFile(join(release, 'smoke-verification.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
 } finally {

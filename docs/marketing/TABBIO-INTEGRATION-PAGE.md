@@ -16,18 +16,18 @@ Tawdheef is a free, open-source project built and personally maintained by Ahmed
 
 ### What you need
 
-- Tawdheef running locally and your installed, signed-in Codex or Claude Code.
+- Tawdheef running locally and your existing, signed-in Codex or Claude Code client connected to its local MCP tools. A separate assistant CLI is not required for Native mode.
 - A Tabbio CV containing your real experience.
 
-Tawdheef's Run currently requires a readable connected Tabbio CV. Public company research and manual tracking are available without one. The app is free; your assistant and connected providers may have their own costs or limits.
+Your actual client must read your real CV before matching jobs or acting on a Run. Tawdheef does not gate a Native handoff on a separate CLI/CV probe. Public company research and manual tracking are available without a CV connection. The app is free; your assistant and connected providers may have their own costs or limits.
 
 ### Connect your CV
 
 1. Follow [Tawdheef's setup guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md) if the app is not ready yet.
-2. In Tawdheef, open **Connections → Your CV → Tabbio CV → Connect** and complete sign-in.
-3. Choose your assistant in Connections and use **Check connections**. Once your CV is readable, review companies with your agent and choose the actions you want to start.
+2. In Tawdheef's **Connections**, copy the CV setup request into your chosen actual client. Reuse or add Tabbio's remote MCP there and complete its normal sign-in and consent in that client.
+3. Ask that client to read your authorized CV and report only dated source/access metadata to Tawdheef. These are client reports, not independent provider verification. Review companies with your agent, choose the actions you want, and explicitly start a Run when ready.
 
-Tawdheef reads your connected CV. Editing or publishing your CV uses Tabbio's separate tools and your request for that action. Connecting a CV or completing setup does not start applications.
+Your actual client reads the connected CV; Tawdheef does not own a second Tabbio session or cache that Native CV response. Editing, publishing or changing CV visibility uses the client's authorized Tabbio tools and your request for that action. Connecting a CV or completing setup does not start applications.
 
 **Need a CV?** [Create your free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=tabbio_integration&utm_campaign=live_cv).
 
@@ -45,18 +45,18 @@ Tawdheef مشروع مجاني ومفتوح المصدر، بناه ويديره
 
 ### ما تحتاج إليه
 
-- تطبيق Tawdheef يعمل على جهازك، مع تثبيت Codex أو Claude Code وتسجيل الدخول إليه.
+- تطبيق Tawdheef يعمل على جهازك، وحسابك الفعلي في Codex أو Claude Code مرتبط بأدوات MCP المحلية للتطبيق. لا يتطلب وضع Native أداة CLI منفصلة للمساعد.
 - سيرة على Tabbio تتضمن خبراتك الحقيقية.
 
-يحتاج Run حاليًا إلى سيرة مرتبطة من Tabbio يمكن قراءتها. يمكنك البحث في أدلة الشركات العامة ومتابعة السجلات يدويًا دونها. التطبيق مجاني، وقد تكون لحساب مساعدك والخدمات المرتبطة تكاليف أو حدود مستقلة.
+يجب أن يقرأ مساعدك الفعلي سيرتك الحقيقية قبل مطابقة الوظائف أو تنفيذ Run. لا يشترط Tawdheef فحص CLI أو سيرة منفصلًا لبدء تسليم Run في وضع Native. يمكنك البحث في أدلة الشركات العامة ومتابعة السجلات يدويًا دون ربط سيرة. التطبيق مجاني، وقد تكون لحساب مساعدك والخدمات المرتبطة تكاليف أو حدود مستقلة.
 
 ### اربط سيرتك
 
 1. اتبع [دليل إعداد Tawdheef](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/i18n/ar/guides/use-the-skill.md) إذا لم يكن التطبيق جاهزًا.
-2. في Tawdheef، افتح **Connections → Your CV → Tabbio CV → Connect** وأكمل تسجيل الدخول.
-3. اختر مساعدك في Connections واستخدم **Check connections**. بعد التأكد من إمكانية قراءة سيرتك، راجع الشركات مع مساعدك واختر الإجراءات التي تريد بدءها.
+2. من **Connections** في Tawdheef، انسخ طلب إعداد السيرة إلى مساعدك الفعلي المختار. أعد استخدام ربط Tabbio MCP أو أضفه هناك، وأكمل تسجيل الدخول والموافقة المعتادين داخل ذلك المساعد.
+3. اطلب من المساعد قراءة سيرتك المصرّح بها وتسجيل بيانات المصدر والوصول المؤرّخة فقط في Tawdheef. هذه تقارير من المساعد وليست تحققًا مستقلًا من المزوّد. راجع الشركات معه، واختر الإجراءات المطلوبة، ثم ابدأ Run صراحةً عندما تكون جاهزًا.
 
-يقرأ Tawdheef سيرتك المرتبطة. أما تعديل السيرة أو نشرها فيستخدم أدوات Tabbio المنفصلة وطلبك لتنفيذ ذلك. ربط السيرة أو إكمال الإعداد لا يبدأ طلبات التوظيف.
+يقرأ مساعدك الفعلي السيرة المرتبطة؛ ولا يملك Tawdheef جلسة Tabbio ثانية أو يخزّن استجابة السيرة في وضع Native. أما تعديل السيرة أو نشرها أو تغيير ظهورها فيستخدم أدوات Tabbio المصرّح بها في المساعد وطلبك لتنفيذ ذلك. ربط السيرة أو إكمال الإعداد لا يبدأ طلبات التوظيف.
 
 **تحتاج إلى سيرة؟** [أنشئ سيرتك مجانًا على Tabbio](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=tabbio_integration_ar&utm_campaign=live_cv).
 

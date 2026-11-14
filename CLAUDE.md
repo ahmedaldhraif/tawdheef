@@ -2,10 +2,13 @@
 
 @AGENTS.md
 
-Read and follow [AGENTS.md](AGENTS.md) before operating this app. It defines the shared local records, explicit application-run authority, source handling, submission evidence and schedule boundaries.
+Follow [AGENTS.md](AGENTS.md). Help the person find jobs that fit their CV and create or complete career profiles for future opportunities, even when no suitable vacancy is open. Act only within their explicit run and its saved choices; profile progress is not a job application.
 
-Connect `node server/mcp.mjs` as a stdio MCP server, or use `node bin/apply-tracker.mjs help`. Use the user's authorized email and browser/computer-use connections for external actions. This app does not embed Claude or assume that a tool listed in another client is available to its local background process.
+Start with `get_agent_context` and `get_capabilities`. Use `node server/mcp.mjs` for stdio MCP, or `node bin/apply-tracker.mjs help` for the CLI.
 
-Start with `get_agent_context`. Read compact company pages, then fetch one record for source evidence and its revision before editing. For mailbox/CV operations, use the tracker tools that proxy to its running local background app; do not create competing OAuth refresh sessions. Import is preview-first and report generation stays local unless email is explicitly requested.
+- [First setup](docs/FIRST-RUN.md): inspect readiness, install missing project tools and preserve existing settings.
+- [Provider setup](docs/CONNECTIONS.md): account sign-in, local credentials and mappings.
+- [Agent guide](docs/AGENT-GUIDE.md): Claude `.mcp.json`, scoped runs, recovery and evidence.
+- [Schedules and reports](docs/AGENT-GUIDE.md#background-connections-and-schedules): tracked replies and reports without new applications or profile work.
 
-See [docs/AGENT-GUIDE.md](docs/AGENT-GUIDE.md) for the verified Claude Code `.mcp.json`/CLI setup and complete shared operation contract.
+These details belong in agent guidance. The screen keeps the person's choices, account actions and actionable status; it does not display configuration or the full operator prompt.

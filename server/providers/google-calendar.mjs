@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { importProviderDependency } from '../provider-dependencies.mjs';
 
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
@@ -102,13 +103,13 @@ function equalState(a, b) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-async function defaultOAuthClient(options) { const { OAuth2Client } = await import('google-auth-library'); return new OAuth2Client(options); }
-async function defaultCalendarClient(auth) { const { calendar } = await import('@googleapis/calendar'); return calendar({ version: 'v3', auth }); }
+async function defaultOAuthClient(options, dataDir) { const { OAuth2Client } = await importProviderDependency('google-auth-library', { dataDir }); return new OAuth2Client(options); }
+async function defaultCalendarClient(auth, dataDir) { const { calendar } = await importProviderDependency('@googleapis/calendar', { dataDir }); return calendar({ version: 'v3', auth }); }
 
 /** Independent Google Calendar sign-in; no mailbox access, invitations or implicit event creation. */
 export function createGoogleCalendarProvider({
-  config = {}, auth = {}, redirectUrl, saveAuth = async () => {},
-  createOAuthClient = defaultOAuthClient, createCalendarClient = defaultCalendarClient, now = Date.now,
+  config = {}, auth = {}, dataDir, redirectUrl, saveAuth = async () => {},
+  createOAuthClient = options => defaultOAuthClient(options, dataDir), createCalendarClient = auth => defaultCalendarClient(auth, dataDir), now = Date.now,
 } = {}) {
   let saved = clone(auth), oauth, api, initialized, account, primary, connecting;
   let saveQueue = Promise.resolve();

@@ -12,6 +12,11 @@ browser routes, and Tawdheef tracks outcomes and replies locally.
 The screen, CLI and stdio MCP share one
 SQLite store. Codex or Claude Code supplies the model and browser tools.
 The tracker does not include its own model or require its own model API key.
+Native is the default: every external connection belongs to that actual client.
+Run copies a saved handoff into the existing conversation; Tawdheef launches no
+second model or assistant CLI. App-owned adapters remain explicit Advanced
+compatibility only. Client reports and observed local tool use are separate
+from independent provider or model verification.
 
 ## Audience and jobs
 
@@ -74,7 +79,8 @@ Tabbio is available worldwide. Present the free CV for recruiters and agents:
 permissioned CLI/MCP access, public web discovery and employer/Open-to-work
 visibility. UAE PASS is optional for eligible users and verifies identity,
 not CV experience. Public indexing and AI recommendations are not guaranteed.
-Tabbio CLI/MCP edits remain separate from Tawdheef's CV-read mapping.
+The actual client's Tabbio CLI/MCP tools read the authorized CV; edits, sharing,
+visibility changes and publishing require the corresponding user request.
 Use the owner-supplied full English violet wordmark in the Tabbio section.
 Use three distinct benefits: agent CV updates/sharing with MCP/CLI marks,
 public discovery with Google/Bing marks, and Open to work with the Tabbio
@@ -86,8 +92,8 @@ UAE PASS as the smaller optional note and search eligibility as one short line.
 Tawdheef code is MIT licensed and the app is free. AI clients, model usage,
 mail providers and other connected services may have independent costs.
 Tabbio's public FAQ says its free plan includes building, sharing and exporting
-a digital CV. Its current plans define paid AI features. The local tracker
-supports authorised CV read mappings. Do not claim integrated CV editing,
+a digital CV. Its current plans define paid AI features. Native CV access belongs
+to the actual client; tracker CV-read mappings are legacy compatibility only. Do not claim integrated CV editing,
 recruiter attribution or analytics merely from Tabbio marketing.
 
 ## Funnel and conversion
@@ -99,8 +105,9 @@ installing the app or creating a CV account. A private
 location and sector preferences; it does not connect or update a CV.
 
 For personal matching and tracking: GitHub release → local agent-assisted setup →
-create a free Tabbio CV or use an existing one → connect it and check readiness →
-review a shortlist → choose companies and explicitly start Run → review outcomes.
+create a free Tabbio CV or use an existing one in the actual client → check real
+client access and record dated reports → review a shortlist → choose companies
+and explicitly start Run → paste its request into that existing client → review outcomes.
 Introduce the CV at the matching step. Contributions and public data stay ungated.
 
 The GitHub repository is https://github.com/ahmedaldhraif/tawdheef. Read
@@ -109,13 +116,15 @@ not /releases/latest. The hero’s Get the free app action leads to the setup gu
 the setup download links directly to the official release asset, with a clone
 alternative. Keep downloadable source, issues and pull requests easy to find.
 
-Directory/manual tracking is usable without Tabbio. Run requires a connected
-Tabbio CV. Tabbio remains a separate CV service, not the operator or warranty
+Directory/manual tracking is usable without Tabbio. The actual client must read
+the real authorized CV before matching or submitting; the app does not gate a
+native handoff on a CLI/CV probe. Tabbio remains a separate CV service, not the operator or warranty
 provider of this personally maintained project. Paid Tabbio help is a secondary
 option only when useful; the free CV path stays clear.
 
 Useful first result: sourced company leads or a reviewed, CV-informed shortlist.
-Local activation: the chosen assistant and connected CV pass readiness checks.
+Local activation: observed tracker tool use and fresh client-reported CV/tool
+access, kept separate from independent provider verification and outcomes.
 Downloads, skill installs, directory use and Tabbio visits are separate signals;
 none proves a unique user, completed setup, signup or CV.
 No baseline, conversion rate, installs or live analytics is established.
@@ -147,7 +156,7 @@ records the reviewed repository patterns, priorities and measurement limits.
   article, with existing setup anchors preserved.
 - `/guides/connect-your-agent/`: actual local Codex/Claude Code setup and checks.
 - `/guides/connect-your-cv/`: free Tabbio CV creation or existing-account connection;
-  distinguish tracker CV reads from a separate Tabbio editing connection.
+  native client CV reads, reported metadata and separately authorized CV editing.
 - `/guides/use-directory-packs/`: public pack discovery, extract/import all CSV
   parts, inspect provenance and contribute researched data for any country.
 - `/guides/apply-to-jobs/`: chosen targets/actions, permission, real confirmations
@@ -155,7 +164,8 @@ records the reviewed repository patterns, priorities and measurement limits.
 - `/guides/replies-and-reports/`: bounded reply checks and real outcomes;
   schedules do not initiate new applications or follow-up messages.
 - `/guides/troubleshoot/`: symptoms, checks and recovery, including local setup,
-  credentials in Connections, missing tools and uncertain submissions.
+  actual-client sign-in, missing tools and uncertain submissions; local credential
+  forms belong only to explicitly selected Advanced compatibility.
 - `/guides/for-agents/`: `llms.txt`, live tool discovery, schemas, CLI/MCP,
   directory catalog/index/provenance and authority boundaries.
 - `/about/`: canonical text in `website/about.md`; the name, practical purpose,
@@ -184,7 +194,8 @@ they do not establish better conversion, ranking or agent citations.
 
 - Free? Yes for the tracker; provider and AI costs remain separate.
 - Technical? No coding is needed. Open the folder in Codex or Claude Code and
-  copy the agent setup request. Node.js 24+ is required; the guide helps with it.
+  copy the agent setup request. Source checkouts need Node.js 24+; prebuilt app
+  packages include their runtime. Native handoffs need no separate assistant CLI.
 - Applications automatic? Only an explicit named run authorises supported
   agent actions. Sign-ins, CAPTCHAs and provider approvals may need the person.
 - Phone? Responsive site and UI; the default app runs on the user's computer,

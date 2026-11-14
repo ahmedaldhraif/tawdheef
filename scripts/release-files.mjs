@@ -6,7 +6,7 @@ import JSZip from 'jszip';
 
 export const publicRoots = ['src', 'server', 'bin', 'scripts', 'data', 'docs', 'skills', 'directories', 'website', 'public', 'tests', '.github', '.agents/skills', '.claude/skills'];
 export const publicFiles = ['package.json', 'package-lock.json', 'index.html', 'vite.config.mjs', 'vercel.json', 'playwright.config.mjs', 'skills-lock.json', 'AGENTS.md', 'CLAUDE.md', 'DESIGN.md', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md', 'Start Apply Tracker.cmd', 'Start Tawdheef.cmd', 'Start Tawdheef.command', 'start-tawdheef.sh', '.gitignore', '.gitattributes', '.nvmrc', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'llms.txt', 'SECURITY.md', 'CHANGELOG.md', '.agents/product-marketing.md'];
-const privatePath = /(^|\/)(?:\.local|\.git|node_modules|outputs|release|agent-config|dist|site-dist|test-results|playwright-report|__pycache__)(\/|$)|(^|\/)\.env|(^|\/)(?:credentials[^/]*|client_secret[^/]*|connections\.private|token-cache|selected-account)\.json$|\.(?:sqlite[^/]*|db(?:3|-wal|-shm)?|log|pem|key|zip)$/i;
+const privatePath = /(^|\/)(?:\.local|\.git|\.tawdheef-setup|node_modules|outputs|release|agent-config|dist|site-dist|test-results|playwright-report|__pycache__)(\/|$)|(^|\/)\.env|(^|\/)(?:credentials[^/]*|client_secret[^/]*|connections\.private|token-cache|selected-account)\.json$|\.(?:sqlite[^/]*|db(?:3|-wal|-shm)?|log|pem|key|zip)$/i;
 // Country sources are versioned once. Download packs regenerate these copies.
 const generatedDirectoryFile = /^directories\/[^/]+\/[^/]+-directory(?:-\d+)?\.(?:json|csv)$/i;
 const generatedDownload = /^public\/downloads(?:\/|$)/i;
@@ -57,7 +57,7 @@ export async function checkPublicSource(root, { git = true } = {}) {
   let bytes = 0;
   for (const file of files) {
     const buffer = await readFile(join(root, file)); bytes += buffer.length;
-    if (!/\.(?:mjs|js|jsx|json|md|txt|html|css|yml|yaml|toml|csv|py|cmd|sh|command)$/.test(file) && !publicFiles.includes(file)) continue;
+    if (!/\.(?:mjs|js|jsx|json|md|txt|html|css|yml|yaml|toml|csv|py|cmd|sh|command|c|h|m|plist|entitlements)$/.test(file) && !publicFiles.includes(file)) continue;
     const content = buffer.toString('utf8');
     if (secretPatterns.some(pattern => pattern.test(content))) findings.push(`${file}: possible embedded credential (value withheld)`);
     if (userProfile && content.replaceAll('\\\\', '/').replaceAll('\\', '/').includes(`${userProfile}/`)) findings.push(`${file}: contains this computer's private profile path`);

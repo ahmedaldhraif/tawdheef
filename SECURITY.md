@@ -2,7 +2,11 @@
 
 Tawdheef is a local, single-user application. The web server binds to loopback. It is not designed as a public multi-user server. Do not expose it through a public tunnel for ordinary use.
 
-Private tracking and provider credentials live in `.local/` or the directory selected with `APPLY_TRACKER_DATA`. They are not encrypted by the tracker; protect your operating-system account, filesystem and backups. AI clients and connected providers handle the information you authorize under their own terms.
+Native mode is the default. Your actual Codex or Claude Code client owns provider credentials, sign-in, browser sessions and password-manager access; Tawdheef does not request or store those secrets in Native mode. Client-reported connection metadata is not independent authentication proof. Keep the client's and provider's approvals and restrictions intact.
+
+Private tracker records, account/source metadata, send plans, receipts, observations, reports and optional user-selected original CV files remain on your computer. Source checkouts normally use `.local/`; native packages use per-user app data, with existing portable data or an explicit `APPLY_TRACKER_DATA` override supported. Explicit `local-adapters` compatibility mode can also store provider credentials and cached responses there. Project setup backups under `.tawdheef-setup/` are private too. The tracker does not encrypt these files; protect your operating-system account, filesystem and backups and exclude them from Git/releases.
+
+Local storage does not mean all processing stays on your device. The actual AI client, model services and connected providers can receive authorized prompts, tool results, CV facts, messages and files under their own terms and account settings. Default Native mode does not create another app-owned provider session; explicit compatibility adapters make their own authorized online requests.
 
 ## Report a vulnerability privately
 

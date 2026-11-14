@@ -1,5 +1,7 @@
 # إعداد Tawdheef
 
-ابدأ من دليل [إعداد Tawdheef مع مساعدك](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md). يشرح تنزيل التطبيق، وربط Codex أو Claude Code بأوامر المشروع، وتثبيت المهارة، والتحقق من اتصال سيرتك الذاتية.
+ابدأ من دليل [إعداد Tawdheef مع مساعدك](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-the-skill.md). نزّل التطبيق، ثم اربط أدوات المتابعة المحلية بتطبيق Codex أو Claude Code الذي تستخدمه بالفعل.
 
-لطلب الإعداد الكامل وخطوات حل المشكلات، اقرأ [FIRST-RUN.md](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/FIRST-RUN.md). إعداد التطبيق لا يبدأ التقديم للوظائف.
+في الوضع الافتراضي، يتولى مساعدك جميع الاتصالات الخارجية: Tabbio MCP والسيرة والبريد والتقويم والمتصفح والتحكم بالكمبيوتر ومدير كلمات المرور. يحتفظ توظيف بالنطاق والتعليمات والنتائج المحلية، ولا يشغّل مساعداً آخر أو جلسة دخول مستقلة للخدمات.
+
+من **Connections → Assistant** اختر مساعدك، وانسخ طلب الإعداد إلى محادثتك الحالية. أكمل تسجيل الدخول والموافقة في تطبيق مساعدك. اقرأ [FIRST-RUN.md](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/FIRST-RUN.md) للخطوات الكاملة. الإعداد لا يصرّح بالتقديم أو الإرسال أو إنشاء جدول.

@@ -1,27 +1,29 @@
 {
   "date": "2026-11-14",
   "positioning": "Tawdheef | Find matching jobs. Build career profiles.",
-  "qualifier": "Free and open source in the supporting sentence; keep the approved centered hero and existing brand assets.",
+  "qualifier": "Free and open source in the supporting sentence; Local-first and Built-in CLI + MCP visible without a badge.",
   "category": "Auto Job Apply & Application Tracker",
   "heroHierarchy": [
     "Centered headline: Find matching jobs. Build career profiles.",
-    "A free, open-source job-search app for you and your Codex or Claude Code agent, with original marks inline and the local CLI/MCP context.",
-    "One clear Get the free app primary action to setup and a plain See how it works link.",
+    "A free, open-source job-search app for you and your Codex or Claude Code agent, with original marks inline, followed by Local-first · Built-in CLI + MCP.",
+    "One black Get the free app primary action to the setup guide and a plain See how it works link.",
     "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork.",
     "Actual local tracker product view."
   ],
-  "heroDecision": "The owner approved matching jobs and career profiles as the two main purposes, including useful profiles when no suitable vacancy is open. Keep local CLI/MCP and Codex/Claude Code setup clear. Only an explicit Run authorizes selected actions; profile outcomes stay separate from confirmed applications. This is positioning, not measured conversion evidence.",
+  "heroDecision": "The owner approved matching jobs and career profiles as the two main purposes, including useful profiles when no suitable vacancy is open. Keep local CLI and MCP explicit and setup simple for Codex and Claude Code. An explicit Run authorizes selected actions; profile outcomes are separate from confirmed applications. This is an owner decision, not measured conversion evidence. The default native workflow hands the saved request to the existing selected client; Tawdheef does not launch another model.",
   "entryPoints": [
     "Ahmed AlDhraif's personal GitHub and content",
     "Real country directory packs and their sources",
     "Agent skill for Codex and Claude Code",
-    "Matching jobs, career profiles and open-source job-search app searches"
+    "Auto job apply and open-source application tracker searches",
+    "Matching jobs, career profiles and open-source job-search app searches",
+    "Public company research examples and a private role/location brief"
   ],
   "funnel": [
     {
       "stage": "Discover",
       "value": "A clear matching-jobs and career-profiles promise, real product preview and sourced public country packs",
-      "cta": "Get the free app → setup guide"
+      "cta": "Browse sourced public country research without an app/CV account, or get the free app setup guide"
     },
     {
       "stage": "Download",
@@ -30,18 +32,18 @@
     },
     {
       "stage": "Set up",
-      "value": "Agent-assisted setup on the person's computer with Node.js 24+ and their installed, signed-in Codex or Claude Code",
-      "cta": "Open the folder and copy the first-run request"
+      "value": "Connect the local tracker to the person’s existing Codex or Claude Code client; source uses Node.js 26 LTS or patched Node 24, while prebuilt app packages include Node",
+      "cta": "Copy the project-only setup request into that existing client and preserve working settings"
     },
     {
       "stage": "Connect CV",
-      "value": "A free current digital CV for the application run",
-      "cta": "Create a free Tabbio CV or use an existing one; connect in Connections and check readiness"
+      "value": "Real CV facts read directly through the actual client’s authorized Tabbio/CV tools",
+      "cta": "Create a free Tabbio CV or reuse an existing account; copy its client setup request from Connections and inspect the actual client’s access"
     },
     {
       "stage": "Find jobs and build profiles",
-      "value": "Apply to matching jobs and build career profiles for future opportunities, with separate evidence for each outcome",
-      "cta": "Choose companies and actions, press Run, then review applications, profiles, CV uploads and Needs you steps"
+      "value": "The existing client performs explicitly selected matching-job/profile/CV actions and records separate evidenced outcomes",
+      "cta": "Choose targets/actions, press Run, paste the saved request into the existing client, then review applications, profiles, CV uploads and Needs you steps"
     },
     {
       "stage": "Contribute",
@@ -65,7 +67,7 @@
     "intended": "ahmedaldhraif/tawdheef",
     "current": "Public at https://github.com/ahmedaldhraif/tawdheef. Read website/config.json releaseTag and verify its assets before linking a download. Website/source updates do not replace an existing release ZIP.",
     "readmeOrder": [
-      "Matching jobs and career profiles, free/open-source promise, local CLI + MCP and actual screenshot",
+      "Approved category and matching-jobs/career-profiles promise, free/open-source context, local CLI + MCP and actual screenshot",
       "Choose a starting point: public country research without an app/CV account, a practical example, or local app setup followed by CV connection and a chosen Run",
       "Concise Guides, agent reference and About navigation",
       "Current country packs with source dates and contribution links",
@@ -123,11 +125,13 @@
     "Run a real phone and desktop review"
   ],
   "operatingBoundaries": {
-    "localClient": "Codex or Claude Code supplies the local agent; browser ChatGPT/Claude chats do not read local stdio configuration.",
-    "authorization": "Only an explicit named application run authorizes sending or submission; sign-ins, CAPTCHA, provider approvals and LinkedIn steps may need the person.",
-    "cv": "Directory browsing/manual tracking does not require Tabbio. Run requires a connected readable Tabbio CV; broader Tabbio CLI/MCP editing remains separate.",
+    "localClient": "The actual selected Codex or Claude Code client owns the model and all external tools. Tawdheef supplies local guidance, scoped records and copied handoffs; no installed assistant CLI or app-launched assistant subprocess is required in native mode. Browser ChatGPT/Claude chats do not read local stdio configuration.",
+    "authorization": "Only an explicit named Run authorizes its saved selected application, profile or CV-sharing actions and targets. Sign-ins, CAPTCHA, provider approvals and LinkedIn steps may need the person. Stop revokes local authority; stop remaining work in the external client too.",
+    "cv": "Public directory research and manual tracking need no Tabbio account or CV. Before matching or submitting, the actual client must read the real authorized CV. Tawdheef does not gate a native handoff on a CLI/CV probe or cache the native CV. Editing, publishing or visibility changes require their own request.",
     "costs": "Tawdheef code is free and MIT licensed. The user's AI client, model use and connected providers may have separate costs or limits.",
-    "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep drafts/uploads/talent pools distinct from applied."
+    "outcomes": "Record real receipts/confirmations, inspect unknown submissions before retrying, and keep accounts, profiles, uploads, CV sends, talent pools and applied outcomes separate.",
+    "connections": "Native is the default: Tabbio MCP/CV, email, calendar, browser/computer and password manager belong to the actual client. Connection reports are dated client observations, not independent verification. App-owned adapters and credentials remain only in explicitly selected Advanced compatibility.",
+    "monitoring": "Only requested read-only monitoring uses the actual client’s supported local automation and tools for bounded source/account reads. Saving preferences, copying a request or recording a task ID does not create or independently verify a schedule. Monitoring grants no applying, profile/CV-sharing, sending or calendar-write authority."
   },
   "informationArchitecture": {
     "decision": "Skills is the main overview for one installable skill and eight task guides. Keep detailed setup in /guides/use-the-skill/. Preserve the approved hero and GitHub-first downloads.",
@@ -223,10 +227,11 @@
     ],
     "localApp": [
       "README or Skills",
-      "Canonical app setup guide",
-      "Connections and CV readiness",
+      "Canonical project-only tracker setup in the existing client",
+      "Client-owned CV/connections and dated actual observations",
       "Reviewed shortlist",
-      "Explicitly chosen Run"
+      "Explicitly chosen Run and copied handoff",
+      "Actual client claims targets and records evidence"
     ],
     "contribute": [
       "Company record or pack",

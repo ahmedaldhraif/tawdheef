@@ -2,9 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { createConnection } from 'node:net';
-import nodemailer from 'nodemailer';
-import { ImapFlow } from 'imapflow';
-import PostalMime from 'postal-mime';
+import { requireProviderDependency } from '../provider-dependencies.mjs';
 import { buildGmailRawMessage, gmailMessageIdForIntent, gmailSendFingerprint } from './gmail.mjs';
 
 export const ICLOUD_MAIL_MAPPINGS = {
@@ -21,7 +19,7 @@ const tools = [
   { name: 'icloud_mail_reconcile', description: 'Inspect Sent for the original send intent. Never sends again.', inputSchema: { type: 'object', properties: { idempotencyKey: { type: 'string' } }, required: ['idempotencyKey'] }, annotations: { readOnlyHint: true } },
 ];
 
-export function createICloudMailProvider({ config = {}, auth = {}, dataDir, saveAuth = async () => {}, createTransport = nodemailer.createTransport, createImap = options => new ImapFlow(options), parse = source => PostalMime.parse(source), operationMs = 45000 } = {}) {
+export function createICloudMailProvider({ config = {}, auth = {}, dataDir, saveAuth = async () => {}, createTransport = options => requireProviderDependency('nodemailer', { dataDir }).createTransport(options), createImap = options => new (requireProviderDependency('imapflow', { dataDir }).ImapFlow)(options), parse = source => { const module = requireProviderDependency('postal-mime', { dataDir }); return (module.default || module).parse(source); }, operationMs = 45000 } = {}) {
   const account = address(config.credentials?.username), password = config.credentials?.password;
   const ledgerPath = dataDir && join(dataDir, 'icloud-mail-intents.json');
   let saved = {};

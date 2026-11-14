@@ -4,10 +4,10 @@ import {
   Copy,
   ExternalLink,
   FileText,
-  Mail,
-  RefreshCw,
 } from "lucide-react";
 import ProviderLogo from './ProviderLogo.jsx';
+import CvFileControl from './CvFileControl.jsx';
+import NativeConnectionPanel from './NativeConnectionPanel.jsx';
 
 const TABBIO_URL = "https://server.tabbio.com/api/mcp";
 const parseObject = (value, label) => {
@@ -23,7 +23,11 @@ const parseObject = (value, label) => {
   return parsed;
 };
 
-export default function ConnectionPanel({
+export default function ConnectionPanel(props) {
+  return (props.connectionMode || props.settings?.connectionMode) === 'local-adapters' ? <LocalConnectionPanel {...props} /> : <NativeConnectionPanel {...props} />;
+}
+
+function LocalConnectionPanel({
   kind,
   conn,
   t,
@@ -69,11 +73,9 @@ export default function ConnectionPanel({
   const [mappingsEdited, setMappingsEdited] = useState(false);
   const [endpointEdited, setEndpointEdited] = useState(false);
   const [clearToken, setClearToken] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
   const [manualCopy, setManualCopy] = useState(false);
   const [agentConfig, setAgentConfig] = useState(null);
   const [cvResult, setCvResult] = useState(null);
-  const instructionsRef = useRef(null);
   const oauthSetupRef = useRef(null);
   const toolsRequest = useRef(0);
   const live = localConnection || conn;
@@ -184,7 +186,7 @@ export default function ConnectionPanel({
           ...(native ? { oauth: { clientId: clientId.trim(), ...(method === 'outlook' ? { tenant: tenant.trim() || 'common' } : {}), ...(clientSecret ? { clientSecret } : {}) } } : {}),
         };
         if (native && !clientId.trim() && !integrationInfo?.oauth?.[method === 'gmail' ? 'gmailConfigured' : 'outlookConfigured'] && !conn?.oauthConfigured) {
-          if (oauthSetupRef.current) { oauthSetupRef.current.open = true; oauthSetupRef.current.querySelector('input')?.focus(); }
+          if (oauthSetupRef.current) { oauthSetupRef.current.open = true; oauthSetupRef.current.querySelector('input:not([readonly])')?.focus(); }
           throw new Error('Add your OAuth client ID in One-time setup, then sign in.');
         }
         // Keep a saved desktop client secret only for the same provider/client ID.
@@ -200,7 +202,7 @@ export default function ConnectionPanel({
       if (email && !saved?.configured) {
         setLocalConnection(saved || null);
         setError(
-          "Email setup is not saved yet. Copy the setup instructions to your assistant, or enter your server in Advanced setup.",
+          "Email setup is not saved yet. Use Copy setup request or Advanced setup.",
         );
         return;
       }
@@ -278,11 +280,10 @@ export default function ConnectionPanel({
   }
 
   async function copySetup() {
-    setShowInstructions(true);
     setManualCopy(false);
     try {
       await navigator.clipboard.writeText(setupTask);
-      notify("Setup instructions copied");
+      notify("Setup request copied");
     } catch {
       setManualCopy(true);
     }
@@ -313,7 +314,7 @@ export default function ConnectionPanel({
     toolsLoading
       ? "Checking setup…"
       : mappingExists(action)
-        ? "Tool selected"
+        ? "Configured"
         : "Needs setup";
   const authHref = safeHref(authUrl);
 
@@ -325,26 +326,20 @@ export default function ConnectionPanel({
       pending={busy}
     >
       <div className="connection-panel">
+        {!email && <CvFileControl api={api} t={t} disabled={busy} />}
         {back && <button type="button" className="text-button" disabled={busy} onClick={back}>{backLabel}</button>}
-        <p className="dialog-intro">
-          {email
-            ? "Connect your mailbox once. The tracker can then check recorded application replies in the background, even while your AI app is closed."
-            : "Sign in to Tabbio to make your digital CV available to this tracker."}
-        </p>
-
         <p className="calendar-provider-title"><ProviderLogo provider={email ? values.provider : 'tabbio'} size={32} decorative /><strong>{email ? providerName : 'Tabbio CV'}</strong></p>
 
         {email && <>
-          <p className="connection-help">{method === 'icloud-mail' ? 'Uses your iCloud Mail address and an app-specific password. No developer account is needed.' : method === 'google-cli' ? 'Uses the Google CLI sign-in saved on this computer. Run npm run connect -- google-cli once, then connect here.' : method === 'outlook-mcp' ? 'Uses the local Outlook MCP bridge. Run npm run connect -- outlook-mcp once, then connect here.' : 'Sign in in your browser. The tracker checks recorded application threads; scheduled checks do not start new applications.'}</p>
           {method === 'icloud-mail' && <>
             <label>iCloud Mail address<input type="email" autoComplete="username" value={mailUsername} onChange={e => setMailUsername(e.target.value)} disabled={busy} placeholder="you@icloud.com" /></label>
             <label>App-specific password<input type="password" autoComplete="new-password" value={mailPassword} onChange={e => setMailPassword(e.target.value)} disabled={busy} placeholder={conn?.hasCredentials ? 'Saved; leave blank to keep' : 'From your Apple Account'} /></label>
-            <p className="field-hint"><a href="https://account.apple.com" target="_blank" rel="noreferrer">Create an app-specific password</a> in Sign-In and Security. Use that password here, not your Apple Account password.</p>
+            <p className="field-hint"><a href="https://account.apple.com" target="_blank" rel="noreferrer">Create an app-specific password</a></p>
           </>}
           {(method === 'gmail' || method === 'outlook') && <details className="advanced" ref={oauthSetupRef}>
             <summary>One-time setup</summary>
-            <p className="connection-help">A developer OAuth app identifies this local tracker. Use your own registration or the one supplied by your distributor. Your email password is never entered here.</p>
-            <p className="connection-help"><a href={method === 'gmail' ? 'https://developers.google.com/identity/protocols/oauth2/native-app' : 'https://learn.microsoft.com/en-us/graph/auth-register-app-v2'} target="_blank" rel="noreferrer">{method === 'gmail' ? 'Google desktop OAuth guide' : 'Microsoft app registration guide'}</a>. Callback: <code>{window.location.origin}/api/connections/email/oauth/callback</code></p>
+            <p className="connection-help"><a href={method === 'gmail' ? 'https://developers.google.com/identity/protocols/oauth2/native-app' : 'https://learn.microsoft.com/en-us/graph/auth-register-app-v2'} target="_blank" rel="noreferrer">Setup guide</a></p>
+            <label>Redirect URI<input readOnly value={`${window.location.origin}/api/connections/email/oauth/callback`} onFocus={event => event.target.select()} /></label>
             <label>OAuth client ID<input autoComplete="off" disabled={busy} value={clientId} onChange={e => setClientId(e.target.value)} placeholder={conn?.oauthConfigured ? 'Configured by this installation' : 'Client ID from your registration'} /></label>
             {method === 'gmail' && <label>Desktop client secret, if supplied<input type="password" autoComplete="off" disabled={busy} value={clientSecret} onChange={e => setClientSecret(e.target.value)} placeholder={conn?.hasClientSecret ? 'Saved; leave blank to keep' : 'From the Google desktop client'} /></label>}
             {method === 'gmail' && <label>Import Google desktop credentials<input type="file" accept=".json,application/json" disabled={busy} onChange={async e => {
@@ -378,11 +373,11 @@ export default function ConnectionPanel({
               {email ? (
                 <>
                   <li>
-                    <span>Send applications and reports</span>
+                    <span>Send email</span>
                     <strong>{mappingStatus("sendEmail")}</strong>
                   </li>
                   <li>
-                    <span>Check application replies</span>
+                    <span>Check replies</span>
                     <strong>{mappingStatus("readThread")}</strong>
                   </li>
                 </>
@@ -393,58 +388,34 @@ export default function ConnectionPanel({
                 </li>
               )}
             </ul>
-            <p className="connection-help">
-              Tool selection is checked here. Live results appear after a
-              supported action completes.
-            </p>
           </section>
         )}
 
         {(email || (connected && !mappingExists("readCV"))) && (
-          <details className="advanced assistant-setup">
-            <summary>
-              {email
-                ? "Set up with my assistant"
-                : "Finish CV setup with my assistant"}
-            </summary>
-            <p>
-              Copy these instructions into Codex or Claude Code. Your assistant
-              will use the connection you choose and check what this tracker
-              supports.
-            </p>
+          <div className="connection-setup-request">
             <button
               type="button"
-              className=""
+              className="text-button"
               disabled={busy}
               onClick={copySetup}
             >
               <Copy />
-              {t("Copy setup instructions")}
+              {t("Copy setup request")}
             </button>
-            {showInstructions && (
+            {manualCopy && (
               <div className="setup-instructions">
                 <label>
-                  Instructions for your assistant
+                  Copy into your assistant
                   <textarea
-                    ref={instructionsRef}
-                    className="code-input"
                     readOnly
-                    rows={8}
+                    rows={3}
                     value={setupTask}
-                    onFocus={(event) => {
-                      if (manualCopy) event.target.select();
-                    }}
+                    onFocus={event => event.target.select()}
                   />
                 </label>
-                {manualCopy && (
-                  <p className="notice" role="status">
-                    Clipboard access is unavailable. Select the instructions
-                    above and copy them manually.
-                  </p>
-                )}
               </div>
             )}
-          </details>
+          </div>
         )}
 
         {!email && connected && mappingExists("readCV") && (
@@ -457,7 +428,7 @@ export default function ConnectionPanel({
                 setError("");
                 try {
                   setCvResult(await api("/cv/read", "POST", {}));
-                  notify("Tabbio response saved on this computer");
+                  notify("CV read successfully");
                 } catch (failure) {
                   setError(failure.message);
                 } finally {
@@ -468,12 +439,7 @@ export default function ConnectionPanel({
               <FileText />
               Read CV
             </button>
-            {cvResult && (
-              <details className="advanced">
-                <summary>Tabbio response</summary>
-                <pre>{JSON.stringify(cvResult, null, 2)}</pre>
-              </details>
-            )}
+            {cvResult && <p className="connection-state" role="status">CV read successfully</p>}
           </section>
         )}
 
@@ -494,7 +460,7 @@ export default function ConnectionPanel({
             setBusy(true); setError('');
             try {
               const presets = await api('/integrations/presets'); const preset = presets.find(item => item.id === 'tabbio');
-              if (!preset?.ready) throw new Error('Run npm run setup -- --tabbio, then npm run connect -- tabbio to sign in to the local Tabbio CLI.');
+              if (!preset?.ready) throw new Error('The Tabbio CLI needs setup. Ask your assistant to follow docs/CONNECTIONS.md.');
               await api('/connections/tabbio', 'PUT', { adapter: 'mcp', provider: 'tabbio', label: 'Tabbio CV', command: preset.command, args: preset.args, env: preset.env, mappings: {} });
               await acceptConnection(await api('/connections/tabbio/connect', 'POST', {}));
             } catch (failure) { setError(failure.message); } finally { setBusy(false); }
@@ -505,10 +471,6 @@ export default function ConnectionPanel({
             <option value="mcp">Custom MCP server</option>
           </select></label>}
           {(!email || method === 'mcp') && <>
-          <p>
-            Use a server or local bridge you trust. Credentials stay in this
-            app’s private local connection settings.
-          </p>
           <label>
             Connection type
             <select
@@ -585,8 +547,7 @@ export default function ConnectionPanel({
                 Arguments (JSON)
                 {conn?.hasArgs && !argsEdited && (
                   <span className="connection-help">
-                    {conn.argCount} saved arguments are kept unless you replace
-                    them.
+                    {conn.argCount} saved; unchanged unless replaced.
                   </span>
                 )}
                 <textarea
@@ -613,8 +574,7 @@ export default function ConnectionPanel({
                 />
               </label>
               <p className="connection-help">
-                Saved secret values are private and are not displayed here.
-                Replacing the command clears its old credentials.
+                Changing the command clears its saved credentials.
               </p>
             </>
           )}
@@ -631,11 +591,6 @@ export default function ConnectionPanel({
               }}
             />
           </label>
-          <p className="connection-help">
-            The assistant can map sendEmail, readThread and readCV from the
-            discovered tool schemas. The expected response formats are in
-            docs/CONNECTIONS.md.
-          </p>
           <button
             type="button"
             disabled={
@@ -651,20 +606,6 @@ export default function ConnectionPanel({
           </>}
         </details>
 
-        {tools.length > 0 && (
-          <details className="advanced">
-            <summary>Available tools ({tools.length})</summary>
-            <div className="tool-list">
-              {tools.map((tool) => (
-                <details key={tool.name}>
-                  <summary>{tool.name}</summary>
-                  <p>{tool.description}</p>
-                  <pre>{JSON.stringify(tool.inputSchema, null, 2)}</pre>
-                </details>
-              ))}
-            </div>
-          </details>
-        )}
         {error && (
           <p className="form-error" role="alert">
             {error}

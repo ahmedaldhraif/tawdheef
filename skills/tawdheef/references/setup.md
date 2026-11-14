@@ -1,64 +1,77 @@
-# Local setup
+# Native-client setup
 
-Use this workflow when the person asks to set up Tawdheef. Ordinary job-search
-runs do not authorize installation or client-setting changes.
+Use this only when the person requests setup. A job-search Run does not permit
+installation, client-setting edits or code changes.
 
-If the app is not downloaded, start at https://github.com/ahmedaldhraif/tawdheef.
-Use published release assets or clone the repository. Releases may be
-prereleases: inspect the releases list and actual asset names rather than
-guessing a `releases/latest` URL. The skill alone is not the app download.
+Start at https://github.com/ahmedaldhraif/tawdheef if the app is missing. Inspect
+actual release assets: a country pack is data, and the skill is guidance, not
+the app. Read the intended checkout's AGENTS.md and docs/FIRST-RUN.md.
 
-1. Work in the intended checkout. Read `AGENTS.md` and `docs/FIRST-RUN.md`.
-   Inspect the existing Node version, data path, app and selected client. Reuse
-   working configuration; never delete a custom config to make setup pass.
-2. Node.js 24 or newer is required. With it installed, `npm start` installs
-   missing locked dependencies, builds and starts the local app. Check
-   `npm run doctor`, then call `get_setup_status`. Before MCP is available,
-   use `node bin/apply-tracker.mjs call get_setup_status`.
-3. Install missing browser tools with `npm run setup -- --browser` for the
-   requested browser workflow. Then configure only the selected client with
-   `npm run agent -- codex --browser` or `npm run agent -- claude-code --browser`.
-   This adds tracker and browser tools to the chat with project-only settings
-   and this skill. Run in the app supplies its own scoped browser tools.
-   Existing custom files stay intact: export configuration with
-   `npm run setup -- --export-config agent-config --include playwright`,
-   inspect it and merge only the missing entries. Never replace the whole
-   file. `--check` previews setup. The person accepts the client's trust
-   prompt and may need to start a new chat for MCP to load.
-4. Guide the person to Connections for their CV and chosen optional mailbox.
-   If they have no CV, open https://app.tabbio.com so they can create their
-   account and digital CV, then return to Connections → Your CV → Tabbio CV.
-   Existing users connect their intended account directly. Discover the actual
-   CV read tool and map `readCV`; do not guess tool names or CV IDs.
-   Its AI assistants section chooses the assistant for Run; Check connections
-   verifies that selection and the CV. Set up with my agent contains the
-   copyable instructions in a collapsed disclosure.
-   They complete sign-in, consent and credential entry in the local form.
-   Native Gmail/Outlook need their own OAuth registration; iCloud Mail uses an
-   Apple app-specific password. Do not request secrets in chat or records.
-5. Call `get_setup_status` with `verify:true` and `assistant:"codex"` or
-   `assistant:"claude-code"`. It checks that client's local sign-in state
-   and reads the connected CV through the running app. Report Ready or one
-   actionable Needs you item. Installation does not prove account access.
+1. Inspect the app/data path and selected existing client. Reuse working parts
+   and custom settings; never delete a config to make setup pass. Source uses
+   Node.js 26 LTS (patched Node 24 is supported) and npm start. Platform apps include Node
+   and the interface: use the launcher and exact bundled runtime, without
+   installing developer tools or rebuilding at launch. Preserve existing data.
+2. Connect only the local tracker MCP/skill to the actual chosen Codex or Claude
+   Code client, using its supported project-only settings. The source commands
+   are npm run agent -- codex or npm run agent -- claude-code. --check previews
+   changes. Inspect/merge conflicting custom entries; never replace the whole
+   file or edit global/home settings. The user accepts client trust and may
+   need a new conversation. No assistant CLI is needed for the default handoff.
+3. Call get_agent_context and get_capabilities. The app observes these local
+   tracker tool calls separately from external connection reports. They do not
+   verify model access, provider authentication, browser/computer control or a
+   schedule. If local stdio MCP is unsupported in this client, explain the
+   supported local-client step; never create a public tunnel or claim a web
+   chat loaded local settings.
+4. In Connections → Assistant, choose the same actual client once. All external
+   services belong there: Tabbio MCP/CV, email, calendar, browser/computer and
+   password manager. Reuse their existing authorized tools and sign-ins. The
+   user handles normal OAuth, identity, consent and unlock. Do not extract
+   another app's credentials or create tracker provider sessions in native mode.
+5. For CV, reuse the person's Tabbio account or offer https://www.tabbio.com/en.
+   Connect its published remote MCP endpoint using supported client settings;
+   the project setup --tabbio option is available when explicitly requested.
+   Read the actual authorized CV through the native client. Report only CV
+   reference/update metadata, never full CV text. No invented experience,
+   visibility change, sharing, publishing or editing to make setup pass.
+6. Check selected external tools in this actual client and record bounded
+   available/needs_you/unknown observations with report_native_connection.
+   Use actual observed account/provider identity and timestamps. Email's main
+   address must come from the selected mail account, not CV text. Calendar
+   reports contain only real IDs the user chooses. Browser and OS computer
+   access are separate; a blank browser page cannot prove OS control. Password
+   manager checks must not read/export a vault. get_native_client_status returns
+   dated client reports, not independent provider verification; stale reports
+   become Unknown. Finish with what was checked and one actionable Needs you.
 
-The app's Run button needs the chosen assistant, a readable connected CV, a
-directory and browser tools or a configured email route. Email is optional
-for browser forms. Calendar and schedules can be added later. Setup never
-sends a test email, starts application/profile/CV-sharing runs, writes calendar events or enables
-startup/schedules. Those need a separate request.
+Do not install a Tawdheef browser engine/provider bridge for native setup.
+Client tools, plans and supported integrations may vary; preserve normal
+client/provider permission requirements. Missing access stays missing.
+The tracker needs no separate model API key.
 
-Tawdheef reads the authorised CV. Tabbio's separate MCP and CLI can expose CV
-editing and sharing tools; connecting the tracker does not configure those
-write operations or authorise CV edits. Keep any requested CV creation or
-editing grounded in the person's real information.
+The person may save an original PDF/DOCX up to 10 MB under Tabbio CV for authorized
+file uploads. It is separate from readable native CV facts. Saving/staging does
+not upload it, attach it to mail or publish it. Respect client file access;
+never manufacture a replacement or invent an export/share URL.
 
-The CLI entrypoint is `node bin/apply-tracker.mjs`; `help` lists the current
-contract. Use JSON input files for structured arguments. The stdio MCP entry
-is `node server/mcp.mjs` and its stdout is protocol only. Keep the data path
-and port identical to the running app; do not create another provider owner.
+Setup authorizes no applications, registrations, profile edits, CV upload/share,
+messages, calendar writes, startup changes or schedules. Run separately saves
+explicit actions/scope and copies a handoff into this existing conversation.
+No app-started model/CLI queue is part of the native workflow.
 
-For custom client settings, export the actual local configuration and offer
-a specific merge. Do not guess paths or change home-directory configuration.
-ChatGPT web does not read local stdio settings. Never create a public tunnel
-for ordinary setup. A skill supplies guidance; it does not install the app,
-connect an account or authorize applications, career profiles or CV sharing on its own.
+Only an explicit Connections → Advanced compatibility → Tawdheef local adapters
+choice enables the older provider forms/CLI runner. That mode has separate
+local credentials, optional dependencies, Check connections and an optional
+explicit CLI model fixture test. Keep that proof separate from native Desktop
+or provider access; do not run models during a passive status read. See
+CONNECTIONS.md before using it; never choose compatibility automatically to
+bypass a native-client restriction.
+
+The CLI is node bin/apply-tracker.mjs; help lists the live contract. Use JSON
+input files for structured writes. The stdio MCP is node server/mcp.mjs;
+stdout is protocol only. Keep its data path and port identical to the app.
+Do not create another private-data folder/provider owner to bypass an error.
+Follow docs/MONITORING.md only when read-only native monitoring is requested.
+It needs the saved assistant/scope/revision and dedicated workspace; copying
+instructions or reporting a task ID does not verify an external schedule.
