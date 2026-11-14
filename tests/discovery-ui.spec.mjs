@@ -61,6 +61,15 @@ async function open(page) {
   return section;
 }
 async function review(page) { const section = await open(page); await section.getByRole('button', { name: 'Review jobs', exact: true }).click(); return page.getByRole('dialog'); }
+async function pageWidths(page) {
+  return page.evaluate(() => ({
+    viewport: innerWidth, document: document.documentElement.scrollWidth, direction: document.documentElement.dir,
+    elements: ['.directory-heading', '.directory-heading > div:first-child', '.directory-heading h1', '.discovery-panel', '.modal-backdrop', '.dialog', '.dialog-header'].map(selector => {
+      const node = document.querySelector(selector), rect = node?.getBoundingClientRect();
+      return { selector, left: rect?.left, right: rect?.right, width: rect?.width, clientWidth: node?.clientWidth, scrollWidth: node?.scrollWidth, font: node && getComputedStyle(node).fontFamily };
+    }),
+  }));
+}
 
 test('job list loads on demand, paginates, keeps old jobs beside a source problem, and returns focus', async ({ page }) => {
   const section = await open(page);
@@ -157,10 +166,36 @@ test('English and Arabic discovery remain readable at 320 and 1440 with native d
       const section = page.locator('.discovery-panel').first(); await section.locator('summary').click();
       await section.getByRole('button', { name: language === 'ar' ? 'مراجعة الوظائف' : 'Review jobs', exact: true }).click();
       const dialog = page.getByRole('dialog'); await expect(dialog.locator('.discovery-jobs > li')).toHaveCount(20);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      const widths = await pageWidths(page);
+      expect(widths.document, JSON.stringify({ language, width, ...widths })).toBeLessThanOrEqual(widths.viewport);
       await page.screenshot({ path: `outputs/discovery-ui-captures/${language}-${width}.png`, fullPage: true });
       await page.keyboard.press('Escape');
     }
+  }
+});
+
+test('an unbroken directory title wraps without widening the page or hiding dialog controls', async ({ page, request }) => {
+  const title = `Discovery ${'M'.repeat(120)}`;
+  await page.route('**/api/bootstrap', async route => {
+    const response = await route.fetch(), boot = await response.json();
+    boot.directories = boot.directories.map(directory => directory.id === page.__directory.id ? { ...directory, name: title } : directory);
+    return route.fulfill({ response, json: boot });
+  });
+  await page.setViewportSize({ width: 320, height: 960 });
+  for (const language of ['en', 'ar']) {
+    await request.patch('/api/settings', { data: { language } }); await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
+    await expect(page.locator('tbody tr:not(.skeleton-row)')).toHaveCount(1);
+    const widths = await pageWidths(page);
+    expect(widths.document, JSON.stringify({ language, ...widths })).toBeLessThanOrEqual(widths.viewport);
+    const section = page.locator('.discovery-panel').first(); await section.locator('summary').click();
+    await section.getByRole('button', { name: language === 'ar' ? 'مراجعة الوظائف' : 'Review jobs', exact: true }).click();
+    const dialog = page.getByRole('dialog'); await expect(dialog.locator('.discovery-jobs > li')).toHaveCount(20);
+    const modalWidths = await pageWidths(page), header = modalWidths.elements.find(element => element.selector === '.dialog-header');
+    expect(modalWidths.document, JSON.stringify({ language, ...modalWidths })).toBeLessThanOrEqual(modalWidths.viewport);
+    expect(header.scrollWidth, JSON.stringify({ language, ...modalWidths })).toBeLessThanOrEqual(header.clientWidth);
+    await expect(dialog.getByRole('button', { name: language === 'ar' ? 'إغلاق' : 'Close', exact: true })).toBeInViewport();
+    await page.keyboard.press('Escape'); await expect(dialog).toHaveCount(0);
   }
 });
 

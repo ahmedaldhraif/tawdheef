@@ -1,7 +1,7 @@
 /* The directory heading and its single primary action. */
 .directory-heading { padding: 20px 0 14px; }
-.directory-heading > div:first-child { min-width: 0; }
-.directory-heading h1 { margin-bottom: 6px; }
+.directory-heading > div:first-child { min-width: 0; max-width: 100%; }
+.directory-heading h1 { margin-bottom: 6px; overflow-wrap: anywhere; }
 .directory-heading .directory-run {
   position: relative;
   isolation: isolate;

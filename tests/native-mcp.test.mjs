@@ -179,3 +179,15 @@ test('Native scheduled discovery cannot borrow manual leases, widen saved source
   store.configureMonitoring({ expectedRevision: config.revision, patch: { enabled: false } });
   assert.equal((await monitor.callTool({ name: 'get_discovery_summary', arguments: {} })).isError, true);
 });
+
+test('Native discovery records unavailable tools as a source blocker without inventing a successful read', async t => {
+  const { connect, store } = await fixture(t), client = await connect();
+  const lease = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  const blocked = await call(client, 'record_job_discovery', { id: lease.id, token: lease.token, status: 'unknown', nextStep: 'Enable the browser in your selected client, then check this careers source.' });
+  assert.equal(blocked.complete, false); assert.equal(blocked.leaseActive, false);
+  const summary = await call(client, 'get_discovery_summary'); assert.equal(summary.sourceProblemCount, 1); assert.match(summary.nextStep, /Enable the browser/);
+  assert.equal((await call(client, 'list_discovered_jobs')).total, 0);
+  const missingProof = await call(client, 'prepare_job_discovery', { companyId: 'alpha' });
+  const falseSuccess = await client.callTool({ name: 'record_job_discovery', arguments: { id: missingProof.id, token: missingProof.token, status: 'checked', complete: true, observations: [] } });
+  assert.equal(falseSuccess.isError, true); assert.equal(store.listRuns().length, 0);
+});

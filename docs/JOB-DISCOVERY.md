@@ -20,12 +20,19 @@ unrestricted. Matching needs a current CV read in the actual client.
    URLs provide structured requests. Workday layouts have best-effort fixture
    support; use the actual client's browser if a layout fails. Other sites use
    the saved careers page. Do not guess a board or tenant from a company name.
+   If a page leads to a different verified ATS board, the normal client can
+   save that actual careers route through `update_company` with its current
+   revision, retaining original evidence, then prepare a new lease. A dedicated
+   monitoring client leaves an actionable source-update handoff instead.
 3. Use your own authorized tools to read that source and call
    `record_job_discovery` with the original lease ID/token, dated `sourceRead`
    and bounded public payload or normalized observations. Record at most 100
    jobs per batch and keep the whole request below 1 MiB. Continue returned
    pagination honestly. `complete:true` requires actual complete coverage;
    a listing without full descriptions is not complete content for matching.
+   If no permitted read tool is available, record `status:"unknown"` and one
+   `nextStep` without inventing `sourceRead` evidence. Successful reads require
+   actual evidence; an unavailable source is never an empty successful search.
 4. Read `list_discovered_jobs` with `review:"pending"`. Fetch full descriptions
    through `get_discovered_job` only for jobs that need review. A detail read
    uses a new `prepare_job_discovery` with its existing company ID and job ID.

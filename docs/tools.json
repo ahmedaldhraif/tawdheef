@@ -2759,7 +2759,7 @@
     },
     {
       "name": "record_job_discovery",
-      "description": "Record bounded public source data read by your actual client under the original lease. Typed content hashes retain unchanged jobs and assessments. Blocked/partial/missing sources never prove closure. No sending or profile changes.",
+      "description": "Record bounded public source data read by your actual client under the original lease. Typed content hashes retain unchanged jobs and assessments. Blocked/partial/missing sources never prove closure. If no permitted reader is available, record status:unknown and one nextStep without inventing sourceRead. Successful reads require actual proof. No sending or profile changes.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -2842,8 +2842,7 @@
         },
         "required": [
           "id",
-          "token",
-          "sourceRead"
+          "token"
         ],
         "additionalProperties": false
       },
