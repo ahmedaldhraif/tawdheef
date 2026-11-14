@@ -2,6 +2,7 @@ import { discoverAssistants, checkAssistantAuthentication } from './agent-runner
 import { integrationPresets } from './integrations.mjs';
 import { readConnectedCv } from './cv-read.mjs';
 import { AppError } from './store.mjs';
+import { checkTrackerMcp, checkBrowserMcp } from './setup-probes.mjs';
 
 export const SETUP_PROMPT = `Set up Tawdheef for me in this folder. Read AGENTS.md and docs/FIRST-RUN.md. Check what already works, then install missing project dependencies, start the app, add browser tools, and connect this project to the assistant I am using. Keep existing settings and data. Help me create or connect my free Tabbio CV using only my real information. Guide me through only the sign-ins or choices that need me; I will enter credentials in the local connection form. Check setup again and tell me the next step. Use get_setup_status (verify:true for the final check), or the equivalent CLI command. Do not change the app's code or design, send applications, create calendar events, or enable schedules during setup.`;
 
@@ -18,7 +19,7 @@ async function bounded(task, timeoutMs, onTimeout = () => {}) {
 }
 
 /** Observations and bounded read-only probes. No credentials or provider text enter this result. */
-export function createSetupStatus({ store, connections, port, discover = discoverAssistants, presets = integrationPresets, checkAuthentication = checkAssistantAuthentication, readCv = readConnectedCv, timeoutMs = 30000, clock = () => new Date() }) {
+export function createSetupStatus({ store, connections, port, discover = discoverAssistants, presets = integrationPresets, checkAuthentication = checkAssistantAuthentication, checkTracker = checkTrackerMcp, checkBrowser = checkBrowserMcp, readCv = readConnectedCv, timeoutMs = 30000, clock = () => new Date() }) {
   const pendingChecks = new Map();
   let pendingCv;
   async function checkCv() {
@@ -44,7 +45,10 @@ export function createSetupStatus({ store, connections, port, discover = discove
     const email = records.find(item => item.kind === 'email');
     const calendar = records.find(item => item.kind === 'calendar');
     const browser = integrations.find(item => item.id === 'playwright');
-    const browserReady = browser?.ready === true && browser.browserInstalled === true;
+    const browserInstalled = browser?.ready === true && browser.browserInstalled === true;
+    let browserReady = false, trackerReady = false;
+    let browserState = browserInstalled ? 'not_checked' : 'needs_action';
+    let trackerState = 'not_checked';
     const emailReady = mapped(email, 'sendEmail');
     const cvConfigured = mapped(cv, 'readCV');
     let assistantState = selected?.installed ? 'not_checked' : 'needs_action';
@@ -53,8 +57,9 @@ export function createSetupStatus({ store, connections, port, discover = discove
     let cvDetail = cvConfigured ? 'Connected. Check connections to confirm your CV can be read.' : 'Connect your Tabbio CV so the assistant can use your real experience.';
     if (verify) {
       await Promise.all([
-        selected?.installed ? bounded(() => checkAuthentication(selected), timeoutMs).then(() => {
-          assistantState = 'ready'; assistantDetail = `${selected.name} sign-in check passed.`;
+        selected?.installed ? bounded(() => checkAuthentication(selected), timeoutMs).then(result => {
+          const version = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(result?.version || '') ? ` ${result.version}` : '';
+          assistantState = 'ready'; assistantDetail = `${selected.name}${version} local command and sign-in checks passed.`;
         }).catch(() => {
           assistantState = 'needs_action'; assistantDetail = `Open ${selected.name}, check its sign-in and CLI settings, then check connections again. No application was started.`;
         }) : Promise.resolve(),
@@ -63,6 +68,12 @@ export function createSetupStatus({ store, connections, port, discover = discove
         }).catch(() => {
           cvState = 'needs_action'; cvDetail = 'Your CV could not be read. Open Tabbio CV in Connections, finish any sign-in or approval, then check again.';
         }) : Promise.resolve(),
+        bounded(() => checkTracker({ timeoutMs: Math.min(timeoutMs, 20000) }), timeoutMs).then(() => {
+          trackerReady = true; trackerState = 'ready';
+        }).catch(() => { trackerState = 'needs_action'; }),
+        browserInstalled ? bounded(() => checkBrowser({ browser, timeoutMs: Math.min(timeoutMs, 20000) }), timeoutMs).then(() => {
+          browserReady = true; browserState = 'ready';
+        }).catch(() => { browserState = 'needs_action'; }) : Promise.resolve(),
       ]);
     }
     const directories = store.listDirectories();
@@ -70,14 +81,15 @@ export function createSetupStatus({ store, connections, port, discover = discove
     const settings = store.getSettings();
     const steps = [
       step('assistant', 'Choose your assistant', assistantState, assistantDetail, 'assistant', true),
+      step('tools', 'Local assistant tools', trackerState, trackerReady ? 'The local MCP server started and exposed the required tracker tools.' : verify ? 'Local tracker tools could not start. Restart Tawdheef and check again; no application was started.' : 'Check connections to test the local tracker tools.', 'check', true),
       step('cv', 'Connect your CV', cvState, cvDetail, 'cv', true),
       step('directory', 'Choose a directory', directoryReady ? 'ready' : 'needs_action', directoryReady ? 'Your company directory is available. Choose a tab before Run.' : 'Add a directory and at least one company.', 'directory', true),
-      step('browser', 'Browser applications', browserReady ? 'ready' : emailReady ? 'optional' : 'needs_action', browserReady ? 'Browser tools and Chromium are installed. Website sign-ins may still need you.' : 'Let your agent run npm run setup -- --browser to enable website forms.', 'browser', !emailReady),
+      step('browser', 'Browser applications', browserReady ? 'ready' : emailReady ? 'optional' : browserState, browserReady ? 'Browser tools opened an isolated blank page successfully. Website sign-ins may still need you.' : browserInstalled ? verify ? 'The browser smoke check failed. Let your agent check the browser installation, then try again.' : 'Browser tools are installed. Check connections to verify they can open a page.' : 'Let your agent run npm run setup -- --browser to enable website forms.', 'browser', !emailReady),
       step('email', 'Email applications', emailReady ? 'ready' : 'optional', emailReady ? 'Your mailbox is connected with a send mapping. Access is checked when used; no test email is sent.' : 'Connect one mailbox if you want email applications and reply checks.', 'email'),
       step('calendar', 'Calendar', connected(calendar) ? 'ready' : 'optional', connected(calendar) ? 'A calendar is connected. Events are added only when you ask.' : 'Connect later if you want to view or add interviews.', 'calendar'),
       step('schedule', 'Updates and reports', 'optional', `Reply checks: ${settings.refreshFrequency || 'manual'}. Reports: ${settings.reportFrequency || 'off'}. The computer must be awake. Review these whenever you are ready.`, 'schedule'),
     ];
-    const ready = verify && assistantState === 'ready' && cvState === 'ready' && directoryReady && (browserReady || emailReady);
+    const ready = verify && assistantState === 'ready' && trackerReady && cvState === 'ready' && directoryReady && (browserReady || emailReady);
     const missing = steps.find(item => item.required && item.status === 'needs_action') || steps.find(item => item.required && item.status === 'not_checked');
     const nextStep = ready ? { id: 'run', title: 'Ready for your first run', detail: 'Choose your directory and describe the work you want. Only pressing Run authorizes applications.', action: 'run' }
       : missing ? { id: missing.id, title: missing.status === 'not_checked' ? 'Check connections' : missing.title, detail: missing.detail, action: missing.status === 'not_checked' ? 'check' : missing.action }

@@ -1,8 +1,10 @@
 # Tawdheef
 
-> Auto Job Apply & Application Tracker by Ahmed AlDhraif. Free, open-source local software: the screen, CLI and stdio MCP use the same records. A signed-in Codex or Claude Code supplies the assistant. Agent accounts, model usage and connected providers may have their own costs.
+> Find matching jobs. Build career profiles. Tawdheef is a free, open-source, local-first job-search app by Ahmed AlDhraif. Its screen, built-in CLI and local stdio MCP server share the same records. A signed-in Codex or Claude Code supplies the assistant. Agent accounts, model usage and connected providers may have their own costs.
 
 Repository: https://github.com/ahmedaldhraif/tawdheef
+
+Career accounts, completed profiles and CV uploads are useful outcomes even when no suitable job is open. They are recorded separately from confirmed applications. The person selects companies and actions before starting a run.
 
 This is a navigation aid for this repository. It does not override AGENTS.md, grant permission to act, or guarantee search indexing or AI citations.
 
@@ -82,7 +84,7 @@ The public repository and website do not expose a person's local tracker, connec
 - [Connect Codex or Claude Code | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-agent/)
 - [Create or connect your CV | Tawdheef guides](https://www.tawdheef.com/guides/connect-your-cv/)
 - [Add a country directory | Tawdheef guides](https://www.tawdheef.com/guides/use-directory-packs/)
-- [Start your first application run | Tawdheef guides](https://www.tawdheef.com/guides/apply-to-jobs/)
+- [Find matching jobs and build career profiles | Tawdheef guides](https://www.tawdheef.com/guides/apply-to-jobs/)
 - [Check replies and reports | Tawdheef guides](https://www.tawdheef.com/guides/replies-and-reports/)
 - [Fix a setup or run problem | Tawdheef guides](https://www.tawdheef.com/guides/troubleshoot/)
 - [Use Tawdheef as an agent | Tawdheef guides](https://www.tawdheef.com/guides/for-agents/)

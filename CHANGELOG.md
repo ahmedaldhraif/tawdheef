@@ -12,6 +12,9 @@
 
 - Filter the company list by city and type, then run the matching unfinished companies across every page or just the checked rows.
 - Three Run choices for matching jobs, career profiles and future-opportunity CV emails, with the remembered assistant beside Run.
+- Compact Run confirmation keeps operational instructions in agent documentation and runtime prompts, with only an optional user note on screen.
+- Simplified Connections and Settings, with direct account actions and setup guidance kept in agent docs.
+- The screen recommends both matching-job applications and career profiles; general CV emails remain optional and existing CLI defaults are preserved.
 - One Settings gear for schedules and reports, plus a restrained graphite activity mark while an assistant works.
 - Auto job apply and application tracker positioning across the public site, README and skill.
 - GitHub-first app and pack downloads, with direct release assets for agents.

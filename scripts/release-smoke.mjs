@@ -43,9 +43,8 @@ try {
   run(join(checkout, 'scripts/agent-setup.mjs'), ['both']);
   run(join(checkout, 'scripts/agent-setup.mjs'), ['both']);
   const base = `http://127.0.0.1:${port}`;
-  for (const path of ['/', '/api/health', '/welcome/', '/downloads/tawdheef-source.zip', '/downloads/uae-directory-pack.zip']) {
+  for (const path of ['/', '/api/health', '/favicon.svg', '/brand/app-icon-192.png']) {
     const response = await fetch(base + path); assert.equal(response.status, 200, path);
-    if (path.endsWith('.zip')) assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
   }
   client = new Client({ name: 'release-verifier', version: pkg.version });
   const transport = new StdioClientTransport({ command: process.execPath, args: [join(checkout, 'server/mcp.mjs')], env, cwd: checkout, stderr: 'pipe' });
@@ -59,7 +58,7 @@ try {
   assert.equal(context.data.directories.find(directory => directory.id === 'uae').count, 772);
   assert.equal(resolve(context.data.dataDir), resolve(dataDir));
   const before = Date.now(); run(join(checkout, 'scripts/start.mjs'), ['--no-open']);
-  const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds', 'project MCP setup for both clients', 'repeat setup preserves files', 'local pages and downloads', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
+  const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds without optional bridges', 'project MCP setup for both clients', 'repeat setup preserves files', 'working app and icons', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
   await writeFile(join(release, 'smoke-verification.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
 } finally {

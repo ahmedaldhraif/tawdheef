@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronRight, Copy, RefreshCw } from 'lucide-react';
 import ProviderLogo from './ProviderLogo.jsx';
+import './connections-compact.css';
 
 // The hub unmounts while a provider is open. Retain only the last control name,
 // so returning with Back places keyboard users where they left the list.
@@ -11,10 +12,11 @@ export default function ConnectionsHub({ connections = [], open, close, Modal, t
   const [assistant, setAssistant] = useState(() => localStorage.getItem('tawdheef-assistant') === 'claude-code' ? 'claude-code' : 'codex');
   const [report, setReport] = useState(null), [checking, setChecking] = useState(false), [error, setError] = useState(''), [copied, setCopied] = useState(false), [showPrompt, setShowPrompt] = useState(false);
   const request = useRef(0);
+  const setupRequest = report?.setupPrompt ? `Use ${assistant === 'codex' ? 'Codex' : 'Claude Code'} for this setup. ${report.setupPrompt}` : '';
   useEffect(() => {
     let active = true;
     const version = ++request.current;
-    setReport(null); setError(''); setCopied(false);
+    setReport(null); setError(''); setCopied(false); setShowPrompt(false);
     api('/setup-status?assistant=' + assistant).then(value => { if (active && version === request.current) setReport(value); }).catch(e => { if (active && version === request.current) setError(e.message); });
     return () => { active = false; };
   }, [assistant]);
@@ -26,8 +28,8 @@ export default function ConnectionsHub({ connections = [], open, close, Modal, t
     finally { setChecking(false); }
   }
   async function copy() {
-    try { await navigator.clipboard.writeText(report.setupPrompt); setCopied(true); }
-    catch { setShowPrompt(true); setError('Copy the instructions below and paste them into your assistant.'); }
+    try { await navigator.clipboard.writeText(setupRequest); setCopied(true); setShowPrompt(false); }
+    catch { setShowPrompt(true); }
   }
   useEffect(() => {
     const provider = returningProvider;
@@ -37,16 +39,16 @@ export default function ConnectionsHub({ connections = [], open, close, Modal, t
     return () => cancelAnimationFrame(frame);
   }, []);
   const groups = [
-    { title: 'Email', hint: 'Send applications and check recorded replies.', rows: [['gmail', 'Gmail', 'email'], ['outlook', 'Outlook Email', 'email'], ['icloud-mail', 'iCloud Mail', 'email']] },
-    { title: 'Calendar', hint: 'See upcoming events and add an interview when you ask.', rows: [['google-calendar', 'Google Calendar', 'calendar'], ['outlook-calendar', 'Outlook Calendar', 'calendar'], ['icloud-calendar', 'iCloud Calendar', 'calendar']] },
-    { title: 'Your CV', hint: 'Use your structured Tabbio CV.', rows: [['tabbio', 'Tabbio CV', 'tabbio']] },
+    { title: 'Email', optional: true, rows: [['gmail', 'Gmail', 'email'], ['outlook', 'Outlook Email', 'email'], ['icloud-mail', 'iCloud Mail', 'email']] },
+    { title: 'Calendar', optional: true, rows: [['google-calendar', 'Google Calendar', 'calendar'], ['outlook-calendar', 'Outlook Calendar', 'calendar'], ['icloud-calendar', 'iCloud Calendar', 'calendar']] },
+    { title: 'Your CV', rows: [['tabbio', 'Tabbio CV', 'tabbio']] },
   ];
-  return <Modal title="Connections" close={close} t={t} pending={checking}>
-    <p className="dialog-intro">Choose your email, calendar, CV and assistant. Account sign-ins and credentials stay on this computer.</p>
-    {report?.verified && <div className={'connections-check-result ' + (report.ready ? 'ready' : '')} role="status"><strong>{report.ready ? 'Ready for Run' : report.nextStep.title}</strong><p>{report.ready ? 'Your assistant sign-in and CV access were checked. Choose a directory and press Run when you want to apply.' : report.nextStep.detail}</p></div>}
+  const footer = <div className="connections-dialog-footer"><div className="form-actions"><button onClick={close} disabled={checking}>Done</button><button onClick={check} disabled={checking}><RefreshCw size={15} />{checking ? 'Checking connections…' : 'Check connections'}</button></div></div>;
+  return <Modal title="Connections" close={close} t={t} pending={checking} footer={footer}>
+    {report?.verified && <div className={'connections-check-result ' + (report.ready ? 'ready' : '')} role="status"><strong>{report.ready ? 'Ready for Run' : report.nextStep.title}</strong>{!report.ready && <p>{report.nextStep.detail}</p>}</div>}
     {error && <p className="form-error" role="alert">{error}</p>}
-    <div className="connection-groups">{groups.map(group => <section key={group.title} aria-labelledby={`connection-group-${group.rows[0][0]}`}>
-      <h3 id={`connection-group-${group.rows[0][0]}`}>{group.title}</h3><p className="connection-group-hint">{group.hint}</p>
+    <div className="connection-groups compact-connection-groups">{groups.map(group => <section key={group.title} aria-labelledby={`connection-group-${group.rows[0][0]}`}>
+      <div className="connection-group-heading"><h3 id={`connection-group-${group.rows[0][0]}`}>{group.title}</h3>{group.optional && <span>Optional</span>}</div>
       <div className="provider-rows">{group.rows.map(([provider, label, kind]) => {
         const current = connections.find(item => item.kind === kind);
         const matches = current && (current.provider === provider || current.adapter === provider || (provider === 'gmail' && current.adapter === 'google-cli') || (provider === 'outlook' && current.adapter === 'outlook-mcp'));
@@ -58,15 +60,13 @@ export default function ConnectionsHub({ connections = [], open, close, Modal, t
         </button>;
       })}</div>
     </section>)}
-    <section aria-labelledby="connection-group-ai"><h3 id="connection-group-ai">AI assistants</h3><p className="connection-group-hint">Choose one assistant for Run.</p><div className="provider-rows">{[['codex', 'Codex'], ['claude-code', 'Claude Code']].map(([id, name]) => {
+    <section aria-labelledby="connection-group-ai"><h3 id="connection-group-ai">AI assistants</h3><div className="provider-rows">{[['codex', 'Codex'], ['claude-code', 'Claude Code']].map(([id, name]) => {
       const ready = report?.verified && report.assistant === id && report.steps.find(step => step.id === 'assistant')?.status === 'ready';
       return <div className="provider-row assistant-provider-row" key={id}>
         <label className="checkbox-label"><input type="radio" name="run-assistant" aria-label={`Use ${name} for Run`} checked={assistant === id} disabled={checking} onChange={() => { localStorage.setItem('tawdheef-assistant', id); setAssistant(id); }} /><ProviderLogo provider={id} size={25} decorative /><span>{name}</span></label>
         <button type="button" disabled={checking} className={'assistant-setup-link ' + (ready ? 'connected' : '')} aria-label={`${name} — View setup`} ref={node => { if (node) rowsRef.current.set(id, node); else rowsRef.current.delete(id); }} onClick={() => { returningProvider = id; open('ai', id === 'claude-code' ? 'claude' : 'codex'); }}>{ready ? 'Ready' : 'View setup'}<ChevronRight size={17} aria-hidden="true" /></button>
       </div>;
     })}</div></section></div>
-    <details className="connection-agent-help"><summary>Set up with my agent</summary><p className="field-hint">Paste these instructions into {assistant === 'codex' ? 'Codex' : 'Claude Code'} with this app folder open. Your agent handles the commands; you complete sign-in.</p><button disabled={!report || checking} onClick={copy}><Copy size={15} />{copied ? 'Instructions copied' : 'Copy instructions'}</button><details open={showPrompt || undefined} onToggle={e => setShowPrompt(e.currentTarget.open)}><summary>Read instructions</summary><pre tabIndex={0}>{report?.setupPrompt || 'Loading instructions…'}</pre></details></details>
-    <p className="connection-help">Email and calendar are optional. Checking confirms assistant sign-in and CV access; it never sends an application.</p>
-    <div className="form-actions"><button onClick={close} disabled={checking}>Done</button><button onClick={check} disabled={checking}><RefreshCw size={15} />{checking ? 'Checking connections…' : 'Check connections'}</button></div>
+    <div className="connection-setup-request"><button type="button" className="text-button" disabled={!report || checking} onClick={copy}><Copy size={15} />{copied ? 'Setup request copied' : 'Copy setup request'}</button>{showPrompt && <label>Copy into your assistant<textarea rows={3} readOnly value={setupRequest} onFocus={event => event.target.select()} /></label>}</div>
   </Modal>;
 }

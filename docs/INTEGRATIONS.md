@@ -71,7 +71,7 @@ Start an agent with `get_agent_context`, `get_capabilities`, then a small compan
 
 ## Installation and update behavior
 
-`npm run setup` installs the lockfile if dependencies or pinned optional tools are missing, then builds. `--all` additionally installs the correct Chromium and separate Tabbio CLI. `--check` only inspects readiness. Sign-in is always an explicit `--login` action. The scripts are relative to their own checkout, so invoking them from another working directory does not create a second tracker database.
+`npm run setup` installs missing source dependencies without optional bridges, then builds only the tracker. A prebuilt app never rebuilds or installs developer tools. Use `--browser`, `--tabbio`, or `--integration google-cli|outlook-mcp` to install just that integration in the private data folder. `--all` explicitly installs all supported integrations and Chromium; an unsupported optional bridge cannot block native providers. `--check` only inspects readiness. Sign-in is always an explicit `--login` action. The scripts are relative to their own checkout, so invoking them from another working directory does not create a second tracker database.
 
 Optional native binaries can be unavailable on an unsupported platform or when downloads are blocked. Doctor names missing tools; the base tracker and native email integrations remain independently usable. If an optional dependency cannot install, inspect the upstream platform requirements rather than substituting an unpinned download. Update reviewed versions and the lockfile together.
 

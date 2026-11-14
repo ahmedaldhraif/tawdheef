@@ -13,7 +13,7 @@ See [the short directory guide](docs/DIRECTORY-CONTRIBUTING.md). Keep original s
 
 Read `AGENTS.md` for operation boundaries and `docs/REPOSITORY.md` for the code map. Read `DESIGN.md` before interface changes. Use the relevant installed development skills on demand.
 
-Use Node.js 24 or newer. Run `npm ci`, then `npm run dev`. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
+Use Node.js 26 LTS (26.13.1 is the release target) and Vite 8.3.8 from the lockfile. Patched Node 24 remains a source compatibility target. Run `npm ci`, then `npm run dev`. This retains the bundler's native platform bindings; mailbox/browser bridges are separate explicit installs. Work with isolated test data; never use someone else's mailbox or tracking database as a fixture. Do not change the original UAE seed to test an edit.
 
 Before proposing a change:
 
@@ -26,6 +26,8 @@ npm run release:check
 For interface or launch changes, install the test browser with `npx playwright install chromium`, then run `npm run test:ui`. Tool changes also require `npm run tools:catalog`. New provider behavior needs fixtures for failure, unknown outcomes, account identity and duplicate protection, not an automatic live send.
 
 Keep changes focused and explain the user-visible result and checks performed. Keep dependencies small. Preserve the shared UI/CLI/MCP validation; do not add a direct-database bypass.
+
+`npm run build` builds only the tracker interface. Build the separate website with `node website/build.mjs` before website/browser checks. Use `npm run benchmark` for disposable synthetic query measurements. Build user packages with `npm run release:app -- --output NEW_FOLDER`, then verify the exact download with `npm run release:app:smoke -- --directory NEW_FOLDER`. Each package must be built and checked on its target OS and architecture.
 
 Never include `.local`, environment files, credentials, cookies, applicant data, real CVs, mailbox contents or client configuration in a pull request. Review screenshots before sharing them. Directory contributions must preserve stable IDs, sources, roles and missing evidence; do not invent contacts or eligibility.
 

@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "type": "module",
-  "description": "Free, open-source auto job apply and application tracker for you and your agent. Local app, MCP, CLI and shared country directory packs.",
+  "description": "Find matching jobs and build career profiles. Free, open-source local app with built-in CLI and MCP for Codex and Claude Code.",
   "license": "MIT",
   "engines": {
     "node": ">=24"
@@ -25,6 +25,9 @@
     "release:check": "node scripts/release-check.mjs && node scripts/tool-catalog.mjs --check",
     "release:prepare": "node scripts/prepare-release.mjs",
     "release:smoke": "node scripts/release-smoke.mjs",
+    "release:app": "node scripts/package-app.mjs",
+    "release:app:smoke": "node scripts/app-smoke.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
     "background:start": "node scripts/background.mjs start",
     "background:stop": "node scripts/background.mjs stop",
     "background:status": "node scripts/background.mjs status"
@@ -42,24 +45,19 @@
     "ical.js": "2.2.1",
     "imapflow": "2.11.0",
     "jszip": "^3.10.2",
-    "lucide-react": "^0.468.0",
     "nodemailer": "10.5.0",
     "postal-mime": "4.2.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
     "tsdav": "2.5.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@vitejs/plugin-react": "^5.1.0",
+    "@vitejs/plugin-react": "6.3.0",
     "exceljs": "^4.4.0",
-    "vite": "^7.2.2"
-  },
-  "optionalDependencies": {
-    "@googleworkspace/cli": "0.22.5",
-    "@playwright/mcp": "0.0.85",
-    "@softeria/ms-365-mcp-server": "0.184.1"
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vite": "8.3.8"
   },
   "overrides": {
     "exceljs": {

@@ -122,7 +122,16 @@ app.delete(
 app.get(
   "/api/companies",
   wrap((req) => {
-    const result = store.listCompanies(req.query);
+    const input = { ...req.query };
+    for (const key of ['companyTypes', 'locations']) {
+      if (input[key] === undefined) continue;
+      try {
+        if (typeof input[key] !== 'string') throw new Error();
+        input[key] = JSON.parse(input[key]);
+        if (!Array.isArray(input[key])) throw new Error();
+      } catch { throw new AppError(`${key} must be a JSON array.`); }
+    }
+    const result = store.listCompanies(input);
     if (req.query.summary === 'true') return { ...result, items: result.items.map(({ sourceFields, ...company }) => company) };
     return result;
   }),
@@ -197,6 +206,7 @@ app.get(
   "/api/reports",
   wrap(() => store.listReports()),
 );
+app.get('/api/snapshot', wrap(req => store.snapshot(req.query)));
 app.post(
   "/api/reports",
   wrap(() => scheduler.generateReport()),
@@ -312,9 +322,14 @@ if (process.argv.includes("--dev")) {
     server: { middlewareMode: true },
     appType: "spa",
   });
+  app.use(express.static(resolve(ROOT, 'public'), { dotfiles: 'deny' }));
   app.use(vite.middlewares);
 } else {
   app.use(express.static(resolve(ROOT, "dist")));
+  // Source checkouts can preview the separately built website. It is not copied
+  // into the working app or its desktop package.
+  if (existsSync(resolve(ROOT, 'public/welcome/index.html'))) app.use(express.static(resolve(ROOT, 'public'), { dotfiles: 'deny' }));
+  else app.get(['/welcome', '/welcome/*path', '/guides/*path', '/skills', '/skills/*path'], (req, res) => res.redirect(302, `https://www.tawdheef.com${req.path.replace(/^\/welcome(?=\/|$)/, '') || '/'}`));
   app.get(/^(?!\/api\/).*/, (_, res) =>
     res.sendFile(resolve(ROOT, "dist/index.html")),
   );

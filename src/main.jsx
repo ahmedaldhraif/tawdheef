@@ -5,7 +5,7 @@ import {
   Mail,
   Link2,
   Plug,
-  Settings2,
+  Settings as SettingsIcon,
   RefreshCw,
   Plus,
   Search,
@@ -40,12 +40,16 @@ import { getDirectorySymbol } from "./directory-symbols.js";
 import ListOptions from "./ListOptions.jsx";
 import ConnectionPanel from "./ConnectionPanel.jsx";
 import RunDialog, { RunProgress } from './RunDialog.jsx';
+import useRunUpdates from './useRunUpdates.js';
+import CompanyFilters from './CompanyFilters.jsx';
 import CompanyProgress, { PROGRESS_LABELS } from './CompanyProgress.jsx';
+import DirectorySnapshot from './DirectorySnapshot.jsx';
 import ConnectionsHub from './ConnectionsHub.jsx';
 import WorkspaceBackground from './WorkspaceBackground.jsx';
 import CalendarPanel from './CalendarPanel.jsx';
 import ProviderLogo from './ProviderLogo.jsx';
 import TawdheefBrand, { TawdheefMark } from './TawdheefBrand.jsx';
+import './directory-header.css';
 
 const LABELS = {
   not_started: "Not started",
@@ -82,6 +86,37 @@ const FIELDS = {
   followUpAt: "Follow-up",
 };
 const AR = {
+  'Directory snapshot': 'ملخص الدليل',
+  'Snapshot period': 'فترة الملخص',
+  'All companies': 'جميع الشركات',
+  'All time': 'كل الفترات',
+  'This week': 'هذا الأسبوع',
+  'Applications sent': 'طلبات التوظيف المُرسلة',
+  'Career profiles': 'الملفات المهنية',
+  'Emails sent': 'رسائل البريد المُرسلة',
+  'Confirmed job applications.': 'طلبات توظيف مؤكدة الإرسال.',
+  'Companies with a completed career profile. An account alone does not count.': 'الشركات التي أكملت فيها ملفك المهني. إنشاء حساب فقط لا يُحتسب.',
+  'Confirmed application and CV emails. An emailed application also appears under Applications sent.': 'رسائل مؤكدة لطلبات التوظيف والسير الذاتية. يظهر الطلب المُرسل بالبريد أيضاً ضمن طلبات التوظيف المُرسلة.',
+  'Confirmed email receipts': 'رسائل لها تأكيد إرسال',
+  'Some earlier emails have no saved receipt and aren’t included.': 'بعض الرسائل السابقة ليس لها تأكيد إرسال محفوظ، لذا لم تُحتسب.',
+  'Unavailable': 'غير متاح',
+  'Loading': 'جارٍ التحميل',
+  'Couldn’t load totals.': 'تعذّر تحميل الأعداد.',
+  'Couldn’t load records.': 'تعذّر تحميل السجلات.',
+  'Loading records…': 'جارٍ تحميل السجلات…',
+  'No records for this period.': 'لا توجد سجلات لهذه الفترة.',
+  'No confirmed applications for this period.': 'لا توجد طلبات توظيف مؤكدة لهذه الفترة.',
+  'No completed career profiles for this period.': 'لا توجد ملفات مهنية مكتملة لهذه الفترة.',
+  'No confirmed emails for this period.': 'لا توجد رسائل بريد مؤكدة لهذه الفترة.',
+  'Snapshot records': 'سجلات الملخص',
+  'Retry': 'إعادة المحاولة',
+  'Previous records': 'السجلات السابقة',
+  'Next records': 'السجلات التالية',
+  'of': 'من',
+  'Find matching jobs and build career profiles.': 'اعثر على وظائف مناسبة وأنشئ ملفاتك المهنية.',
+  'Create an account or complete my profile': 'أنشئ حساباً أو أكمل ملفي المهني',
+  'Apply to jobs that match my CV': 'قدّم على الوظائف المناسبة لسيرتي الذاتية',
+  'Email my CV for future opportunities': 'أرسل سيرتي بالبريد لفرص مستقبلية',
   Connections: 'الاتصالات',
   "Apply Tracker": "توظيف",
   "Connect email": "ربط البريد",
@@ -268,6 +303,11 @@ function App() {
         savedView(localStorage.getItem("apply-directory") || "uae").status ||
         "",
     ),
+    [companyTypes, setCompanyTypes] = useState(() => savedView(localStorage.getItem('apply-directory') || 'uae').companyTypes || []),
+    [locations, setLocations] = useState(() => savedView(localStorage.getItem('apply-directory') || 'uae').locations || []),
+    [filterPending, setFilterPending] = useState(false),
+    [selectedPreview, setSelectedPreview] = useState(null),
+    [rowsRevision, setRowsRevision] = useState(0),
     [page, setPage] = useState(0),
     [sort, setSort] = useState(
       () =>
@@ -315,11 +355,23 @@ function App() {
       "careersUrl",
       "notes",
     ];
+  const listScope = { directoryId: active, search: query, status: Object.hasOwn(LABELS, status) ? status : '', attention: ['needs_you', 'follow_up_due'].includes(status) ? status : '', companyTypes, locations };
+  const listScopeKey = JSON.stringify(listScope);
+  const runScope = { ...listScope, ...(selected.size ? { companyIds: [...selected].sort() } : {}) };
+  const runScopeKey = JSON.stringify(runScope);
+  const rowsCurrent = data._scopeKey === listScopeKey && data.listScopeVersion === 1;
+  const runCount = selected.size
+    ? selectedPreview?.scopeKey === runScopeKey ? selectedPreview.count : null
+    : rowsCurrent ? data.remainingCount : null;
+  const runLabel = runCount == null ? 'Checking companies…' : `Run on ${runCount} ${selected.size ? 'selected' : runCount === 1 ? 'company' : 'companies'}`;
   const chooseDirectory = (id) => {
     const v = savedView(id);
     setActive(id);
     setQuery(v.query || "");
     setStatus(v.status || "");
+    setCompanyTypes(Array.isArray(v.companyTypes) ? v.companyTypes : []);
+    setLocations(Array.isArray(v.locations) ? v.locations : []);
+    setFilterPending(false);
     setSort(v.sort || "name");
     setDirection(v.direction || "asc");
   };
@@ -363,17 +415,23 @@ function App() {
         status === "needs_you" || status === "follow_up_due" ? status : "",
       limit: "100",
       summary: 'true',
+      companyTypes: JSON.stringify(companyTypes),
+      locations: JSON.stringify(locations),
       offset: String(page * 100),
       sort,
       direction,
     });
     try {
       const result = await api("/companies?" + params);
-      if (request === rowsRequest.current) setData(result);
+      if (request === rowsRequest.current) {
+        setData({ ...result, _scopeKey: listScopeKey, _directoryId: active });
+        setRowsRevision(revision => revision + 1);
+        if (result.listScopeVersion !== 1) setError('Restart the local app to use the new list filters and Run choices.');
+      }
     } finally {
       if (request === rowsRequest.current) setRowsLoading(false);
     }
-  }, [active, query, status, page, sort, direction]);
+  }, [active, query, status, companyTypes, locations, page, sort, direction]);
   const refresh = async () => {
     await Promise.all([loadBoot(), loadRows()]);
   };
@@ -389,6 +447,28 @@ function App() {
     );
     return () => clearTimeout(timer);
   }, [loadRows]);
+  const runningManagedRun = boot?.runs?.find(r => r.managed && r.status === 'running');
+  const hasActiveRun = Boolean(runningManagedRun);
+  const updateRun = useCallback(run => {
+    const { targets, companyIds, brief, ...fields } = run;
+    setBoot(previous => {
+      if (!previous) return previous;
+      const old = previous.runs.find(item => item.id === run.id);
+      const summary = {
+        ...old, ...fields,
+        total: run.total ?? companyIds?.length ?? old?.total ?? 0,
+        appliedCount: targets?.filter(target => target.status === 'applied').length ?? run.appliedCount ?? old?.appliedCount ?? 0,
+        directoryName: old?.directoryName || previous.directories.find(item => item.id === run.directoryId)?.name || '',
+        currentName: targets?.find(target => target.companyId === run.activeCompanyId)?.name ?? run.currentName ?? old?.currentName ?? '',
+      };
+      return { ...previous, runs: old ? previous.runs.map(item => item.id === run.id ? summary : item) : [summary, ...previous.runs] };
+    });
+    setModal(previous => previous?.type === 'run' && (!previous.run || previous.run.id === run.id) ? { ...previous, run } : previous);
+  }, []);
+  const runPollingError = useRunUpdates({
+    run: runningManagedRun || (modal?.type === 'run' ? modal.run : null),
+    api, onUpdate: updateRun, onFinished: refresh,
+  });
   useEffect(() => {
     const timer = setInterval(() => {
       if (
@@ -398,18 +478,11 @@ function App() {
         )
       )
         return;
-      loadBoot().catch(() => {});
+      if (!hasActiveRun) loadBoot().catch(() => {});
       loadRows().catch(() => {});
     }, 15000);
     return () => clearInterval(timer);
-  }, [loadBoot, loadRows]);
-  const runningManagedRun = boot?.runs?.find(r => r.managed && r.status === 'running');
-  const hasActiveRun = boot?.runs?.some(r => r.managed && r.status === 'running');
-  useEffect(() => {
-    if (!hasActiveRun) return;
-    const timer = setInterval(() => loadBoot().catch(() => {}), 2000);
-    return () => clearInterval(timer);
-  }, [hasActiveRun, loadBoot]);
+  }, [loadBoot, loadRows, hasActiveRun]);
   useEffect(() => {
     localStorage.setItem("apply-directory", active);
     setSelected(new Set());
@@ -423,13 +496,22 @@ function App() {
   useEffect(() => {
     setPage(0);
     setSelected(new Set());
-  }, [query, status]);
+  }, [query, status, companyTypes, locations]);
+  useEffect(() => {
+    if (!active || !selected.size) { setSelectedPreview(null); return; }
+    let current = true;
+    setSelectedPreview(null);
+    api('/run-preview', 'POST', JSON.parse(runScopeKey)).then(result => {
+      if (current && result.listScopeVersion === 1 && Number.isInteger(result.count)) setSelectedPreview({ scopeKey: runScopeKey, count: result.count });
+    }).catch(e => { if (current) setError(e.message); });
+    return () => { current = false; };
+  }, [runScopeKey, rowsRevision]);
   useEffect(() => {
     localStorage.setItem(
       "apply-view-" + active,
-      JSON.stringify({ query, status, sort, direction }),
+      JSON.stringify({ query, status, companyTypes, locations, sort, direction }),
     );
-  }, [active, query, status, sort, direction]);
+  }, [active, query, status, companyTypes, locations, sort, direction]);
   async function action(key, fn) {
     setBusy(key);
     setError("");
@@ -545,7 +627,7 @@ function App() {
             title={t("Settings")}
             onClick={() => setModal({ type: "settings" })}
           >
-            <Settings2 />
+            <SettingsIcon />
           </button>
         </div>
       </header>
@@ -609,22 +691,16 @@ function App() {
                 <MoreHorizontal />
               </button>
             </h1>
-            <p>
-              {(directory?.count || 0).toLocaleString()}{" "}
-              {t("companies & sources")}
-            </p>
+            <p>{t('Find matching jobs and build career profiles.')}</p>
           </div>
           <div className="heading-actions">
             <button
-              className="primary"
-              disabled={!directory}
+              className="primary directory-run"
+              disabled={!directory || (!runningManagedRun && (filterPending || rowsLoading || !rowsCurrent || runCount == null || runCount === 0))}
               onClick={() => setModal({ type: "run", ...(runningManagedRun ? { run: runningManagedRun } : {}) })}
             >
               <Play size={15} />
-              {runningManagedRun ? "View progress" : t("Run")}
-              {selected.size > 0 && (
-                <span className="button-count">{selected.size}</span>
-              )}
+              <span>{runningManagedRun ? "View progress" : runLabel}</span>
             </button>
           </div>
         </section>
@@ -643,8 +719,19 @@ function App() {
         )}
         {(runningManagedRun || boot.runs.find(r => r.managed && r.directoryId === active)) && (() => {
           const run = runningManagedRun || boot.runs.find(r => r.managed && r.directoryId === active);
-          return <RunProgress run={run} open={() => setModal({ type: 'run', run })} stop={() => perform('stop-run', async () => { await api(`/runs/${run.id}/stop`, 'POST'); await refresh(); })} />;
+          return <RunProgress run={run} open={() => setModal({ type: 'run', run })} stop={() => perform('stop-run', async () => { updateRun(await api(`/runs/${run.id}/stop`, 'POST')); await refresh(); })} />;
         })()}
+        {directory && <DirectorySnapshot
+          directoryId={active}
+          directoryName={directory.name}
+          revision={`${rowsRevision}:${runningManagedRun?.id || ''}:${runningManagedRun?.completed ?? ''}`}
+          timeZone={boot.settings.timezone}
+          locale={lang}
+          api={api}
+          Dialog={Modal}
+          t={t}
+          onOpenCompany={companyId => openDetail({ id: companyId }, null, 'applications')}
+        />}
         <div
           className="table-surface"
           id={"directory-" + active}
@@ -671,6 +758,7 @@ function App() {
                   </button>
                 )}
               </label>
+              {directory && <CompanyFilters directory={directory} facets={data._directoryId === active ? data.facets : null} companyTypes={companyTypes} locations={locations} onCompanyTypesChange={setCompanyTypes} onLocationsChange={setLocations} onPendingChange={setFilterPending} t={t} pending={!!busy} />}
               <label className="status-filter">
                 <span>{t("Status")}</span>
                 <select
@@ -806,16 +894,6 @@ function App() {
                         >
                           {t("Company")}
                           <ArrowUpDown size={13} />
-                        </button>
-                      ) : key === "lastUpdate" ? (
-                        <button
-                          className="column-update"
-                          aria-label={t("Update schedule")}
-                          title={t("Update schedule")}
-                          onClick={() => setModal({ type: "updates" })}
-                        >
-                          {t("Last update")}
-                          <Settings2 size={14} />
                         </button>
                       ) : (
                         t(FIELDS[key] || key)
@@ -1064,10 +1142,9 @@ function App() {
                 Source snapshot: 10 Nov 2026 <span className="footer-dot" />
               </>
             )}
-            <button
+            <span
               className="update-status"
-              title={boot.settings.lastRefreshMessage || t("Update schedule")}
-              onClick={() => setModal({ type: "updates" })}
+              title={boot.settings.lastRefreshMessage || 'Manage reply checks and reports in Settings'}
             >
               {boot.settings.lastRefreshStatus === "no_threads"
                 ? "No applications to check yet"
@@ -1077,7 +1154,7 @@ function App() {
                     ? "Last reply check: " +
                       formatDate(boot.settings.lastRefreshAt)
                     : "Replies not checked yet"}
-            </button>
+            </span>
           </span>
         </footer>
       </main>
@@ -1195,10 +1272,8 @@ function App() {
           }}
         />
       )}
-      {(modal?.type === "settings" || modal?.type === "updates") && (
+      {modal?.type === "settings" && (
         <SettingsDialog
-          key={modal.type}
-          mode={modal.type === "updates" ? "updates" : "general"}
           reports={boot.reports}
           checkReplies={async () => {
             const result = await api("/refresh", "POST", {});
@@ -1215,9 +1290,7 @@ function App() {
           settings={boot.settings}
           close={() => setModal(null)}
           save={async (values) => {
-            const keys =
-              modal.type === "updates"
-                ? [
+            const keys = [
                     "refreshFrequency",
                     "reportFrequency",
                     "reportTime",
@@ -1226,8 +1299,8 @@ function App() {
                     "timezone",
                     "emailReports",
                     "reportEmail",
-                  ]
-                : ["language"];
+                    "language",
+                  ];
             await api(
               "/settings",
               "PATCH",
@@ -1268,19 +1341,21 @@ function App() {
           t={t}
           directory={directory}
           selected={selected}
+          scope={runScope}
+          scopeLabels={{ locationLabels: locations.map(id => data.facets?.locations?.find(item => item.id === id)?.label || id.replace(/^location:/, '')), companyTypeLabels: companyTypes.map(id => data.facets?.companyTypes?.find(item => item.id === id)?.label || id) }}
           run={modal.run}
+          onRunUpdate={updateRun}
+          pollingError={runPollingError}
           close={() => setModal(null)}
           notify={notify}
           api={api}
           Modal={Modal}
           stopped={refresh}
-          start={async (instructions, assistant, companyTypes, locations) => {
+          start={async (instructions, assistant, actions) => {
             const r = await api("/run", "POST", {
               assistant,
-              companyTypes,
-              locations,
-              directoryId: active,
-              ...(selected.size ? { companyIds: [...selected] } : {}),
+              ...runScope,
+              actions,
               instructions,
               mode: "send_and_submit",
               explicit: true,
@@ -1763,14 +1838,14 @@ function SettingsDialog({
   settings,
   close,
   save,
-  mode = "general",
   reports = [],
   checkReplies,
   generateReport,
 }) {
-  const updates = mode === "updates";
   const [actionBusy, setActionBusy] = useState(""),
     [actionError, setActionError] = useState(""),
+    [saveBusy, setSaveBusy] = useState(false),
+    [saveError, setSaveError] = useState(""),
     [latestReport, setLatestReport] = useState(reports[0] || null);
   useEffect(() => {
     setLatestReport(reports[0] || null);
@@ -1793,7 +1868,6 @@ function SettingsDialog({
     [startupBusy, setStartupBusy] = useState(false),
     [startupError, setStartupError] = useState("");
   useEffect(() => {
-    if (updates) return;
     api("/background")
       .then(setBackground)
       .catch((e) => setStartupError(e.message));
@@ -1815,46 +1889,37 @@ function SettingsDialog({
     }
   }
   const field = (key, value) => setV((s) => ({ ...s, [key]: value }));
+  const pending = startupBusy || !!actionBusy || saveBusy;
   return (
     <Modal
-      title={t(updates ? "Updates & reports" : "Settings")}
+      title={t("Settings")}
       close={close}
       t={t}
-      pending={startupBusy || !!actionBusy}
+      pending={pending}
+      footer={<div className="settings-dialog-footer">
+        {saveError && <p className="form-error" role="alert">{saveError}</p>}
+        <div className="form-actions">
+          <button type="button" onClick={close} disabled={pending}>{t('Cancel')}</button>
+          <button type="submit" form="settings-form" className="primary" disabled={pending}>{saveBusy ? 'Saving…' : t('Save changes')}</button>
+        </div>
+      </div>}
     >
-      <Form
-        t={t}
-        close={close}
-        save={() => save(v)}
-        pending={startupBusy || !!actionBusy}
+      <form
+        id="settings-form"
+        onSubmit={async event => {
+          event.preventDefault();
+          if (pending) return;
+          setSaveBusy(true); setSaveError('');
+          try { await save(v); } catch (error) { setSaveError(error.message); }
+          finally { setSaveBusy(false); }
+        }}
       >
-        {updates && (
-          <>
-            <div className="updates-summary">
-              <p>Reply checks and reports run locally for all directories.</p>
-              <button
-                type="button"
-                disabled={!!actionBusy}
-                onClick={() => runUpdateAction("replies", checkReplies)}
-              >
-                <RefreshCw className={actionBusy === "replies" ? "spin" : ""} />
-                {actionBusy === "replies"
-                  ? "Checking…"
-                  : t("Check replies now")}
-              </button>
-              <span>
-                {settings.lastRefreshMessage ||
-                  "Replies have not been checked yet."}
-              </span>
-            </div>
+        <>
+            <p className="field-hint">For all directories.</p>
             <section className="settings-section">
-              <h3>{t("Automatic updates")}</h3>
-              <p>
-                Check replies to recorded applications. New applications start
-                only when you start a run.
-              </p>
+              <div className="settings-update-row">
               <label>
-                Check for updates
+                Check replies
                 <select
                   value={v.refreshFrequency}
                   onChange={(e) => field("refreshFrequency", e.target.value)}
@@ -1866,6 +1931,12 @@ function SettingsDialog({
                   ))}
                 </select>
               </label>
+              <button type="button" aria-label="Check replies now" disabled={pending} onClick={() => runUpdateAction('replies', checkReplies)}>
+                <RefreshCw className={actionBusy === 'replies' ? 'spin' : ''} />
+                {actionBusy === 'replies' ? 'Checking…' : 'Check now'}
+              </button>
+              </div>
+              <p className="field-hint">{settings.lastRefreshAt ? `Last check: ${new Date(settings.lastRefreshAt).toLocaleString()}` : 'Not checked yet'}</p>
             </section>
             <section className="settings-section">
               <h3>{t("Report schedule")}</h3>
@@ -1883,14 +1954,14 @@ function SettingsDialog({
                     ))}
                   </select>
                 </label>
-                <label>
+                {v.reportFrequency !== 'off' && <label>
                   {t("Time")}
                   <input
                     type="time"
                     value={v.reportTime}
                     onChange={(e) => field("reportTime", e.target.value)}
                   />
-                </label>
+                </label>}
               </div>
               {v.reportFrequency === "weekly" && (
                 <label>
@@ -1929,14 +2000,6 @@ function SettingsDialog({
                   />
                 </label>
               )}
-              <label>
-                {t("Time zone")}
-                <input
-                  value={v.timezone}
-                  placeholder="Asia/Dubai"
-                  onChange={(e) => field("timezone", e.target.value)}
-                />
-              </label>
               <label className="checkbox-label">
                 <input
                   type="checkbox"
@@ -1957,8 +2020,8 @@ function SettingsDialog({
                 </label>
               )}
             </section>
-            <section className="updates-report">
-              <h3>Latest report</h3>
+            <details className="updates-report advanced">
+              <summary>Latest report</summary>
               {latestReport ? (
                 <>
                   <p className="field-hint">
@@ -1989,7 +2052,6 @@ function SettingsDialog({
                       <dd>{latestReport.needsYou?.length || 0}</dd>
                     </div>
                   </dl>
-                  <p className="field-hint report-progress-note">Account, profile and CV totals count companies with recorded progress during this report period. They are separate from applications sent.</p>
                   {latestReport.delivery?.status &&
                     latestReport.delivery.status !== "local" && (
                       <p className="field-hint">
@@ -2012,15 +2074,9 @@ function SettingsDialog({
                     ? "Generate & email report"
                     : t("Generate report")}
               </button>
-              <p className="field-hint">
-                Uses the saved schedule and email settings.
-              </p>
-            </section>
-          </>
-        )}
-        {!updates && (
-          <>
-            <section className="settings-section">
+            </details>
+            <details className="advanced settings-preferences">
+              <summary>Preferences</summary>
               <div className="form-row">
                 <label>
                   {t("Language")}
@@ -2032,15 +2088,11 @@ function SettingsDialog({
                     <option value="ar">العربية</option>
                   </select>
                 </label>
+                <label>
+                  {t('Time zone')}
+                  <input value={v.timezone} placeholder="Asia/Dubai" onChange={e => field('timezone', e.target.value)} />
+                </label>
               </div>
-            </section>
-            <details className="advanced">
-              <summary>{t("Local background service")}</summary>
-              <p>
-                The local server checks your schedule every minute, even when
-                your AI client is closed. Your computer must be awake and
-                online.
-              </p>
               {background?.startupSupported ? (
                 <>
                   <label className="checkbox-label">
@@ -2050,18 +2102,12 @@ function SettingsDialog({
                       checked={background.startupInstalled}
                       onChange={changeStartup}
                     />
-                    Start automatically when I sign in to Windows
+                    Open at Windows sign-in
                   </label>
-                  <p>
-                    {background.startupInstalled
-                      ? "Enabled for your Windows account."
-                      : "Optional. Your current background session keeps running until stopped or the computer shuts down."}
-                  </p>
                 </>
               ) : (
                 <p>
-                  Use your computer’s login settings to start the tracker after
-                  signing in.
+                  {background ? 'Automatic startup is unavailable on this computer.' : 'Loading startup settings…'}
                 </p>
               )}
               {startupError && (
@@ -2069,165 +2115,49 @@ function SettingsDialog({
                   {startupError}
                 </p>
               )}
-              <p>
-                Your directories, activity and connections live in the ignored
-                .local folder. No app account or hosted database.
-              </p>
             </details>
-          </>
-        )}
+            <p className="field-hint">Scheduled updates need this computer awake and online.</p>
+        </>
         {actionError && (
           <p className="form-error" role="alert">
             {actionError}
           </p>
         )}
-        {updates && settings.lastRefreshError && (
+        {settings.lastRefreshError && (
           <p className="notice">Reply check: {settings.lastRefreshError}</p>
         )}
-        {updates && settings.lastReportError && (
+        {settings.lastReportError && (
           <p className="notice">Report: {settings.lastReportError}</p>
         )}
-      </Form>
+      </form>
     </Modal>
   );
 }
-function AIDialog({ t, close, back, notify, initialClient, backLabel = 'Back to connections' }) {
-  const [config, setConfig] = useState(null),
-    [error, setError] = useState(""),
-    [client, setClient] = useState(initialClient === 'claude' ? 'claude' : 'codex'),
-    [browserTools, setBrowserTools] = useState(false),
-    [integrations, setIntegrations] = useState(null);
-  const server = config?.mcpServers?.["apply-tracker"];
-  const configText = server
-    ? client === "codex"
-      ? Object.entries(config.mcpServers).map(([name, entry]) => [
-          `[mcp_servers.${name}]`,
-          "command = " + JSON.stringify(entry.command),
-          "args = " + JSON.stringify(entry.args),
-          "",
-          ...(entry.env ? [`[mcp_servers.${name}.env]`] : []),
-          ...Object.entries(entry.env || {}).map(
-            ([key, value]) => key + " = " + JSON.stringify(value),
-          ),
-        ].join("\n")).join('\n\n')
-      : JSON.stringify(config, null, 2)
-    : "";
+function AIDialog({ t, close, back, initialClient, backLabel = 'Back to connections' }) {
+  const assistant = initialClient === 'claude' ? 'claude-code' : 'codex';
+  const name = assistant === 'codex' ? 'Codex' : 'Claude Code';
+  const [report, setReport] = useState(null), [error, setError] = useState(''), [retry, setRetry] = useState(0), [manualCopy, setManualCopy] = useState(false), [copied, setCopied] = useState(false);
+  const setupRequest = report?.setupPrompt ? `Use ${name} for this setup. ${report.setupPrompt}` : '';
   useEffect(() => {
     let active = true;
-    setConfig(null);
-    api(browserTools ? '/agent-config?include=playwright' : '/agent-config')
-      .then(value => { if (active) { setConfig(value); setError(''); } })
-      .catch(e => { if (active) setError(e.message); });
-    api('/integrations').then(value => { if (active) setIntegrations(value); }).catch(() => {});
+    setReport(null); setError(''); setCopied(false); setManualCopy(false);
+    api('/setup-status?assistant=' + assistant).then(value => { if (active) setReport(value); }).catch(error => { if (active) setError(error.message); });
     return () => { active = false; };
-  }, [browserTools]);
-  async function copy(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      notify("Copied");
-    } catch {
-      setError("Select the configuration text and copy it manually.");
-    }
+  }, [assistant, retry]);
+  async function copy() {
+    try { await navigator.clipboard.writeText(setupRequest); setCopied(true); setManualCopy(false); }
+    catch { setManualCopy(true); }
   }
-  return (
-    <Modal title={t("Connect AI")} close={close} t={t}>
-      {back && <button className="text-button" onClick={back}>{backLabel}</button>}
-      <p className="dialog-intro">
-        Choose Codex or Claude Code. Install and sign in to that assistant on this computer once. Run uses your installed assistant and its account.
-      </p>
-      <div className="setup-step">
-        <span>1</span>
-        <div>
-          <h3>Use your assistant</h3>
-          <p>
-            Press Run in the tracker to start working. No separate ChatGPT connection is needed.
-          </p>
-        </div>
-      </div>
-      <div
-        className="client-tabs"
-        role="tablist"
-        aria-label="AI client"
-        onKeyDown={(e) => {
-          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key))
-            return;
-          e.preventDefault();
-          const next =
-            e.key === "Home"
-              ? "codex"
-              : e.key === "End"
-                ? "claude"
-                : client === "codex"
-                  ? "claude"
-                  : "codex";
-          setClient(next);
-          document.getElementById("setup-" + next)?.focus();
-        }}
-      >
-        {[
-          ["codex", "Codex"],
-          ["claude", "Claude Code"],
-        ].map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            id={"setup-" + key}
-            aria-selected={client === key}
-            tabIndex={client === key ? 0 : -1}
-            aria-controls="client-config"
-            onClick={() => setClient(key)}
-          >
-            <ProviderLogo provider={key === 'claude' ? 'claude-code' : key} size={20} decorative />{label}
-          </button>
-        ))}
-      </div>
-      <p className="field-hint"><a href={client === 'codex' ? 'https://developers.openai.com/codex/cli/' : 'https://code.claude.com/docs/en/quickstart'} target="_blank" rel="noreferrer">Install {client === 'codex' ? 'Codex' : 'Claude Code'} and sign in</a>. Then return here and press Run.</p>
-      <p className="field-hint">To use Tawdheef from an existing assistant chat, run this once in the app folder:</p>
-      <pre>{client === 'codex' ? 'npm run agent -- codex' : 'npm run agent -- claude-code'}</pre>
-      <button onClick={() => copy(client === 'codex' ? 'npm run agent -- codex' : 'npm run agent -- claude-code')}><Copy />Copy setup command</button>
-      <details className="advanced"><summary>Manual MCP configuration</summary>
-      <p className="field-hint client-hint">
-        {client === "codex"
-          ? "Add this to your Codex config.toml."
-          : "Add this to your project’s .mcp.json."}{" "}
-        You can ask your assistant to do this for you.
-      </p>
-      <label className="checkbox-label"><input type="checkbox" checked={browserTools} disabled={!integrations?.integrations?.find(item => item.id === 'playwright')?.ready} onChange={e => setBrowserTools(e.target.checked)} />Include browser tools for career pages and forms</label>
-      {!integrations?.integrations?.find(item => item.id === 'playwright')?.ready && <p className="connection-help">Install browser tools with <code>npm run setup -- --browser</code>.</p>}
-      <pre
-        id="client-config"
-        role="tabpanel"
-        aria-labelledby={"setup-" + client}
-      >
-        {configText || "Loading local configuration…"}
-      </pre>
-      <button disabled={!config} onClick={() => copy(configText)}>
-        <Copy />
-        {t("Copy configuration")}
-      </button>
-      </details>
-      <div className="setup-step">
-        <span>2</span>
-        <div>
-          <h3>Give your agent a task</h3>
-          <p>
-            “Use Tawdheef. Work through all remaining companies in my UAE directory. Submit suitable applications, record receipts and continue past individual blockers.”
-          </p>
-        </div>
-      </div>
-      <p className="notice">
-        Run launches your installed assistant. Optional browser tools handle career pages and forms. Sign-in, CAPTCHA and permission blockers appear as “Needs you”; the queue moves on.
-      </p>
-      {error && <p className="form-error">{error}</p>}
-      <details className="advanced">
-        <summary>Command line</summary>
-        <code>npm run cli -- doctor</code>
-        <br />
-        <code>npm run cli -- list --directory uae</code>
-      </details>
-    </Modal>
-  );
+  return <Modal title={name + ' setup'} close={close} t={t}>
+    {back && <button className="text-button" onClick={back}>{backLabel}</button>}
+    <p className="assistant-setup-intro"><ProviderLogo provider={assistant} size={28} decorative /><span>Open this app folder in {name}, then paste the setup request.</span></p>
+    <div className="assistant-setup-actions">
+      <a className="button" href={assistant === 'codex' ? 'https://developers.openai.com/codex/cli/' : 'https://code.claude.com/docs/en/quickstart'} target="_blank" rel="noreferrer">Install {name}</a>
+      <button disabled={!report?.setupPrompt} onClick={copy}><Copy size={15} />{copied ? 'Copied' : 'Copy setup request'}</button>
+    </div>
+    {manualCopy && <label className="assistant-copy-fallback">Copy this request<textarea rows={3} readOnly value={setupRequest} onFocus={event => event.target.select()} /></label>}
+    {error && <div className="form-error" role="alert"><p>{error}</p><button onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
+  </Modal>;
 }
 
 function DetailPanel({ detail, t, close, save, archive }) {

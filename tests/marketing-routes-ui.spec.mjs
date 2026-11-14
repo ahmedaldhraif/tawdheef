@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 
 const installCommand = 'npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef';
 const quickStart = 'npm run setup -- --browser\nnpm run agent -- codex --browser\nnpm start';
 const guideSlugs = ['use-the-skill', 'connect-your-agent', 'connect-your-cv', 'use-directory-packs', 'apply-to-jobs', 'replies-and-reports', 'troubleshoot', 'for-agents'];
+const publishedTools = JSON.parse(readFileSync(new URL('../docs/tools.json', import.meta.url), 'utf8')).tools;
 
 async function captureClipboard(page) {
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', {
@@ -278,3 +280,59 @@ test('website, Skills, brand guide and app footers omit the Tabbio endorsement',
     await expect(footer.locator('a[href*="tabbio.com"], img[src*="tabbio"]')).toHaveCount(0);
   }
 });
+
+for (const locale of ['en', 'ar']) for (const colorScheme of ['light', 'dark']) {
+  test('Skills task field is static, decorative and uses real read-only tools in ' + locale + ' ' + colorScheme, async ({ page }) => {
+    await captureClipboard(page);
+    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+    await page.goto(locale === 'ar' ? '/ar/skills/' : '/skills/');
+    const hero = page.locator('.skills-hero');
+    const field = hero.locator('.skills-command-field');
+    await expect(field).toBeVisible();
+    await expect(field).toHaveAttribute('aria-hidden', 'true');
+    await expect(field).toHaveJSProperty('inert', true);
+    await expect(field).toHaveCSS('pointer-events', 'none');
+    await expect(field).toHaveCSS('animation-name', 'none');
+    await expect(field.locator('a, button, input, select, textarea, [tabindex], [contenteditable]')).toHaveCount(0);
+    await expect(field.locator('.skills-command-row')).toHaveCount(8);
+    const requests = await field.locator('.skills-command-request').allTextContents();
+    expect(new Set(requests).size).toBe(8);
+    expect(requests.every(text => locale === 'ar' ? /[\u0600-\u06ff]/.test(text) : /[a-z]/i.test(text))).toBe(true);
+    const names = await field.locator('.skills-command-tool').allTextContents();
+    expect(new Set(names).size).toBe(8);
+    for (const name of names) {
+      const tool = publishedTools.find(tool => tool.name === name);
+      expect(tool, 'A decorative tool name must exist in the actual contract: ' + name).toBeTruthy();
+      expect(tool.annotations.readOnlyHint, name).toBe(true);
+    }
+    for (const tool of await field.locator('.skills-command-tool').all()) {
+      await expect(tool).toHaveAttribute('dir', 'ltr');
+    }
+
+    const layering = await hero.evaluate(element => {
+      const field = element.querySelector('.skills-command-field'), heading = element.querySelector('h1');
+      const a = field.getBoundingClientRect(), b = element.getBoundingClientRect();
+      return {
+        isolation: getComputedStyle(element).isolation,
+        fieldZ: Number(getComputedStyle(field).zIndex),
+        headingZ: Number(getComputedStyle(heading).zIndex),
+        headingOpacity: Number(getComputedStyle(heading).opacity),
+        fieldCenter: a.left + a.width / 2,
+        heroCenter: b.left + b.width / 2,
+      };
+    });
+    expect(layering.isolation).toBe('isolate');
+    expect(layering.headingZ).toBeGreaterThan(layering.fieldZ);
+    expect(layering.headingOpacity).toBe(1);
+    if (locale === 'ar') expect(layering.fieldCenter).toBeLessThan(layering.heroCenter);
+    else expect(layering.fieldCenter).toBeGreaterThan(layering.heroCenter);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+    await page.locator('[data-copy="skills-install"]').click();
+    expect(await page.evaluate(() => window.__copied)).toBe(installCommand);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(field).not.toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+}

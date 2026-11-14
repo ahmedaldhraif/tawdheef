@@ -9,6 +9,16 @@ export default {
     license: "بترخيص MIT",
     release: "الإصدار"
   },
+  commandRows: [
+    { request: "اقرأ سياق التطبيق المحلي", tool: "get_agent_context" },
+    { request: "اعرض الأدوات المتاحة", tool: "get_capabilities" },
+    { request: "اعرض أدلة الدول لديّ", tool: "list_directories" },
+    { request: "اعرض شركات هذا الدليل", tool: "list_companies" },
+    { request: "اقرأ مصادر هذه الشركة", tool: "get_company" },
+    { request: "تحقق من اتصالاتي المحفوظة", tool: "list_connections" },
+    { request: "تحقق من خطوة الإعداد التالية", tool: "get_setup_status" },
+    { request: "راجع تقدمي المسجّل", tool: "get_report" }
+  ],
   cvShortcut: "أنشئ سيرتك الذاتية أو اربطها",
   start: {
     title: "ابدأ من هنا",

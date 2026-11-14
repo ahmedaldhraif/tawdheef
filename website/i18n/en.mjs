@@ -18,11 +18,12 @@ export default {
     },
     {
       "title": "Career profiles",
-      "body": "Build profiles and upload your CV for future roles."
+      "body": "Create a profile and upload your CV on supported career sites, so employers can consider you even when no matching job is open."
     },
     {
-      "title": "Local records",
-      "body": "Keep profiles, CV uploads and applications distinct."
+      "id": "email",
+      "title": "Your email",
+      "body": "Connect Gmail, Outlook or iCloud Mail to send applications and track their replies."
     }
   ],
   "workflow": {
@@ -109,7 +110,7 @@ export default {
       },
       {
         "q": "What if a company has no matching job?",
-        "a": "If you ask your agent to build career profiles, your agent can create or complete accounts and upload your CV where supported. Profiles and CV uploads stay separate from applications."
+        "a": "When you choose career profiles, your agent can create an account, fill in your details and upload your CV on supported career sites. This can make your details available for future consideration. Visibility depends on the site; it does not guarantee contact. Profiles and CV uploads are recorded separately from applications."
       },
       {
         "q": "Do I need Tabbio?",
@@ -125,7 +126,7 @@ export default {
       },
       {
         "q": "Where does my data go?",
-        "a": "Records stay in a local database. Connected AI, email and CV services work online under their own permissions."
+        "a": "The tracker runs on your computer, where your records and connection settings are stored. Your chosen AI, CV and email services work online. When you start a run, the actions you select determine which applications, profiles or CVs your agent sends to employers."
       },
       {
         "q": "Can I add a country or fix a company?",
@@ -135,7 +136,7 @@ export default {
   },
   "closing": {
     "title": "Ready to start?",
-    "body": "Get the app. Connect your CV. Choose where to apply.",
+    "body": "Find a role now. Build profiles for what comes next.",
     "cta": "Get Tawdheef"
   },
   "tour": {

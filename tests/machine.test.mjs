@@ -294,7 +294,7 @@ test("detached background runner serves its own instance and stops without an AI
     assert.equal(started.running, true);
     const status = await backgroundCommand("status", { dataDir, port });
     assert.equal(status.running, true);
-    assert.equal(status.startupSupported, process.platform === "win32");
+    assert.equal(status.startupSupported, ['win32', 'darwin', 'linux'].includes(process.platform));
     assert.equal(typeof status.startupInstalled, "boolean");
     assert.equal(status.pid, started.pid);
     const health = await (

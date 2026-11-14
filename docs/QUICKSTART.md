@@ -1,16 +1,18 @@
 # Start Tawdheef
 
-**Prefer your agent to handle setup?** Open this folder in Codex or Claude Code and use the single prompt in the [setup guide](FIRST-RUN.md). It handles local installation and checks while you complete your own sign-ins. In the app, open **Connections** and expand **Set up with my agent → Copy instructions**. Choose your assistant in the same panel and use **Check connections** to verify it and your CV.
+Find jobs that fit your CV and build career profiles for future opportunities, even when no suitable job is open.
+
+**Prefer your agent to handle setup?** Open this folder in Codex or Claude Code and use the single prompt in the [setup guide](FIRST-RUN.md). It handles local installation and checks while you complete your own sign-ins. In the app, open **Connections** and choose **Copy setup request**. Choose your assistant in the same panel and use **Check connections** to verify it and your CV.
 
 The instructions below are the manual route.
 
-Install **Node.js 24 or newer**, download/extract or clone this repository, and open a terminal in that folder.
+For the source edition, install **Node.js 26 LTS** (patched Node 24 is also supported), download/extract or clone this repository, and open a terminal in that folder. A platform app package includes Node; extract it fully and use **Start Tawdheef.cmd** on Windows or **Start Tawdheef.command** on Mac. App packages never install developer tools or rebuild the screen. See [desktop releases](DESKTOP-RELEASE.md) for candidate and signing status.
 
 ```sh
 npm start
 ```
 
-Start installs missing locked dependencies, builds the screen, starts its background process and opens your browser. On Windows, double-click **Start Tawdheef.cmd** instead. On macOS/Linux, `npm start` works from a terminal; the macOS `.command` and Linux `.sh` launchers are also provided. OS execution permissions may apply. First launch needs internet. Later launches reuse the existing build until files change. All tracker data stays in `.local` beside this folder unless `APPLY_TRACKER_DATA` chooses another local folder.
+In the source edition, Start installs missing locked dependencies without optional bridges, builds only the tracker, starts its background process and opens your browser. On Windows, double-click **Start Tawdheef.cmd** instead. On macOS/Linux, `npm start` works from a terminal; the macOS `.command` and Linux `.sh` launchers are also provided. OS execution permissions may apply. The source's first launch needs internet; later launches reuse the build until app files change. All tracker data stays in `.local` beside this folder unless `APPLY_TRACKER_DATA` chooses another local folder. Optional browser/provider integrations install only when requested.
 
 The UAE tab contains a dated research directory. Its links are leads, not proof of current vacancies or completed applications. Add another directory with the **+** beside the tabs, choose a flag or icon, then import a spreadsheet or add companies.
 
@@ -40,7 +42,7 @@ For browser form work from that chat, first run `npm run setup -- --browser`, th
 
 Codex uses `.codex/config.toml`; Claude Code uses `.mcp.json`. Both generated files are ignored by Git. If an existing client-level server uses the same `apply-tracker` name, inspect `/mcp` and its data path before using it. Client policies and configuration precedence still apply.
 
-For existing custom settings or another stdio client, copy the tracker entry from **Connections → AI assistants**, or export reviewable files:
+For existing custom settings or another stdio client, ask your agent to call `get_client_config`, use `node bin/apply-tracker.mjs client-config`, or export reviewable files:
 
 ```sh
 npm run setup -- --export-config ./agent-config
@@ -54,7 +56,9 @@ Tell the agent: **“Read AGENTS.md, call get_agent_context, and help me with th
 
 Use **Connections → Check connections** to check your chosen assistant's sign-in state and read your CV. A directory and at least one application route are needed: browser tools for forms or a configured email connection. Email is optional when using browser forms; calendar and schedules are always optional. The connection check does not send a test email or application.
 
-Install and sign in to Codex or Claude Code on this computer once. Choose that assistant in **Run**, describe the roles you want, then press **Run**. It checks all remaining companies in the active tab, or the unfinished companies you selected. There is no app count limit. Each company gets a separate attempt; failures and blockers are recorded and the queue continues. Confirmed submissions are skipped on later runs. Uncertain submissions must be checked before retrying.
+Install and sign in to Codex or Claude Code on this computer once. Filter the company list or check specific rows, then open **Run**. Matching applications and career-profile creation start selected; change either before starting. The profile choice creates or completes an account, fills the available career details and uploads your CV when no suitable opening is found. It reuses existing accounts. CV-only email stays off unless you select it. Use **Add a note** for extra role or location preferences, then press **Run**.
+
+Run covers all matching unfinished companies across every page, or only the unfinished checked companies that match. There is no app count limit. Each company gets a separate attempt; failures and blockers are recorded and the queue continues. Confirmed applications and completed tracking statuses are skipped on later runs. Uncertain submissions must be checked before retrying. Account, profile and CV steps remain separate from job applications in progress and reports.
 
 **View progress** shows the current company and actual outcomes. **Stop** cancels further work. Closing the panel does not stop the run; closing/stopping the local app does. The next Run retries unfinished companies. Assistant sign-in or usage-limit failures stop the queue until you resolve them. The tracker stores data locally; the selected assistant and connected providers may process authorized data online under your own accounts.
 
@@ -67,7 +71,7 @@ npm run setup -- --all
 npm run setup -- --export-config ./agent-config-with-browser --include playwright
 ```
 
-`--all` installs Chromium for the pinned Playwright MCP and downloads the external Tabbio CLI into private local tools. It does not sign in, send mail, submit an application, or change startup/schedule settings. Tabbio CLI is distributed separately with an `UNLICENSED` package declaration; it is an external tool, not part of the MIT tracker source.
+`--browser` installs only Playwright MCP and Chromium. `--integration google-cli` or `--integration outlook-mcp` installs only that bridge. `--all` explicitly requests all supported bridges, Chromium and the external Tabbio CLI in private local tools; unsupported optional bridges are skipped. None signs in, sends mail, submits applications or changes startup/schedule settings. Tabbio CLI is distributed separately with an `UNLICENSED` package declaration; it is not part of the MIT tracker source.
 
 Optional external sign-ins:
 
@@ -80,9 +84,9 @@ Only add external mailbox/CV servers directly to the AI client when you need the
 
 ## Start applying and keep track
 
-Choose companies and explicitly start an application run. The agent may send and submit within that named run. It records actual evidence, distinguishes drafts from submissions, and asks for help when a login, CAPTCHA or provider permission requires you. LinkedIn application steps stay manual.
+Choose companies and explicitly start your selected actions. The agent may send and submit within that named run's choices. It records actual evidence, distinguishes accounts/profiles/CV uploads from applications, and asks for help when a login, CAPTCHA or provider permission requires you. LinkedIn application steps stay manual.
 
-Click the schedule control beside **Last update** to configure reply checks and reports. Fresh installs leave automatic checks and reports off; upgrades preserve existing choices. Scheduled work checks tracked threads; it never starts a fresh application run. The computer must remain awake and online. A revoked account permission may require signing in again.
+Open the **Settings** gear beside Connections to configure reply checks and reports for all directories. Fresh installs leave automatic checks and reports off; upgrades preserve existing choices. Scheduled work checks tracked threads; it never starts applications, creates profiles, shares CVs or sends follow-ups. The computer and local app must remain running, awake and online. A revoked account permission may require signing in again. Save report preferences before generating a report; generation uses the saved window and email settings. Start-at-login is optional on Windows, macOS and Linux and is installed only when explicitly enabled. Native login execution on each OS requires platform verification before release claims.
 
 ```sh
 npm run doctor

@@ -19,6 +19,8 @@ function fixture(overrides = {}) {
     discover: async () => [{ id: 'codex', name: 'Codex', installed: true }, { id: 'claude-code', name: 'Claude Code', installed: true }],
     presets: async () => [{ id: 'playwright', ready: true, browserInstalled: true }],
     checkAuthentication: async () => { calls.auth++; },
+    checkTracker: async () => {},
+    checkBrowser: async () => {},
     readCv: async () => { calls.cv++; return { secretFixtureCv: 'This must never appear in the public checklist' }; },
     clock: () => new Date('2026-11-13T00:00:00.000Z'),
   };
@@ -36,6 +38,24 @@ test('passive setup reports installation without claiming sign-in or reading CV'
   assert.equal(report.assistants[1].status, 'not_checked');
   assert.match(SETUP_PROMPT, /Do not change the app's code or design/);
   assert.match(SETUP_PROMPT, /or enable schedules during setup/);
+});
+
+test('verified setup requires a real local tool check and an opened browser rather than installation alone', async () => {
+  let tools = 0, browser = 0;
+  const f = fixture({ checkTracker: async () => { tools++; }, checkBrowser: async () => { browser++; throw new Error('private browser diagnostic'); } });
+  const passive = await f.check({ assistant: 'codex' });
+  assert.equal(tools, 0); assert.equal(browser, 0);
+  assert.equal(row(passive, 'tools').status, 'not_checked');
+  assert.equal(row(passive, 'browser').status, 'not_checked');
+  const failed = await f.check({ assistant: 'codex', verify: true });
+  assert.equal(failed.ready, false); assert.equal(row(failed, 'tools').status, 'ready');
+  assert.equal(row(failed, 'browser').status, 'needs_action');
+  assert.doesNotMatch(JSON.stringify(failed), /private browser diagnostic/);
+  const noTools = fixture({ checkTracker: async () => { throw new Error('private path'); } });
+  const blocked = await noTools.check({ verify: true });
+  assert.equal(blocked.ready, false); assert.equal(blocked.nextStep.id, 'tools');
+  const version = fixture({ checkAuthentication: async () => ({ version: '1.2.3' }) });
+  assert.match(row(await version.check({ verify: true }), 'assistant').detail, /1\.2\.3/);
 });
 
 test('verified setup checks only chosen assistant and connected CV, never mailbox or calendar actions', async () => {

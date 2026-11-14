@@ -2,6 +2,10 @@
 
 The app supports native Gmail/Outlook/iCloud mail, separate Google/Outlook Calendar OAuth, and iCloud Calendar through CalDAV. Open **Connections** for provider rows and account setup. Each user owns their registrations and account sign-in; this repository has no shared keys. Native adapters provide normalized mappings automatically. See [QUICKSTART.md](QUICKSTART.md) and [INTEGRATIONS.md](INTEGRATIONS.md) for real setup steps, scopes and the optional Google CLI/Outlook MCP/Tabbio/browser tools.
 
+Connections shows account actions, credential fields and observed status. **Copy setup request** copies the setup task for the person to paste into the selected assistant; technical explanations belong in these guides. Native OAuth fields stay under **One-time setup**, and custom endpoints or mappings stay under **Advanced setup**. Enter secrets only in the private local form or a private input file, never in an assistant chat. Only one mailbox and one calendar connection are active at a time; their permissions remain separate.
+
+The app's Run needs a readable connected CV and a signed-in assistant. Email and calendar are optional. Use **Check connections** to verify assistant sign-in and a fresh CV read; a saved connection or installed executable alone is not proof of readiness. The check does not send applications, create career profiles, send email or create calendar events. A successful CV read confirms access, not the accuracy of its contents.
+
 The following sections describe custom MCP connections, which remain available under Advanced. Native providers use the same private storage and single-owner background process. Native account sign-in uses one-time state and PKCE; calendar grants are separate from mail. iCloud requires an Apple app-specific password; no main account password belongs in the app.
 
 The tracker connects to an MCP server supplied by the user. Gmail and Outlook
@@ -16,6 +20,10 @@ actual tools after signing in. It makes no assumption about free-tier analytics,
 per-company view attribution or permission to send through Tabbio.
 
 ## Setup
+
+For native Google/Microsoft sign-in, create the appropriate desktop OAuth registration using [INTEGRATIONS.md](INTEGRATIONS.md), then enter or import its credentials under One-time setup. The callback is the app's actual loopback origin plus `/api/connections/email/oauth/callback` or `/api/connections/calendar/oauth/callback`; the default origin is `http://127.0.0.1:4000`. Preserve existing working registrations and sign-ins. The user completes consent in the provider page. iCloud Mail and Calendar instead use an Apple app-specific password, not the main account password.
+
+Use `list_connections`, `configure_connection`, `connect_connection` and `get_connection_tools` through the tracker. An agent setting up a custom bridge must discover its real schemas and supported results, not invent an endpoint, tool name or permission. Preserve working configuration and local credentials. Setup never authorizes a test message or application, career-page work, CV editing or a schedule change.
 
 For a remote server, enter its HTTPS MCP address. Leave the access token empty
 to use the server's MCP OAuth discovery and browser sign-in. HTTP is accepted

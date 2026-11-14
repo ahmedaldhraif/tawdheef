@@ -91,9 +91,37 @@ test('HTTP starts from the actual 772-record seed and returns exact local agent/
   const startupBefore = await startupSnapshot();
   const { response, result: background } = await json('/api/background');
   assert.equal(response.status, 200);
-  assert.equal(background.startupSupported, process.platform === 'win32');
+  assert.equal(background.startupSupported, ['win32', 'darwin', 'linux'].includes(process.platform));
   assert.equal(typeof background.startupInstalled, 'boolean');
   assert.deepEqual(await startupSnapshot(), startupBefore);
+});
+
+test('HTTP directory snapshot counts confirmed work and opens compact paginated history', async () => {
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'Snapshot HTTP fixture' } });
+  const { result: imported } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [{ name: 'Snapshot employer', email: 'careers@example.test' }, { name: 'Form employer' }] } });
+  const [companyId, formId] = imported.ids;
+  await json('/api/applications', { method: 'POST', body: { companyId, event: 'profile_created', url: 'https://careers.example.test/profile?session=private-session' } });
+  const { result: run } = await json('/api/runs', { method: 'POST', body: { directoryId: directory.id, companyIds: [companyId, formId], explicit: true, mode: 'send_and_submit' } });
+  for (const [id, method] of [[companyId, 'email'], [formId, 'career_page']]) {
+    const { response } = await json('/api/applications', { method: 'POST', body: { companyId: id, runId: run.id, event: 'applied', method, role: 'Snapshot role', evidence: method === 'email' ? { providerMessageId: 'snapshot-http-message' } : 'Fixture form receipt', notes: 'private note', url: 'https://careers.example.test/apply?session=private-session' } });
+    assert.equal(response.status, 200);
+  }
+  await json(`/api/companies/${companyId}`, { method: 'PATCH', body: { archived: true } });
+  const { response, result } = await json(`/api/snapshot?directoryId=${directory.id}`);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(result.counts, { applications: 2, profiles: 1, emails: 1 });
+  assert.equal(result.period, 'all_time');
+  assert.equal(result.metric, null);
+  assert.equal(result.total, 0);
+  assert.deepEqual(result.items, []);
+  const { result: detail } = await json(`/api/snapshot?directoryId=${directory.id}&metric=applications&limit=1&offset=1`);
+  assert.equal(detail.total, 2);
+  assert.equal(detail.items.length, 1);
+  assert.equal(JSON.stringify(detail).includes('private'), false);
+  assert.deepEqual((await json('/api/snapshot?directoryId=uae')).result.counts, { applications: 0, profiles: 0, emails: 0 });
+  assert.equal((await json('/api/snapshot?directoryId=missing')).response.status, 404);
+  for (const query of ['', `directoryId=${directory.id}&period=month`, `directoryId=${directory.id}&limit=101`, `directoryId=${directory.id}&metric=other`, `directoryId=${directory.id}&search=anything`, `directoryId=${directory.id}&period=all_time&period=this_week`]) assert.equal((await json('/api/snapshot?' + query)).response.status, 400);
 });
 
 test('HTTP table summaries omit source bulk while full company evidence remains accessible', async () => {
@@ -181,5 +209,34 @@ test('HTTP run filters preview and snapshot the same selected type and location 
   assert.equal(invalid.response.status, 400);
   const empty = await json('/api/run-preview', { method: 'POST', body: { ...input, locations: ['location:absent'] } });
   assert.equal(empty.result.count, 0);
+  await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
+});
+
+test('HTTP list filters return full-list facets and match preview without silently accepting malformed arrays', async () => {
+  const { result: directory } = await json('/api/directories', { method: 'POST', body: { name: 'List scope fixture', country: 'AE' } });
+  const { result: added } = await json(`/api/directories/${directory.id}/companies`, { method: 'POST', body: { records: [
+    { name: 'Scope target Dubai', type: 'Private company', location: 'Dubai' },
+    { name: 'Scope target Sharjah', type: 'Private company', location: 'Sharjah' },
+    { name: 'Scope other Dubai', type: 'Federal government entity', location: 'Dubai' },
+  ] } });
+  await json(`/api/companies/${added.ids[0]}`, { method: 'PATCH', body: { attention: 'needs_you', status: 'ready' } });
+  const input = { directoryId: directory.id, search: 'target', status: 'ready', attention: 'needs_you', companyTypes: ['private'], locations: ['location:dubai'] };
+  const query = new URLSearchParams({ ...input, companyTypes: JSON.stringify(input.companyTypes), locations: JSON.stringify(input.locations), limit: '1', summary: 'true' });
+  const list = await json('/api/companies?' + query);
+  const preview = await json('/api/run-preview', { method: 'POST', body: input });
+  assert.equal(list.response.status, 200); assert.equal(list.result.total, 1);
+  assert.equal(list.result.remainingCount, preview.result.count); assert.equal(preview.result.listScopeVersion, 1);
+  assert.deepEqual(list.result.items.map(item => item.id), [added.ids[0]]);
+  assert.equal(list.result.facets.companyTypes.find(type => type.id === 'federal_government').count, 1);
+  assert.equal(list.result.facets.locations.find(place => place.label === 'Sharjah').count, 1);
+  for (const value of ['private', 'null', '{}', '[42]']) {
+    query.set('companyTypes', value);
+    assert.equal((await json('/api/companies?' + query)).response.status, 400);
+  }
+  const started = await json('/api/runs', { method: 'POST', body: { ...input, actions: { applyMatchingJobs: false, createProfiles: true }, mode: 'send_and_submit', explicit: true } });
+  assert.equal(started.response.status, 200);
+  assert.deepEqual(started.result.companyIds, [added.ids[0]]);
+  assert.equal(started.result.filters.search, 'target'); assert.equal(started.result.filters.attention, 'needs_you');
+  assert.equal(started.result.actions.applyMatchingJobs, false);
   await json(`/api/runs/${started.result.id}`, { method: 'PATCH', body: { status: 'cancelled' } });
 });

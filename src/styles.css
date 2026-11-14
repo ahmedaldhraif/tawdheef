@@ -777,9 +777,9 @@ tbody tr:last-child td {
   min-height: 24px;
 }
 .run-banner {
-  background: #f0f4f1;
-  border-color: #dae4dd;
-  color: #41604a;
+  background: #fff;
+  border-color: #dedee3;
+  color: #252525;
 }
 .run-banner button {
   border: 0;
@@ -1713,6 +1713,7 @@ button,
   align-items: center;
   gap: 14px;
   min-width: 0;
+  flex-wrap: wrap;
 }
 .search {
   width: 300px;
@@ -2225,17 +2226,13 @@ html[dir="rtl"] .connection-chevron {
   padding: 0;
   background: transparent;
   color: inherit;
-  text-decoration: underline;
-  text-decoration-color: #75757e55;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  cursor: default;
   white-space: normal;
   text-align: inherit;
 }
 @media (hover: hover) and (pointer: fine) {
-  .update-status:hover {
-    background: transparent;
-    color: #252525;
-  }
+  .update-status:hover { background: transparent; }
 }
 .updates-summary {
   margin: 0 0 22px;
@@ -2526,6 +2523,23 @@ a:active {
   .connection-agent-help summary { min-height: 44px; }
 }
 .run-current { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
+.dialog-footer:has(.settings-dialog-footer) { flex: 0 0 auto; }
+.settings-dialog-footer { padding: 14px 24px; background: #fff; border-top: 1px solid #ededf1; }
+.settings-dialog-footer .form-actions { margin: 0; padding: 0; border: 0; }
+.settings-dialog-footer .form-error { margin: 0 0 12px; max-height: 20dvh; overflow-y: auto; }
+.assistant-setup-intro { display: flex; gap: 12px; align-items: center; margin: 20px 0; font-size: 13px; line-height: 1.6; }
+.assistant-setup-intro .provider-logo { flex-shrink: 0; }
+.assistant-setup-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.assistant-copy-fallback { margin-top: 20px; }
+.settings-preferences .form-row { margin-top: 12px; }
+.settings-update-row { display: flex; align-items: flex-end; gap: 10px; }
+#settings-form .settings-update-row > label { flex: 1; min-width: 0; margin-bottom: 0; }
+.settings-update-row > button { min-height: 40px; white-space: nowrap; }
+#settings-form .advanced { padding: 0; }
+#settings-form .advanced > summary { padding: 12px; min-height: 44px; }
+#settings-form .advanced[open] { padding: 0 12px 12px; }
+#settings-form .advanced[open] > summary { margin-inline: -12px; }
+@media (max-width: 460px) { .settings-update-row > button { min-height: 44px; } }
 .run-targets { list-style: none; padding: 0; max-height: 320px; overflow: auto; border-block: 1px solid #dedee3; }
 .run-targets li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
 .run-targets small { grid-column: 1 / -1; color: #62626b; }

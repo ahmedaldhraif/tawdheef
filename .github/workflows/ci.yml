@@ -12,12 +12,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        node: ['24', '26']
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci --include=optional
       - run: npm run build
@@ -26,20 +27,24 @@ jobs:
       - run: npm run release:check
 
   browser:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '26'
           cache: npm
       - run: npm ci --include=optional
       - run: npm run build
+      - run: node website/build.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: browser-failure
+          name: browser-failure-${{ matrix.os }}
           path: test-results/
           retention-days: 7

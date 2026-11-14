@@ -9,6 +9,16 @@ export default {
     license: "MIT licensed",
     release: "Release"
   },
+  commandRows: [
+    { request: "Read the local context", tool: "get_agent_context" },
+    { request: "Show the available tools", tool: "get_capabilities" },
+    { request: "Show my country directories", tool: "list_directories" },
+    { request: "Show companies in this directory", tool: "list_companies" },
+    { request: "Read this company's original sources", tool: "get_company" },
+    { request: "Check my saved connections", tool: "list_connections" },
+    { request: "Check what setup needs next", tool: "get_setup_status" },
+    { request: "Review my recorded progress", tool: "get_report" }
+  ],
   cvShortcut: "Create or connect your CV",
   start: {
     title: "Get started",

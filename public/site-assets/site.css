@@ -33,7 +33,8 @@
 .keep-word{white-space:nowrap}
 .hero h1{max-width:740px;margin:0 auto;font-size:48px;font-weight:575;line-height:1.13;letter-spacing:-1.4px;text-wrap:balance}
 .hero .subtitle{max-width:550px;margin:22px auto 0;font-size:17px;line-height:1.7;text-wrap:pretty}
-.agent-options{white-space:nowrap}
+.agent-options{white-space:normal}
+.hero-access{margin:12px auto 0;font-size:13px;line-height:1.7;color:#62626b}.hero-access a{color:inherit;text-underline-offset:3px;text-decoration-color:#c8c8ce}
 .agent-name{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;vertical-align:-.15em;color:#303037}.agent-name img{object-fit:contain;color-scheme:light;flex:0 0 auto}
 .hero .actions{justify-content:center;gap:24px;margin-top:28px}
 .hero .button{min-height:44px;padding:10px 18px;background:#252525;border-color:#252525;box-shadow:inset 0 1px 0 #ffffff12,0 1px 2px #0000000d;font-size:14px}
@@ -54,6 +55,10 @@
  .hero .button,.hero-explainer{font-size:13px}
  .creator-credit{margin-top:24px;gap:0;font-size:12px}
 }
+.quick-setup>h3{display:flex;align-items:center;gap:9px}.quick-setup>h3 img{object-fit:contain;flex:0 0 auto}
+.fact-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.email-provider-marks{display:flex;align-items:center;gap:7px}.email-provider-marks img{width:20px;height:20px;object-fit:contain;flex:0 0 auto}
+.facts>div>span{font-size:14px}
+@media(max-width:600px){.facts{grid-template-columns:1fr;gap:22px}.facts strong{font-size:16px}.facts span{margin-top:5px}}
 
 .pack-actions{display:flex;align-items:center;gap:18px;font-size:13px;flex:0 0 auto}.pack-actions a{display:inline-flex;align-items:center;min-height:44px;color:#5a2aff;text-decoration:underline;text-underline-offset:4px}.pack-list{padding-top:12px}.pack-list>p{margin-bottom:12px}@media(max-width:680px){.directory-row{flex-wrap:wrap;column-gap:14px;row-gap:0}.directory-row .directory-text{flex-basis:calc(100% - 52px)}.pack-actions{padding-inline-start:52px;gap:22px}.directory-text p{font-size:12px}.pack-list{padding-top:8px}}
 

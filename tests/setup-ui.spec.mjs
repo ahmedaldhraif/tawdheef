@@ -65,7 +65,7 @@ async function openConnections(page) {
   return dialog;
 }
 
-test('first use keeps a single Connections entry without an onboarding banner or second setup screen', async ({ page }) => {
+test('first use keeps a single Connections entry without an onboarding banner or second setup screen', async ({ page }, testInfo) => {
   await openTracker(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.setup-banner')).toHaveCount(0);
@@ -79,7 +79,11 @@ test('first use keeps a single Connections entry without an onboarding banner or
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(dialog.getByRole('button', { name: 'Setup checklist', exact: true })).toHaveCount(0);
   for (const name of ['Email', 'Calendar', 'Your CV', 'AI assistants']) await expect(dialog.getByRole('heading', { name, exact: true })).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Copy instructions', exact: true })).not.toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Copy setup request', exact: true })).toBeVisible();
+  await expect(dialog.locator('pre')).toHaveCount(0);
+  await expect(dialog.locator('.dialog-intro, .connection-group-hint')).toHaveCount(0);
+  await expect(dialog.getByText('Optional', { exact: true })).toHaveCount(2);
+  await page.screenshot({ path: testInfo.outputPath('connections-desktop.png') });
 });
 
 test('optional agent helper copies setup-only instructions for the single selected assistant', async ({ page }) => {
@@ -88,16 +92,28 @@ test('optional agent helper copies setup-only instructions for the single select
   await dialog.getByRole('radio', { name: 'Use Claude Code for Run', exact: true }).check();
   await expect(dialog.getByRole('radio', { name: 'Use Codex for Run', exact: true })).not.toBeChecked();
   await expect(dialog.getByRole('radio', { name: 'Use Claude Code for Run', exact: true })).toBeChecked();
-  await expect(dialog.getByRole('button', { name: 'Copy instructions', exact: true })).not.toBeVisible();
-  await dialog.getByText('Set up with my agent', { exact: true }).click();
-  const copy = dialog.getByRole('button', { name: 'Copy instructions', exact: true });
+  const copy = dialog.getByRole('button', { name: 'Copy setup request', exact: true });
   await expect(copy).toBeEnabled();
   await copy.click();
   const copied = await page.evaluate(() => window.__setupClipboard);
   expect(copied).toContain('using Claude Code');
   expect(copied).toContain('docs/FIRST-RUN.md');
   expect(copied).toContain('Do not send applications or change schedules');
+  await expect(dialog.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveCount(0);
+  await expect(dialog.locator('pre')).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Run', exact: true })).toHaveCount(0);
+});
+
+test('a blocked clipboard exposes only a compact selectable setup request', async ({ page }) => {
+  const dialog = await openConnections(page);
+  await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error('Clipboard blocked'); }; });
+  await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
+  const fallback = dialog.getByRole('textbox', { name: 'Copy into your assistant', exact: true });
+  await expect(fallback).toHaveValue(/Read AGENTS.md and docs\/FIRST-RUN.md/);
+  await expect(fallback).toHaveAttribute('readonly', '');
+  await expect(fallback).toHaveAttribute('rows', '3');
+  await expect(dialog.locator('pre')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Check connections', exact: true })).toBeInViewport();
 });
 
 test('Check connections verifies only the chosen assistant and explains blockers without requiring optional accounts', async ({ page }) => {
@@ -158,8 +174,9 @@ test('assistant choice persists when returning from CV and AI setup', async ({ p
   dialog = page.getByRole('dialog', { name: 'Connections', exact: true });
   await expect(dialog.getByRole('radio', { name: 'Use Claude Code for Run', exact: true })).toBeChecked();
   await dialog.getByRole('button', { name: 'Claude Code \u2014 View setup', exact: true }).click();
-  const ai = page.getByRole('dialog', { name: 'Connect AI', exact: true });
-  await expect(ai.getByRole('tab', { name: 'Claude Code', exact: true })).toHaveAttribute('aria-selected', 'true');
+  const ai = page.getByRole('dialog', { name: 'Claude Code setup', exact: true });
+  await expect(ai.getByRole('link', { name: 'Install Claude Code', exact: true })).toBeVisible();
+  await expect(ai.getByRole('tab')).toHaveCount(0);
   await ai.getByRole('button', { name: 'Back to connections', exact: true }).click();
   await expect(dialog.getByRole('radio', { name: 'Use Claude Code for Run', exact: true })).toBeChecked();
   await expect(dialog.getByRole('button', { name: 'Claude Code \u2014 View setup', exact: true })).toBeFocused();
@@ -173,7 +190,8 @@ test('narrow Connections helper stays readable and keyboard dismissal returns fo
   await page.setViewportSize({ width: 320, height: 740 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const dialog = await openConnections(page);
-  await dialog.getByText('Set up with my agent', { exact: true }).click();
+  await expect(dialog.getByRole('button', { name: 'Check connections', exact: true })).toBeInViewport();
+  await expect(dialog.getByRole('button', { name: 'Done', exact: true })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBeTruthy();
   const close = dialog.getByRole('button', { name: 'Close', exact: true }).first();

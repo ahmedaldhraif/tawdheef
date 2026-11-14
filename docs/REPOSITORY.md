@@ -32,7 +32,8 @@ You do not need another `agent.md`, a prompt for every company, or an embedded m
 | `src/` | React screen, tables, panels, accessible controls. |
 | `server/store.mjs` | Shared SQLite records, validation and revisions. |
 | `server/index.mjs` | Loopback web server and provider session owner. |
-| `server/mcp.mjs` | 43 tool definitions and stdio MCP transport. |
+| `server/mcp.mjs` | 44 tool definitions and stdio MCP transport. |
+| `server/snapshot.mjs` | Directory snapshot counts and paginated evidence, shared by the screen, CLI and MCP. |
 | `bin/apply-tracker.mjs` | CLI over those same definitions; every tool supports `call TOOL --input-file FILE`. |
 | `server/providers/` | Gmail, Outlook, iCloud Mail, calendars and local bridge adapters. |
 | `server/agent-runner.mjs`, `server/operator-contract.mjs` | One assistant subprocess per company, durable queue outcomes and scoped operating tools. |
@@ -60,7 +61,7 @@ node bin/apply-tracker.mjs list --directory uae --limit 20
 node bin/apply-tracker.mjs call TOOL_NAME --input-file arguments.json
 ```
 
-The contract covers setup checks, directories, companies, statuses/notes, imports/exports, runs, application evidence, email, calendar, CV reads, connections, settings, schedules, activity and reports. See [`tools.json`](tools.json) for all 43 schemas. Background lifecycle and installation use local CLI commands, not provider tools. Browser form filling comes from the user's agent/computer tools; LinkedIn actions remain manual.
+The contract covers setup checks, directories, companies, statuses/notes, imports/exports, runs, application evidence, email, calendar, CV reads, connections, settings, schedules, snapshots, activity and reports. See [`tools.json`](tools.json) for all 44 schemas. Background lifecycle and installation use local CLI commands, not provider tools. Browser form filling comes from the user's agent/computer tools; LinkedIn actions remain manual.
 
 Only the running local app owns provider sessions. The CLI/MCP can edit offline records, but live provider operations proxy to the app with a matching private-data directory. Local records and connected online services are distinct.
 

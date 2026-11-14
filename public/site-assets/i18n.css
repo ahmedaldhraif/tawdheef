@@ -1,5 +1,5 @@
 /* Locale controls share the existing header without changing product UI. */
-.site-header .language-switch{display:inline-flex;align-items:center;gap:2px;flex:none;padding:2px;border:1px solid #dedee3;border-radius:10px;background:#f5f5f7;direction:ltr;isolation:isolate}
+.site-header .site-header .language-switch{display:inline-flex;align-items:center;gap:2px;flex:none;padding:2px;border:1px solid #dedee3;border-radius:10px;background:#f5f5f7;direction:ltr;isolation:isolate}
 .site-header .language-switch a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px 10px;border:1px solid transparent;border-radius:7px;color:#62626b;font-size:13px;font-weight:500;line-height:1.4;text-decoration:none;white-space:nowrap;unicode-bidi:isolate;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .site-header .language-switch a[lang=ar]{direction:rtl;font-family:'Segoe UI',Tahoma,Arial,sans-serif}
 .site-header .language-switch a[aria-current=page]{color:#252525;background:#fff;border-color:#dedee3;box-shadow:0 1px 2px #2020300b;font-weight:600;text-decoration:none}

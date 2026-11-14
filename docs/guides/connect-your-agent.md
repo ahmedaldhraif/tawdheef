@@ -23,7 +23,7 @@ For Claude Code:
 npm run agent -- claude-code
 ```
 
-The commands create project-only MCP settings and install the Tawdheef skill. They preserve existing custom files. If a conflict appears, use the configuration shown in Connections to merge the missing entries rather than replacing your settings.
+The commands create project-only MCP settings and install the Tawdheef skill. They preserve existing custom files. If a conflict appears, export the client entries with `npm run setup -- --export-config agent-config`, then review and merge them using the [manual connection guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md#connect-once). Add `--include playwright` to the export command if you need browser tools.
 
 ## Add browser tools when needed
 

@@ -30,7 +30,9 @@ Public research needs no private CV or mailbox. Public record IDs map to local `
 
 ## Act within the requested run
 
-Use `preview_run` to inspect the intended company scope. Call `start_run` only when the person explicitly requests an application run, with `explicit:true`, `mode:"send_and_submit"` and the intended directory and targets. Read the returned scope and expiry before acting, and follow the person's instructions within that scope. A managed company attempt must not launch a nested queue.
+Use `preview_run` to inspect the intended company scope. Call `start_run` only when the person explicitly requests the job-search actions, with `explicit:true`, `mode:"send_and_submit"`, the intended directory and targets, and explicit `actions`. Pass the same filters and actions to preview and start. Read the saved choices, scope and expiry before acting. A managed company attempt must not launch a nested queue.
+
+The screen starts with matching jobs and career profiles selected, with CV-only emails off. CLI/MCP calls that omit `actions` mean application-only for compatibility. Set `applyMatchingJobs`, `createProfiles` and `sendCvEmails` to the person's actual choices. Profiles-only runs are valid. When matching jobs are selected, use future-opportunity actions only after finding no suitable role; a blocked search is not that finding. Reuse existing accounts and record profiles and CV uploads separately from applications.
 
 Use `check_submission` before acting. Reserve a browser’s final submission through `prepare_form_submission` and resolve real evidence through `resolve_form_submission`. Reconcile uncertain sends or forms before retrying. Record account creation and CV uploads separately from confirmed applications.
 

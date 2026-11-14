@@ -45,6 +45,7 @@ async function packageLocation(item, options) {
 export async function integrationPresets(options = {}) {
   const { dataDir } = locations(options);
   return Promise.all(INTEGRATIONS.map(async item => {
+    const supported = !(item.id === 'google-cli' && (options.platform || process.platform) === 'win32' && (options.arch || process.arch) !== 'x64');
     const installed = await packageLocation(item, options);
     let browserInstalled;
     if (item.id === 'playwright' && installed.installed) {
@@ -67,7 +68,7 @@ export async function integrationPresets(options = {}) {
         MS365_MCP_REQUIRE_CONFIRM: 'true',
       } : {};
     return {
-      ...item, ...installed, expectedVersion: item.version, ready: installed.installed && installed.versionMatches,
+      ...item, ...installed, supported, expectedVersion: item.version, ready: supported && installed.installed && installed.versionMatches,
       ...(browserInstalled !== undefined ? { browserInstalled } : {}),
       command: installed.executable || process.execPath,
       args: installed.entry ? [...(installed.executable ? [] : [installed.entry]), ...args] : [],
@@ -76,8 +77,8 @@ export async function integrationPresets(options = {}) {
       ...(item.id === 'tabbio' ? { loginArgs: installed.entry ? [installed.entry, 'login'] : [] } : {}),
       ...(item.id === 'outlook-mcp' ? { loginArgs: installed.entry ? [installed.entry, ...args, '--login'] : [] } : {}),
       nextStep: installed.installed
-        ? installed.versionMatches ? (item.id === 'playwright' ? 'Install Chromium with npm run setup -- --browser, then add these browser tools to your AI client.' : 'Sign in before using this integration. Installation is not account access.') : 'Run npm run setup to restore the pinned integration version.'
-        : item.id === 'tabbio' ? 'Run npm run setup -- --tabbio to download the external Tabbio CLI.' : 'Run npm run setup to install the pinned optional integration.',
+        ? installed.versionMatches ? (item.id === 'playwright' ? 'Install Chromium with npm run setup -- --browser, then add these browser tools to your AI client.' : 'Sign in before using this integration. Installation is not account access.') : `Run npm run setup -- --integration ${item.id} to restore the pinned integration version.`
+        : !supported ? 'This optional bridge is unavailable on this platform. Choose a native provider in Connections.' : `Run npm run setup -- --integration ${item.id} to install only this integration.`,
     };
   }));
 }

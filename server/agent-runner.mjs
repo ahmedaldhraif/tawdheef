@@ -1,26 +1,75 @@
 import { spawn } from 'node:child_process';
-import { access, mkdir, writeFile, readFile, unlink } from 'node:fs/promises';
+import { access, mkdir, writeFile, readFile, unlink, readdir, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import { join, delimiter } from 'node:path';
+import { join, dirname, isAbsolute } from 'node:path';
 import { homedir } from 'node:os';
+import { execFile } from 'node:child_process';
 import { AppError } from './store.mjs';
 import { createClientConfig, integrationPresets } from './integrations.mjs';
 import { OPERATOR_TOOLS, operatorPrompt } from './operator-contract.mjs';
 
 export async function discoverAssistants({ env = process.env, platform = process.platform, home = homedir() } = {}) {
-  const dirs = [...new Set([...(env.PATH || env.Path || '').split(delimiter), join(home, '.local', 'bin'), ...(env.APPDATA ? [join(env.APPDATA, 'npm')] : [])].filter(Boolean))];
+  // Finder/Explorer launches do not necessarily inherit an interactive shell PATH.
+  // Inspect known installation locations; never execute shell startup files.
+  const dirs = [...(env.PATH || env.Path || '').split(platform === 'win32' ? ';' : ':'), join(home, '.local', 'bin'), join(home, '.volta', 'bin'), dirname(process.execPath)];
+  if (env.VOLTA_HOME) dirs.push(join(env.VOLTA_HOME, 'bin'));
+  if (env.NVM_BIN) dirs.push(env.NVM_BIN);
+  if (platform === 'win32') {
+    if (env.APPDATA) dirs.push(join(env.APPDATA, 'npm'));
+    if (env.LOCALAPPDATA) dirs.push(join(env.LOCALAPPDATA, 'Microsoft', 'WinGet', 'Links'));
+    if (env.NVM_HOME) dirs.push(env.NVM_HOME);
+    if (env.NVM_SYMLINK) dirs.push(env.NVM_SYMLINK);
+  } else {
+    dirs.push('/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin');
+    const versions = join(env.NVM_DIR || join(home, '.nvm'), 'versions', 'node');
+    try {
+      const installed = (await readdir(versions, { withFileTypes: true })).filter(item => item.isDirectory() && /^v\d+\.\d+\.\d+$/.test(item.name)).sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true })).slice(0, 32);
+      dirs.push(...installed.map(item => join(versions, item.name, 'bin')));
+    } catch { /* nvm is optional. */ }
+  }
+  const locations = [...new Set(dirs.filter(Boolean).filter(isAbsolute))];
   return Promise.all(['codex', 'claude-code'].map(async id => {
     const binary = id === 'codex' ? 'codex' : 'claude';
-    const candidates = dirs.flatMap(dir => [
+    const override = env[id === 'codex' ? 'TAWDHEEF_CODEX_PATH' : 'TAWDHEEF_CLAUDE_PATH'];
+    const candidates = override ? (isAbsolute(override) && !/\.(?:cmd|bat|ps1)$/i.test(override) ? [{ command: /\.[cm]?js$/i.test(override) ? process.execPath : override, args: /\.[cm]?js$/i.test(override) ? [override] : [] }] : []) : locations.flatMap(dir => [
       { command: join(dir, binary + (platform === 'win32' ? '.exe' : '')), args: [] },
       { command: process.execPath, args: [join(dir, 'node_modules', id === 'codex' ? '@openai/codex/bin/codex.js' : '@anthropic-ai/claude-code/cli.js')] },
       ...(platform === 'win32' ? [] : [{ command: process.execPath, args: [join(dir, '..', 'lib', 'node_modules', id === 'codex' ? '@openai/codex/bin/codex.js' : '@anthropic-ai/claude-code/cli.js')] }]),
     ]);
     for (const candidate of candidates) {
-      try { await access(candidate.args[0] || candidate.command, platform === 'win32' || candidate.args.length ? constants.R_OK : constants.X_OK); return { id, name: id === 'codex' ? 'Codex' : 'Claude Code', installed: true, ...candidate }; } catch { /* Try the next standard local installation. */ }
+      try {
+        const path = candidate.args[0] || candidate.command;
+        if (!(await stat(path)).isFile()) continue;
+        await access(path, platform === 'win32' || candidate.args.length ? constants.R_OK : constants.X_OK);
+        return { id, name: id === 'codex' ? 'Codex' : 'Claude Code', installed: true, ...candidate };
+      } catch { /* Try the next standard local installation. */ }
     }
     return { id, name: id === 'codex' ? 'Codex' : 'Claude Code', installed: false };
   }));
+}
+
+async function readAssistantCommand({ executable, args, timeoutMs = 15000 }) {
+  return new Promise((accept, reject) => {
+    execFile(executable, args, { cwd: homedir(), env: process.env, windowsHide: true, shell: false, timeout: timeoutMs, maxBuffer: 256_000 }, (error, stdout) => {
+      if (error) reject(new AppError('The assistant CLI cannot run the required local commands. Update its installation and check its settings.'));
+      else accept(stdout);
+    });
+  });
+}
+
+/** Version/help only: no model task, sign-in, configuration write or permission change. */
+export async function checkAssistantCompatibility(executable, { run = readAssistantCommand } = {}) {
+  const invoke = args => run({ executable: executable.command, args: [...(executable.args || []), ...args], timeoutMs: 15000 });
+  const versionOutput = await invoke(['--version']);
+  const version = String(versionOutput).match(/\b\d+\.\d+\.\d+(?:[-+][\w.-]+)?/)?.[0];
+  if (!version) throw new AppError('The assistant CLI did not report a supported version. Update its installation.');
+  const args = executable.id === 'codex'
+    ? ['exec', '--json', '--sandbox', 'read-only', '--skip-git-repo-check', '--help']
+    : ['--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--permission-mode', 'default', '--tools', 'Read,WebFetch,WebSearch', '--help'];
+  const help = String(await invoke(args));
+  const required = executable.id === 'codex' ? ['--json', '--sandbox', '--skip-git-repo-check', '--cd'] : ['--mcp-config', '--output-format', '--permission-mode'];
+  if (!required.every(flag => help.includes(flag))) throw new AppError('The assistant CLI is missing required local-run capabilities. Update it before Run.');
+  return { version, capabilitiesChecked: true };
 }
 
 export function launchArguments(assistant, config, cwd) {
@@ -34,8 +83,10 @@ export function launchArguments(assistant, config, cwd) {
 }
 
 export async function checkAssistantAuthentication(executable) {
+  const compatibility = await checkAssistantCompatibility(executable);
   const result = await executeAssistant({ executable: executable.command, args: [...executable.args, ...(executable.id === 'codex' ? ['login', 'status'] : ['auth', 'status'])], cwd: homedir(), env: process.env, timeoutMs: 15000 });
   if (result.status !== 'finished') throw new AppError(result.configurationError ? result.reason : `Open ${executable.name || executable.id}, finish signing in, then press Run again. If it is already signed in, update its CLI to a version that supports local runs.`);
+  return compatibility;
 }
 
 /** One owned subprocess per company. No shell, raw agent log, hidden model or automatic retry. */
@@ -114,8 +165,10 @@ export function createAgentRunner({ store, port, discover = discoverAssistants, 
         const applied = applications.some(a => a.appliedAt);
         const needs = current.some(a => a.status === 'needs_user');
         const failure = current.some(a => a.status === 'error');
+        const progressLabels = { account_created: 'Account created', profile_created: 'Profile completed', cv_uploaded: 'CV uploaded', cv_sent: 'CV sent for future opportunities', talent_pool_joined: 'Talent pool joined' };
+        const progress = [...new Set(current.flatMap(application => application.milestones || []).filter(milestone => milestone.at >= run.createdAt && progressLabels[milestone.event]).map(milestone => progressLabels[milestone.event]))];
         const status = applied ? 'applied' : uncertain ? 'uncertain' : needs ? 'needs_you' : failure ? 'failed' : result.status === 'finished' && current.length ? 'checked' : result.status === 'finished' ? 'needs_you' : result.status === 'stopped' ? 'needs_you' : result.status;
-        const reason = applied ? 'Submission recorded with evidence.' : uncertain ? 'Inspect the previous submission before retrying.' : needs || failure ? (current.find(a => a.status === (needs ? 'needs_user' : 'error'))?.notes || 'Check application history.') : result.reason || (result.status === 'stopped' ? 'Stopped. Inspect any open application before retrying.' : current.length ? 'Company checked. See application history.' : 'No outcome recorded. Check assistant access and try again.');
+        const reason = applied ? 'Submission recorded with evidence.' : uncertain ? 'Inspect the previous submission before retrying.' : needs || failure ? (current.find(a => a.status === (needs ? 'needs_user' : 'error'))?.notes || 'Check application history.') : result.reason || (result.status === 'stopped' ? 'Stopped. Inspect any open application before retrying.' : progress.length ? `${progress.join('; ')}. See application history.` : current.length ? 'Company checked. See application history.' : 'No outcome recorded. Check assistant access and try again.');
         store.finishRunTarget(run.id, companyId, { status, reason });
         if (!applied && status === 'checked') { const c = store.getCompany(companyId); store.updateCompany(companyId, { expectedRevision: c.revision, nextAction: reason }); }
         if (result.global && store.getRun(run.id).status === 'running') { store.updateRun(run.id, { status: 'failed', notes: reason }); break; }

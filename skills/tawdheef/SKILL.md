@@ -6,7 +6,8 @@ description: Set up the local Tawdheef tracker when asked, shortlist job sources
 # Tawdheef
 
 Tawdheef is an **Auto Job Apply & Application Tracker**. Help the person and
-their agent work from the same local records. Its CLI and MCP identifier remains
+their agent find jobs that fit their CV and build career profiles for future
+opportunities, even when no suitable job is open, using the same local records. Its CLI and MCP identifier remains
 `apply-tracker`. Applications, profile creation and CV sharing start only within the person's chosen run.
 
 ## Operate the tracker
@@ -87,12 +88,16 @@ passwords, tokens, cookies or identity documents in a tracking record.
 
 ## Record evidence, not intent
 
-Read the run's saved `actions` and brief. Defaults are
-`{applyMatchingJobs:true,createProfiles:false,sendCvEmails:false}`; at least one
-choice must be on. Default runs apply only to jobs that
-match the CV and requested work locations. `createProfiles` and `sendCvEmails`
-are optional fallbacks after finding no suitable current role, or standalone
-actions when `applyMatchingJobs` is false. A blocked search is not a no-match.
+Read the run's saved `actions` and brief. The screen initially selects matching
+jobs and career profiles, with CV-only email off, and passes explicit choices.
+CLI/MCP calls omitting `actions` retain the compatibility default
+`{applyMatchingJobs:true,createProfiles:false,sendCvEmails:false}`; never infer
+broader permission. At least one choice must be on. Apply only to jobs that
+match the CV and requested work locations. Selected `createProfiles` and
+`sendCvEmails` are fallbacks after finding no suitable current role, or standalone
+actions when `applyMatchingJobs` is false. The profile choice covers registering
+an account, completing real career details, uploading the CV and joining an
+offered talent pool. A blocked search is not a no-match.
 Use existing accounts first. Share the CV only through a route the company
 offers, using authorized CV content or an existing link; never change visibility.
 Use email purpose `cv_share` for future opportunities and `application` for a

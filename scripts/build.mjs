@@ -3,6 +3,7 @@ import { readFile, readdir, writeFile, access } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { appAssets } from './app-assets.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildFingerprint(directory = root) {
@@ -14,20 +15,24 @@ export async function buildFingerprint(directory = root) {
       else if (entry.isFile()) { hash.update(name); hash.update(await readFile(join(directory, name))); }
     }
   }
-  for (const path of ['src', 'public']) await walk(path);
+  await walk('src');
+  for (const file of await appAssets(directory)) { hash.update(`public/${file}`); hash.update(await readFile(join(directory, 'public', file))); }
   for (const path of ['index.html', 'vite.config.mjs', 'package.json', 'package-lock.json']) { hash.update(path); hash.update(await readFile(join(directory, path))); }
   return hash.digest('hex');
 }
 
 export async function ensureBuild({ directory = root, force = false } = {}) {
-  // ZIP downloads are generated locally, never recursively committed inside source.
-  try { await access(join(directory, 'public/downloads/tawdheef-source.zip')); }
-  catch {
-    for (const script of ['scripts/marketing/build-directory-pack.mjs', 'website/build.mjs']) {
-      try { await access(join(directory, script)); } catch { continue; }
-      const result = spawnSync(process.execPath, [join(directory, script)], { cwd: directory, stdio: 'inherit', windowsHide: true });
-      if (result.error || result.status !== 0) throw new Error(`Could not prepare local downloads: ${script}`);
-    }
+  // User packages contain the reviewed build. Never install Vite or rebuild them.
+  let manifest;
+  try { manifest = JSON.parse(await readFile(join(directory, 'tawdheef-app.json'), 'utf8')); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (manifest) {
+    const pkg = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8'));
+    if (manifest.format !== 1 || manifest.name !== 'Tawdheef' || manifest.version !== pkg.version) throw new Error('Invalid app package. Download a fresh Tawdheef package; your private data was not changed.');
+    try { await access(join(directory, 'dist', 'index.html')); }
+    catch { throw new Error('The prebuilt interface is missing. Download a fresh Tawdheef package; your private data was not changed.'); }
+    if (force) throw new Error('This is a prebuilt app. Use the source edition for development builds.');
+    return { built: false, prebuilt: true };
   }
   const fingerprint = await buildFingerprint(directory);
   const marker = join(directory, 'dist', '.tawdheef-build');

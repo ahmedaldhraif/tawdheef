@@ -31,8 +31,8 @@ guessing a `releases/latest` URL. The skill alone is not the app download.
    Existing users connect their intended account directly. Discover the actual
    CV read tool and map `readCV`; do not guess tool names or CV IDs.
    Its AI assistants section chooses the assistant for Run; Check connections
-   verifies that selection and the CV. Set up with my agent contains the
-   copyable instructions in a collapsed disclosure.
+   verifies that selection and the CV. Copy setup request copies a task for
+   the person to paste into that assistant; detailed instructions stay in the guides.
    They complete sign-in, consent and credential entry in the local form.
    Native Gmail/Outlook need their own OAuth registration; iCloud Mail uses an
    Apple app-specific password. Do not request secrets in chat or records.

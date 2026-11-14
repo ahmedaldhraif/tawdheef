@@ -23,7 +23,7 @@ jobs:
           ref: ${{ inputs.tag }}
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
       - run: npm ci --include=optional
       - run: npm test
@@ -44,7 +44,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '26.13.1'
           cache: npm
       - name: Verify tag matches source version
         run: |

@@ -1,5 +1,7 @@
 # Set up Tawdheef with your agent
 
+Find matching jobs and build career profiles, including when no suitable job is open. Tawdheef is a local-first app with its own CLI and local MCP server. Codex or Claude Code does the work using your connected CV and accounts.
+
 ## Install
 
 Download Tawdheef from [GitHub Releases](https://github.com/ahmedaldhraif/tawdheef/releases) and extract the app's source ZIP.
@@ -34,7 +36,9 @@ For Claude Code, replace the second command with:
 npm run agent -- claude-code --browser
 ```
 
-This creates project-only MCP settings and installs the skill. Existing custom settings are preserved; follow the reported merge instructions if they conflict. Reopen the project or start a new chat so your assistant loads the tools. The screen, CLI and MCP use the same local records.
+This creates project-only settings for Tawdheef's local **stdio MCP server** and installs the skill. Existing custom settings are preserved; follow the reported merge instructions if they conflict. Reopen the project or start a new chat so your assistant loads the tools.
+
+The app also has its own CLI: `node bin/apply-tracker.mjs help`. The screen, CLI and MCP use the same local records. MCP lets a compatible local agent call tools directly; the CLI supports terminal agents and scripts. [See the tool reference](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/AGENT-GUIDE.md).
 
 `npm run setup -- --all` also installs the separate Tabbio CLI. It is optional for this setup. See [Connect your agent](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/connect-your-agent.md) for connection details.
 
@@ -64,9 +68,11 @@ To use Tabbio's separate CLI, you can optionally run `npm run setup -- --login t
 
 ## Workflow
 
-Choose the bundled UAE directory or [add a country pack](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-directory-packs.md). Filter or select your target companies, describe the roles and locations you want, then start **Run** for that scope.
+Choose the bundled UAE directory or [add a country pack](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/use-directory-packs.md). Filter the list by city, company type or status, and select individual companies if you want a smaller scope. Open **Run** to review the matching company count and actions.
 
-Your agent checks source evidence and your real CV, then records actual results and next actions. Career profiles, CV uploads and confirmed job applications are separate outcomes. [Read the run guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md).
+Matching jobs and career profiles are selected by default. Your agent checks vacancies against your CV. When no suitable job is open, it can create or complete a career account, fill your profile and upload your CV where supported. You can change these choices before starting; CV-only emails are optional and off by default.
+
+Career profiles, CV uploads and confirmed job applications are recorded separately. [Read the run guide](https://github.com/ahmedaldhraif/tawdheef/blob/main/docs/guides/apply-to-jobs.md).
 
 ## Use
 
@@ -87,13 +93,13 @@ Choose your assistant in the installer. This adds guidance; it does not install 
 Find a shortlist:
 
 ```text
-Shortlist 10 companies in [directory] for [role and location]. Check the source evidence and my connected CV. Explain the fit and missing information. Do not apply or send messages.
+Shortlist suitable companies in [directory] for [role and location]. Check the source evidence and my connected CV. Explain the fit and missing information. Do not apply or send messages.
 ```
 
-Start an explicit application run:
+Start a run for matching jobs and career profiles:
 
 ```text
-Start an application run for [company names] in [directory] for [role and location]. Use my real CV, check duplicates and apply to suitable roles within that scope. Record confirmations and anything that needs me.
+Start a run for [company names] in [directory] for [role and location]. Use my real CV and apply to suitable jobs. If no suitable job is open, create or complete my career profile and upload my CV where supported. Reuse existing accounts and check for duplicates. Leave CV-only emails off. Record real outcomes and anything that needs me.
 ```
 
 Review existing work:

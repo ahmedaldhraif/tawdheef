@@ -2,9 +2,13 @@
 
 <img src="public/brand/logo-latin-purple.svg" alt="tawdheef.com" width="320" />
 
-**Auto Job Apply & Application Tracker**
+**Find matching jobs. Build career profiles.**
 
-Free and open source. Choose companies, let your Codex or Claude Code agent apply, and track applications and replies in one place. Your records stay on your computer.
+A free, open-source job-search app for you and your AI assistant. Find jobs that fit your CV, apply to suitable roles, and build career profiles for future opportunities, even when no suitable job is open. Your agent can create or complete career accounts, fill your details and upload your CV where those options are available. Tawdheef tracks each outcome separately.
+
+**Local-first · Built-in CLI + MCP · Codex & Claude Code**
+
+The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the public source-download links below remain unchanged. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
@@ -19,13 +23,34 @@ Built and personally maintained by [Ahmed AlDhraif](https://github.com/ahmedaldh
 ## Start here
 
 1. Download the source ZIP from the [GitHub release](https://github.com/ahmedaldhraif/tawdheef/releases/tag/v0.1.2) and extract it.
-2. Open the folder in Codex or Claude Code and [ask your agent to set it up](docs/FIRST-RUN.md). Node.js 24+ is required.
-3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or use your existing one. Connect it in the app’s **Connections** panel and check readiness.
-4. Choose companies and start **Run**. Your agent applies through supported email or browser routes; Tawdheef keeps the outcomes and receipts. Sign-ins, CAPTCHAs and provider approvals may need you; LinkedIn application steps stay manual.
+2. Open the folder in your installed, signed-in **Codex or Claude Code** and paste the setup request below. You only need one assistant, plus [Node.js 24+](https://nodejs.org/en/download).
+3. [Create a free Tabbio CV](https://app.tabbio.com/?utm_source=tawdheef&utm_medium=github&utm_campaign=live_cv), or connect your existing one in **Connections**. Complete your own sign-ins and use **Check connections**.
+4. Filter or select companies, then press **Run**. Matching jobs and career profiles start selected; change either choice before starting. Your agent checks for suitable roles and, when none is found, creates or completes a career profile where available.
+
+Paste this into your assistant:
+
+> Set up Tawdheef in this folder using AGENTS.md and docs/FIRST-RUN.md. Preserve my settings and data, help me connect my CV, and guide me through the sign-ins that need me. Check that my chosen assistant and CV are ready. Do not start a job-search run or enable schedules during setup.
+
+Your agent handles local installation and configuration. You handle account sign-in and consent. Email and calendar are optional; add them when needed. [Full setup guide](docs/FIRST-RUN.md).
 
 The app is free; your AI client and connected providers may have their own costs or limits. You can browse directories and track applications without Tabbio. **Run requires a connected Tabbio CV.**
 
-Start with [setup and the Tawdheef skill](docs/guides/use-the-skill.md), including the direct CLI commands. Browse [all guides](docs/guides/README.md) for connections, applications and replies. [Troubleshoot a problem](docs/guides/troubleshoot.md), explore the [agent reference](docs/guides/for-agents.md) and [skill](docs/guides/use-the-skill.md), or learn [about Tawdheef](website/about.md). The website renders these same guides, so the instructions stay consistent.
+## Built-in CLI + local MCP
+
+Tawdheef includes its own CLI and local stdio MCP server. The screen, CLI and MCP tools read and update the **same local SQLite database**, so your assistant works with the same companies, profiles, applications and reports you see.
+
+The setup command connects Codex or Claude Code to the MCP tools and installs the Tawdheef skill. Other compatible local MCP clients can use the same server; terminal agents and scripts can use the CLI:
+
+```sh
+node bin/apply-tracker.mjs help
+node bin/apply-tracker.mjs call list_directories
+```
+
+`AGENTS.md` teaches the shared workflow; `CLAUDE.md` imports it for Claude Code. The CLI and MCP expose validated operations for setup, directories, runs, progress, connections and reports. Your assistant supplies the AI and browser tools. [Agent guide and configuration](docs/AGENT-GUIDE.md) · [Tool schemas](docs/tools.json) · [Repository structure](docs/REPOSITORY.md).
+
+## Guides and tools
+
+Browse [all guides](docs/guides/README.md) for CVs, directories, applications and replies. [Troubleshoot a problem](docs/guides/troubleshoot.md), read the [setup and skill guide](docs/guides/use-the-skill.md), or learn [about Tawdheef](website/about.md). The website renders these same guides, so the instructions stay consistent.
 
 ## GCC directory packs
 
@@ -46,34 +71,22 @@ Download a pack, choose a directory in the app, then use **List options → Impo
 
 **Add a company. Fix a link. Contribute a country.** [Suggest a correction](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=directory-data.yml), [propose a new pack](https://github.com/ahmedaldhraif/tawdheef/issues/new?template=new-country-pack.yml), or open a pull request. No coding is needed to suggest data. Include a public source link, record ID if known and date checked. [Contribution guide](docs/DIRECTORY-CONTRIBUTING.md).
 
-## Let your agent set it up
+## Manual setup
 
-Download and extract the source ZIP, install [Node.js 24+](https://nodejs.org/en/download) if needed, then open the folder in your installed, signed-in **Codex or Claude Code**. You only need one. Paste:
-
-> Set up Tawdheef for me in this folder. Read AGENTS.md and docs/FIRST-RUN.md. Check what already works, then install missing project dependencies, start the app, add browser tools, and connect this project to the assistant I am using. Keep existing settings and data. Help me create or connect my free Tabbio CV using only my real information. Guide me through only the sign-ins or choices that need me; I will enter credentials in the local connection form. Check setup again and tell me the next step. Use get_setup_status (verify:true for the final check), or the equivalent CLI command. Do not change the app's code or design, send applications, create calendar events, or enable schedules during setup.
-
-Your agent handles local setup; you complete account sign-in and consent in **Connections**. Choose your assistant there and use **Check connections**. Setup does not send a test application. The current Run needs a connected Tabbio CV; browser applications do not require email. Calendar and schedules can wait. [Setup guide](docs/FIRST-RUN.md).
-
-## Start it yourself
-
-With Node.js 24+, open a terminal in the extracted folder:
-
-```sh
-npm start
-```
-
-On Windows, double-click **Start Tawdheef.cmd** instead. First launch installs dependencies, builds the screen and opens the local app. No Docker, hosted tracker account or model API key is needed.
-
-## Connect your agent
-
-For an existing agent chat, install browser tools and configure one client:
+Prefer commands? With Node.js 24+, run these in the downloaded folder:
 
 ```sh
 npm run setup -- --browser
 npm run agent -- codex --browser
+npm start
 ```
 
-Use `npm run agent -- claude-code --browser` instead for Claude Code. Open the folder in your client, accept its trust prompt and start a new chat. Setup installs the skill and creates project-only MCP settings; custom settings are preserved and conflicting files are not overwritten. [Manual and other-client setup](docs/AGENT-GUIDE.md).
+For Claude Code, replace the second command with `npm run agent -- claude-code --browser`. Open the folder in that client, accept its trust prompt and start a new chat. Setup installs the browser tools and skill, and creates project-only MCP settings. Custom settings are preserved; conflicting files are not overwritten. Sign in and connect your CV in the app. [Existing settings and other clients](docs/AGENT-GUIDE.md).
+
+To open the app again, use `npm start` or double-click **Start Tawdheef.cmd** on Windows. No Docker, hosted tracker account or model API key is needed.
+
+<details>
+<summary>Install just the skill</summary>
 
 To install the [skill](skills/tawdheef/SKILL.md) separately:
 
@@ -82,6 +95,8 @@ npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef
 ```
 
 A skill alone does not install the app, connect MCP tools, authenticate accounts or authorize applications. A browser-only ChatGPT or Claude conversation does not automatically access local stdio tools.
+
+</details>
 
 ## Connect your accounts
 
@@ -105,9 +120,13 @@ For local operation, read [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), the [f
 
 ## Run through your list
 
-Install and sign in to Codex or Claude Code once, connect your CV and accounts, then press **Run**. The app works through all remaining companies in the tab, or your selection, with no app count cap. Individual blockers are recorded and the queue moves on. **View progress** names the current company; **Stop** cancels further work. A new Run retries unfinished companies and skips confirmed submissions. Unknown email/form submissions must be inspected before another attempt.
+The snapshot above each directory shows **Applications sent**, **Career profiles** and **Emails sent**. Choose **All time** or **This week**, then click a number to see its records. Profiles count companies with a completed career profile; email totals count confirmed messages. An email application can appear in both applications and emails, so these are separate outcomes rather than a combined total. The same read-only snapshot is available through CLI and MCP as `get_snapshot`.
 
-Only real evidence means Applied; CV uploads and talent-pool membership are distinct outcomes. Sign-in, CAPTCHA and provider approvals may need you. LinkedIn application actions stay manual. Scheduled reply checks and reports never start applications or send follow-ups. The background app can check replies while the assistant is closed and the computer is awake.
+Filter the list by city, company type or status, or check specific companies, then press **Run**. The app works through all matching unfinished companies across every page, or the checked companies that also match, with no app count cap. It launches your chosen Codex or Claude Code assistant for each company. Individual blockers are recorded and the queue moves on. **View progress** names the current company; **Stop** cancels further work. A new Run retries unfinished companies and skips confirmed applications or completed tracking statuses. Unknown email/form submissions must be inspected before another attempt.
+
+Matching jobs and career profiles are selected by default. If no suitable role is found, the profile choice lets your agent register an account, complete your profile, upload your CV or join an offered talent pool. Existing accounts are reused. CV-only emails are a separate option, off by default. Only a confirmed application is marked **Applied**; accounts, profiles and CV progress have their own records and report counts.
+
+Sign-in, CAPTCHA and provider approvals may need you. LinkedIn application actions stay manual. Scheduled reply checks and reports never start applications, create career profiles or send follow-ups. The background app can check replies while the assistant is closed and the computer is awake.
 
 ## Local storage and costs
 

@@ -1,26 +1,26 @@
 {
   "date": "2026-11-13",
-  "positioning": "Tawdheef | Auto Job Apply & Application Tracker",
-  "qualifier": "Free, open-source software is visible in the supporting sentence; no separate badge.",
-  "category": "Auto Job Apply & Application Tracker",
+  "positioning": "Tawdheef | Find matching jobs. Build career profiles.",
+  "qualifier": "Free and open source in the supporting sentence; Local-first and Built-in CLI + MCP visible without a badge.",
+  "category": "Local job-search app with built-in CLI and MCP",
   "heroHierarchy": [
-    "Centered headline: Auto-apply to jobs. Track your applications.",
-    "One paragraph: Free, open-source software for you and your ChatGPT or Claude agent, with original marks inline.",
+    "Centered headline: Find matching jobs. Build career profiles.",
+    "A free, open-source job-search app for you and your Codex or Claude Code agent, with original marks inline, followed by Local-first · Built-in CLI + MCP.",
     "One black Get the free app primary action to the setup guide and a plain See how it works link.",
     "One unboxed LinkedIn byline: supplied portrait, Built by Ahmed AlDhraif and original LinkedIn favicon square without registered-mark artwork.",
     "Actual local tracker product view."
   ],
-  "heroDecision": "The owner approved explicit auto-apply and application-tracking positioning. The exact category stays in naming/search context; natural sentences lead the centered hero. Retain one paragraph, no badge, separate audience row, stacked client captions, Founder of Tabbio line or duplicate central ta mark. Auto-apply is a user-started run through the person's own local agent and authorized connections; no universal, unattended or guaranteed-success claim. This is an owner decision, not measured conversion evidence.",
+  "heroDecision": "The owner approved matching jobs and career profiles as the two main purposes, including useful profiles when no suitable vacancy is open. Keep local CLI and MCP explicit and setup simple for Codex and Claude Code. An explicit Run authorizes selected actions; profile outcomes are separate from confirmed applications. This is an owner decision, not measured conversion evidence.",
   "entryPoints": [
     "Ahmed AlDhraif's personal GitHub and content",
     "Real country directory packs and their sources",
     "Agent skill for Codex and Claude Code",
-    "Auto job apply and open-source application tracker searches"
+    "Matching jobs, career profiles and open-source job-search app searches"
   ],
   "funnel": [
     {
       "stage": "Discover",
-      "value": "A clear auto-apply and tracking promise, actual product view and sourced country packs",
+      "value": "A clear matching-jobs and career-profiles promise, actual product view and sourced country packs",
       "cta": "Get the free app → setup guide"
     },
     {
@@ -39,9 +39,9 @@
       "cta": "Create a free Tabbio CV or use an existing one; connect in Connections and check readiness"
     },
     {
-      "stage": "Apply and track",
-      "value": "Authorized supported email/form applications and evidence-backed outcomes",
-      "cta": "Choose targets and explicitly start Run; review applications, replies and Needs you steps"
+      "stage": "Find jobs and build profiles",
+      "value": "Apply to matching jobs and build career profiles for future opportunities, with separate evidence for each outcome",
+      "cta": "Choose companies and actions, press Run, then review applications, profiles, CV uploads and Needs you steps"
     },
     {
       "stage": "Contribute",
@@ -65,11 +65,11 @@
     "intended": "ahmedaldhraif/tawdheef",
     "current": "Public at https://github.com/ahmedaldhraif/tawdheef; v0.1.1 public preview is live. New website/source documentation is separate from the existing versioned release assets.",
     "readmeOrder": [
-      "Approved auto-apply/tracking descriptor, free/open-source promise and actual screenshot",
+      "Matching jobs and career profiles, free/open-source promise, local CLI + MCP and actual screenshot",
       "GitHub release → local agent setup → free Tabbio CV → connect/verify → chosen Run",
       "Concise Guides, agent reference and About navigation",
       "Current country packs with source dates and contribution links",
-      "Canonical first-run request and optional manual/client setup",
+      "One short agent-led setup request near the start, with optional manual/client setup",
       "Account requirements, provider limits and agent documentation",
       "Operational, policy, security and contribution docs"
     ],
