@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { runtimeEnvironment } from './runtime-env.mjs';
 import { defaultDataDir } from './app-paths.mjs';
 import { homedir } from 'node:os';
+import { isDirectInvocation } from './is-direct.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const serverPath = join(root, 'server', 'index.mjs');
@@ -139,6 +140,6 @@ export const backgroundStatus = options => backgroundCommand('status', options);
 export const installBackground = options => backgroundCommand('install', options);
 export const uninstallBackground = options => backgroundCommand('uninstall', options);
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   backgroundCommand(process.argv[2] || 'status').then(result => process.stdout.write(`${JSON.stringify({ ok: true, data: result }, null, 2)}\n`)).catch(error => { process.stderr.write(`${JSON.stringify({ ok: false, error: error.message })}\n`); process.exitCode = 1; });
 }

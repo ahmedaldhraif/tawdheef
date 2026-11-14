@@ -8,6 +8,8 @@ process.env.APPLY_TRACKER_UI_TEST_DATA ||= mkdtempSync(join(tmpdir(), 'apply-tra
 const baseURL = process.env.APPLY_TRACKER_UI_TEST_URL || 'http://127.0.0.1:4017';
 const testAddress = new URL(baseURL);
 if (testAddress.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(testAddress.hostname) || !testAddress.port) throw new Error('Use a loopback URL with an explicit port for browser tests.');
+const browserName = process.env.APPLY_TRACKER_UI_TEST_BROWSER || 'chromium';
+if (!['chromium', 'webkit'].includes(browserName)) throw new Error('Use the Chromium or WebKit verification browser.');
 
 export default defineConfig({
   testDir: './tests',
@@ -21,7 +23,7 @@ export default defineConfig({
   outputDir: 'test-results',
   use: {
     baseURL,
-    browserName: 'chromium',
+    browserName,
     headless: true,
     viewport: { width: 1440, height: 960 },
     screenshot: 'only-on-failure',

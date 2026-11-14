@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile, rm, chmod } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm, chmod, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -151,7 +151,8 @@ test('direct setup in a native Mac bundle chooses external defaults and refuses 
 test('the setup CLI honors external workspace environment without placing configuration in the app directory', async t => {
   const { root } = await project(t), workspace = join(root, 'external-workspace');
   for (const name of ['scripts', 'server', 'docs']) await mkdir(join(root, name), { recursive: true });
-  for (const file of ['scripts/agent-setup.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
+  await writeFile(join(root, 'server/mcp.mjs'), '// Fixture entrypoint; configuration check only.');
+  for (const file of ['scripts/agent-setup.mjs', 'scripts/agent-config-merge.mjs', 'scripts/app-paths.mjs', 'scripts/native-start.mjs', 'scripts/runtime-env.mjs', 'scripts/is-direct.mjs', 'server/integrations.mjs']) await writeFile(join(root, file), await readFile(new URL('../' + file, import.meta.url)));
   for (const [name, content] of Object.entries({ 'AGENTS.md': 'Fixture rules', 'CLAUDE.md': '@AGENTS.md', 'docs/FIRST-RUN.md': 'Fixture guide' })) await writeFile(join(root, name), content);
   const env = { ...process.env, TAWDHEEF_WORKSPACE: workspace, APPLY_TRACKER_DATA: join(root, 'private-data') };
   const configured = spawnSync(process.execPath, [join(root, 'scripts/agent-setup.mjs'), 'both', '--json'], { cwd: root, env, shell: false, windowsHide: true, encoding: 'utf8' });
@@ -159,7 +160,8 @@ test('the setup CLI honors external workspace environment without placing config
   assert.equal(JSON.parse(configured.stdout).workspace, workspace);
   const config = JSON.parse(await readFile(join(workspace, '.mcp.json'), 'utf8'));
   assert.equal(config.mcpServers['apply-tracker'].command, process.execPath);
-  assert.deepEqual(config.mcpServers['apply-tracker'].args, [join(root, 'server/mcp.mjs')]);
+  assert.equal(config.mcpServers['apply-tracker'].args.length, 1);
+  assert.equal(await realpath(config.mcpServers['apply-tracker'].args[0]), await realpath(join(root, 'server/mcp.mjs')));
   await assert.rejects(readFile(join(root, '.mcp.json')), { code: 'ENOENT' });
 });
 

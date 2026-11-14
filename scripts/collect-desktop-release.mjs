@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { APP_TARGETS, NODE_VERSION } from './package-app.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export function validateDesktopEvidence({ report, smoke, archive, version, target }) {
@@ -49,7 +50,7 @@ export async function collectDesktopRelease({ artifacts, output, version }) {
   return { targets: APP_TARGETS.length, assets: entries.length };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   try {
     const args = process.argv.slice(2), flags = new Map();
     for (let i = 0; i < args.length; i += 2) {

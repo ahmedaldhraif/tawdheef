@@ -12,6 +12,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { nativeLayout, nativeCommand } from './native-package.mjs';
 import { verifyDesktopSigning } from './sign-desktop.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export async function smokeApp(archive, { output, requireSigned = process.env.TAWDHEEF_SIGN === 'required' } = {}) {
   const checkout = await mkdtemp(join(tmpdir(), 'Tawdheef space-تجربة-'));
@@ -40,6 +41,11 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(APPLY_TRACKER_|GOOGLE_WORKSPACE_CLI_|MS365_MCP_|TAWDHEEF_)/i.test(key)));
   const dataDir = join(checkout, 'private data'), workspace = join(dataDir, 'workspace');
   Object.assign(env, { APPLY_TRACKER_DATA: dataDir, APPLY_TRACKER_PORT: String(port), TAWDHEEF_WORKSPACE: workspace });
+  const base = `http://127.0.0.1:${port}`;
+  const http = async path => {
+    try { return await fetch(base + path, { signal: AbortSignal.timeout(10_000) }); }
+    catch (error) { throw new Error(`Exact package HTTP GET ${path} failed after launcher startup${error.cause?.code ? ` (${error.cause.code})` : ''}.`, { cause: error }); }
+  };
   async function run(args, { launcher = false } = {}) {
     let executable = node, commandArgs = args;
     if (launcher) {
@@ -53,15 +59,14 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       child.once('exit', code => { clearTimeout(timer); code === 0 ? accept(log) : reject(new Error(`Package command failed (${code}): ${log.slice(-4000)}`)); });
     });
   }
-  let client;
+  let client, failure;
   try {
     const version = (await run(['--version'])).trim(); assert.equal(version, 'v' + manifest.runtime.version);
     const started = performance.now(); await run([], { launcher: true }); const firstLaunchMs = performance.now() - started;
-    const base = `http://127.0.0.1:${port}`;
-    for (const path of ['/', '/api/health', '/favicon.svg', '/site.webmanifest', '/brand/app-icon-192.png', '/brands/claude-code.png']) assert.equal((await fetch(base + path)).status, 200, path);
-    const boot = await (await fetch(base + '/api/bootstrap')).json(); assert.equal(boot.directories.find(item => item.id === 'uae').count, 772);
-    const before = await (await fetch(base + '/api/background')).json();
-    await run([], { launcher: true }); const after = await (await fetch(base + '/api/background')).json(); assert.equal(before.pid, after.pid);
+    for (const path of ['/', '/api/health', '/favicon.svg', '/site.webmanifest', '/brand/app-icon-192.png', '/brands/claude-code.png']) assert.equal((await http(path)).status, 200, path);
+    const boot = await (await http('/api/bootstrap')).json(); assert.equal(boot.directories.find(item => item.id === 'uae').count, 772);
+    const before = await (await http('/api/background')).json();
+    await run([], { launcher: true }); const after = await (await http('/api/background')).json(); assert.equal(before.pid, after.pid);
     for (let pass = 0; pass < 2; pass++) await run(['scripts/agent-setup.mjs', 'both']);
     const claude = JSON.parse(await readFile(join(workspace, '.mcp.json'), 'utf8'));
     assert.equal(await realpath(claude.mcpServers['apply-tracker'].command), await realpath(node));
@@ -77,7 +82,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       delete env.APPLY_TRACKER_DATA; delete env.TAWDHEEF_WORKSPACE;
       env.LOCALAPPDATA = join(checkout, 'fixture local app data');
       await run([], { launcher: true });
-      const defaults = await (await fetch(base + '/api/agent-config')).json();
+      const defaults = await (await http('/api/agent-config')).json();
       const defaultData = join(env.LOCALAPPDATA, 'Tawdheef');
       assert.equal(await realpath(defaults.mcpServers['apply-tracker'].env.APPLY_TRACKER_DATA), await realpath(defaultData));
       const setupPreview = JSON.parse(await run(['scripts/agent-setup.mjs', 'both', '--check', '--json']));
@@ -87,7 +92,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       dataPathChecks.push('native Windows launch and manual setup use fixture LOCALAPPDATA when no data override exists');
       const legacy = join(root, '.local'); await mkdir(legacy); await writeFile(join(legacy, 'fixture-preserved.txt'), 'existing portable data');
       await run([], { launcher: true });
-      const reused = await (await fetch(base + '/api/agent-config')).json();
+      const reused = await (await http('/api/agent-config')).json();
       assert.equal(await realpath(reused.mcpServers['apply-tracker'].env.APPLY_TRACKER_DATA), await realpath(legacy));
       assert.equal(await readFile(join(legacy, 'fixture-preserved.txt'), 'utf8'), 'existing portable data');
       dataPathChecks.push('adjacent legacy portable data reused without migration');
@@ -98,9 +103,15 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
     if (signature.signed) await verifyDesktopSigning({ folder, codeRoot: root, layout });
     if (output) await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
     return report;
-  } finally { await client?.close(); await run(['scripts/background.mjs', 'stop']); }
+  } catch (error) { failure = error; throw error; }
+  finally {
+    let cleanupError;
+    try { await client?.close(); } catch (error) { cleanupError = error; }
+    try { await run(['scripts/background.mjs', 'stop']); } catch (error) { cleanupError ||= error; }
+    if (!failure && cleanupError) throw cleanupError;
+  }
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2), index = args.indexOf('--archive'), dirIndex = args.indexOf('--directory'), outIndex = args.indexOf('--output');
   let archive = index >= 0 ? args[index + 1] : null;
   if (dirIndex >= 0 && args[dirIndex + 1]) {

@@ -5,6 +5,7 @@ import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { runtimeEnvironment } from './runtime-env.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const directory = path => { try { return statSync(path).isDirectory(); } catch { return false; } };
@@ -49,4 +50,4 @@ export async function startNative({ root = ROOT, args = process.argv.slice(2), e
     child.once('exit', code => code === 0 ? accept(paths) : reject(new Error('Tawdheef could not start. Open its local background log or run the diagnostic command.')));
   });
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) startNative().catch(error => { console.error(error.message); process.exitCode = 1; });
+if (isDirectInvocation(import.meta.url)) startNative().catch(error => { console.error(error.message); process.exitCode = 1; });

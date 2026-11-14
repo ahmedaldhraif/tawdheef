@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 5
     env:
       RELEASE_TAG: ${{ inputs.tag }}
+    outputs:
+      commit: ${{ steps.reviewed-ref.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -25,7 +27,9 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
-      - run: node scripts/verify-release-ref.mjs
+      - name: Verify reviewed tag and pin its commit
+        id: reviewed-ref
+        run: node scripts/verify-release-ref.mjs
 
   verify:
     needs: tag
@@ -38,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.tag.outputs.commit }}
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
@@ -52,20 +56,21 @@ jobs:
     needs: tag
     uses: ./.github/workflows/desktop-packages.yml
     with:
-      source-ref: ${{ inputs.tag }}
+      source-ref: ${{ needs.tag.outputs.commit }}
 
   draft:
-    needs: [verify, desktop]
+    needs: [tag, verify, desktop]
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_RELEASE_SHA: ${{ needs.tag.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ needs.tag.outputs.commit }}
           fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -84,8 +89,9 @@ jobs:
           path: desktop-artifacts
       - name: Require matching exact-archive receipts for all six downloads
         run: node scripts/collect-desktop-release.mjs --artifacts desktop-artifacts --output "release/$RELEASE_TAG"
-      - name: Create draft prerelease with verified assets
+      - name: Recheck remote tag and create draft prerelease with verified assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          node scripts/verify-release-ref.mjs --remote
           gh release create "$RELEASE_TAG" release/"$RELEASE_TAG"/* --verify-tag --draft --prerelease --title "Tawdheef ${RELEASE_TAG#v} public preview" --notes-file release/"$RELEASE_TAG"/RELEASE-NOTES.md

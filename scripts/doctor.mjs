@@ -1,6 +1,5 @@
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { integrationStatus, runGws } from '../server/integrations.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export async function doctor(options = {}) {
   const report = await integrationStatus(options);
@@ -36,7 +35,7 @@ export async function doctor(options = {}) {
   };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args.some(arg => !['--probe', '--json'].includes(arg))) {
     process.stderr.write('Use node scripts/doctor.mjs [--probe] [--json].\n');

@@ -12,6 +12,7 @@ import { findNpmCli } from './npm-cli.mjs';
 import { runtimeEnvironment } from './runtime-env.mjs';
 import { nativeLayout, buildNativeLauncher, nativeCommand } from './native-package.mjs';
 import { signingConfiguration, signDesktop } from './sign-desktop.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export const NODE_VERSION = '26.13.1';
 export const APP_TARGETS = Object.freeze(['win32-x64', 'win32-arm64', 'darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64']);
@@ -133,7 +134,7 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   await writeFile(join(output, 'SHA256SUMS.txt'), `${report.sha256}  ${name}\n`);
   return { folder: packageFolder, appRoot: folder, report };
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   const args = process.argv.slice(2); const index = args.indexOf('--output');
   if (args.includes('--help')) console.log('Build a local user package: npm run release:app -- --output NEW_FOLDER\nBuild on each target OS/architecture. Bundles verified Node 26 LTS, npm, runtime dependencies and the prebuilt interface. Nothing is published.');
   else if (index < 0 || !args[index + 1] || args.some((arg, i) => i !== index && i !== index + 1)) { console.error('Use --output NEW_FOLDER.'); process.exitCode = 1; }

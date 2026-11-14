@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { fileURLToPath } from "node:url";
+import { isDirectInvocation } from '../scripts/is-direct.mjs';
 import { resolve } from "node:path";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { OPERATOR_TOOLS, guardOperatorCall } from './operator-contract.mjs';
@@ -1111,10 +1112,7 @@ export async function runMcp() {
   await server.connect(new StdioServerTransport());
 }
 
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+if (isDirectInvocation(import.meta.url)) {
   runMcp().catch((error) => {
     process.stderr.write(`Apply Tracker MCP: ${error.message}\n`);
     process.exitCode = 1;

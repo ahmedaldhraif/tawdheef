@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { access, mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDirectInvocation } from './is-direct.mjs';
 import { createRequire } from 'node:module';
 import { INTEGRATIONS_ROOT, INTEGRATIONS, integrationPresets, exportClientConfig } from '../server/integrations.mjs';
 import { doctor } from './doctor.mjs';
@@ -103,6 +104,6 @@ export async function setup(argv = process.argv.slice(2)) {
   return { ...await doctor({ probe: true }), ...(exported ? { exported } : {}), nextStep: 'Run npm start. Open Connect email or Connect Tabbio for account setup. For coding agents, export or copy the generated MCP configuration.' };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   setup().then(data => { if (data && !process.argv.includes('--quiet')) process.stdout.write(`${JSON.stringify({ ok: true, data }, null, 2)}\n`); }).catch(error => { process.stderr.write(`${JSON.stringify({ ok: false, error: error.message })}\n`); process.exitCode = 1; });
 }

@@ -21,6 +21,8 @@ The exact-ZIP smoke test uses a path with spaces and Arabic characters, invokes 
 
 `.github/workflows/desktop-packages.yml` defines target-specific build/smoke jobs for Windows x64/ARM64, macOS Intel/Apple Silicon and Linux x64/ARM64. CI also defines backend coverage for Node 24/26 on Windows/macOS/Linux and browser checks on all three OSs. A configured job is not a passing job: retain the run's uploaded package and smoke receipt before marking that target verified. Hosted runner availability and account policies remain external prerequisites.
 
+The Mac browser matrix also checks core tracker flows in Playwright WebKit, the engine Safari uses. This is an engine check; manual Safari, Finder, OS quarantine and login-startup checks remain distinct.
+
 ## First launch and optional tools
 
 Extract the complete folder. Windows uses **Tawdheef.exe**; Mac uses **Tawdheef.app**; Linux uses **start-tawdheef.sh**. Native launchers use bundled Node and accept only the controlled `--no-open` option for verification. The source edition retains `.cmd` and `.command` launchers. The initial working app needs no npm install, build or account. Connected services still need internet, personal sign-in and consent.

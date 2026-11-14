@@ -2,6 +2,7 @@
 import { mkdtemp, writeFile, appendFile, rm } from 'node:fs/promises';
 import { join, resolve, dirname, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export function signingSecretsMissing(platform, env = {}) {
   const required = platform === 'darwin'
@@ -28,7 +29,7 @@ export async function cleanupNotaryKey(env = process.env) {
   if (dirname(folder) !== root || !basename(folder).startsWith('tawdheef-notary-key-') || basename(file) !== 'AuthKey.p8') throw new Error('Refusing an unexpected signing-key cleanup path.');
   await rm(folder, { recursive: true, force: true, maxRetries: 5 });
 }
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isDirectInvocation(import.meta.url)) {
   try {
     if (process.argv[2] === 'cleanup') await cleanupNotaryKey();
     else {

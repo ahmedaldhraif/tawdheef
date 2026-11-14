@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { appAssets } from './app-assets.mjs';
+import { isDirectInvocation } from './is-direct.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export async function buildFingerprint(directory = root) {
@@ -46,4 +47,4 @@ export async function ensureBuild({ directory = root, force = false } = {}) {
   return { built: true };
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) ensureBuild({ force: true }).catch(error => { console.error(error.message); process.exitCode = 1; });
+if (isDirectInvocation(import.meta.url)) ensureBuild({ force: true }).catch(error => { console.error(error.message); process.exitCode = 1; });

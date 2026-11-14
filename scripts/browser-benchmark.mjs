@@ -120,8 +120,14 @@ export async function benchmarkBrowser({ app, output, screenshot } = {}) {
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
     const page = await context.newPage(), session = await context.newCDPSession(page);
     await session.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-    const requests = [], errors = [];
-    page.on('request', request => requests.push({ url: request.url(), method: request.method(), type: request.resourceType() }));
+    const requests = [], errors = [], pendingApi = new Set();
+    let lastApiActivity = performance.now();
+    page.on('request', request => {
+      requests.push({ url: request.url(), method: request.method(), type: request.resourceType() });
+      if (new URL(request.url()).pathname.startsWith('/api/')) { pendingApi.add(request); lastApiActivity = performance.now(); }
+    });
+    const finishRequest = request => { if (pendingApi.delete(request)) lastApiActivity = performance.now(); };
+    page.on('requestfinished', finishRequest); page.on('requestfailed', finishRequest);
     page.on('pageerror', error => errors.push(error.message));
     await page.route('**/*', route => {
       const url = new URL(route.request().url());
@@ -168,13 +174,30 @@ export async function benchmarkBrowser({ app, output, screenshot } = {}) {
     const saved = await (await fetch(base + '/api/companies/synthetic-0')).json();
     assert.equal(saved.company.notes, 'Synthetic browser performance edit');
     assert.deepEqual(saved.applications, []);
-    await page.locator('h1').click(); await page.waitForLoadState('networkidle');
+    // A visible row response can schedule the summary after networkidle was
+    // observed. Settle both React consumers and their follow-up read before
+    // measuring idle; do not count a visibility transition as an idle interval.
+    const settleWork = async () => {
+      const deadline = performance.now() + 10000;
+      await page.evaluate(() => new Promise(accept => requestAnimationFrame(() => requestAnimationFrame(accept))));
+      while (performance.now() < deadline) {
+        const settled = await page.evaluate(() => document.querySelector('.table-scroll')?.getAttribute('aria-busy') === 'false' && document.querySelector('.directory-snapshot')?.getAttribute('aria-busy') === 'false');
+        if (settled && pendingApi.size === 0 && performance.now() - lastApiActivity >= 1000) return;
+        await page.waitForTimeout(50);
+      }
+      throw new Error('The table and summary did not finish their pending reads before idle measurement.');
+    };
+    await page.locator('h1').click(); await settleWork();
     const visibleStart = requests.length, visibleRafStart = await page.evaluate(() => window.__benchmark.rafCalls);
     await page.waitForTimeout(IDLE_WINDOW_MS);
     const visibleRequests = requests.slice(visibleStart).map(request => new URL(request.url).pathname);
     const visibleIdleRafCalls = await page.evaluate(start => window.__benchmark.rafCalls - start, visibleRafStart);
-    await page.waitForLoadState('networkidle');
+    await settleWork();
+    const transitionStart = requests.length;
     await page.evaluate(() => { window.__benchmarkHidden = true; document.dispatchEvent(new Event('visibilitychange')); });
+    await settleWork();
+    const transitionRequests = requests.slice(transitionStart).map(request => new URL(request.url).pathname);
+    assert.ok(transitionRequests.length <= 1 && transitionRequests.every(path => path === '/api/snapshot'), 'Only a pending visible summary may settle during the visibility transition.');
     const hiddenStart = requests.length, hiddenRafStart = await page.evaluate(() => window.__benchmark.rafCalls);
     await page.waitForTimeout(IDLE_WINDOW_MS);
     const hiddenRequests = requests.slice(hiddenStart).map(request => new URL(request.url).pathname);
@@ -196,7 +219,7 @@ export async function benchmarkBrowser({ app, output, screenshot } = {}) {
     const report = { benchmark: 'tawdheef-browser', version: 1, scope: 'isolated_synthetic_production_browser', app: { version: packageInfo.version, edition: manifest ? 'prebuilt' : 'source' }, environment: { platform: process.platform, architecture: process.arch, measurementNode: process.version, appNode: appNodeVersion, browser: await browser.version() }, companyCount: COMPANY_COUNT, pageRows: PAGE_ROWS, cpuThrottleRate: 4, viewport: { width: 1440, height: 960 }, initialRowsMs: Math.round(initialRowsMs), initialMetrics,
       searchResults: searches.map(item => ({ ...item, resultPaintMs: Math.round(item.resultPaintMs) })), sequentialTyping: { characters: 5, resultPaintMs: Math.round(typingMs), companyRequests: typingRequests }, inlineEditSavePaintMs: Math.round(savePaintMs),
       inputEventDurationMs: { observedEntries: durations.length, p50: percentile(.5), p95: percentile(.95), max: durations.at(-1) ?? 0 }, longTasks: { count: measurements.longTasks.length, totalMs: Math.round(measurements.longTasks.reduce((sum, entry) => sum + entry.duration, 0)), maximumMs: Math.round(Math.max(0, ...measurements.longTasks.map(entry => entry.duration))) },
-      visibleIdle: { observedMs: IDLE_WINDOW_MS, requests: visibleRequests, requestAnimationFrameCalls: visibleIdleRafCalls }, simulatedHidden: { observedMs: IDLE_WINDOW_MS, requests: hiddenRequests, requestAnimationFrameCalls: hiddenIdleRafCalls }, network: { totalRequests: requests.length, externalRequests: externalRequests.length, initialResources: measurements.resources.filter(entry => !new URL(entry.name).pathname.startsWith('/api/')).map(entry => ({ path: new URL(entry.name).pathname, transferBytes: entry.transferBytes, durationMs: Math.round(entry.durationMs) })) }, runtimeErrors: errors,
+      visibleIdle: { observedMs: IDLE_WINDOW_MS, requests: visibleRequests, requestAnimationFrameCalls: visibleIdleRafCalls }, visibilityTransition: { requests: transitionRequests }, simulatedHidden: { observedMs: IDLE_WINDOW_MS, requests: hiddenRequests, requestAnimationFrameCalls: hiddenIdleRafCalls }, network: { totalRequests: requests.length, externalRequests: externalRequests.length, initialResources: measurements.resources.filter(entry => !new URL(entry.name).pathname.startsWith('/api/')).map(entry => ({ path: new URL(entry.name).pathname, transferBytes: entry.transferBytes, durationMs: Math.round(entry.durationMs) })) }, runtimeErrors: errors,
       checks: ['synthetic directory scope and counts', 'search results match the requested company', 'fixture edit persisted without applications', 'visible idle refresh', 'hidden polling and animation-frame pause', 'no external resource requests or browser runtime errors'],
       limitations: ['Headless Chromium measurement, not Safari or physical-device verification.', 'The server starts directly; native launcher and signature checks are separate release smoke tests.', 'CPU throttling approximates CPU load, not GPU or memory limits.', 'Input event timings are browser event entries, not a field INP percentile.', 'Hidden state is simulated through document.hidden and visibilitychange, not an OS minimize test.', 'Absolute latency thresholds are observational and do not fail shared CI runners.', 'No model, CV, mailbox, application, profile or calendar action occurred.'] };
     if (output) { await mkdir(dirname(output), { recursive: true }); await writeFile(output, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' }); }

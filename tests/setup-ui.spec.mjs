@@ -238,12 +238,23 @@ test('workspace pointer highlight fades to idle and leaves table controls unobst
 });
 
 test('workspace texture stays static for reduced motion and touch, and hides in forced colors', async ({ page, browser, baseURL }) => {
+  const expectTextureForPreferences = async currentPage => {
+    const solidSurface = await currentPage.evaluate(() => matchMedia('(prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active)').matches);
+    if (solidSurface) {
+      await expect(currentPage.locator('.workspace-background')).toHaveCSS('display', 'none');
+      await expect(currentPage.locator('.workspace-dot-grid')).toBeHidden();
+    } else await expect(currentPage.locator('.workspace-dot-grid')).toBeVisible();
+  };
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openTracker(page);
-  await expect(page.locator('.workspace-dot-grid')).toBeVisible();
+  await expectTextureForPreferences(page);
   await expect(page.locator('.workspace-dot-spotlight')).toHaveCSS('display', 'none');
   await page.mouse.move(150, 150);
   expect(await page.locator('.workspace-dot-spotlight').evaluate(element => element.getAnimations().length)).toBe(0);
+  const session = await page.context().newCDPSession(page);
+  await session.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }, { name: 'prefers-reduced-transparency', value: 'reduce' }] });
+  expect(await page.evaluate(() => matchMedia('(prefers-reduced-transparency: reduce)').matches)).toBe(true);
+  await expect(page.locator('.workspace-background')).toHaveCSS('display', 'none');
   await page.emulateMedia({ forcedColors: 'active' });
   await expect(page.locator('.workspace-background')).toHaveCSS('display', 'none');
   const touch = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: 'no-preference' });
@@ -258,7 +269,7 @@ test('workspace texture stays static for reduced motion and touch, and hides in 
       return route.continue();
     });
     await openTracker(touchPage);
-    await expect(touchPage.locator('.workspace-dot-grid')).toBeVisible();
+    await expectTextureForPreferences(touchPage);
     await expect(touchPage.locator('.workspace-dot-spotlight')).toHaveCSS('display', 'none');
     await touchPage.getByRole('textbox', { name: 'Search companies', exact: true }).tap();
     expect(await touchPage.locator('.workspace-dot-spotlight').evaluate(element => element.getAnimations().length)).toBe(0);
