@@ -2,6 +2,7 @@ export default {
   "hero": {
     "line1": "Find matching jobs.",
     "line2": "Build career profiles.",
+    "community": "One open-source project. Community directories, skills and guides.",
     "subtitleBefore": "A free, open-source job-search app for you and your",
     "subtitleAfter": "agent.",
     "or": "or",

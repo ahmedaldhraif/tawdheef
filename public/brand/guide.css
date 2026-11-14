@@ -14,3 +14,5 @@ main{max-width:1440px;margin:auto;padding:0 56px}.hero{display:grid;grid-templat
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(pointer:coarse){select{font-size:16px}button{touch-action:manipulation;user-select:none}}
 @media print{.site-header nav,.preview-controls,.motion-buttons,.download,.downloads,.copy-status,.hero-links,.asset-caption a{display:none!important}body{color:#000}main{padding:0}.section{padding:32px 0;break-inside:avoid}.hero{min-height:420px}.hero-art{print-color-adjust:exact}.swatch{print-color-adjust:exact}.guide-footer{padding:20px 0}h1{font-size:40px}.hero-copy{padding-top:32px}.edition{margin-bottom:24px}}
+
+.parent-line,.endorsement{background:none;border:0;box-shadow:none}.parent-line a,.endorsement a{color:inherit;text-decoration:underline;text-underline-offset:3px}.usage-grid article>a{display:inline-flex;align-items:center;min-height:44px;font-size:13px;text-underline-offset:4px}
