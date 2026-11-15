@@ -151,3 +151,6 @@ html:has(.guide-layout){scroll-behavior:auto}
 .agent-phrase-text{padding-inline:5px;overflow:visible}
 
 .hero .hero-community{max-width:480px;margin:20px auto 0;font-size:12px;line-height:1.7;color:var(--site-muted,var(--muted))}.hero-community a{color:inherit;text-decoration-color:var(--site-line);text-underline-offset:4px}
+
+/* Same authentic Native preview on landing, Skills and task guides. */
+.native-app-preview{margin:28px 0;max-width:100%;min-width:0}.native-app-preview picture,.native-app-preview img{display:block;max-width:100%}.native-app-preview img{width:100%;height:auto}.native-app-preview figcaption{margin-top:10px;font-size:12px;line-height:1.7;color:var(--docs-muted,var(--site-muted,#71717a));text-align:start}.native-preview-disclosure{margin:28px 0;border-block:1px solid var(--docs-line,#e5e5e7);padding:12px 0}.native-preview-disclosure>summary{cursor:pointer;min-height:44px;display:list-item;align-content:center;font-size:14px}.native-preview-disclosure>summary:focus-visible{outline:2px solid #6035ff;outline-offset:4px}.native-preview-disclosure .native-app-preview{margin:16px 0}.skills-start>.native-app-preview{margin-top:28px}@media(max-width:600px){.native-app-preview .tour-frame{max-width:320px;margin-inline:auto}.native-app-preview figcaption{max-width:320px;margin-inline:auto}}
