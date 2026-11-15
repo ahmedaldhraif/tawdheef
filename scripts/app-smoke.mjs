@@ -75,9 +75,9 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       assert.equal(pack.guidanceStatus, 'scanned_on_preview');
       await access(join(root, 'directories', pack.id, 'GUIDE.md'));
     }
-    for (const path of ['/examples/', '/ar/examples/job-search-brief/']) {
+    for (const path of ['/examples/', '/ar/examples/job-search-brief/', '/skills/', '/ar/skills/', '/guides/connect-your-cv/', '/ar/guides/connect-your-cv/']) {
       const response = await http(path);
-      assert.equal(response.status, 302); assert.equal(response.headers.get('location'), `https://www.tawdheef.com${path}`);
+      assert.equal(response.status, 302); assert.equal(response.headers.get('location'), `http://127.0.0.1:4001${path}`);
     }
     for (const optional of ['@azure/msal-node', '@googleapis/gmail', '@googleapis/calendar', '@microsoft/microsoft-graph-client', 'imapflow', 'nodemailer', 'tsdav']) await assert.rejects(access(join(root, 'node_modules', optional)), { code: 'ENOENT' }, `${optional} must remain outside the ordinary runtime`);
     for (const retired of ['server/connections.mjs', 'server/agent-runner.mjs', 'server/scheduler.mjs', 'server/local-adapter-services.mjs', 'runtime/node_modules/npm', 'runtime/lib/node_modules/npm']) await assert.rejects(access(join(root, retired)), { code: 'ENOENT' }, `${retired} must remain outside the Native-only download`);
