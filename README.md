@@ -6,7 +6,7 @@
   <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
   <source media="(prefers-reduced-motion: reduce)" srcset="public/brand/github-hero/wordmark-light.png" />
   <source media="(prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.gif" />
-  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
+  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" />
 </picture>
 
 [![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
@@ -19,7 +19,10 @@ A free, open-source job-search app for you and your AI assistant. Find jobs that
 
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
-![Tawdheef company directory and outcome tracking interface](public/site-assets/walkthrough/directory.png)
+<picture>
+  <source media="(max-width: 600px)" srcset="public/site-assets/walkthrough/native-mobile-light.jpg" />
+  <img src="public/site-assets/walkthrough/native-desktop-light.jpg" alt="Tawdheef native app: company directory, monitoring, job updates and separate career profile progress" width="1100" />
+</picture>
 
 Interface preview with illustrative data. Directory records are research sources, not confirmed job vacancies.
 
@@ -30,8 +33,6 @@ Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, w
 Created by [Ahmed AlDhraif](https://github.com/ahmedaldhraif). The app, community directories, skill and guides grow together. [Help improve the project](CONTRIBUTING.md).
 
 [Download current source](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip) · [Previous preview release](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
-
-<img src="public/site-assets/tracker-desktop.png" alt="Tawdheef's local directory and application tracker, showing the public UAE research snapshot" width="100%" />
 
 [English guides](docs/guides/README.md) · [الأدلة بالعربية](docs/i18n/ar/guides/README.md)
 
@@ -164,9 +165,9 @@ Filter by city/type/status or select companies, then press **Run**. Native Run s
 
 Matching jobs and career profiles are selected by default. If no suitable role is found, the profile choice lets your agent register an account, complete your profile, upload your CV or join an offered talent pool. Existing accounts are reused. CV-only emails are a separate option, off by default. Only a confirmed application is marked **Applied**; accounts, profiles and CV progress have their own records and report counts.
 
-Sign-in, CAPTCHA and provider approvals may need you. LinkedIn actions stay manual. Scheduled work never starts applications, creates profiles, shares CVs, sends follow-ups or changes calendars. App-owned legacy reply/report timers are optional compatibility features.
+Sign-in, CAPTCHA and provider approvals may need you. LinkedIn actions stay manual. Scheduled work never starts applications, creates profiles, shares CVs, sends follow-ups or changes calendars. Historical app-owned timers are retired and inert.
 
-**Settings → Monitoring** prepares selected read-only careers/profile updates, tracked replies and calendar reads for a local native Codex/Claude Desktop task. Copy its request into that client and inspect the actual task. The computer, native client and local tracker must be available. A copied request or reported task ID does not prove the schedule is running. [Monitoring setup and status](docs/MONITORING.md).
+**Monitoring** prepares selected read-only careers/profile updates, tracked replies and calendar reads for a local native Codex/Claude Desktop task. Copy its request into that client and inspect the actual task. The computer, native client and local tracker must be available. A copied request or reported task ID does not prove the schedule is running. [Monitoring setup and status](docs/MONITORING.md).
 
 The actual client reads selected careers/profile pages, original-account tracked threads and selected calendars, then records dated evidence. The app performs no external read in Native mode. For new accounts, use only the reported actual mailbox address; existing accounts keep their login. CV facts/original files and career credentials remain in client-owned tools. Native email reserves one immutable send plan; the client sends once and reports the real original-account receipt. Source/capability reports never prove an application independently.
 
