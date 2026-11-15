@@ -57,7 +57,11 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', error => page.__pollingErrors.push(error.message));
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
-test.afterEach(async ({ page }) => expect(page.__pollingErrors).toEqual([]));
+test.afterEach(async ({ page }) => {
+  // Stop accepting mocked requests and drain handlers before Playwright disposes responses.
+  await page.unrouteAll({ behavior: 'wait' });
+  expect(page.__pollingErrors).toEqual([]);
+});
 
 test('banner and dialog share one run reader, pause when hidden and catch up immediately on return', async ({ page }) => {
   const run = await fixture(page);
