@@ -27,6 +27,8 @@ The Mac browser matrix also checks core tracker flows in Playwright WebKit, the 
 
 ## First launch and optional tools
 
+Before the public domain is connected, packaged-app landing, Skills and guide links open the separately running website at `http://127.0.0.1:4001`. The tracker stays on port 4000. English and Arabic paths and query strings are preserved; old setup links open the current setup guide. Start the built website on port 4001 before using these links. Source checkouts with a built `public/welcome/` retain their embedded preview. The temporary destination lives in `server/marketing-links.mjs`.
+
 Extract the complete folder. Windows uses **Tawdheef.exe**; Mac uses **Tawdheef.app**; Linux uses **start-tawdheef.sh**. Native launchers use bundled Node and accept only the controlled `--no-open` option for verification. The source edition retains `.cmd` and `.command` launchers. The initial working app needs no npm install, build or account. Connected services still need internet, personal sign-in and consent.
 
 Use Connections to choose Codex or Claude Code and copy the setup request. Each assistant still requires its own installation and account; these clients are not bundled. Browser-only chat products do not automatically read local MCP settings.

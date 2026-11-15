@@ -1,4 +1,5 @@
 import express from "express";
+import { installMarketingRedirects } from './marketing-links.mjs';
 import { resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { openStore, ROOT, STATUSES, AppError } from "./store.mjs";
@@ -66,6 +67,8 @@ app.use((req, res, next) => {
 });
 app.use('/api/discovery/record', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: "30mb" }));
+// Packaged apps use the separately running local website until domain connection.
+installMarketingRedirects(app, { websiteAvailable: existsSync(resolve(ROOT, 'public/welcome/index.html')) });
 // Older setup and skill links lead directly to the shared setup guide.
 app.get(["/skills/tawdheef", "/skills/tawdheef/", "/get-started", "/get-started/", "/guides/get-started", "/guides/get-started/"], (_request, response) => response.redirect(301, "/guides/use-the-skill/"));
 const wrap = (fn) => async (req, res, next) => {
@@ -343,7 +346,6 @@ if (process.argv.includes("--dev")) {
   // Source checkouts can preview the separately built website. It is not copied
   // into the working app or its desktop package.
   if (existsSync(resolve(ROOT, 'public/welcome/index.html'))) app.use(express.static(resolve(ROOT, 'public'), { dotfiles: 'deny' }));
-  else app.get(['/welcome', '/welcome/*path', '/guides/*path', '/skills', '/skills/*path', '/examples', '/examples/*path', '/ar/guides/*path', '/ar/skills', '/ar/skills/*path', '/ar/examples', '/ar/examples/*path'], (req, res) => res.redirect(302, `https://www.tawdheef.com${req.path.replace(/^\/welcome(?=\/|$)/, '') || '/'}`));
   app.get(/^(?!\/api\/).*/, (_, res) =>
     res.sendFile(resolve(ROOT, "dist/index.html")),
   );
