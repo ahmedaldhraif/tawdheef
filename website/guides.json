@@ -2,7 +2,7 @@
   {
     "slug": "use-the-skill",
     "title": "Set up Tawdheef with your agent",
-    "description": "Download the free app, connect Codex or Claude Code and your CV, then find matching jobs and build career profiles.",
+    "description": "Start the app, copy the setup request into your agent, then choose companies and actions.",
     "category": "Start",
     "source": "docs/guides/use-the-skill.md",
     "related": [
@@ -16,7 +16,7 @@
   {
     "slug": "connect-your-agent",
     "title": "Connect Codex or Claude Code",
-    "description": "Connect the local tracker tools, install the workflow skill and verify the assistant you want Run to use.",
+    "description": "Choose Codex or Claude Code in Connections and copy the setup request into that client.",
     "category": "Start",
     "source": "docs/guides/connect-your-agent.md",
     "related": [
@@ -30,7 +30,7 @@
   {
     "slug": "connect-your-cv",
     "title": "Create or connect your CV",
-    "description": "Create a free digital CV on Tabbio or connect your existing account, then check that Tawdheef can read it.",
+    "description": "Create or reuse a Tabbio CV. Your agent connects it and reads your current experience.",
     "category": "Start",
     "source": "docs/guides/connect-your-cv.md",
     "related": [
@@ -58,7 +58,7 @@
   {
     "slug": "apply-to-jobs",
     "title": "Find matching jobs and build career profiles",
-    "description": "Choose companies and let your assistant apply to suitable jobs or build career profiles for future opportunities.",
+    "description": "Choose companies and Run actions. Continue in your agent and track confirmed outcomes.",
     "category": "Use",
     "source": "docs/guides/apply-to-jobs.md",
     "related": [
@@ -72,7 +72,7 @@
   {
     "slug": "replies-and-reports",
     "title": "Check replies and reports",
-    "description": "Review tracked replies, save a local report and choose optional schedules without starting new applications.",
+    "description": "Ask your agent to check tracked replies and new jobs, then keep a local report. Monitoring is read-only.",
     "category": "Use",
     "source": "docs/guides/replies-and-reports.md",
     "related": [
