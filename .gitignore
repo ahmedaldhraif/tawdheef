@@ -25,6 +25,9 @@ directories/*/*-directory.json
 directories/*/*-directory*.csv
 *.pem
 *.key
+*.p8
+*.p12
+*.pfx
 credentials*.json
 client_secret*.json
 *token-cache*.json

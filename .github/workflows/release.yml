@@ -88,7 +88,7 @@ jobs:
           pattern: desktop-*
           path: desktop-artifacts
       - name: Require matching exact-archive receipts for all six downloads
-        run: node scripts/collect-desktop-release.mjs --artifacts desktop-artifacts --output "release/$RELEASE_TAG"
+        run: node scripts/collect-desktop-release.mjs --artifacts desktop-artifacts --output "release/$RELEASE_TAG" --source-commit "$EXPECTED_RELEASE_SHA"
       - name: Recheck remote tag and create draft prerelease with verified assets
         env:
           GH_TOKEN: ${{ github.token }}

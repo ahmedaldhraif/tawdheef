@@ -39,8 +39,8 @@
     const triggers=[...document.querySelectorAll('.docs-search-trigger')],results=[...docsSearch.querySelectorAll('[data-docs-search]')];let returnFocus;
     const visible=()=>results.filter(item=>!item.hidden);
     function filterDocs(){const query=normalizeSearch(docsInput.value.trim());for(const result of results)result.hidden=!normalizeSearch(result.dataset.docsSearch).includes(query);const count=visible().length;document.getElementById('docs-search-status').textContent=countLabel(count,'searchOne','searchOther');document.getElementById('docs-search-empty').hidden=count>0;}
-    function openSearch(){if(docsSearch.open)return;returnFocus=document.activeElement;docsInput.value='';filterDocs();docsSearch.showModal();docsInput.focus();}
-    triggers.forEach(trigger=>trigger.addEventListener('click',openSearch));
+    function openSearch(opener=document.activeElement){if(docsSearch.open)return;returnFocus=opener;docsInput.value='';filterDocs();docsSearch.showModal();docsInput.focus();}
+    triggers.forEach(trigger=>trigger.addEventListener('click',()=>openSearch(trigger)));
     docsSearch.querySelector('.docs-search-close').addEventListener('click',()=>docsSearch.close());
     docsSearch.addEventListener('close',()=>{if(returnFocus?.isConnected)returnFocus.focus();});
     docsSearch.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();docsSearch.close();}},{capture:true});

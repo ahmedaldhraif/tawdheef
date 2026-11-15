@@ -4,7 +4,7 @@ Tawdheef keeps its browser interface and local Node/SQLite service. Windows adds
 
 ## Build and verify
 
-Run on the target operating system and architecture:
+Run on the target operating system and architecture from the exact root of a clean, committed Git checkout:
 
 ```sh
 npm ci
@@ -15,7 +15,9 @@ npm run release:app -- --output outputs/NEW-DESKTOP-CANDIDATE
 npm run release:app:smoke -- --directory outputs/NEW-DESKTOP-CANDIDATE --output outputs/NEW-DESKTOP-CANDIDATE/smoke-verification.json
 ```
 
-The output must be a new folder. Packaging downloads the official Node archive over HTTPS and compares SHA-256 with the official release checksum before extraction. Third-party runtime licences remain in `runtime/`; application dependency licences remain in their packages. `package-report.json` records the exact target, runtime archive/hash, app archive/hash, file count and installed size. Packaging does not publish anything or establish that checks passed.
+The output must be a new folder. Packaging records the checked-out full `sourceCommit`, downloads the official Node archive over HTTPS and compares SHA-256 with the official release checksum before extraction. Third-party runtime licences remain in `runtime/`; application dependency licences remain in their packages. `package-report.json` records the source commit, exact target, runtime archive/hash, app archive/hash, file count and installed size. The exact-archive smoke receipt repeats that source commit and archive hash. Packaging does not publish anything or establish that checks passed.
+
+The clean-Git requirement applies to producing a distribution, not to ordinary downloaded-app use. Use separate clean worktrees or CI jobs for desktop and source-release generation; source generation writes derived pack and website files. Do not discard unrelated local work to satisfy a build check.
 
 The exact-ZIP smoke test uses a path with spaces and Arabic characters, invokes the native Windows/Mac executable or Linux script, opens the app using bundled Node, verifies a repeated launch reuses its process, configures both clients in an external temporary workspace, and performs real stdio MCP discovery and a context read. It checks that private data and client configuration were not created inside the app. Signed downloads undergo platform signature verification before startup and again after setup. Mac extraction uses `ditto` to preserve notarization metadata. The test stops its server and never signs into accounts, calls an AI model or sends applications/emails. A direct native-executable smoke is distinct from a manual Finder/Explorer launch or an actual login-startup test.
 
@@ -75,7 +77,7 @@ An Apple Developer account alone is not a signing certificate. This workflow nee
 
 On your Mac, `base64 -i DeveloperID.p12 | pbcopy` and `base64 -i AuthKey.p8 | pbcopy` copy each encoded file locally for pasting directly into its GitHub secret. Use your actual filenames. Base64 is encoding, so protect those values like the original private files.
 
-Run **Actions → Sign verified desktop download** with `platform: macos` and an existing reviewed version tag. It builds Intel and Apple Silicon artifacts using temporary credentials, without publishing. No Windows secrets are required for this selection. See [the workflow](../.github/workflows/sign-desktop.yml) and [secret preflight](../scripts/signing-secrets.mjs).
+Run **Actions → Sign verified desktop download** with `platform: macos`, an existing reviewed version `tag` and that tag's exact 40-character `source-commit`. It builds `signed-desktop-darwin-x64` and `signed-desktop-darwin-arm64` artifacts using temporary credentials, without publishing. No Windows secrets are required for this selection. Select `windows` for its two targets or `all` for all four Windows/Mac targets. See [the workflow](../.github/workflows/sign-desktop.yml) and [secret preflight](../scripts/signing-secrets.mjs).
 
 The driver signs nested code and the bundle with hardened runtime/timestamps, requires Apple notarization status `Accepted`, staples the ticket, and verifies with `codesign`, `stapler` and Gatekeeper. It creates the final archive after stapling and records verification outside the immutable bundle. See [Apple's signing](https://developer.apple.com/documentation/xcode/creating-distribution-signed-code-for-the-mac) and [notarization guidance](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
 
@@ -88,5 +90,7 @@ New public certificates commonly use a CA's hardware token, HSM or cloud service
 The Windows driver uses SHA-256 and RFC 3161 timestamps, then verifies the launcher and bundled Node using [SignTool's Authenticode policy](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool). Warnings fail verification. This signs the native executable; the ZIP is not a signed installer or sealed Windows app bundle.
 
 Retain `package-report.json`, the signing receipt and exact-archive smoke receipt. Fixture results or account ownership never establish live signing readiness.
+
+The normal **Prepare draft release** workflow remains an unsigned-preview path. A successful separate signing job does not replace its ZIPs. To assemble signed Windows/Mac artifacts with the same-commit Linux packages, use the source-pinned `collect-desktop-release.mjs --signing required` flow in [public release preparation](RELEASE.md#prepare-desktop-downloads). It requires the exact source ZIP smoke receipt too and refuses to overwrite an existing candidate. Signed Windows/Mac claims remain per-target; Linux uses checksum verification.
 
 Public links continue to point at existing source releases until actual platform artifacts have been verified and published. No local build or fixture test proves successful live applications, mailbox access or employer responses.

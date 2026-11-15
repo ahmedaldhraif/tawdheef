@@ -16,7 +16,7 @@ async function fixture(t) {
 }
 test('source release excludes private files, generated archives and development outputs', async t => {
   const root = await fixture(t);
-  for (const name of ['README.md', 'server/index.mjs', '.agents/skills/example/SKILL.md', '.local/secret.json', 'public/.env', 'public/nested/.local/secret.json', 'public/downloads/old.zip', 'outputs/screenshot.png', 'server/credentials.json']) {
+  for (const name of ['README.md', 'server/index.mjs', '.agents/skills/example/SKILL.md', '.local/secret.json', 'public/.env', 'public/nested/.local/secret.json', 'public/downloads/old.zip', 'outputs/screenshot.png', 'server/credentials.json', 'docs/certs/AuthKey.p8', 'public/certs/publisher.P12', '.github/publisher.pfx']) {
     const path = join(root, name); await mkdir(join(path, '..'), { recursive: true }); await writeFile(path, 'fixture');
   }
   const report = await checkPublicSource(root, { git: false }); assert.equal(report.files, 3);
@@ -32,6 +32,7 @@ test('source release excludes private files, generated archives and development 
   assert.equal(isPublicSource('directories/qatar/qatar-directory.json'), false);
   assert.equal(isPublicSource('directories/qatar/qatar-directory-01.csv'), false);
   assert.equal(isPublicSource('public/downloads/qatar-source.json'), false);
+  for (const file of ['docs/certs/AuthKey.p8', 'public/certs/publisher.P12', '.github/publisher.pfx']) assert.equal(isPublicSource(file), false, file);
 });
 test('release check rejects credential signatures without returning the value', async t => {
   const root = await fixture(t), secret = 'gh' + 'p_' + 'a'.repeat(36);

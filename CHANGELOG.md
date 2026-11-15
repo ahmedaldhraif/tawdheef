@@ -4,17 +4,19 @@
 
 - Combined the contribution UX with Native discovery: evidence-backed career routes, a one-time visible Career profile column, focused Preferences, client-owned Monitoring and reports, contribution links and approved bilingual wordmarks. Contact-address hints never replace actual Native sender identity.
 - Native job discovery with bounded public feed plans, meaningful-change reuse, current CV/preference citations and a small Jobs review panel. New, changed and Needs you records remain separate from confirmed applications; source failures retain earlier results.
-- Node 26.13.1 and Vite 8.3.8, a prebuilt tracker-only interface and explicitly selected optional integrations.
+- Node 26.13.1 and Vite 8.3.8, with a prebuilt tracker-only interface. Ordinary downloads contain no bundled npm, browser engine or app-managed mail/calendar SDKs.
 - Windows and Mac native launchers around the local browser interface, with external private data and assistant workspaces.
 - Target-specific Windows, Mac and Linux x64/ARM64 packaging and exact-archive checks in GitHub CI.
-- Faster SQL-backed company filtering and paging, incremental edit refreshes and one visibility-aware run reader.
-- Native Codex/Claude connections by default: the actual client owns CV, mail, calendar, browser/computer and password-manager tools. Tawdheef keeps local guidance, scope and results, with no default model/CLI subprocess or second provider session owner.
+- Faster SQL-backed company filtering, paging and compact progress snapshots, incremental edit refreshes and one visibility-aware run reader. Snapshot refreshes preserve archived outcomes without decoding full company research payloads.
+- Native Codex/Claude connections only: the actual client owns CV, mail, calendar, browser/computer and password-manager tools. Tawdheef keeps local guidance, scope and results, without a model/CLI subprocess or app-owned provider session.
 - Project-only setup with ownership checks/backups and optional direct Tabbio MCP. Six familiar connection categories distinguish dated client reports from observed tracker tool use.
 - Claim-scoped native run handoffs, durable native email plans and original-account receipt reconciliation. Stop revokes authority without claiming to kill an external chat.
-- Optional app-owned adapters, CLI runner and disposable model check remain under Advanced compatibility; their ten mail/cloud SDKs are excluded from ordinary runtime dependencies.
+- Advanced compatibility, app-owned adapters, the CLI runner and disposable model checks are retired. Their mail/calendar SDKs are removed; historical settings, private files and evidence remain preserved and inert.
 - Native Codex/Claude local monitoring requests with a separate read-only workspace, saved source scope, deduplicated updates and actionable Needs you outcomes. Copying a request never claims a schedule is active.
 - Compact local records, original PDF/DOCX staging for authorized uploads and fresh observed main-email registration guidance. Native CV facts remain in the client's own connection.
+- Explicit inspected historical-submission recovery preserves the original intent and grants no new sending authority. Missing original mailbox provenance remains Needs you.
 - Separate optional publisher signing/notarization workflow. Local operation requires no developer account; unsigned previews remain labelled unsigned.
+- Website search returns focus to its opener in Safari after Close, Escape or clicking outside, including Arabic and narrow screens.
 
 ## 0.1.2 — guides and product walkthrough
 

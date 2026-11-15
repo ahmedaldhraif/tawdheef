@@ -1,10 +1,12 @@
 # Public release preparation
 
-The intended repository is `ahmedaldhraif/tawdheef`, recorded in `website/config.json`. That is a proposed destination, not evidence of publication. This checkout's release commands never create a remote repository, push code or publish a release.
+The public repository is [ahmedaldhraif/tawdheef-auto-apply-jobs](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs), recorded in `website/config.json`. The prepared version is **0.2.0**. An existing repository, passing CI or a local package does not mean that version has been published.
+
+Tawdheef remains local first and Codex/Claude native. The actual client owns external connections, sign-in and model access. Release preparation must not connect accounts, inspect a real CV/mailbox, enable schedules or use private tracking as test data.
 
 ## Prepare a candidate
 
-Use Node.js 26.13.1 LTS and the committed lockfile. Patched Node 24 remains a source compatibility test target. Review the source and changes before running:
+Use Node.js 26.13.1 LTS and the committed lockfile. Patched Node 24 remains a source compatibility test target. Work in a clean, reviewed checkout with isolated data:
 
 ```sh
 npm ci
@@ -16,31 +18,68 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-`release:prepare` verifies public paths and credential signatures, checks the generated tool catalog, rebuilds the website/downloads and UI, then writes `release/vVERSION/`. It refuses to overwrite an existing candidate. Use `node scripts/prepare-release.mjs --output outputs/NEW-CANDIDATE/assets` for a separate reviewed candidate without replacing an earlier folder. Verify that candidate with `node scripts/release-smoke.mjs --release-dir outputs/NEW-CANDIDATE/assets`. It does not claim tests passed merely because packaging completed. `release:smoke` extracts that exact ZIP into an isolated local folder, exercises first launch, project setup for both clients, local downloads and a real stdio MCP handshake, then stops its test process. It never signs in or sends anything; its isolated files remain under `.local/release-smoke/` for inspection.
+`release:prepare` checks public paths, possible credential signatures and the generated tool catalog, rebuilds the website/downloads and tracker interface, then writes `release/vVERSION/`. It refuses to overwrite an existing candidate. To preserve an earlier build, use:
 
-Artifacts:
+```sh
+node scripts/prepare-release.mjs --output outputs/NEW-CANDIDATE/assets
+node scripts/release-smoke.mjs --release-dir outputs/NEW-CANDIDATE/assets
+```
 
-- `tawdheef-VERSION-source.zip`: complete public source with launchers, guides, skills, tests and original source evidence.
-- `tawdheef-skill.zip`: optional standalone workflow guidance and its license.
-- Seven directory ZIPs: six current GCC country packs plus the original UAE snapshot, each with full public research, a compact JSON index, manifest and import CSV parts.
-- `tawdheef-brand-kit.zip`: original project artwork and retained third-party/font notices.
-- `SHA256SUMS.txt`, `manifest.json`, `RELEASE-NOTES.md`: integrity hashes, exact file inventory and user-facing release notes.
-- `smoke-verification.json`: produced only after the fresh-download check passes.
+The source smoke check extracts the exact ZIP into an isolated folder. It exercises first launch, project setup for both clients, local assets and a real stdio MCP handshake, then stops its test process. It never signs in or sends anything. Its isolated files remain under `.local/release-smoke/` for inspection. Packaging alone does not establish that tests passed.
 
-Private tracking, OAuth files, local MCP settings, logs, node_modules, development outputs and generated ZIPs are excluded. The website and Git release use the same source boundary. Review assets and new directory data too; automated pattern matching cannot establish that every file is appropriate to publish.
+The prepared source assets are:
 
-## Publish after owner approval
+- `tawdheef-VERSION-source.zip`: public source, launchers, guides, skills, tests and original research evidence.
+- `tawdheef-skill.zip`: optional standalone workflow guidance and license.
+- Seven directory ZIPs: six GCC country packs and the original UAE snapshot, with source evidence, compact indexes, manifests and import CSV parts.
+- `tawdheef-brand-kit.zip`: project artwork and retained third-party/font notices.
+- `SHA256SUMS.txt`, `manifest.json` and `RELEASE-NOTES.md`: hashes, inventory and release notes.
+- `smoke-verification.json`: written only after the fresh-source-download check passes.
 
-1. Confirm the account/repository and public visibility. Review `git status` and the source inventory; never use an unreviewed blanket upload of the working folder.
-2. Create the repository, commit only reviewed source and push the intended branch. Enable private vulnerability reporting in repository settings if available.
-3. Run CI. The configured matrix covers Node 24/26 on Windows, macOS and Linux; browser checks cover all three OSs. The separate desktop workflow builds and checks six OS/architecture packages using their actual launchers. Workflow configuration is not evidence those hosted jobs have already run. See [desktop packaging and signing](DESKTOP-RELEASE.md).
-4. Tag the reviewed commit with the exact package version, such as `v0.1.0`, and push that tag.
-5. Run **Prepare draft release** in GitHub Actions with that existing tag. It verifies the version, runs tests, packages and checks a fresh download, then creates a **draft prerelease** with the assets attached. Existing releases are not overwritten. It does not publish automatically.
-6. Review the draft notes/downloads and publish when ready. A source release is not a signed installer. Keep the current OAuth setup requirement and live-provider testing limits visible.
-7. Set `website/config.json`'s `repositoryPublished` to true only after the public URL exists, then rebuild the website. Website deployment and DNS are separate from publishing the repository.
+Private tracking, credentials, publisher keys/certificates, client configuration, logs, `node_modules` and development outputs must stay out of source and release archives. Review new files and artwork too; automated scans do not establish that every included file is appropriate to publish.
 
-After publication, the repository identifier can be used with the Skills CLI: `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef`. Until then, use `npx skills@latest add . --skill tawdheef` from the source folder. The simple `npm run agent -- CLIENT` path already installs the local skill.
+## Prepare desktop downloads
 
-For manual release management, use [GitHub's release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository). Keep release notes in a file when invoking `gh release create --notes-file`; do not place multiline content in a shell-built string.
+Build each of Windows x64/ARM64, Mac Intel/Apple Silicon and Linux x64/ARM64 on its target OS and architecture:
 
-`npm run release:app -- --output NEW_FOLDER` creates a separate prebuilt user candidate with a checksum-verified Node runtime. Verify its exact ZIP with `npm run release:app:smoke -- --directory NEW_FOLDER`. Source and desktop assets have distinct inventories and checks; the website is never copied into the tracker build. Signing and native platform receipts remain required before consumer claims.
+```sh
+npm run release:app -- --output NEW_FOLDER
+npm run release:app:smoke -- --directory NEW_FOLDER
+```
+
+Each ZIP contains the prebuilt tracker and a checksum-verified Node runtime. It does not install developer tools, optional app adapters or a browser at launch. The public website, source-download ZIPs and marketing assets are separate from the tracker interface.
+
+Retain each target's exact ZIP, `package-report.json`, `SHA256SUMS.txt` and successful `smoke-verification.json`. Check the archive hash, version, runtime, architecture, tool catalog and source workflow run. Do not mix artifacts from different commits just because they share version `0.2.0`.
+
+Both source and desktop packaging require a clean, committed Git checkout and record its full `sourceCommit`. This is a publisher/build requirement; ordinary users need no Git installation to run a downloaded app. Source preparation generates derived pack/website files, so use separate clean worktrees or CI jobs for source and desktop builds, or build the desktop first.
+
+Choose the candidate's distribution status explicitly. Unsigned previews must remain labelled unsigned. A signed desktop candidate needs the publisher credentials, successful platform signing/notarization and matching exact-archive verification described in [desktop packaging and signing](DESKTOP-RELEASE.md). A source ZIP or successful unsigned build is not a signed app.
+
+After the exact prepared source ZIP has passed `release:smoke`, assemble an unsigned candidate from the six `desktop-TARGET` artifact directories:
+
+```sh
+node scripts/collect-desktop-release.mjs --artifacts DOWNLOADED_ARTIFACTS --output PREPARED_RELEASE --source-commit FULL_40_CHARACTER_SHA --signing unsigned-preview
+```
+
+For a signed desktop candidate, run **Sign verified desktop download** with the same reviewed `tag`, full `source-commit` and `platform: all`. It produces four `signed-desktop-TARGET` artifacts for Windows and Mac. Create a fresh prepared source candidate, smoke-test it, then collect those artifacts with the two Linux artifacts from that same source commit:
+
+```sh
+node scripts/collect-desktop-release.mjs --artifacts DOWNLOADED_UNSIGNED_ARTIFACTS --signed-artifacts DOWNLOADED_SIGNED_ARTIFACTS --output FRESH_PREPARED_RELEASE --source-commit FULL_40_CHARACTER_SHA --signing required
+```
+
+Required signing rejects missing or unverified Windows/Mac signatures and missing Mac notarization. Linux packages retain exact-archive checksum verification; this does not label them platform-signed. The collector requires matching source and desktop receipts before copying any assets and refuses existing destination files. Do not replace ZIPs by hand inside an already assembled candidate.
+
+## Create a draft, then publish separately
+
+1. Merge the reviewed source and confirm the exact commit and version. Run the Node 24/26, browser and six-target desktop checks on that source. Workflow configuration alone is not test evidence.
+2. Confirm `v0.2.0` is unused before creating it. Tag only the reviewed commit with the exact `package.json` version and push the tag. Never move an existing release tag to fit a new build.
+3. Run **Prepare draft release** with that existing tag. The workflow pins its commit, verifies the version and remote tag, runs checks, prepares source assets and collects verified desktop receipts before creating a **draft prerelease**. It refuses to overwrite an existing release and does not publish automatically.
+4. Review the draft's exact downloads, notes, checksums, target receipts and signing status. When signed downloads are intended, verify the final draft actually contains those signed artifacts; a separate signing job's success does not change an already prepared unsigned ZIP.
+5. Publish only after the release owner approves that concrete draft. Keep unsigned/signed status and live-provider testing limits visible. Users connect services in their actual Codex/Claude client; there is no app-owned OAuth setup.
+6. Change `website/config.json` download/version links only after the matching public release assets exist, then rebuild and deploy the website separately. The current `v0.1.2` preview links must not be silently relabelled as new verified desktop downloads.
+
+Ordinary users need no Apple Developer account or Windows signing identity. Those identify the publisher. See the signing handoff in [DESKTOP-RELEASE.md](DESKTOP-RELEASE.md) for secure configuration; never put certificates, private keys, passwords or tokens in chat, issues or source files.
+
+The published repository can be used with `npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef`. For local guidance, use `npx skills@latest add . --skill tawdheef`; `npm run agent -- CLIENT` already installs the owned project skill when explicitly requested.
+
+For manual draft management, use [GitHub's release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository). Pass multiline notes through a file, such as `gh release create --notes-file RELEASE-NOTES.md`, and keep draft preparation separate from publication.

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { checkPublicSource, sourceArchive, sourceFiles } from './release-files.mjs';
+import { getReleaseSource } from './release-source.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const version = pkg.version;
@@ -14,6 +15,7 @@ if (outputFlag >= 0 && !process.argv[outputFlag + 1]) throw new Error('--output 
 const output = outputFlag >= 0 ? resolve(root, process.argv[outputFlag + 1]) : join(root, 'release', `v${version}`);
 try { await access(output); throw new Error(`Release folder already exists: ${output}. Review or move that version before rebuilding; it was not overwritten.`); }
 catch (error) { if (error.code !== 'ENOENT') throw error; }
+const { sourceCommit } = getReleaseSource(root);
 function run(script, args = []) {
   const result = spawnSync(process.execPath, [join(root, script), ...args], { cwd: root, stdio: 'inherit', windowsHide: true });
   if (result.error || result.status !== 0) throw new Error(`Release stopped at ${script}.`);
@@ -34,7 +36,11 @@ await cp(join(root, 'public/brand/tawdheef-brand-kit.zip'), join(output, 'tawdhe
 await cp(join(root, `docs/releases/v${version}.md`), join(output, 'RELEASE-NOTES.md'));
 const assets = [`tawdheef-${version}-source.zip`, 'tawdheef-skill.zip', 'tawdheef-brand-kit.zip', ...packs.map(pack => pack.download.split('/').at(-1))];
 const sums = [];
-for (const asset of assets) sums.push(`${createHash('sha256').update(await readFile(join(output, asset))).digest('hex')}  ${asset}`);
+const checksums = {};
+for (const asset of assets) {
+  checksums[asset] = createHash('sha256').update(await readFile(join(output, asset))).digest('hex');
+  sums.push(`${checksums[asset]}  ${asset}`);
+}
 await writeFile(join(output, 'SHA256SUMS.txt'), sums.join('\n') + '\n');
-await writeFile(join(output, 'manifest.json'), JSON.stringify({ name: 'Tawdheef', version, stage: 'public preview candidate', published: false, source: report, files, assets, validation: 'Run npm test, npm run test:ui and npm run release:smoke before publishing. Packaging does not claim live provider authentication.' }, null, 2) + '\n');
+await writeFile(join(output, 'manifest.json'), JSON.stringify({ name: 'Tawdheef', version, sourceCommit, sourceArchive: { name: `tawdheef-${version}-source.zip`, sha256: checksums[`tawdheef-${version}-source.zip`] }, stage: 'unsigned public preview candidate', published: false, source: report, files, assets, validation: 'Run npm test, npm run test:ui and npm run release:smoke before publishing. Packaging does not claim live provider authentication or publisher signing.' }, null, 2) + '\n');
 console.log(`Prepared ${output}\nSource, skill, ${packs.length} directory packs, brand kit, checksums and release notes are ready. Nothing was published.`);

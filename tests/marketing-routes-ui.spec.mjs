@@ -173,6 +173,45 @@ test('guide search filters actual content, handles empty results and returns foc
   await expect(trigger).toBeFocused();
 });
 
+for (const [locale, path] of [['en', '/skills/'], ['ar', '/ar/skills/']]) for (const width of [320, 1440]) for (const dismissal of ['close button', 'Escape', 'backdrop']) {
+  test(`${locale} pointer search restores its actual trigger after ${dismissal} at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(path);
+    const trigger = page.locator('.docs-search-trigger');
+    const previous = page.locator('.site-header .language-switch a:not([aria-current])');
+    const dialog = page.locator('#docs-search');
+    // Safari leaves prior keyboard focus in place when a button is pointer-clicked.
+    // The return target must therefore be the opener, not document.activeElement.
+    await previous.focus();
+    await expect(previous).toBeFocused();
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#docs-search-input')).toBeFocused();
+    if (dismissal === 'close button') await dialog.locator('.docs-search-close').click();
+    else if (dismissal === 'Escape') await page.keyboard.press('Escape');
+    else await page.mouse.click(4, 4);
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+  });
+}
+
+for (const [locale, path] of [['en', '/skills/'], ['ar', '/ar/skills/']]) {
+  test(`${locale} keyboard search restores prior focus after Control and Command toggles`, async ({ page }) => {
+    await page.goto(path);
+    const previous = page.locator('.site-header .language-switch a:not([aria-current])');
+    const dialog = page.locator('#docs-search');
+    for (const shortcut of ['Control+k', 'Meta+k']) {
+      await previous.focus();
+      await page.keyboard.press(shortcut);
+      await expect(dialog).toBeVisible();
+      await expect(page.locator('#docs-search-input')).toBeFocused();
+      await page.keyboard.press(shortcut);
+      await expect(dialog).not.toBeVisible();
+      await expect(previous).toBeFocused();
+    }
+  });
+}
+
 test('color theme choice survives reload in both directions', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/skills/');
