@@ -51,12 +51,17 @@ async function fakeRun(page, directory) {
   return () => submitted;
 }
 test.beforeEach(async ({ page, request }) => {
+  page.__pendingRouteReleases = [];
   page.__filterErrors = [];
   page.on('pageerror', error => page.__filterErrors.push(error.message));
   await page.route('**/api/bootstrap', async route => { const response = await route.fetch(), boot = await response.json(); boot.settings.connectionMode = 'native'; return route.fulfill({ response, json: boot }); });
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
-test.afterEach(async ({ page }) => expect(page.__filterErrors).toEqual([]));
+test.afterEach(async ({ page }) => {
+  for (const release of page.__pendingRouteReleases) release();
+  await page.unrouteAll({ behavior: 'wait' });
+  expect(page.__filterErrors).toEqual([]);
+});
 
 test('filter the list first, then Run sends that exact scope with only the chosen actions', async ({ page, request }, testInfo) => {
   const directory = await openFixture(page, request, 'Guided scope');
@@ -198,6 +203,7 @@ test('failed and stale Run previews cannot enable the wrong scope or actions', a
   await expect(dialog.getByRole('button', { name: /^Run on/ })).toBeEnabled();
   let releaseOld, oldRequested;
   const oldWait = new Promise(resolve => { releaseOld = resolve; });
+  page.__pendingRouteReleases.push(releaseOld);
   const requested = new Promise(resolve => { oldRequested = resolve; });
   await page.route('**/api/run-preview', async route => {
     const input = route.request().postDataJSON();

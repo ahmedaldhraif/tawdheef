@@ -9,6 +9,7 @@ async function fixture(page, { failFirst = false, holdFirst = false } = {}) {
   };
   let reads = 0, bootstraps = 0, release;
   const held = holdFirst ? new Promise(resolve => { release = resolve; }) : null;
+  page.__releasePollingRead = () => release?.();
   await page.addInitScript(() => {
     window.__pollingDocumentHidden = false;
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => window.__pollingDocumentHidden });
@@ -16,9 +17,12 @@ async function fixture(page, { failFirst = false, holdFirst = false } = {}) {
   await page.route('**/api/bootstrap', async route => {
     bootstraps++;
     const response = await route.fetch();
+    const cleanup = page.__pollingBootstrapCleanup;
+    if (cleanup) { cleanup.entered(); await cleanup.gate; }
     const body = await response.json();
     const { targets, ...summary } = run;
     await route.fulfill({ json: { ...body, runs: [summary] } });
+    if (cleanup) cleanup.completed = true;
   });
   await page.route('**/api/runs/polling-fixture', async route => {
     const attempt = ++reads;
@@ -57,7 +61,12 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', error => page.__pollingErrors.push(error.message));
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
-test.afterEach(async ({ page }) => expect(page.__pollingErrors).toEqual([]));
+test.afterEach(async ({ page }) => {
+  page.__releasePollingRead?.();
+  await page.unrouteAll({ behavior: 'wait' });
+  if (page.__pollingBootstrapCleanup) expect(page.__pollingBootstrapCleanup.completed).toBe(true);
+  expect(page.__pollingErrors).toEqual([]);
+});
 
 test('banner and dialog share one run reader, pause when hidden and catch up immediately on return', async ({ page }) => {
   const run = await fixture(page);
@@ -118,4 +127,12 @@ test('slow reads never overlap and a late response cannot undo Stop', async ({ p
   await expect(dialog).toContainText('Run stopped');
   await expect(page.locator('.run-banner')).toContainText('Run cancelled');
   expect(run.reads()).toBe(1);
+  // Keep a real bootstrap body reader pending when teardown begins.
+  let entered, release;
+  const started = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  // gstack-timing-ok: force delayed response-body teardown, never a timing assertion.
+  page.__pollingBootstrapCleanup = { gate, completed: false, entered: () => { entered(); setTimeout(release, 150); } };
+  await page.evaluate(() => { window.__trailingPollingBootstrap = fetch('/api/bootstrap').then(response => response.json()); });
+  await started;
 });

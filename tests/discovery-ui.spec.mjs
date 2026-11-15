@@ -7,6 +7,7 @@ const job = (index, patch = {}) => ({ id: `job-${index}`, title: `Product design
 const overview = () => ({ new: 21, changed: 1, pending: 21, needsYou: 1, nextStep: 'Sign in to the blocked source in your actual client.', lastCheckAt: observedAt, lastSuccessAt: observedAt, cv: { status: 'reported', id: 'cv-fixture', versionHash: 'current-cv-version' }, preferences: preferences(), sourceProblems: [{ companyId: 'blocked-company', companyName: 'Blocked source fixture', sourceUrl: 'https://careers.example.test/blocked', status: 'error', nextStep: 'Sign in to the blocked source in your actual client.', observedAt }] });
 
 test.beforeEach(async ({ page, request }) => {
+  page.__pendingRouteReleases = [];
   const previous = (await (await request.get('/api/bootstrap')).json()).settings;
   page.__priorSettings = { connectionMode: previous.connectionMode, preferredAssistant: previous.preferredAssistant, language: previous.language };
   await request.patch('/api/settings', { data: { connectionMode: 'native', preferredAssistant: 'claude-code', language: 'en' } });
@@ -48,6 +49,8 @@ test.beforeEach(async ({ page, request }) => {
   });
 });
 test.afterEach(async ({ page, request }) => {
+  for (const release of page.__pendingRouteReleases) release();
+  await page.unrouteAll({ behavior: 'wait' });
   await request.patch('/api/settings', { data: page.__priorSettings });
   expect(page.__errors).toEqual([]);
 });
@@ -118,6 +121,7 @@ test('missing API, a failed read and an empty list stay distinct', async ({ page
   page.__missing = true;
   let releaseRows, heldRows = false;
   const initialRows = new Promise(resolve => { releaseRows = resolve; });
+  page.__pendingRouteReleases.push(releaseRows);
   await page.route('**/api/companies?*', async route => {
     if (!heldRows && new URL(route.request().url()).searchParams.get('directoryId') === page.__directory.id) {
       heldRows = true; await initialRows;
@@ -258,6 +262,7 @@ test('a delayed old review response cannot replace the newly selected view', asy
   let release, requested;
   const waiting = new Promise(resolve => { requested = resolve; });
   const delayed = new Promise(resolve => { release = resolve; });
+  page.__pendingRouteReleases.push(release);
   await page.route('**/api/discovery/jobs?*', async route => {
     if (new URL(route.request().url()).searchParams.get('review') !== 'pending') return route.fallback();
     requested(); await delayed;
@@ -278,6 +283,7 @@ test('a delayed copy response from the old directory never writes the clipboard 
   let release, started;
   const requested = new Promise(resolve => { started = resolve; });
   const delayed = new Promise(resolve => { release = resolve; });
+  page.__pendingRouteReleases.push(release);
   await page.route('**/api/discovery/request?*', async route => { started(); await delayed; await route.fulfill({ json: { prompt: 'OLD DIRECTORY REQUEST', readOnly: true, actionsAuthorized: false } }); });
   await section.getByRole('button', { name: 'Copy review request', exact: true }).click(); await requested;
   await page.getByRole('tab').filter({ hasText: 'UAE' }).click();
