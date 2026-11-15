@@ -9,17 +9,21 @@
   <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
 </picture>
 
+[![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
+
+[Get started](docs/guides/use-the-skill.md) · [Directory packs](directories/README.md) · [Guides](docs/guides/README.md) · [Contribute](CONTRIBUTING.md) · [العربية](README.ar.md)
+
 **Find matching jobs. Build career profiles.**
 
 A free, open-source job-search app for you and your AI assistant. Find jobs that fit your CV, apply to suitable roles, and build career profiles for future opportunities, even when no suitable job is open. Your agent can create or complete career accounts, fill your details and upload your CV where those options are available. Tawdheef tracks each outcome separately.
 
 **Local-first · Built-in CLI + MCP · Codex & Claude Code**
 
+![Tawdheef company directory and outcome tracking interface](public/site-assets/walkthrough/directory.png)
+
+Interface preview with illustrative data. Directory records are research sources, not confirmed job vacancies.
+
 **Your actual AI client owns the connections.** Native connections: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in the app.
-
-The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the v0.1.2 release remains an older preview; the setup below uses current source. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
-
-The production core has six direct dependencies for the local server, MCP, validation and file formats. App-managed mail/calendar SDKs and adapter execution code have been removed. External connections belong to your actual client. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
 
 Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
 
@@ -91,6 +95,15 @@ Start with the GCC. Any country is welcome.
 Download a pack, choose a directory in the app, then use **List options → Import list** and review the preview. Saudi Arabia and expanded UAE have two numbered CSV parts: import both into the same directory. A fresh app starts with the original UAE snapshot; the other packs are add-ons. [Pack guide](directories/README.md).
 
 **Add a company. Fix a link. Contribute a country.** [Suggest a correction](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new?template=directory-data.yml), [propose a new pack](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/issues/new?template=new-country-pack.yml), or open a pull request. No coding is needed to suggest data. Include a public source link, record ID if known and date checked. [Contribution guide](docs/DIRECTORY-CONTRIBUTING.md).
+
+<details>
+<summary>Source requirements and desktop packaging</summary>
+
+The source edition recommends **Node.js 26 LTS** and uses **Vite 8.3.8**. Desktop packaging now produces prebuilt Windows/Mac/Linux candidates with a checksum-verified Node runtime and server dependencies, so those downloads need no build or separate Node installation. Platform packages remain unsigned candidates until their exact download and operating-system checks pass; the v0.1.2 release remains an older preview; the setup below uses current source. See [desktop packaging and verification](docs/DESKTOP-RELEASE.md).
+
+The production core has six direct dependencies for the local server, MCP, validation and file formats. App-managed mail/calendar SDKs and adapter execution code have been removed. External connections belong to your actual client. Native startup needs no installed Codex/Claude Code CLI and launches no assistant subprocess; open your existing selected client to perform the handoff. That client, model and its external tools have their own requirements and permissions.
+
+</details>
 
 ## Manual setup
 

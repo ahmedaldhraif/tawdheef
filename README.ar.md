@@ -7,6 +7,10 @@
   <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
 </picture>
 
+[![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
+
+[ابدأ هنا](docs/i18n/ar/guides/use-the-skill.md) · [حزم الشركات](directories/README.md) · [الأدلة](docs/i18n/ar/guides/README.md) · [ساهم](CONTRIBUTING.md) · [English](README.md)
+
 **اعثر على وظائف تناسبك. أنشئ ملفاتك المهنية.**
 
 تطبيق مجاني ومفتوح المصدر لك ولمساعدك Codex أو Claude Code. استكشف الشركات
@@ -14,8 +18,9 @@
 الشركات والإجراءات قبل بدء Run. إنشاء حساب أو ملف مهني نتيجة مفيدة، ولا يعني
 أن طلب توظيف أُرسل.
 
+![واجهة توظيف لمراجعة الشركات وتتبع النتائج](public/site-assets/walkthrough/directory.png)
 
-
+معاينة الواجهة ببيانات توضيحية. سجلات الشركات ليست وظائف شاغرة مؤكدة.
 
 **الاتصالات في مساعدك الفعلي.** يملك Codex أو Claude أدوات السيرة الذاتية
 والبريد والتقويم والمتصفح واستخدام الكمبيوتر ومدير كلمات المرور. يحتفظ توظيف
