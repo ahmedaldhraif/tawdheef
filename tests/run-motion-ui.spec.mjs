@@ -31,7 +31,10 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', error => page.__motionErrors.push(error.message));
   await page.route('**/*', route => ['127.0.0.1', 'localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
-test.afterEach(async ({ page }) => expect(page.__motionErrors).toEqual([]));
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'wait' });
+  expect(page.__motionErrors).toEqual([]);
+});
 
 test('run activity uses real owned work, remains stationary and stops immediately on Stop', async ({ page }, testInfo) => {
   await openRunFixture(page);

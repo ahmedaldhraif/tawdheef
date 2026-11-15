@@ -13,6 +13,7 @@ import { runtimeEnvironment } from './runtime-env.mjs';
 import { nativeLayout, buildNativeLauncher, nativeCommand } from './native-package.mjs';
 import { signingConfiguration, signDesktop } from './sign-desktop.mjs';
 import { isDirectInvocation } from './is-direct.mjs';
+import { getReleaseSource } from './release-source.mjs';
 
 export const NODE_VERSION = '26.13.1';
 export const APP_TARGETS = Object.freeze(['win32-x64', 'win32-arm64', 'darwin-x64', 'darwin-arm64', 'linux-x64', 'linux-arm64']);
@@ -84,6 +85,7 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   const signing = signingConfiguration({ platform }); // Required signing fails before producing an unsigned download.
   output = resolve(output);
   try { await lstat(output); throw new Error('The package output already exists. Choose a new folder.'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const { sourceCommit } = getReleaseSource(root);
   await checkPublicSource(root, { git: false });
   if (!skipBuild) await ensureBuild({ directory: root, force: true });
   const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
@@ -102,7 +104,7 @@ export async function packageApp({ root = ROOT, output, platform = process.platf
   await writeFile(join(folder, 'package-lock.json'), JSON.stringify(lock, null, 2) + '\n');
   await run(process.execPath, [await findNpmCli(root), 'ci', '--omit=dev', '--omit=optional', '--no-fund', '--no-audit'], folder);
   const runtime = await addRuntime(folder, platform, arch);
-  const manifest = { format: 1, name: 'Tawdheef', version: pkg.version, platform, arch, runtime, prebuilt: true, layout, published: false,
+  const manifest = { format: 1, name: 'Tawdheef', version: pkg.version, sourceCommit, platform, arch, runtime, prebuilt: true, layout, published: false,
     signing: { requested: signing.requested, verification: 'See signing-verification.json outside the app bundle; the exact extracted download must be verified.' },
     validation: 'Run release:app:smoke on this exact extracted package. Account sign-in and other platforms are separate checks.' };
   await writeFile(join(folder, 'tawdheef-app.json'), JSON.stringify(manifest, null, 2) + '\n');

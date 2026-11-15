@@ -7,6 +7,10 @@ on:
         description: Existing reviewed version tag
         required: true
         type: string
+      source-commit:
+        description: Exact reviewed source commit (40-character SHA)
+        required: true
+        type: string
       platform:
         description: Publisher credentials must be configured for every selected OS
         required: true
@@ -23,10 +27,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(inputs.platform == 'macos' && '["macos-latest","macos-15-intel"]' || inputs.platform == 'windows' && '["windows-latest","windows-11-arm"]' || '["macos-latest","macos-15-intel","windows-latest","windows-11-arm"]') }}
+        include: ${{ fromJSON(inputs.platform == 'macos' && '[{"os":"macos-latest","target":"darwin-arm64"},{"os":"macos-15-intel","target":"darwin-x64"}]' || inputs.platform == 'windows' && '[{"os":"windows-latest","target":"win32-x64"},{"os":"windows-11-arm","target":"win32-arm64"}]' || '[{"os":"macos-latest","target":"darwin-arm64"},{"os":"macos-15-intel","target":"darwin-x64"},{"os":"windows-latest","target":"win32-x64"},{"os":"windows-11-arm","target":"win32-arm64"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       RELEASE_TAG: ${{ inputs.tag }}
+      EXPECTED_RELEASE_SHA: ${{ inputs.source-commit }}
       TAWDHEEF_SIGN: required
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -94,7 +99,7 @@ jobs:
         run: npm run release:app:smoke -- --directory outputs/signed-desktop --output outputs/signed-desktop/smoke-verification.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: signed-desktop-${{ matrix.os }}
+          name: signed-desktop-${{ matrix.target }}
           path: |
             outputs/signed-desktop/*.zip
             outputs/signed-desktop/package-report.json

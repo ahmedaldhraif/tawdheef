@@ -9,12 +9,20 @@ import assert from 'node:assert/strict';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { isPublicSource } from './release-files.mjs';
+import { createHash } from 'node:crypto';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const releaseFlag = process.argv.indexOf('--release-dir');
 if (releaseFlag >= 0 && !process.argv[releaseFlag + 1]) throw new Error('--release-dir needs a prepared release folder.');
 const release = releaseFlag >= 0 ? resolve(root, process.argv[releaseFlag + 1]) : join(root, 'release', `v${pkg.version}`);
-const zip = await JSZip.loadAsync(await readFile(join(release, `tawdheef-${pkg.version}-source.zip`)));
+const manifest = JSON.parse(await readFile(join(release, 'manifest.json'), 'utf8'));
+assert.match(manifest.sourceCommit || '', /^[a-f0-9]{40}$/, 'Prepared source must identify its source commit');
+const sourceName = `tawdheef-${pkg.version}-source.zip`;
+assert.equal(manifest.version, pkg.version); assert.equal(manifest.sourceArchive?.name, sourceName);
+const sourceBytes = await readFile(join(release, sourceName));
+const sourceSha256 = createHash('sha256').update(sourceBytes).digest('hex');
+assert.equal(manifest.sourceArchive.sha256, sourceSha256, 'The exact prepared source archive changed');
+const zip = await JSZip.loadAsync(sourceBytes);
 await mkdir(join(root, '.local/release-smoke'), { recursive: true });
 const checkout = await mkdtemp(join(root, '.local/release-smoke/checkout-'));
 for (const entry of Object.values(zip.files)) {
@@ -58,7 +66,7 @@ try {
   assert.equal(context.ok, true); assert.equal(context.data.mode, 'native'); assert.equal(context.data.connectionOwner, 'native-client');
   assert.equal(context.data.directories.find(directory => directory.id === 'uae').count, 772);
   const before = Date.now(); run(join(checkout, 'scripts/start.mjs'), ['--no-open']);
-  const result = { ok: true, version: pkg.version, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds without optional bridges', 'project MCP setup for both clients', 'repeat setup preserves files', 'working app and icons', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
+  const result = { ok: true, version: pkg.version, archive: sourceName, sha256: sourceSha256, sourceCommit: manifest.sourceCommit, platform: process.platform, tools: tools.tools.length, sourceRecords: 772, repeatedLaunchMs: Date.now() - before, checks: ['exact ZIP extracted', 'first launch installs and builds without optional bridges', 'project MCP setup for both clients', 'repeat setup preserves files', 'working app and icons', 'real stdio MCP discovery and context', 'one background process on repeated launch'], liveAccountActions: false };
   await writeFile(join(release, 'smoke-verification.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
 } finally {

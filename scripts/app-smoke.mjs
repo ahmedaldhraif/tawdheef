@@ -31,6 +31,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
   const folder = join(checkout, 'tawdheef'), layout = nativeLayout(process.platform);
   const root = join(folder, layout.codeRoot); const manifest = JSON.parse(await readFile(join(root, 'tawdheef-app.json'), 'utf8'));
   assert.equal(manifest.platform, process.platform); assert.equal(manifest.arch, process.arch);
+  assert.match(manifest.sourceCommit || '', /^[a-f0-9]{40}$/, 'The package must identify its exact source commit');
   const receipt = JSON.parse(await readFile(join(folder, 'signing-verification.json'), 'utf8'));
   if (requireSigned) assert.equal(receipt.signed, true, 'A required signed distribution was not produced');
   let signature = { signed: false, osSigningVerified: false };
@@ -112,7 +113,7 @@ export async function smokeApp(archive, { output, requireSigned = process.env.TA
       assert.equal(await readFile(join(legacy, 'fixture-preserved.txt'), 'utf8'), 'existing portable data');
       dataPathChecks.push('adjacent legacy portable data reused without migration');
     }
-    const report = { ok: true, archive: basename(archive), sha256: archiveSha256, platform: process.platform, arch: process.arch, node: version, version: manifest.version, firstLaunchMs: Math.round(firstLaunchMs), tools: tools.tools.length,
+    const report = { ok: true, archive: basename(archive), sha256: archiveSha256, sourceCommit: manifest.sourceCommit, platform: process.platform, arch: process.arch, node: version, version: manifest.version, firstLaunchMs: Math.round(firstLaunchMs), tools: tools.tools.length,
       checks: ['exact ZIP extracted to a Unicode path with spaces', 'bundled runtime', 'native platform launcher or Linux script', 'prebuilt offline startup', 'native default without optional mail/cloud SDKs', 'one background process', 'external private data and assistant workspace', 'repeat setup for both clients', 'real stdio MCP discovery and context'],
       directoryPackMetadata: packs.available.length, dataPathChecks, liveAssistantCalls: false, liveAccountActions: false, osSigningVerified: signature.osSigningVerified, signing: signature };
     if (signature.signed) await verifyDesktopSigning({ folder, codeRoot: root, layout });
