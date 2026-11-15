@@ -63,6 +63,7 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(async ({ page }) => {
   page.__releasePollingRead?.();
+  // Stop accepting mocked requests and drain handlers before Playwright disposes responses.
   await page.unrouteAll({ behavior: 'wait' });
   if (page.__pollingBootstrapCleanup) expect(page.__pollingBootstrapCleanup.completed).toBe(true);
   expect(page.__pollingErrors).toEqual([]);

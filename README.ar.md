@@ -4,7 +4,7 @@
   <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
   <source media="(prefers-reduced-motion: reduce)" srcset="public/brand/github-hero/wordmark-light.png" />
   <source media="(prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.gif" />
-  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" height="176" />
+  <img src="public/brand/github-hero/wordmark-light.gif" alt="Tawdheef native agent types tawdheef.com, then توظيف.كوم" width="800" />
 </picture>
 
 [![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
@@ -18,7 +18,10 @@
 الشركات والإجراءات قبل بدء Run. إنشاء حساب أو ملف مهني نتيجة مفيدة، ولا يعني
 أن طلب توظيف أُرسل.
 
-![واجهة توظيف لمراجعة الشركات وتتبع النتائج](public/site-assets/walkthrough/directory.png)
+<picture>
+  <source media="(max-width: 600px)" srcset="public/site-assets/walkthrough/native-mobile-light.jpg" />
+  <img src="public/site-assets/walkthrough/native-desktop-light.jpg" alt="Tawdheef native app: company directory, monitoring, job updates and separate career profile progress" width="1100" />
+</picture>
 
 معاينة الواجهة ببيانات توضيحية. سجلات الشركات ليست وظائف شاغرة مؤكدة.
 
