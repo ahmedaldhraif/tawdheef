@@ -89,12 +89,12 @@ test('queued and completed runs remain static and hidden documents stop the work
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => window.__motionDocumentHidden });
   });
   const setRun = await openRunFixture(page, { activeCompanyId: null, currentName: '' });
-  let mark = page.locator('.run-banner .run-activity-mark');
+  const mark = page.locator('.run-banner .run-activity-mark');
   await expect(mark).toHaveAttribute('data-active', 'false');
   expect(await runningAnimations(mark)).toBe(0);
   setRun({ activeCompanyId: 'motion-company', currentName: 'Example company' });
-  await page.reload();
-  mark = page.locator('.run-banner .run-activity-mark');
+  // Exercise real queue updates through the shared reader, without cancelling
+  // intercepted WebKit fetches by navigating away during a progress read.
   await expect.poll(() => runningAnimations(mark)).toBeGreaterThan(0);
   await page.evaluate(() => { window.__motionDocumentHidden = true; document.dispatchEvent(new Event('visibilitychange')); });
   await expect(mark).toHaveAttribute('data-visible', 'false');
@@ -102,7 +102,6 @@ test('queued and completed runs remain static and hidden documents stop the work
   await page.evaluate(() => { window.__motionDocumentHidden = false; document.dispatchEvent(new Event('visibilitychange')); });
   await expect.poll(() => runningAnimations(mark)).toBeGreaterThan(0);
   setRun({ status: 'completed', activeCompanyId: null, completed: 42 });
-  await page.reload();
   await expect(mark).toHaveAttribute('data-active', 'false');
   expect(await runningAnimations(mark)).toBe(0);
 });
