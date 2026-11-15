@@ -7,10 +7,16 @@ if(agent){
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  let visible=true,timer=0,index=0,count=0,mode='type',started=false;
  const allowed=()=>visible&&!document.hidden&&!reduced.matches;
- function paint(){text.textContent=phrases[index].slice(0,count).join('');slot.dataset.phase=mode;agent.dataset.state=mode==='hold'?'speaking':'coding';}
+ function motion(){
+  const working=allowed()&&(mode==='type'||mode==='erase');
+  agent.dataset.state='coding';
+  agent.dataset.busy=String(working);agent.dataset.playing=String(working);
+ }
+ function paint(){text.textContent=phrases[index].slice(0,count).join('');slot.dataset.phase=mode;motion();}
  function schedule(delay){clearTimeout(timer);if(allowed())timer=setTimeout(step,delay);}
  function step(){
-  if(!allowed())return;
+  // Reconcile late visibility/media changes before the next typing step too.
+  if(!allowed()){sync();return;}
   if(mode==='type'){count++;if(count===phrases[index].length){mode='hold';paint();schedule(2100);}else{paint();schedule(65);}return;}
   if(mode==='hold'){mode='erase';paint();schedule(40);return;}
   count--;paint();
@@ -18,8 +24,9 @@ if(agent){
  }
  function sync(){
   clearTimeout(timer);agent.dataset.paused=String(!allowed());group.dataset.motionPaused=String(!allowed());
-  if(reduced.matches){text.textContent=slot.dataset.first;slot.dataset.phase='static';agent.dataset.state='rest';started=false;return;}
+  if(reduced.matches){text.textContent=slot.dataset.first;slot.dataset.phase='static';motion();started=false;return;}
   if(!started){count=0;index=0;mode='type';started=true;paint();}
+  motion();
   if(allowed())schedule(mode==='hold'?2100:300);
  }
  new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;sync();}).observe(group);

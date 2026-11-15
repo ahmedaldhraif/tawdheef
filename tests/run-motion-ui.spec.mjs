@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-async function openRunFixture(page, overrides = {}) {
+async function openRunFixture(page, overrides = {}, language = 'en') {
   let run = {
     id: 'motion-fixture', directoryId: 'uae', directoryName: 'UAE', native: true,
     assistant: 'codex', total: 42, completed: 7, appliedCount: 3,
@@ -11,6 +11,7 @@ async function openRunFixture(page, overrides = {}) {
     const response = await route.fetch();
     const body = await response.json();
     body.runs = [run];
+    body.settings = {...body.settings,language};
     await route.fulfill({ json: body });
   });
   await page.route('**/api/runs/motion-fixture', route => route.fulfill({ json: run }));
@@ -25,6 +26,20 @@ async function openRunFixture(page, overrides = {}) {
 }
 
 const runningAnimations = locator => locator.evaluate(element => element.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length);
+
+for (const width of [320,1440]) for (const language of ['en','ar']) test(`native Run agent stays consistent at ${width}px in ${language}`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await openRunFixture(page,{},language);
+  const mark=page.locator('.run-banner .run-activity-mark');
+  await expect(mark).toHaveAttribute('data-agent-artwork','native-coding');
+  await expect(mark.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+  await expect.poll(()=>runningAnimations(mark)).toBeGreaterThan(0);
+  const bounds=await mark.boundingBox();
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  expect(await runningAnimations(mark)).toBe(0);
+});
 
 test.beforeEach(async ({ page }) => {
   page.__motionErrors = [];
@@ -44,9 +59,12 @@ test('run activity uses real owned work, remains stationary and stops immediatel
   await expect(banner).toContainText('7 of 42 checked');
   await expect(mark).toHaveAttribute('aria-hidden', 'true');
   await expect(mark).toHaveCSS('pointer-events', 'none');
-  await expect(mark).toHaveCSS('color', 'rgb(37, 37, 37)');
+  await expect(mark).toHaveCSS('color', 'rgb(90, 42, 255)');
+  // The same coding agent as Brand Studio, with a square eye and wide > eye.
+  await expect(mark.locator('.mascot-eye-square rect')).toHaveAttribute('x', '28.333333');
+  await expect(mark.locator('.mascot-eye-angle-right')).toHaveCSS('opacity', '1');
   await expect.poll(() => runningAnimations(mark)).toBeGreaterThan(0);
-  // The fixed mark and information retain their geometry while only a sheen moves.
+  // The mark and information keep their geometry during its eye/sheen animation.
   const before = await mark.boundingBox();
   await page.waitForTimeout(180);
   expect(await mark.boundingBox()).toEqual(before);
@@ -56,6 +74,8 @@ test('run activity uses real owned work, remains stationary and stops immediatel
   const dialog = page.getByRole('dialog', { name: 'Run progress', exact: true });
   await expect(dialog).toContainText('3 with confirmed submissions');
   await expect.poll(() => runningAnimations(dialog.locator('.run-activity-mark'))).toBeGreaterThan(0);
+  const ids = await page.locator('.run-activity-mark [id]').evaluateAll(elements => elements.map(element => element.id));
+  expect(new Set(ids).size).toBe(ids.length);
   await page.screenshot({ path: testInfo.outputPath('working-mark.png') });
   await dialog.getByRole('button', { name: 'Stop run', exact: true }).click();
   await expect(dialog).toContainText('Run stopped');
@@ -95,7 +115,7 @@ test('reduced motion and forced colors keep the owned-work indicator static and 
   expect(await runningAnimations(mark)).toBe(0);
   await expect(page.locator('.run-banner')).toContainText('Example company');
   await page.emulateMedia({ reducedMotion: 'no-preference', forcedColors: 'active' });
-  await expect(mark.locator('.run-activity-sheen')).toHaveCSS('display', 'none');
+  await expect(mark.locator('.mascot-sheen')).toHaveCSS('display', 'none');
   expect(await runningAnimations(mark)).toBe(0);
   await expect(page.locator('.run-banner').getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
 });

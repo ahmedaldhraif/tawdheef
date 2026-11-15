@@ -14,6 +14,63 @@ const canonicalPaths = [...expectedPaths];
 const localPath = path => path === '/' ? '/welcome/' : path === '/ar/' ? '/welcome/ar/' : path;
 const themeKey = 'tawdheef-docs-theme';
 
+const activeAgentAnimations = locator => locator.evaluate(element => element.getAnimations({subtree:true}).filter(animation => animation.playState === 'running').length);
+
+test('the website agent stops when hidden or offscreen and keeps the native face',async({page})=>{
+  await page.addInitScript(()=>{
+    window.__agentDocumentHidden=false;
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>window.__agentDocumentHidden});
+  });
+  await page.goto('/welcome/');
+  const agent=page.locator('#hero-native-agent');
+  await expect(agent).toHaveAttribute('data-playing','true');
+  await page.evaluate(()=>{window.__agentDocumentHidden=true;document.dispatchEvent(new Event('visibilitychange'));});
+  await expect(agent).toHaveAttribute('data-playing','false');
+  expect(await activeAgentAnimations(agent)).toBe(0);
+  await page.evaluate(()=>{window.__agentDocumentHidden=false;document.dispatchEvent(new Event('visibilitychange'));});
+  await expect(agent).toHaveAttribute('data-playing','true');
+  await page.locator('footer').scrollIntoViewIfNeeded();
+  await expect(agent).toHaveAttribute('data-playing','false');
+  expect(await activeAgentAnimations(agent)).toBe(0);
+  await expect(agent.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+});
+
+for (const width of [320,1440]) for (const locale of ['en','ar']) for (const colorScheme of ['light','dark']) {
+  test(`native agent is shared, unclipped and works only during typing at ${width}px ${locale} ${colorScheme}`, async ({page}) => {
+    await page.setViewportSize({width,height:900});
+    await page.emulateMedia({colorScheme,reducedMotion:'no-preference'});
+    const prefix=locale==='ar'?'/ar':'';
+    for (const path of [locale==='ar'?'/welcome/ar/':'/welcome/',prefix+'/skills/']) {
+      await page.goto(path);
+      const agent=page.locator('#hero-native-agent');
+      await expect(agent).toHaveAttribute('data-agent-artwork','native-coding');
+      await expect(agent.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+      await expect.poll(()=>activeAgentAnimations(agent)).toBeGreaterThan(0);
+      await expect(page.locator('.agent-phrase-slot')).toHaveAttribute('data-phase','hold');
+      await expect(agent).toHaveAttribute('data-playing','false');
+      expect(await activeAgentAnimations(agent)).toBe(0);
+      const bounds=await agent.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);
+      await expect.poll(()=>activeAgentAnimations(agent)).toBeGreaterThan(0);
+      await page.emulateMedia({reducedMotion:'reduce'});
+      await expect(agent).toHaveAttribute('data-playing','false');
+      expect(await activeAgentAnimations(agent)).toBe(0);
+      await expect(agent.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+      await page.emulateMedia({reducedMotion:'no-preference'});
+    }
+    const setupCard=page.locator('#skills-setup-agent');
+    await expect(setupCard).toHaveAttribute('data-playing','false');
+    expect(await activeAgentAnimations(setupCard)).toBe(0);
+    await page.goto(prefix+'/guides/use-the-skill/');
+    const guideAgent=page.locator('#guide-setup-agent');
+    await expect(guideAgent).toHaveAttribute('data-agent-artwork','native-coding');
+    await expect(guideAgent).toHaveAttribute('data-playing','false');
+    await expect(guideAgent.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+    expect(await activeAgentAnimations(guideAgent)).toBe(0);
+  });
+}
+
 test.beforeAll(() => {
   expect(canonicalPaths).toHaveLength(36);
   const sitemapPath = new URL('../site-dist/sitemap.xml', import.meta.url);

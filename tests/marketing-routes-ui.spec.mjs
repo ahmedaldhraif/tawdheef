@@ -64,9 +64,10 @@ test('Skills is a canonical overview while six legacy setup aliases retain ancho
   await page.goto('/skills/tawdheef/#install');
   await expect(page).toHaveURL(/\/guides\/use-the-skill\/#install$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Set up Tawdheef with your agent');
-  const mark = page.locator('.guide-title-row img');
-  await expect(mark).toHaveAttribute('src', '/brand/mark.svg');
-  expect(await mark.evaluate(image => image.complete && image.naturalWidth > 0)).toBe(true);
+  const mark = page.locator('.guide-title-row .native-agent');
+  await expect(mark).toHaveAttribute('data-agent-artwork', 'native-coding');
+  await expect(mark).toHaveAttribute('data-playing', 'false');
+  await expect(mark.locator('.mascot-eye-angle-right')).toHaveCSS('opacity', '1');
   for (const id of ['install', 'agent', 'cv', 'use', 'workflow', 'prompts', 'permissions', 'privacy']) {
     await expect(page.locator('#' + id)).toHaveCount(1);
   }
