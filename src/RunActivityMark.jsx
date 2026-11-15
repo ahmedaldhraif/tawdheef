@@ -1,17 +1,28 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
+import nativeAgent from '../public/brand/states/state-coding-animated.svg?raw';
 import './run-activity-mark.css';
 
-/** A working-state variant; the header and canonical brand assets stay static. */
+// Reuse the Brand Studio artwork and motion rather than drawing a second agent.
+// Inline SVG lets reduced motion and actual run/visibility state stop its motion.
+const agentContents = nativeAgent.slice(nativeAgent.indexOf('>') + 1, nativeAgent.lastIndexOf('</svg>'))
+  .replace(/<title>.*?<\/title>/, '');
+
 export default function RunActivityMark({ active = false, size = 32 }) {
   const [visible, setVisible] = useState(() => !document.hidden);
-  const clipId = `run-mark-${useId().replace(/:/g, '')}`;
+  const instanceId = `run-mark-${useId().replace(/:/g, '')}`;
+  // Banner and dialog can coexist; their clip/gradient references must be unique.
+  const markup = useMemo(() => agentContents.replaceAll('tawdheef-wink-coding', instanceId), [instanceId]);
   useEffect(() => {
     const update = () => setVisible(!document.hidden);
     document.addEventListener('visibilitychange', update);
     return () => document.removeEventListener('visibilitychange', update);
   }, []);
   return <svg
-    className="run-activity-mark"
+    className="tawdheef-mascot run-activity-mark"
+    data-option="wink"
+    data-state="coding"
+    data-busy={active ? 'true' : 'false'}
+    data-playing={active && visible ? 'true' : 'false'}
     data-active={active ? 'true' : 'false'}
     data-visible={visible ? 'true' : 'false'}
     viewBox="0 0 100 100"
@@ -19,18 +30,6 @@ export default function RunActivityMark({ active = false, size = 32 }) {
     height={size}
     aria-hidden="true"
     focusable="false"
-  >
-    <defs><clipPath id={clipId}>
-      <path d="M10 40.4H26V59.6H74V40.4H90V75.6H10Z" />
-      <rect x="31.333333" y="24.4" width="16" height="16" />
-      <rect x="52.666667" y="24.4" width="16" height="16" />
-    </clipPath></defs>
-    <path className="run-activity-body" d="M10 40.4H26V59.6H74V40.4H90V75.6H10Z" />
-    <rect x="31.333333" y="24.4" width="16" height="16" />
-    <rect x="52.666667" y="24.4" width="16" height="16" />
-    <g clipPath={`url(#${clipId})`}>
-      <path className="run-activity-sheen" d="M-16 20H0L-20 80H-36Z" />
-    </g>
-    <path className="run-activity-code" d="M63.5 28.4L59 32.4L63.5 36.4" />
-  </svg>;
+    dangerouslySetInnerHTML={{ __html: markup }}
+  />;
 }
