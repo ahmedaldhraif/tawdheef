@@ -45,6 +45,14 @@ messages, calendar writes or schedules.
 
 ## Primary email and career credentials
 
+**Check setup** in Connections combines the selected preparations in one
+copyable request for the actual client. `get_native_readiness` compares the
+intended contact email with the observed mailbox, and distinguishes readable
+CV facts, an upload-ready file and browser or computer access. Calendar and
+password-manager access are conditional. Fresh observations can be reused until
+their account, CV version, file, access or freshness changes. The app performs
+no provider probe. See [the Native workflow](NATIVE-WORKFLOW.md).
+
 New career registrations use the fresh main account email actually observed
 through the selected client's email tools. Never derive it from CV text or a
 configured username. Reuse existing career accounts and their original login,

@@ -34,6 +34,14 @@ test.beforeEach(async ({ page, request }) => {
     if (cleanup) cleanup.completed = true;
   });
   await page.route('**/api/native/client?*', route => route.fulfill({ json: page.__nativeClient }));
+  await page.route('**/api/native/readiness*', route => {
+    const input = route.request().method() === 'POST' ? route.request().postDataJSON() : Object.fromEntries(new URL(route.request().url()).searchParams);
+    return route.fulfill({ json: { assistant: input.assistant || page.__nativeAssistant, status: 'unknown', ready: false, actions: input.actions || { applyMatchingJobs: true, createProfiles: true, sendCvEmails: false }, clientReported: true, independentlyVerified: false, checkedAt: null, checks: [{ id: 'cv', label: 'Readable CV', status: 'unknown', required: true, detail: 'Ask your actual assistant to read the selected CV.' }, { id: 'uploadFile', label: 'CV upload file', status: 'optional', required: false, detail: 'Needed only when a career site asks for a file.' }], nextStep: { id: 'cv', title: 'Read your CV in the selected assistant.', action: 'cv' }, intendedEmail: null, observedEmail: page.__nativeClient.primaryEmail } });
+  });
+  await page.route('**/api/native/setup-request', route => {
+    const input = route.request().postDataJSON(); page.__nativeRequests.push({ ...input, kind: 'setup' });
+    return route.fulfill({ json: { prompt: `Fixture ${input.assistant} complete setup. Reuse existing connections; do not send or submit.` } });
+  });
   await page.route('**/api/native/connection-request?*', route => {
     const input = Object.fromEntries(new URL(route.request().url()).searchParams); page.__nativeRequests.push(input);
     return route.fulfill({ json: { assistant: input.assistant, prompt: `Fixture ${input.assistant} ${input.kind} ${input.provider || ''} setup. Check your actual client tools; do not send or submit.` } });
@@ -138,7 +146,7 @@ test('Tabbio CV uses native MCP guidance and keeps an optional local original fi
   const dialog = await openConnections(page);
   await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
   await expect(dialog.getByRole('link', { name: 'Create a CV in Tabbio', exact: true })).toHaveAttribute('href', 'https://www.tabbio.com/en');
-  await expect(dialog).toContainText('Connect Tabbio MCP in your assistant');
+  await expect(dialog).toContainText('Use Tabbio in your assistant to read your real CV.');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect.poll(() => page.__nativeRequests.at(-1)).toMatchObject({ assistant: 'codex', kind: 'cv' });
   await dialog.locator('.cv-original-file > summary').click();
@@ -197,7 +205,7 @@ test('blocked clipboard preserves native setup request as selectable text', asyn
   const dialog = await openConnections(page);
   await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error('Clipboard unavailable'); }; });
   await dialog.getByRole('button', { name: 'Passwords — Unknown', exact: true }).click();
-  await expect(dialog).toContainText('Website passwords stay in your browser or password manager.');
+  await expect(dialog).toContainText('Use a unique password for each career site through your assistant’s supported password manager. Reuse existing accounts.');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect(dialog.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveValue(/codex passwordManager/);
   await expect(dialog).not.toContainText('Connected');

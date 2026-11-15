@@ -139,6 +139,37 @@ const AR = {
   'Checked': 'تم الفحص',
   'Copy setup request': 'نسخ طلب الإعداد',
   'Setup request copied': 'تم نسخ طلب الإعداد',
+  'Check setup': 'فحص الإعداد',
+  'Setup readiness': 'جاهزية الإعداد',
+  'Setup details': 'تفاصيل الإعداد',
+  'Checking setup…': 'جارٍ فحص الإعداد…',
+  'Setup check unavailable': 'فحص الإعداد غير متاح',
+  'Ready to start': 'جاهز للبدء',
+  'Setup not checked': 'لم يُفحص الإعداد',
+  'Setup could not be checked. Try again.': 'تعذّر فحص الإعداد. حاول مجدداً.',
+  'Connect your assistant to Tawdheef.': 'اربط مساعدك بتوظيف.',
+  'Ask your assistant to read your CV.': 'اطلب من مساعدك قراءة سيرتك الذاتية.',
+  'Check the intended mailbox in your assistant.': 'تحقق من البريد المطلوب في مساعدك.',
+  'Check browser access in your assistant.': 'تحقق من إمكانية استخدام المتصفح في مساعدك.',
+  'Reported by': 'أبلغ عنه',
+  'Through MCP': 'عبر MCP',
+  'Through browser': 'عبر المتصفح',
+  'Through computer use': 'عبر التحكم بالجهاز',
+  'Through a file': 'عبر ملف',
+  'Through your assistant': 'عبر مساعدك',
+  'Your assistant checks its existing connections.': 'يفحص مساعدك اتصالاته الحالية.',
+  'Readable CV': 'سيرة ذاتية متاحة للقراءة',
+  'CV upload file': 'ملف السيرة الذاتية للرفع',
+  'Intended mailbox': 'البريد المطلوب',
+  'Browser access': 'إمكانية استخدام المتصفح',
+  'Career sign-in': 'دخول مواقع التوظيف',
+  'Use Tabbio in your assistant to read your real CV.': 'استخدم Tabbio في مساعدك لقراءة سيرتك الذاتية الفعلية.',
+  'Email for new accounts': 'البريد للحسابات الجديدة',
+  'Use the observed mailbox': 'استخدام البريد الذي فحصه المساعد',
+  'Your assistant checks this mailbox. Existing accounts keep their sign-in.': 'يتحقق مساعدك من هذا البريد. تبقى بيانات دخول الحسابات الحالية كما هي.',
+  'The reported mailbox is different. Ask your assistant to select this account before registering.': 'البريد الذي أبلغ عنه المساعد مختلف. اطلب منه اختيار هذا الحساب قبل التسجيل.',
+  'Open page': 'فتح الصفحة',
+  'Resume': 'متابعة',
   'Copy into your assistant': 'انسخ الطلب إلى مساعدك',
   'Choose a directory': 'اختيار دليل',
   'The setup request could not be prepared. Try again.': 'تعذّر تجهيز طلب الإعداد. حاول مرة أخرى.',
@@ -384,7 +415,7 @@ const AR = {
   "Create a CV in Tabbio": "إنشاء سيرة ذاتية في Tabbio",
   "Connect your email in your assistant. Tawdheef keeps the recorded outcomes.": "اربط بريدك في تطبيق مساعدك. يحتفظ توظيف بالنتائج المسجلة.",
   "Connect your calendar in your assistant and report the calendars you choose.": "اربط تقويمك في تطبيق مساعدك، ودعه يسجل التقاويم التي تختارها.",
-  "Website passwords stay in your browser or password manager. Your assistant uses the access you allow.": "تبقى كلمات مرور المواقع في متصفحك أو مدير كلمات المرور. يستخدم مساعدك الصلاحيات التي تسمح بها.",
+  'Use a unique password for each career site through your assistant’s supported password manager. Reuse existing accounts.': 'استخدم كلمة مرور فريدة لكل موقع توظيف عبر مدير كلمات المرور الذي يدعمه مساعدك. أعد استخدام الحسابات الحالية.',
   "Connect this local tracker to your existing assistant. Continue in the client you already use.": "اربط تطبيق المتابعة المحلي بمساعدك، وتابع في التطبيق الذي تستخدمه بالفعل.",
   "Setup happens in your assistant.": "يتم الإعداد في تطبيق مساعدك.",
   "Waiting for assistant": "بانتظار المساعد",
@@ -428,6 +459,7 @@ async function api(path, method = "GET", body) {
 }
 function App() {
   const settingsDraft = useRef(null);
+  const nativeRunDraft = useRef(null);
   const [boot, setBoot] = useState(null),
     [active, setActive] = useState(
       localStorage.getItem("apply-directory") || "uae",
@@ -1434,10 +1466,11 @@ function App() {
       {(modal?.type === 'settings' || modal?.type === 'monitoring') && (
         <SettingsDialog
           section={modal.type === 'monitoring' ? 'monitoring' : 'preferences'}
+          openJobPreferences={modal.focus === 'job-preferences'}
           clientStatus={boot.nativeClient}
           draftRef={settingsDraft}
           monitoringScope={runScope}
-          onOpenConnections={() => setModal({ type: 'connections' })}
+          onOpenConnections={() => setModal({ type: 'connections', returnTo: modal })}
           onOpenCompany={async id => { setModal(null); await openDetail({ id }); }}
           reports={boot.reports}
           generateReport={async () => {
@@ -1447,7 +1480,7 @@ function App() {
           }}
           t={t}
           settings={boot.settings}
-          close={() => { settingsDraft.current = null; setModal(null); }}
+          close={() => { settingsDraft.current = null; setModal(modal.returnTo || null); }}
           save={async (values) => {
             const keys = ['timezone', 'language'];
             await api(
@@ -1455,22 +1488,27 @@ function App() {
               "PATCH",
               Object.fromEntries(keys.map((key) => [key, values[key]])),
             );
-            await loadBoot();
+            await loadBoot().catch(() => {});
             settingsDraft.current = null;
-            setModal(null);
+            setModal(modal.returnTo || null);
             notify(t("Saved"));
-            await loadRows();
+            await loadRows().catch(() => {});
           }}
         />
       )}
       {modal?.type === 'connections' && <ConnectionsHub api={api} settings={boot.settings} clientStatus={boot.nativeClient}
+        onOpenJobPreferences={() => setModal({ type: 'settings', focus: 'job-preferences', returnTo: modal })}
         onCopyConnectionRequest={(kind, options = {}) => api(`/native/connection-request?${new URLSearchParams({ kind, assistant: options.assistant || boot.settings.preferredAssistant || 'codex', ...(options.provider ? { provider: options.provider } : {}) })}`)}
         onSettingsChange={async patch => { const saved = await api('/settings', 'PATCH', patch); await loadBoot(); return saved; }}
-        Modal={Modal} t={t} close={() => setModal(null)} />}
+        Modal={Modal} t={t} close={() => setModal(modal.returnTo || null)} />}
       {modal?.type === "run" && directory && (
         <RunDialog
+          settings={boot.settings}
+          clientStatus={boot.nativeClient}
+          draftRef={nativeRunDraft}
           preferredAssistant={boot.settings.preferredAssistant}
-          onChangeAssistant={() => setModal({ type: 'connections' })}
+          onChangeAssistant={() => setModal({ type: 'connections', returnTo: modal })}
+          onOpenConnections={() => setModal({ type: 'connections', returnTo: modal })}
           t={t}
           directory={directory}
           selected={selected}
@@ -1479,16 +1517,25 @@ function App() {
           run={modal.run}
           onRunUpdate={updateRun}
           pollingError={runPollingError}
-          close={() => setModal(null)}
+          close={() => { nativeRunDraft.current = null; setModal(null); }}
           notify={notify}
           api={api}
           Modal={Modal}
           stopped={refresh}
           onStartNative={async (instructions, assistant, actions) => {
             const value = await api('/native/runs', 'POST', { assistant, ...runScope, actions, instructions, mode: 'send_and_submit', explicit: true });
-            await refresh(); return value;
+            nativeRunDraft.current = null;
+            updateRun(value.run || value);
+            await refresh().catch(() => {}); return value;
           }}
           onCopyHandoff={run => api(`/native/runs/${encodeURIComponent(run.id)}/request`, 'POST', {})}
+          onResumeNative={async (run, companyId) => {
+            const value = await api(`/native/runs/${encodeURIComponent(run.id)}/resume`, 'POST', { companyId, assistant: run.assistant, explicit: true });
+            updateRun(value.run || value);
+            setModal({ type: 'run', run: value.run || value });
+            await refresh().catch(() => {});
+            return value;
+          }}
 
         />
       )}
@@ -1774,6 +1821,7 @@ function SettingsDialog({
   draftRef,
   onOpenConnections,
   onOpenCompany,
+  openJobPreferences = false,
   section = 'preferences',
 }) {
   const [actionBusy, setActionBusy] = useState(""),
@@ -1799,10 +1847,29 @@ function SettingsDialog({
 
   const [v, setV] = useState(draftRef?.current?.values || { ...settings });
   const originalSettings = useRef(settings);
+  const draftRetired = useRef(false);
   const [monitor, setMonitor] = useState(draftRef?.current?.monitor || null), [monitorStatus, setMonitorStatus] = useState(null), [monitorError, setMonitorError] = useState(''), [monitorUpdates, setMonitorUpdates] = useState([]);
   const savedMonitor = useRef(null);
   const [monitorRetry, setMonitorRetry] = useState(0);
   const [jobPreferences, setJobPreferences] = useState(draftRef?.current?.jobPreferences || null), [preferencesError, setPreferencesError] = useState('');
+  const splitJobValues = text => [...new Set(text.split(/[,\n،]/).map(value => value.trim()).filter(Boolean))];
+  const jobPayload = draft => ({ roles: splitJobValues(draft.rolesText), locations: splitJobValues(draft.locationsText), notes: draft.notes || '' });
+  const savedJobPayload = saved => ({ roles: saved.roles || [], locations: saved.locations || [], notes: saved.notes || '' });
+  function persistDraft(jobs = jobPreferences, currentMonitor = monitor) {
+    if (draftRef && !draftRetired.current) draftRef.current = { values: v, monitor: currentMonitor, jobPreferences: jobs };
+  }
+  function acceptSavedJobs(saved) {
+    const next = { revision: saved.revision, rolesText: (saved.roles || []).join(', '), locationsText: (saved.locations || []).join(', '), notes: saved.notes || '', base: saved };
+    setJobPreferences(next);
+    persistDraft(next);
+    return next;
+  }
+  const [jobsOpen, setJobsOpen] = useState(openJobPreferences), jobsPanel = useRef(null), jobsFocused = useRef(false);
+  useEffect(() => {
+    if (!openJobPreferences || !jobPreferences || jobsFocused.current) return;
+    const field = jobsPanel.current?.querySelector('textarea');
+    if (field) { jobsFocused.current = true; field.focus({ preventScroll: true }); }
+  }, [openJobPreferences, jobPreferences]);
   useEffect(() => {
     let active = true;
     discoveryApi('/preferences').then(value => {
@@ -1814,14 +1881,13 @@ function SettingsDialog({
   }, []);
   async function saveJobPreferences() {
     if (!jobPreferences) return;
-    const split = text => [...new Set(text.split(/[,\n،]/).map(value => value.trim()).filter(Boolean))];
-    const patch = { roles: split(jobPreferences.rolesText), locations: split(jobPreferences.locationsText), notes: jobPreferences.notes };
+    const patch = jobPayload(jobPreferences);
     const base = jobPreferences.base;
-    if (JSON.stringify(patch) === JSON.stringify({ roles: base.roles || [], locations: base.locations || [], notes: base.notes || '' })) return;
+    if (JSON.stringify(patch) === JSON.stringify(savedJobPayload(base))) return acceptSavedJobs(base);
     try {
       const value = await discoveryApi('/preferences', 'PATCH', { expectedRevision: jobPreferences.revision, explicit: true, patch });
       const saved = value.preferences || value;
-      setJobPreferences(previous => ({ ...previous, revision: saved.revision, base: saved }));
+      return acceptSavedJobs(saved);
     } catch (error) {
       if (error.status === 409) throw new Error(t('Preferences changed elsewhere. Your draft is kept. Reopen Settings to compare before saving.'));
       throw error;
@@ -1837,7 +1903,7 @@ function SettingsDialog({
     }).catch(error => { if (active) setMonitorError(error.message); });
     return () => { active = false; };
   }, [monitorRetry]);
-  useEffect(() => { if (draftRef) draftRef.current = { values: v, monitor, jobPreferences }; }, [v, monitor, jobPreferences]);
+  useEffect(() => { persistDraft(); }, [v, monitor, jobPreferences]);
   async function saveMonitor() {
     if (!monitor || !savedMonitor.current) return monitor;
     const prepared = { ...monitor, timezone: v.timezone };
@@ -1876,12 +1942,12 @@ function SettingsDialog({
   const editablePreferences = ['language', 'timezone'];
   const dirtyPreferences = editablePreferences.some(key => (v[key] ?? '') !== (originalSettings.current[key] ?? ''));
   const dirtyMonitoring = Boolean(monitor && savedMonitor.current && JSON.stringify(monitor) !== JSON.stringify(savedMonitor.current));
-  const dirtyJobs = Boolean(jobPreferences && (jobPreferences.rolesText !== (jobPreferences.base.roles || []).join(', ') || jobPreferences.locationsText !== (jobPreferences.base.locations || []).join(', ') || jobPreferences.notes !== (jobPreferences.base.notes || '')));
+  const dirtyJobs = Boolean(jobPreferences && JSON.stringify(jobPayload(jobPreferences)) !== JSON.stringify(savedJobPayload(jobPreferences.base)));
   return (
     <Modal
       title={t(section === 'monitoring' ? 'Monitoring' : 'Preferences')}
       dirty={dirtyPreferences || dirtyMonitoring || dirtyJobs}
-      close={close}
+      close={() => { draftRetired.current = true; close(); }}
       t={t}
       pending={pending}
       footer={<div className="settings-dialog-footer">
@@ -1898,12 +1964,22 @@ function SettingsDialog({
           event.preventDefault();
           if (pending) return;
           setSaveBusy(true); setSaveError('');
-          try { await saveJobPreferences(); await saveMonitor(); await save(v); } catch (error) { setSaveError(error.message); }
+          let savedJobs = jobPreferences, savedMonitoring = monitor;
+          try {
+            savedJobs = await saveJobPreferences() || jobPreferences;
+            savedMonitoring = await saveMonitor() || monitor;
+            draftRetired.current = true;
+            await save(v);
+          } catch (error) {
+            draftRetired.current = false;
+            persistDraft(savedJobs, savedMonitoring);
+            setSaveError(error.message);
+          }
           finally { setSaveBusy(false); }
         }}
       >
         <>
-            {section === 'preferences' && <details className="advanced discovery-preferences"><summary>{t('Job preferences')}</summary>
+            {section === 'preferences' && <details className="advanced discovery-preferences" ref={jobsPanel} open={jobsOpen} onToggle={event => setJobsOpen(event.currentTarget.open)}><summary>{t('Job preferences')}</summary>
               <p className="field-hint">{t('Your assistant uses these preferences with your actual CV.')}</p>
               {preferencesError ? <p role="alert" className="form-error">{t(preferencesError)}</p> : !jobPreferences ? <p role="status" className="field-hint">{t('Loading job preferences…')}</p> : <>
                 <label>{t('Roles')}<textarea value={jobPreferences.rolesText} disabled={pending} onChange={event => setJobPreferences(previous => ({ ...previous, rolesText: event.target.value }))} /></label>

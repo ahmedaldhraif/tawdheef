@@ -32,10 +32,13 @@ the app. Read the intended checkout's AGENTS.md and docs/FIRST-RUN.md.
 5. For CV, reuse the person's Tabbio account or offer https://www.tabbio.com/en.
    Connect its published remote MCP endpoint using supported client settings;
    the project setup --tabbio option is available when explicitly requested.
+   A supported signed-in Tabbio browser is also a valid authorized reading route;
+   do not force a broken MCP route when this actual client can already read the CV.
    Read the actual authorized CV through the native client. Report only CV
    reference/update metadata, never full CV text. No invented experience,
    visibility change, sharing, publishing or editing to make setup pass.
-6. Check selected external tools in this actual client and record bounded
+6. Call get_native_readiness for the selected actions. Check only missing or
+   stale preparations through this actual client's tools and record bounded
    available/needs_you/unknown observations with report_native_connection.
    Use actual observed account/provider identity and timestamps. Email's main
    address must come from the selected mail account, not CV text. Calendar
@@ -43,9 +46,29 @@ the app. Read the intended checkout's AGENTS.md and docs/FIRST-RUN.md.
    access are separate; a blank browser page cannot prove OS control. Password
    manager checks must not read/export a vault. get_native_client_status returns
    dated client reports, not independent provider verification; stale reports
-   become Unknown. Finish with what was checked and one actionable Needs you.
+   become Unknown. Compare the intended contact email with the actually observed
+   mailbox; an account in a browser may differ from the account exposed by a mail
+   plugin. Preserve both and report the channel actually used. Verify a real
+   upload file separately from readable CV facts; native file metadata must
+   identify the exact CV source/version. Calendar and password-manager access
+   do not block unrelated work. Recheck readiness, then finish with what was
+   checked and one actionable Needs you if needed. Reuse fresh working reports
+   until their account, source/version, file or actual access changes.
 
 Do not install a Tawdheef browser engine/provider bridge for native setup.
+Read get_discovery_preferences for the saved roles, locations and notes. Reuse
+that brief; if useful choices are missing, ask once in a bundled question and
+save only the person's explicit preferences through update_discovery_preferences
+with its current expectedRevision. Empty role/location lists mean unrestricted,
+not missing eligibility. The existing Job preferences form is shared with this
+agent flow. Preferences never authorize a Run or enlarge its selected scope.
+
+For career accounts, prefer reuse and the original login. Guide supported native
+password-manager setup when needed. Use unique credentials per site where the
+actual client permits their creation/storage; never ask for one shared password
+or store it in Tawdheef preferences. A required credential or unlock step remains
+with the person under that client's rules. Keep only non-secret account references.
+
 Client tools, plans and supported integrations may vary; preserve normal
 client/provider permission requirements. Missing access stays missing.
 The tracker needs no separate model API key.

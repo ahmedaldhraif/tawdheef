@@ -1,9 +1,13 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { calendarTime, sameCalendar } from './native-client.mjs';
+import { nativeReadiness } from './native-readiness.mjs';
 
 const ASSISTANTS = ['codex', 'claude-code'];
 const KINDS = ['assistant', 'cv', 'email', 'calendar', 'browser', 'computer', 'passwordManager'];
+const STAGES = ['check_jobs', 'match_jobs', 'sign_in', 'register', 'profile', 'cv_upload', 'application', 'complete'];
+const BLOCKERS = ['sign_in', 'credential', 'consent', 'identity', 'captcha', 'verification', 'cv_file', 'missing_fact', 'tool_unavailable', 'source_error', 'submission_uncertain'];
 const TTL = 24 * 60 * 60_000;
+const INSPECT_PENDING = 'Inspect the original uncertain submission in its original account before any new Submit. Reconcile its actual receipt; do not repeat the registration or create a new intent key.';
 const hash = value => createHash('sha256').update(value).digest('hex');
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value) && [Object.prototype, null].includes(Object.getPrototypeOf(value));
 export function nativeIdentity({ provider, accountId, accountEmail, kind = 'email' }) {
@@ -17,7 +21,9 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
   db.exec(`CREATE TABLE IF NOT EXISTS native_run_targets(run_id TEXT NOT NULL REFERENCES runs(id),company_id TEXT NOT NULL REFERENCES companies(id),position INTEGER NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(run_id,company_id));
     CREATE UNIQUE INDEX IF NOT EXISTS native_targets_order ON native_run_targets(run_id,position);
     CREATE INDEX IF NOT EXISTS native_targets_status ON native_run_targets(run_id,json_extract(payload,'$.status'),position);
-    CREATE INDEX IF NOT EXISTS applications_run ON applications(json_extract(payload,'$.runId'));`);
+    CREATE INDEX IF NOT EXISTS applications_run ON applications(json_extract(payload,'$.runId'));
+    CREATE TABLE IF NOT EXISTS native_journeys(company_id TEXT PRIMARY KEY REFERENCES companies(id),payload TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS native_journeys_run ON native_journeys(json_extract(payload,'$.runId'));`);
   const require = (test, message, status = 400) => { if (!test) throw new ErrorType(message, status); };
   const object = (value, keys) => { require(plain(value), 'Supply structured native-client fields.'); require(Object.keys(value).every(key => keys.includes(key)), 'Use only supported native-client fields; never send credentials, raw CVs or logs.'); };
   const text = (value, label, max = 2000, optional = false) => { require(typeof value === 'string' && (optional || value.trim()) && value.length <= max && !/[\0\r\n]/.test(value), `Use bounded one-line ${label}.`); return value.trim(); };
@@ -36,12 +42,40 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
     require(!/\bbearer\s+\S+|\b(?:password|api[_ -]?key|secret|token|access[_ -]?token|refresh[_ -]?token|id[_ -]?token|client[_ -]?secret|authorization|cookie|session[_ -]?(?:id|token))["']?\s*[:=]/i.test(result), 'Keep credentials and session tokens out of native reports.');
     return result;
   };
+  const workflowText = value => {
+    const result = safeText(value);
+    require(!/\b(?:code_verifier|client_secret|otp|verification[_ -]?(?:code|token)|auth(?:orization)?[_ -]?code|recovery[_ -]?code|state)["']?\s*[:=]|(?:[\\/]\.codex[\\/]auth\.json|[\\/]\.claude[\\/][^\\/]*credentials|[\\/]Login Data(?:$|[\\/])|[\\/]Cookies(?:$|[\\/]))/i.test(result), 'Keep authentication codes, credential files and session data out of workflow records.');
+    return result;
+  };
   const url = value => {
     text(value, 'source URL', 8192); let result; try { result = new URL(value); } catch { require(false, 'Use a complete HTTP(S) source URL.'); }
     require(['http:', 'https:'].includes(result.protocol) && !result.username && !result.password, 'Use an HTTP(S) URL without credentials.');
     require(![...result.searchParams.keys()].some(key => /^(?:token|access_token|refresh_token|password|api_key|secret|session|sessionid)$/i.test(key)), 'Keep secret URL parameters out of native reports.');
     return result.href;
   };
+  const workflowUrl = value => {
+    const result = new URL(url(value));
+    const fragment = result.hash.replace(/^#/, ''), fragmentQuery = fragment.includes('?') ? fragment.slice(fragment.indexOf('?') + 1) : fragment;
+    require(![...result.searchParams.keys(), ...new URLSearchParams(fragmentQuery).keys()].some(key => /(?:^|[_-])(?:code|state|otp|auth|authorization|credential|token|secret|session|ticket|assertion|code_verifier|verification|signature|sig|sas|keypairid|key-pair-id|SAMLResponse|SAMLRequest|RelayState|JWT)(?:$|[_-])/i.test(key)), 'Use a clean career page URL without authentication, verification, signed-download or callback parameters.');
+    require(!/\/(?:oauth|callback|sso)(?:\/|$)/i.test(result.pathname), 'Use a clean career page URL, not an authentication callback.');
+    return result.href;
+  };
+  const checkpoint = companyId => { const row = db.prepare('SELECT payload FROM native_journeys WHERE company_id=?').get(companyId); return row ? JSON.parse(row.payload) : null; };
+  function journey(companyId, owner) {
+    const company = getStore().getCompany(companyId), saved = checkpoint(companyId);
+    const related = getStore().relatedCompanyIds?.(companyId) || [companyId];
+    const args = related.length ? related : [companyId];
+    const where = `company_id IN (${args.map(() => '?').join(',')}) AND json_extract(payload,'$.deliveryStatus') IN ('unknown','sending') AND json_extract(payload,'$.idempotencyKey') IS NOT NULL`;
+    const pendingCount = Number(db.prepare(`SELECT COUNT(*) AS n FROM applications WHERE ${where}`).get(...args).n);
+    const pendingIntents = db.prepare(`SELECT id,company_id,json_extract(payload,'$.runId') AS runId,json_extract(payload,'$.nativeAssistant') AS nativeAssistant,json_extract(payload,'$.purpose') AS purpose,json_extract(payload,'$.method') AS method,json_extract(payload,'$.url') AS url,json_extract(payload,'$.role') AS role,json_extract(payload,'$.deliveryStatus') AS deliveryStatus,COALESCE(json_extract(payload,'$.registrationEmail'),json_extract(payload,'$.nativePlan.from')) AS accountEmail FROM applications WHERE ${where} ORDER BY json_extract(payload,'$.createdAt') DESC LIMIT 10`).all(...args).map(item => {
+      const { company_id, ...value } = item;
+      if (value.url) { try { value.url = workflowUrl(value.url); } catch { delete value.url; value.urlNeedsInspection = true; } }
+      return { ...value, companyId: company_id, assistant: item.nativeAssistant || (item.runId ? read('runs', item.runId)?.assistant : null) || null };
+    });
+    return { companyId, assistant: owner, checkpoint: saved, progress: company.progress, pendingIntents, pendingCount,
+      requiresInspection: pendingCount > 0, authority: 'read_only_context',
+      nextStep: pendingCount ? INSPECT_PENDING : saved?.nextStep || 'Inspect existing career accounts and recorded progress, then continue the selected actions.' };
+  }
   const capabilities = owner => read('settings', `native_client:${owner}`) || {};
   function connection(owner, kind) {
     const value = capabilities(assistant(owner))[kind], age = value ? Date.parse(now()) - Date.parse(value.observedAt) : Infinity;
@@ -58,7 +92,11 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       COUNT(DISTINCT CASE WHEN json_extract(a.payload,'$.status')='profile_created' OR EXISTS(SELECT 1 FROM json_each(a.payload,'$.milestones') m WHERE json_extract(CASE WHEN m.type='object' THEN m.value ELSE '{}' END,'$.event')='profile_created') THEN a.company_id END) AS careerProfiles,
       COUNT(DISTINCT CASE WHEN json_extract(a.payload,'$.method')='email' AND json_extract(a.payload,'$.deliveryStatus')='confirmed' AND COALESCE(json_extract(a.payload,'$.providerMessageId'),'')<>'' THEN json_array(COALESCE(json_extract(a.payload,'$.evidence.provider'),''),COALESCE(json_extract(a.payload,'$.evidence.accountId'),''),json_extract(a.payload,'$.providerMessageId')) END) AS emailsSent
       FROM applications a WHERE json_extract(a.payload,'$.runId')=?`).get(runId);
-    return { id: run.id, status: run.status, assistant: run.assistant, directoryId: run.directoryId, directoryName: run.directoryName, actions: run.actions, filters: run.filters, total: run.companyIds.length, completed: run.completed, activeCompanyId: run.activeCompanyId || null, currentName: current?.name || '', createdAt: run.createdAt, expiresAt: run.expiresAt, notes: run.notes || '', mode: 'send_and_submit', native: true, executionOwner: 'native-client', clientReported: true, targetCounts: counts, outcomes: Object.fromEntries(Object.entries(outcomes).map(([key, value]) => [key, Number(value)])) };
+    const checkpointRevision = Number(db.prepare("SELECT COALESCE(SUM(json_extract(j.payload,'$.revision')),0) AS revision FROM native_run_targets t JOIN native_journeys j ON j.company_id=t.company_id WHERE t.run_id=?").get(run.id).revision);
+    let currentCheckpoint = run.activeCompanyId ? checkpoint(run.activeCompanyId) : null;
+    const savedInstructions = typeof run.instructions === 'string' ? run.instructions.slice(0, 20000) : '';
+    if (currentCheckpoint && db.prepare("SELECT 1 FROM applications WHERE company_id=? AND json_extract(payload,'$.deliveryStatus') IN ('unknown','sending') AND json_extract(payload,'$.idempotencyKey') IS NOT NULL AND json_extract(payload,'$.runId')<>? LIMIT 1").get(run.activeCompanyId, run.id)) currentCheckpoint = { ...currentCheckpoint, requiresInspection: true, nextStep: INSPECT_PENDING };
+    return { id: run.id, status: run.status, assistant: run.assistant, directoryId: run.directoryId, directoryName: run.directoryName, actions: run.actions, filters: run.filters, ...(run.resumedFrom ? { resumedFrom: run.resumedFrom, originalFilters: run.originalFilters } : {}), total: run.companyIds.length, completed: run.completed, activeCompanyId: run.activeCompanyId || null, currentName: current?.name || '', currentCheckpoint, createdAt: run.createdAt, updatedAt: run.updatedAt || run.createdAt, checkpointRevision, expiresAt: run.expiresAt, notes: run.notes || '', instructions: savedInstructions, mode: 'send_and_submit', native: true, executionOwner: 'native-client', clientReported: true, targetCounts: counts, outcomes: Object.fromEntries(Object.entries(outcomes).map(([key, value]) => [key, Number(value)])) };
   }
   function claim(input) {
     const run = nativeRun(input.runId), item = target(run.id, input.companyId);
@@ -80,6 +118,11 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
     return view(runId);
   }
   return {
+    getNativeReadiness(input = {}, { localCvFile } = {}) {
+      object(input, ['assistant', 'actions']);
+      const owner = assistant(input.assistant || getStore().getSettings().preferredAssistant);
+      return nativeReadiness({ client: getStore().getNativeClientStatus({ assistant: owner }), settings: getStore().getSettings(), actions: input.actions, localCvFile });
+    },
     getNativeClientStatus({ assistant: owner = getStore().getSettings().preferredAssistant } = {}) {
       assistant(owner); const result = Object.fromEntries(KINDS.map(kind => [kind, connection(owner, kind)]));
       const used = read('settings', `native_use:${owner}`);
@@ -88,24 +131,36 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
     },
     touchNativeClient({ assistant: owner, tool } = {}) { assistant(owner); require(['get_agent_context', 'get_capabilities'].includes(tool), 'Record only actual Tawdheef bootstrap tool use.'); setting(`native_use:${owner}`, { tool, observedAt: now() }); return getStore().getNativeClientStatus({ assistant: owner }); },
     reportNativeConnection(input = {}) {
-      object(input, ['assistant', 'kind', 'status', 'observedAt', 'provider', 'accountEmail', 'accountId', 'cv', 'calendarIds', 'evidence', 'nextStep']);
+      object(input, ['assistant', 'kind', 'status', 'observedAt', 'provider', 'accountEmail', 'accountId', 'cv', 'calendarIds', 'evidence', 'nextStep', 'accessMethod']);
       const owner = assistant(input.assistant); require(KINDS.includes(input.kind), 'Choose a native-client capability.');
       require(['available', 'needs_you', 'unknown'].includes(input.status), 'Report available, needs_you or unknown.');
       text(input.observedAt, 'observation timestamp', 100); const at = Date.parse(input.observedAt);
       require(/T.*(?:Z|[+-]\d{2}:\d{2})$/i.test(input.observedAt) && Number.isFinite(at) && at <= Date.parse(now()) + 300_000, 'Use the actual client observation time with a timezone.');
       const value = { status: input.status === 'available' ? 'reported' : input.status, observedAt: new Date(at).toISOString(), provider: input.provider === undefined ? '' : text(input.provider, 'provider name', 100), nextStep: input.status === 'available' ? 'Reported by this assistant; the app has not independently checked this connection.' : `Check ${input.kind} in the selected assistant, then report its current state.` };
+      if (input.accessMethod !== undefined) { require(['mcp', 'browser', 'computer', 'file', 'other'].includes(input.accessMethod), 'Report the actual supported access method.'); value.accessMethod = input.accessMethod; }
       if (input.nextStep !== undefined) { value.nextStep = safeText(input.nextStep); require(value.nextStep.length <= 1000, 'Keep the actionable next step under 1,000 characters.'); }
       if (input.accountEmail !== undefined) value.accountEmail = email(input.accountEmail);
       if (input.accountId !== undefined) value.accountId = text(input.accountId, 'public provider account ID', 2048);
       if (value.accountId !== undefined) value.accountId = nativeIdentity({ ...value, kind: input.kind }).accountId;
       if (['email', 'calendar'].includes(input.kind) && input.status === 'available') { const identity = nativeIdentity({ ...value, kind: input.kind }); require(identity.provider && identity.accountId, 'Report the actual provider and observed account identity.'); Object.assign(value, identity); }
       if (input.cv !== undefined) {
-        require(input.kind === 'cv', 'CV metadata belongs only to the CV capability.'); object(input.cv, ['id', 'url', 'label', 'updatedAt', 'primaryEmail', 'versionHash']); value.cv = {};
+        require(input.kind === 'cv', 'CV metadata belongs only to the CV capability.'); object(input.cv, ['id', 'url', 'label', 'updatedAt', 'primaryEmail', 'versionHash', 'uploadFile']); value.cv = {};
         if (input.cv.versionHash !== undefined) { require(typeof input.cv.versionHash === 'string' && /^[a-fA-F0-9]{64}$/.test(input.cv.versionHash), 'Use a SHA-256 hash of the actual CV source version, never its contents.'); value.cv.versionHash = input.cv.versionHash.toLowerCase(); }
         for (const key of ['id', 'label']) if (input.cv[key] !== undefined) value.cv[key] = text(input.cv[key], `CV ${key}`, 500);
         if (input.cv.url !== undefined) value.cv.url = url(input.cv.url);
         if (input.cv.updatedAt !== undefined) { require(typeof input.cv.updatedAt === 'string' && Number.isFinite(Date.parse(input.cv.updatedAt)), 'Use the observed CV update timestamp.'); value.cv.updatedAt = new Date(input.cv.updatedAt).toISOString(); }
         if (input.cv.primaryEmail !== undefined) value.cv.primaryEmail = email(input.cv.primaryEmail);
+        if (input.cv.uploadFile !== undefined) {
+          const file = input.cv.uploadFile;
+          object(file, ['name', 'mimeType', 'sizeBytes', 'sha256', 'reference', 'cvSourceId', 'cvVersionHash']);
+          const name = workflowText(file.name); require(name.length <= 200 && !/[\\/]/.test(name) && /\.(pdf|docx)$/i.test(name), 'Report an original PDF or DOCX filename, not a file path.');
+          const mimeType = /\.pdf$/i.test(name) ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          require(file.mimeType === mimeType && Number.isSafeInteger(file.sizeBytes) && file.sizeBytes > 0 && file.sizeBytes <= 10 * 1024 * 1024, 'Report the actual original PDF/DOCX type and size up to 10 MB.');
+          require(typeof file.sha256 === 'string' && /^[a-fA-F0-9]{64}$/.test(file.sha256), 'Report the actual file byte SHA-256, never CV contents.');
+          require(value.cv.versionHash && (value.cv.id || value.cv.url) && file.cvSourceId === (value.cv.id || value.cv.url) && typeof file.cvVersionHash === 'string' && file.cvVersionHash.toLowerCase() === value.cv.versionHash, 'Bind the original file to this current CV source and version. Recheck it when the CV changes.');
+          const reference = workflowText(file.reference); require(reference.length <= 2048, 'Use a bounded actual client file reference.'); if (/^https?:/i.test(reference)) workflowUrl(reference);
+          value.cv.uploadFile = { name, mimeType, sizeBytes: file.sizeBytes, sha256: file.sha256.toLowerCase(), reference, cvSourceId: file.cvSourceId, cvVersionHash: value.cv.versionHash, clientReported: true, independentlyVerified: false };
+        }
       }
       if (input.kind === 'cv' && input.status === 'available') require(value.cv?.id || value.cv?.url, 'Report a real CV source ID or URL, without its contents.');
       if (input.calendarIds !== undefined) { require(input.kind === 'calendar' && Array.isArray(input.calendarIds) && input.calendarIds.length <= 1000, 'Report a bounded list of actual calendar IDs.'); value.calendarIds = [...new Set(input.calendarIds.map(id => text(id, 'calendar ID', 2048)))]; }
@@ -118,6 +173,8 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
         claim(input);
         const mailbox = connection(input.assistant, 'email');
         require(mailbox.status === 'reported' && mailbox.provider && mailbox.accountId, 'Ask this assistant to inspect and report its current mailbox identity before preparing a send.');
+        const intendedEmail = getStore().getSettings().applicationEmail?.trim().toLowerCase();
+        require(!intendedEmail || mailbox.accountEmail === intendedEmail, 'The observed mailbox differs from the selected contact email. Inspect the intended sending account before preparing a new email.');
         const attachments = input.attachments ?? [];
         require(Array.isArray(attachments) && attachments.length <= 5, 'Use up to five native-client CV attachment references, without file contents.');
         const references = attachments.map(value => { object(value, ['name', 'source', 'reference']); require(['native_cv', 'native-client'].includes(value.source), 'Use an actual native-client attachment source.'); const reference = safeText(value.reference); require(reference.length <= 2048, 'Keep actual attachment references under 2,048 characters.'); return { name: text(value.name, 'attachment name', 200), source: value.source, reference, clientReported: true }; });
@@ -215,6 +272,65 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
       if (observations.some(item => ['unknown', 'error'].includes(item.status))) complete = false;
       return getStore().finishMonitoringCheck({ ...key, status: input.status === 'checked' && !complete ? 'partial' : input.status, complete, observations, ...(input.sourceRead !== undefined ? { sourceRead: input.sourceRead } : {}), ...(input.summary !== undefined ? { summary: input.summary } : {}), cursor: null });
     },
+    getNativeJourney(input = {}) {
+      object(input, ['companyId', 'assistant']);
+      return journey(input.companyId, assistant(input.assistant || getStore().getSettings().preferredAssistant));
+    },
+    recordNativeCheckpoint(input = {}) {
+      object(input, ['runId', 'companyId', 'assistant', 'claimToken', 'stage', 'status', 'reasonCode', 'nextStep', 'url', 'accountEmail', 'intentId', 'expectedRevision']);
+      return tx(() => {
+        const { run, item } = claim(input), previous = checkpoint(item.companyId);
+        require(STAGES.includes(input.stage), 'Choose a supported career journey step.');
+        require(['working', 'needs_you'].includes(input.status), 'Record a working step or a specific Needs you blocker.');
+        require(input.status !== 'needs_you' || BLOCKERS.includes(input.reasonCode), 'Needs you requires a concrete blocker code, not a routine confirmation request.');
+        if (input.reasonCode !== undefined) require(BLOCKERS.includes(input.reasonCode), 'Choose a supported blocker code.');
+        require(Number.isSafeInteger(input.expectedRevision) && input.expectedRevision >= 0, 'Read the current journey and supply expectedRevision (0 for its first checkpoint).');
+        require(input.expectedRevision === (previous?.revision || 0), 'This career step changed. Read and merge its latest checkpoint before editing.', 409);
+        require(input.stage !== 'application' || run.actions.applyMatchingJobs, 'This Run does not allow job applications.');
+        require(!['sign_in', 'register', 'profile', 'cv_upload'].includes(input.stage) || run.actions.applyMatchingJobs || run.actions.createProfiles, 'This Run does not allow career profile steps.');
+        const nextStep = workflowText(input.nextStep); require(nextStep.length <= 1000, 'Keep the next step under 1,000 characters.');
+        const saved = { companyId: item.companyId, runId: run.id, assistant: run.assistant, stage: input.stage, status: input.status, nextStep,
+          revision: (previous?.revision || 0) + 1, updatedAt: now(), clientReported: true, independentlyVerified: false };
+        if (input.reasonCode !== undefined) saved.reasonCode = input.reasonCode;
+        if (input.url !== undefined) saved.url = workflowUrl(input.url);
+        else if (previous?.url && input.stage === previous.stage) saved.url = previous.url;
+        if (previous?.accountEmail) saved.accountEmail = previous.accountEmail;
+        if (input.accountEmail !== undefined) { const value = email(input.accountEmail); require(!saved.accountEmail || value === saved.accountEmail, 'Keep this career account’s original sign-in email. Do not replace it with the current mailbox.'); saved.accountEmail = value; }
+        if (input.intentId !== undefined) {
+          const intent = read('applications', text(input.intentId, 'original intent ID', 200));
+          require(intent && intent.companyId === item.companyId, 'Reference the original intent for this company.');
+          const original = read('runs', intent.runId);
+          require(original?.native && original.assistant === run.assistant && (!intent.nativeAssistant || intent.nativeAssistant === run.assistant), 'Use this assistant’s original Native submission intent.');
+          saved.intentId = intent.id;
+          if (intent.registrationEmail) { require(!saved.accountEmail || saved.accountEmail === intent.registrationEmail, 'Keep the original registration mailbox for this intent.'); saved.accountEmail = intent.registrationEmail; }
+        } else if (previous?.intentId && input.stage === previous.stage) saved.intentId = previous.intentId;
+        db.prepare('INSERT INTO native_journeys VALUES(?,?) ON CONFLICT(company_id) DO UPDATE SET payload=excluded.payload').run(item.companyId, JSON.stringify(saved));
+        run.updatedAt = now(); saveRun(run);
+        if (saved.status === 'needs_you') { const company = getStore().getCompany(item.companyId); company.attention = 'needs_you'; company.nextAction = saved.nextStep; company.lastUpdate = now(); company.revision++; saveCompany(company); }
+        activity('native_checkpoint', `${saved.stage}: ${saved.status === 'needs_you' ? saved.reasonCode + ': ' : ''}${saved.nextStep}`, item.companyId);
+        return { checkpoint: saved, journey: journey(item.companyId, run.assistant), run: view(run.id) };
+      });
+    },
+    resumeNativeRun(input = {}) {
+      object(input, ['runId', 'companyId', 'assistant', 'explicit']);
+      require(input.explicit === true, 'Resume requires a fresh explicit user action.');
+      const original = nativeRun(input.runId);
+      require(assistant(input.assistant) === original.assistant, 'Resume with the original Run-selected assistant.');
+      require(original.status !== 'running', 'Finish or stop the current Run before resuming a company.');
+      require(original.companyIds.includes(input.companyId) && target(original.id, input.companyId), 'Resume only a company in the original snapshotted Run.');
+      require(getStore().isCompanyEligibleForRun(input.companyId, original.actions), 'The selected actions for this company are already complete or unavailable.');
+      const { status: previousStatus, attention: previousAttention, ...structuralFilters } = original.filters || {};
+      const result = getStore().startNativeRun({ directoryId: original.directoryId, ...structuralFilters, companyIds: [input.companyId],
+        assistant: original.assistant, actions: original.actions, explicit: true, mode: 'send_and_submit', instructions: original.instructions || '' });
+      const resumed = getStore().getRun(result.run.id); resumed.resumedFrom = original.id; resumed.originalFilters = original.filters; saveRun(resumed);
+      return { ...result, run: view(resumed.id), journey: journey(input.companyId, original.assistant), resumedFrom: original.id };
+    },
+    assertNativeRegistrationIdentity({ assistant: owner } = {}) {
+      const mailbox = connection(assistant(owner), 'email'), intended = getStore().getSettings().applicationEmail?.trim().toLowerCase();
+      require(mailbox.status === 'reported' && mailbox.accountEmail, 'Inspect and report the intended mailbox before creating a new career account.');
+      require(!intended || mailbox.accountEmail === intended, 'The observed mailbox differs from the selected contact email. Select and report the intended mailbox before a new registration.');
+      return { accountEmail: mailbox.accountEmail, provider: mailbox.provider };
+    },
     startNativeRun(input = {}) {
       return tx(() => {
         require(getStore().getSettings().connectionMode === 'native', 'Switch to native connection mode before starting a native Run.');
@@ -231,11 +347,16 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
     },
     getNativeRun({ runId } = {}) { return view(runId); },
     listNativeTargets(input = {}) {
-      object(input, ['runId', 'offset', 'limit', 'status']); const { offset, limit } = page(input); nativeRun(input.runId);
+      object(input, ['runId', 'offset', 'limit', 'status']); const { offset, limit } = page(input); const run = nativeRun(input.runId);
       require(input.status === undefined || ['pending', 'working', 'applied', 'checked', 'failed', 'needs_you', 'uncertain', 'skipped'].includes(input.status), 'Choose a supported native-target status.');
       const where = 'run_id=?' + (input.status ? " AND json_extract(payload,'$.status')=?" : ''), args = [input.runId, ...(input.status ? [input.status] : [])];
       const total = Number(db.prepare(`SELECT COUNT(*) AS n FROM native_run_targets WHERE ${where}`).get(...args).n);
-      const items = db.prepare(`SELECT payload FROM native_run_targets WHERE ${where} ORDER BY position LIMIT ? OFFSET ?`).all(...args, limit, offset).map(row => publicTarget(JSON.parse(row.payload)));
+      const pending = "SELECT 1 FROM applications a WHERE a.company_id=t.company_id AND json_extract(a.payload,'$.deliveryStatus') IN ('unknown','sending') AND json_extract(a.payload,'$.idempotencyKey') IS NOT NULL";
+      const items = db.prepare(`SELECT t.payload AS payload,j.payload AS checkpoint,EXISTS(${pending}) AS pending,EXISTS(${pending} AND json_extract(a.payload,'$.runId')<>t.run_id) AS priorPending FROM native_run_targets t LEFT JOIN native_journeys j ON j.company_id=t.company_id WHERE ${where.replace(/run_id/g, 't.run_id').replace(/json_extract\(payload/g, 'json_extract(t.payload')} ORDER BY position LIMIT ? OFFSET ?`).all(...args, limit, offset).map(row => {
+        const item = publicTarget(JSON.parse(row.payload)), saved = row.checkpoint ? JSON.parse(row.checkpoint) : null;
+        const requiresInspection = Boolean(row.priorPending || row.pending && (run.status !== 'running' || ['needs_you', 'uncertain'].includes(item.status)));
+        return { ...item, ...(saved ? { checkpoint: saved } : {}), requiresInspection, nextStep: requiresInspection ? INSPECT_PENDING : saved?.nextStep || item.reason || '' };
+      });
       return { items, total, offset, limit, nextOffset: offset + limit < total ? offset + limit : null };
     },
     claimNativeTarget(input = {}) {
@@ -253,7 +374,7 @@ export function createNativeStore({ db, getStore, tx, now, activity, ErrorType, 
         }
         const claimToken = randomBytes(32).toString('base64url'); item.status = 'working'; item.startedAt = now(); item.expiresAt = new Date(Date.parse(now()) + 3600_000).toISOString(); item.tokenHash = hash(claimToken); saveTarget(item);
         run.activeCompanyId = item.companyId; run.expiresAt = item.expiresAt; run.updatedAt = now(); saveRun(run);
-        return { run: view(run.id), target: publicTarget(item), claimToken, expiresAt: item.expiresAt, reused: false };
+        return { run: view(run.id), target: publicTarget(item), journey: journey(item.companyId, run.assistant), claimToken, expiresAt: item.expiresAt, reused: false };
       });
     },
     getNativeClaim(input = {}) { object(input, ['runId', 'companyId', 'assistant', 'claimToken']); const result = claim(input); return { run: view(result.run.id), target: publicTarget(result.item) }; },

@@ -4,7 +4,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { openStore } from '../server/store.mjs';
-import { createNativeClient } from '../server/native-client.mjs';
+import { createNativeClient, nativeRunPrompt } from '../server/native-client.mjs';
+import { nativeSetupRequest, nativeRunRequest } from '../server/native-guidance.mjs';
 
 async function fixture(t, count = 3) {
   const prefix = join(tmpdir(), 'tawdheef-native-client-'), dataDir = await mkdtemp(prefix);
@@ -42,6 +43,23 @@ test('native capability reports are dated metadata only, preserve client ownersh
   assert.equal(store.getNativeClientStatus().capabilities.assistant.clientReported, false);
   advance(24 * 60 * 60_000 + 1);
   assert.equal(store.getNativeClientStatus().capabilities.email.status, 'unknown'); assert.equal(store.getNativeClientStatus().primaryEmail, null);
+});
+
+test('Native setup and Run guidance preserve the actual saved discovery brief without adding credential settings', async t => {
+  const { store, start } = await fixture(t);
+  const empty = store.getDiscoveryPreferences();
+  assert.deepEqual(nativeSetupRequest({ store }).preferences.roles, []);
+  assert.equal(store.getDiscoveryPreferences().revision, empty.revision, 'empty preferences remain an unrestricted brief, not an automatic rewrite');
+  const brief = store.updateDiscoveryPreferences({ expectedRevision: empty.revision, explicit: true, patch: { roles: ['HR manager'], locations: ['UAE'], notes: 'Government employers only' } });
+  const settingsBefore = store.getSettings(), setup = nativeSetupRequest({ store });
+  assert.deepEqual(setup.preferences, brief); assert.deepEqual(store.getDiscoveryPreferences(), brief);
+  const run = start({ instructions: 'Reuse existing logins.' }).run;
+  const prompt = nativeRunRequest({ store, runId: run.id }).prompt;
+  assert.match(prompt, /get_discovery_preferences/); assert.match(prompt, /unique per-employer password/); assert.match(prompt, /Preserve required client\/provider approvals/);
+  const facadePrompt = nativeRunPrompt(run);
+  assert.ok(facadePrompt.includes(`actions ${JSON.stringify(run.actions)}`)); assert.match(facadePrompt, /record_native_checkpoint with expectedRevision/);
+  assert.deepEqual(store.getSettings(), settingsBefore, 'preparing guidance creates no password setting or account owner');
+  assert.deepEqual(store.getDiscoveryPreferences(), brief);
 });
 
 test('native Run needs explicit authority but no CLI/model connection and exposes only compact paged targets', async t => {

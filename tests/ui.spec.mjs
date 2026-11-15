@@ -63,6 +63,7 @@ async function createDirectory(page, name, flag = null) {
 }
 
 test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { language: 'en' } })).ok()).toBe(true);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   page.__runtimeErrors = errors;
@@ -344,7 +345,7 @@ test('Native Run uses the existing assistant, shows real queue state and stops w
   await page.route('**/api/runs/fixture-run/stop', route => { run = { ...run, status: 'cancelled', activeCompanyId: null }; return route.fulfill({ json: run }); });
   await page.getByRole('button', { name: /^Run/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Run', exact: true });
-  await expect(dialog.getByRole('status')).toContainText('1 selected company');
+  await expect(dialog.locator('.dialog-intro[role="status"]')).toContainText('1 selected company');
   await dialog.locator('summary').filter({ hasText: /^Add a note$/ }).click();
   await dialog.getByLabel('Note (optional)', { exact: true }).fill('Engineering roles in the UAE.');
   await dialog.getByRole('button', { name: /^Run on/ }).click();

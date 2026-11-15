@@ -9,6 +9,8 @@
 .connection-category-name { flex: 1; min-width: 0; font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
 .connection-category-value { flex-shrink: 0; color: #62626b; font-size: 12px; max-width: 110px; white-space: normal; overflow-wrap: anywhere; text-align: end; }
 .connections-back { min-height: 44px; margin-bottom: 12px; padding-inline: 0; }
+.connections-job-preferences { display: flex; justify-content: space-between; width: 100%; min-height: 44px; margin-top: 8px; padding-inline: 0; }
+.connections-job-preferences > svg { color: #86868b; }
 .connections-provider-picker, .connections-assistant-picker { border: 0; border-radius: 0; }
 .connections-provider-picker .provider-row { min-height: 48px; padding: 10px 0; }
 .connections-assistant-picker .provider-row { min-height: 48px; padding: 2px 0; }
@@ -20,9 +22,35 @@
 .native-capability-status .connection-checked-at { display: block; margin-top: 4px; }
 .native-create-cv { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 10px; }
 .native-connection-content .cv-original-file { margin-top: 18px; }
+.native-readiness { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #ededf1; }
+.native-readiness-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.native-readiness-heading > div { min-width: 0; flex: 1 1 180px; }
+.native-readiness-heading strong { font-size: 14px; font-weight: 600; }
+.native-readiness-heading .connection-checked-at { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.native-readiness-heading > button { flex: 0 0 auto; min-height: 44px; }
+.native-readiness-next { margin: 8px 0 0; color: #62626b; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.native-readiness .form-error { margin: 8px 0 0; }
+.native-readiness-details { margin-bottom: 8px; }
+.native-readiness-details > summary { min-height: 44px; padding-block: 12px; line-height: 20px; cursor: pointer; color: #62626b; }
+.native-readiness-details dl { margin: 0 0 12px; }
+.native-readiness-details dl > div { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 2fr); gap: 8px 16px; padding: 8px 0; }
+.native-readiness-details dt { font-weight: 500; }
+.native-readiness-details dd { margin: 0; overflow-wrap: anywhere; }
+.native-readiness-details dd strong { display: block; font-size: 13px; font-weight: 500; }
+.native-readiness-details dd span { display: block; color: #62626b; font-size: 12px; line-height: 1.5; margin-top: 3px; }
+.native-readiness-compact { border-bottom: 0; border-top: 1px solid #ededf1; padding: 12px 0 0; margin: 14px 0; }
+.native-contact-hint { margin-top: 18px; }
+.native-contact-hint .field-hint { margin-bottom: 8px; }
+.native-contact-label { display: block; font-weight: 500; margin-bottom: 4px; }
+.native-upload-status { border-top: 1px solid #ededf1; margin-top: 18px; padding-top: 14px; }
+.native-upload-status p { margin: 6px 0 0; color: #62626b; font-size: 13px; }
+.run-targets .run-target-actions { display: flex; align-items: center; gap: 12px; grid-column: 1 / -1; flex-wrap: wrap; }
+.run-target-actions a, .run-target-actions button { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+.run-targets li > span, .run-targets small { overflow-wrap: anywhere; }
 [dir="rtl"] .connection-category-row > svg:last-child,
 [dir="rtl"] .connections-provider-picker .connection-chevron,
 [dir="rtl"] .connections-back > svg { transform: scaleX(-1); }
+[dir="rtl"] .connections-job-preferences > svg { transform: scaleX(-1); }
 .run-assistant-selected { display: flex; align-items: center; gap: 7px; min-width: 0; margin-inline-end: auto; color: #62626b; font-size: 12px; }
 .run-assistant-selected > span { overflow-wrap: anywhere; }
 .run-assistant-selected > .text-button { min-height: 40px; padding-inline: 5px; font-size: 12px; }

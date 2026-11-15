@@ -6,9 +6,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CLIENTS = { codex: 'Codex', 'claude-code': 'Claude Code' };
 export function registrationContext({ store, companyId, assistant = store.getSettings().preferredAssistant }) {
   const client = store.getNativeClientStatus({ assistant });
-  const primaryEmail = client.primaryEmail;
+  const observedEmail = client.primaryEmail, intendedEmail = store.getSettings().applicationEmail?.trim().toLowerCase() || null;
+  const mailboxMismatch = Boolean(intendedEmail && observedEmail && intendedEmail !== observedEmail);
+  const primaryEmail = mailboxMismatch ? null : observedEmail;
   const company = companyId ? store.getCompany(companyId) : null;
-  return { primaryEmail, emailSource: primaryEmail ? 'native_client_report' : null, clientReported: true, independentlyVerified: false,
+  const saved = companyId ? store.getNativeJourney({ assistant, companyId }).checkpoint : null;
+  return { primaryEmail, observedEmail, intendedEmail, mailboxMismatch, existingAccountEmail: saved?.accountEmail || null, emailSource: primaryEmail ? 'native_client_report' : null, clientReported: true, independentlyVerified: false,
     company: company ? { id: company.id, name: company.name, progress: company.progress } : null,
     instructions: 'Reuse an existing career account and its original sign-in. For a new account, use only the fresh observed mailbox email reported by this selected client. If missing, ask the actual client to inspect its intended mailbox identity. A local contact hint or another client’s report is not a mailbox identity. Use the client’s supported browser/password manager to generate, save and fill credentials. Save only a non-secret manager reference/login email with the actual account outcome; never put passwords, master keys or recovery codes in tracker records, prompts or logs. A sign-in, identity confirmation or required approval becomes Needs you. Do not create another mailbox or change an existing account email.',
     credentials: { owner: 'user_browser_or_password_manager', storedByTracker: false, availability: 'not_verified_by_tracker' } };

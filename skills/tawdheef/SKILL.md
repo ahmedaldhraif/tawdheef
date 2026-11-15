@@ -53,6 +53,15 @@ prove model access, provider authentication, browser control or a schedule.
 Report browser and OS computer tools separately. Missing tools, login, CAPTCHA,
 identity checks, required declarations and provider approvals become Needs you.
 
+Use `get_native_readiness` to check preparations together for the selected
+actions. Reuse fresh observations and the same working browser/account; refresh
+only changed, stale or unavailable access. Readable CV facts and an actual
+upload file are distinct. Use an authorized Tabbio browser if supported when MCP
+is unavailable, and report the route actually used. Compare the intended mailbox
+with the actual account; preserve existing account logins. Calendar and password
+manager are conditional capabilities, not global setup requirements. See
+`docs/NATIVE-WORKFLOW.md` for the full setup and continuation contract.
+
 ## Research and review
 
 For research/shortlisting, read evidence and real CV fit without sending or
@@ -99,6 +108,16 @@ schemas. Never start a nested Run or widen the scope. Finish through
 `finish_native_target`, recording real outcome and next step, then claim the next
 pending target. Continue individual blockers; stop when client access/quota is
 unavailable. A reused claim must be inspected, never duplicated.
+
+Read the journey returned by a claim, or `get_native_journey`, before starting over. Perform ordinary
+authorized steps with supported client tools without a generic approval for
+each company. Save a structured checkpoint when a real blocker needs the person,
+with `record_native_checkpoint`, its expectedRevision and the exact stage and
+one next action; a checkpoint is not submission evidence.
+Use `resume_native_run` for an ended attempt only after a fresh explicit request
+for its original
+target/actions/assistant. Inspect original accounts and uncertain intents first;
+never repeat an uncertain submission or renew an old claim from a checkpoint.
 
 Filter first. `list_companies`, `preview_run` and native start share `search`,
 `status`, `attention`, `companyTypes` and `locations`. Use returned facet IDs.

@@ -55,3 +55,9 @@ The landing setup uses the Skills overview's compact skill install block, with a
 ## Native-only cleanup, 15 November 2026
 
 Advanced compatibility is removed. Connections has one Native flow for the actual Codex or Claude Code client. The app never owns provider credentials, browsers, email/calendar readers or an assistant subprocess. Preserve historical settings and records as inert data. Keep the six familiar connection rows, local contact hint and optional original CV file. Preferences remains simple. Older adapter instructions above are superseded by this rule.
+
+## Native readiness and continuation
+
+Connections keeps the one-time Check setup action beside a compact dated readiness summary. Keep the six existing rows; do not add a wizard, second setup destination or chat. Check the selected work together and show one useful next step. Distinguish the intended mailbox, observed account, readable CV and upload-ready file. Calendar and password-manager access are conditional. Ready is based on dated reports from the selected client, never independent provider verification. Keep the explanation on demand and operational tool instructions in the guides.
+
+Run keeps its three existing action choices. Preparation feedback follows those choices and offers the existing Connections destination without blocking ordinary read-only discovery. Needs you names the company, observed blocker and one next action. Resume after an ended Run starts a fresh explicit Run for that original company, client, saved actions and filters; it does not reset the whole directory or silently revive an old claim. Preserve checkpoints and uncertain submissions across Stop/restart, without storing credentials or claiming completion. Use normal instant controls and the existing dialog styles; no new runtime library or decorative animation.

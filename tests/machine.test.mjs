@@ -59,7 +59,8 @@ test("real Native stdio MCP shares records while retired adapter environment can
     await client.connect(transport);
     const catalog = (await client.listTools()).tools, names = catalog.map(tool => tool.name);
     assert.match(client.getInstructions(), /actual Codex or Claude Code client owns/);
-    assert.equal(names.length, 69);
+    assert.equal(names.length, 73);
+    for (const name of ['get_native_readiness', 'get_native_journey', 'record_native_checkpoint', 'resume_native_run']) assert.ok(names.includes(name), name);
     for (const name of ['get_cv', 'send_application_email', 'configure_connection', 'get_connection_tools', 'create_calendar_event', 'save_monitor', 'set_monitor_status', 'update_run']) assert.ok(!names.includes(name), name);
     const call = async (name, args = {}) => unpack(await client.callTool({ name, arguments: args }));
     const capabilities = (await call('get_capabilities')).data;
