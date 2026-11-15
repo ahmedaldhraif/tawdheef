@@ -2,6 +2,8 @@
 export const LOCAL_MARKETING_ORIGIN = 'http://127.0.0.1:4001';
 const roots = ['welcome', 'skills', 'guides', 'examples', 'get-started', 'directories', 'about', 'brand', 'policies'];
 export function isMarketingPath(path) {
+  // Packaged icons and other static resources must stay in the native app.
+  if (/\.[a-z0-9]+$/i.test(path)) return false;
   return roots.some(root => path === '/'+root || path.startsWith('/'+root+'/')) ||
     path === '/ar' || path === '/ar/' || roots.some(root => path === '/ar/'+root || path.startsWith('/ar/'+root+'/'));
 }

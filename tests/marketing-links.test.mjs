@@ -27,7 +27,7 @@ test('packaged website links preserve locale, query and canonical setup routes',
     assert.equal(response.status, 302, path);
     assert.equal(response.headers.get('location'), 'http://127.0.0.1:4001'+target, path);
   }
-  for (const path of ['/', '/api/health', '/skills-extra', '/arbitrary']) {
+  for (const path of ['/', '/api/health', '/skills-extra', '/arbitrary', '/brand/app-icon-192.png', '/brand/mark.svg']) {
     assert.equal((await fetch(base+path, { redirect: 'manual' })).status, 418, path);
   }
   assert.throws(() => localMarketingUrl('/api/health'));
