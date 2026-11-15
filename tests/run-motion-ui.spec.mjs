@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-async function openRunFixture(page, overrides = {}) {
+async function openRunFixture(page, overrides = {}, language = 'en') {
   let run = {
     id: 'motion-fixture', directoryId: 'uae', directoryName: 'UAE', native: true,
     assistant: 'codex', total: 42, completed: 7, appliedCount: 3,
@@ -11,6 +11,7 @@ async function openRunFixture(page, overrides = {}) {
     const response = await route.fetch();
     const body = await response.json();
     body.runs = [run];
+    body.settings = {...body.settings,language};
     await route.fulfill({ json: body });
   });
   await page.route('**/api/runs/motion-fixture', route => route.fulfill({ json: run }));
@@ -25,6 +26,20 @@ async function openRunFixture(page, overrides = {}) {
 }
 
 const runningAnimations = locator => locator.evaluate(element => element.getAnimations({ subtree: true }).filter(animation => animation.playState === 'running').length);
+
+for (const width of [320,1440]) for (const language of ['en','ar']) test(`native Run agent stays consistent at ${width}px in ${language}`,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await openRunFixture(page,{},language);
+  const mark=page.locator('.run-banner .run-activity-mark');
+  await expect(mark).toHaveAttribute('data-agent-artwork','native-coding');
+  await expect(mark.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+  await expect.poll(()=>runningAnimations(mark)).toBeGreaterThan(0);
+  const bounds=await mark.boundingBox();
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  expect(await runningAnimations(mark)).toBe(0);
+});
 
 test.beforeEach(async ({ page }) => {
   page.__motionErrors = [];
