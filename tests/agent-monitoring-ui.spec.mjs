@@ -49,6 +49,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'wait' });
   expect(page.__monitorErrors).toEqual([]); expect(page.__unexpectedMonitorWrites).toEqual([]);
 });
 
