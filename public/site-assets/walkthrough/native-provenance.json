@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-11-15T15:52:31.682152+00:00",
+  "sourceCommit": "d2d1a6c60571c760cbe1c50e92de99a741a58211",
+  "packageVersion": "0.2.0",
+  "method": "CUA screenshot of built Native app, isolated temp store; public GCC sources imported through domain store",
+  "privateData": false,
+  "applications": 0,
+  "runs": 0,
+  "theme": "Actual native app is light; no artificial dark recoloring",
+  "files": {
+    "native-desktop-light.jpg": "449df758b6546768c1bc0fd396fe861c108e7b8a81760752d3896720784e3875",
+    "native-mobile-light.jpg": "8fad7a37a326950da2398858a0d7a7ec18cf72aea4297d1bf0a2a0f3b0256818"
+  }
+}
