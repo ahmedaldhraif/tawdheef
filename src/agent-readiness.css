@@ -8,12 +8,21 @@
 .connection-category-row > svg:last-child { color: #86868b; }
 .connection-category-name { flex: 1; min-width: 0; font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
 .connection-category-value { flex-shrink: 0; color: #62626b; font-size: 12px; max-width: 110px; white-space: normal; overflow-wrap: anywhere; text-align: end; }
-.connections-back { min-height: 44px; margin-bottom: 12px; padding-inline: 0; }
+.connections-back { padding: 0; }
 .connections-job-preferences { display: flex; justify-content: space-between; width: 100%; min-height: 44px; margin-top: 8px; padding-inline: 0; }
 .connections-job-preferences > svg { color: #86868b; }
 .connections-provider-picker, .connections-assistant-picker { border: 0; border-radius: 0; }
 .connections-provider-picker .provider-row { min-height: 48px; padding: 10px 0; }
-.connections-assistant-picker .provider-row { min-height: 48px; padding: 2px 0; }
+.connections-assistant-picker { min-inline-size: 0; padding: 0; margin: 0 0 20px; }
+.connections-assistant-picker .provider-row { min-height: 52px; padding: 12px 0; margin: 0; font-size: 14px; }
+.connections-assistant-picker .provider-row > img { flex: 0 0 auto; }
+.connections-assistant-picker input[type="radio"] { flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 0; }
+.connection-category-email { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
+.connections-setup-hint { margin: 8px 0 12px; }
+.native-connection-details { margin-bottom: 16px; color: #62626b; font-size: 13px; line-height: 1.6; }
+.native-connection-details > summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.native-connection-details p { overflow-wrap: anywhere; }
+.native-account-email { overflow-wrap: anywhere; }
 .connection-capability p { margin: 0 0 14px; line-height: 1.65; }
 .connection-capability-owner { display: flex; align-items: center; gap: 10px; }
 .connection-capability > button { min-height: 44px; }

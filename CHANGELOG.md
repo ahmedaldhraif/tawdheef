@@ -2,7 +2,8 @@
 
 ## 0.2.0 — local desktop preview
 
-- One Native Check setup request combines the selected client's intended mailbox, readable CV, exact upload-file metadata and browser/computer reports. Fresh observations are reused; optional calendar/password-manager access does not block unrelated work. No external connection is owned or probed by the app.
+- Compact Connections setup with aligned native assistant radios, header Back, preserved keyboard selection and explicit Copy setup request handoffs. Dates and technical provenance stay on demand; unused calendar/password connections are visibly optional.
+- One Native setup request combines the selected client's intended mailbox, readable CV, exact upload-file metadata and browser/computer reports. Fresh observations are reused; optional calendar/password-manager access does not block unrelated work. No external connection is owned or probed by the app.
 - Durable company checkpoints carry one actionable Needs you step across ended Runs. An explicit single-company Resume retains the original client, actions and structural scope, inspects original uncertain intents and never restores an old claim or duplicates a submission.
 - Combined the contribution UX with Native discovery: evidence-backed career routes, a one-time visible Career profile column, focused Preferences, client-owned Monitoring and reports, contribution links and approved bilingual wordmarks. Contact-address hints never replace actual Native sender identity.
 - Native job discovery with bounded public feed plans, meaningful-change reuse, current CV/preference citations and a small Jobs review panel. New, changed and Needs you records remain separate from confirmed applications; source failures retain earlier results.

@@ -139,7 +139,9 @@ const AR = {
   'Checked': 'تم الفحص',
   'Copy setup request': 'نسخ طلب الإعداد',
   'Setup request copied': 'تم نسخ طلب الإعداد',
-  'Check setup': 'فحص الإعداد',
+  'Local connection observed': 'رُصد اتصال محلي',
+  'Connection details': 'تفاصيل الاتصال',
+  'Your connections stay in your assistant.': 'تبقى اتصالاتك في تطبيق مساعدك.',
   'Setup readiness': 'جاهزية الإعداد',
   'Setup details': 'تفاصيل الإعداد',
   'Checking setup…': 'جارٍ فحص الإعداد…',
@@ -404,7 +406,6 @@ const AR = {
   "Unknown": "غير معروف",
   "Back": "رجوع",
   "Client reported": "بحسب إفادة المساعد",
-  "Tracker used": "تم استخدام أدوات المتابعة",
   "Observed": "رُصد في",
   "Reported": "أُفيد في",
   "Use Codex": "استخدام Codex",
@@ -1499,7 +1500,12 @@ function App() {
       {modal?.type === 'connections' && <ConnectionsHub api={api} settings={boot.settings} clientStatus={boot.nativeClient}
         onOpenJobPreferences={() => setModal({ type: 'settings', focus: 'job-preferences', returnTo: modal })}
         onCopyConnectionRequest={(kind, options = {}) => api(`/native/connection-request?${new URLSearchParams({ kind, assistant: options.assistant || boot.settings.preferredAssistant || 'codex', ...(options.provider ? { provider: options.provider } : {}) })}`)}
-        onSettingsChange={async patch => { const saved = await api('/settings', 'PATCH', patch); await loadBoot(); return saved; }}
+        onSettingsChange={async patch => {
+          const saved = await api('/settings', 'PATCH', patch);
+          setBoot(previous => ({ ...previous, settings: { ...previous.settings, ...saved } }));
+          await loadBoot().catch(() => {});
+          return saved;
+        }}
         Modal={Modal} t={t} close={() => setModal(modal.returnTo || null)} />}
       {modal?.type === "run" && directory && (
         <RunDialog

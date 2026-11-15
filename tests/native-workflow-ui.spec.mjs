@@ -100,7 +100,7 @@ test('Connections offers one client-owned setup request and keeps missing upload
   await dialog.getByText('Setup details', { exact: true }).click();
   await expect(dialog.locator('.native-readiness-details')).toContainText('Readable CV');
   await expect(dialog.locator('.native-readiness-details')).toContainText('CV upload file');
-  await dialog.getByRole('button', { name: 'Check setup', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect(dialog.getByRole('button', { name: 'Setup request copied', exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => window.__workflowClipboard)).toContain('Synthetic codex setup');
   expect(page.__workflow.writes).toEqual([{ path: '/api/native/setup-request', input: { assistant: 'codex' } }]);

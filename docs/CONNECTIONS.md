@@ -30,11 +30,11 @@ identity reported by the actual client. Existing saved values are preserved.
 actual client check: available/needs_you/unknown, observation time, provider/account
 identity, CV reference/update metadata or selected calendar IDs. Available is
 shown as **Client reported**, not independently verified Connected. Reports age
-out after 24 hours; an expired report remains Unknown with its observation date.
+out after 24 hours; an expired report is Not checked with its observation date in Connection details.
 A configured URL, saved username or report alone is not fresh provider access.
 
 Actual `get_agent_context`/`get_capabilities` use is recorded separately as
-**Tracker used**. It proves a local tracker tool call was observed, not an AI
+**Local connection observed** in the Assistant panel, with dated Connection details. It proves a local tracker tool call was observed, not an AI
 model response, native browser/computer control, provider sign-in or a schedule.
 The default Run does not require an installed assistant CLI or a CLI model test.
 
@@ -45,7 +45,7 @@ messages, calendar writes or schedules.
 
 ## Primary email and career credentials
 
-**Check setup** in Connections combines the selected preparations in one
+**Copy setup request** in Connections combines the selected preparations in one
 copyable request for the actual client. `get_native_readiness` compares the
 intended contact email with the observed mailbox, and distinguishes readable
 CV facts, an upload-ready file and browser or computer access. Calendar and

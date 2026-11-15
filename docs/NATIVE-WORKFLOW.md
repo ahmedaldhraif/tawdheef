@@ -10,7 +10,7 @@ their credentials. The local app is the shared view of the same work.
 1. Open Tawdheef and choose your actual client in **Connections → Assistant**.
    Connect the local tracker MCP with the supplied project-only setup request.
    Keep unrelated client settings and existing accounts.
-2. Use **Check setup** in Connections and paste its request into that client.
+2. Use **Copy setup request** in Connections and paste it into that client.
    The agent inspects what already works and guides only missing access.
 3. Confirm the intended mailbox. The agent compares it with the account its
    actual mail or browser tool observes. A Gmail plugin and a browser tab can

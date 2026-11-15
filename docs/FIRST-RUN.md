@@ -31,7 +31,7 @@ local tracker. It does not sign into providers or start job-search actions.
 ## Connect the client you already use
 
 Open **Connections → Assistant**, choose Codex or Claude Code once, then use
-**Check setup**. Paste its request into your existing client conversation.
+**Copy setup request**. Paste it into your existing client conversation.
 Use the local folder specified by the request; a packaged app keeps its writable
 assistant workspace outside the installed app bundle. There is no app deep link,
 embedded chat or automatic launch of another assistant in the default mode.
@@ -59,7 +59,7 @@ A setup request can be:
    choices and copyable requests. Browser & computer use checks those capabilities
    separately. Passwords uses your existing supported browser/password manager;
    you handle unlock and identity prompts. Availability depends on your actual
-   client, account, installed tools and permissions. Check setup checks the
+   client, account, installed tools and permissions. The setup request asks the client to check the
    selected work together. Calendar and password-manager access are optional;
    they do not block unrelated work. A new account may need an available mailbox,
    and an upload needs an actual PDF/DOCX file. Missing access has one next step.
