@@ -47,7 +47,7 @@ export default {
       },
       {
         "title": "Create or connect your CV",
-        "body": "Connect your Tabbio CV. Email is optional."
+        "body": "Copy the CV setup request into your actual client. Email is optional."
       },
       {
         "title": "Choose companies. Run.",
