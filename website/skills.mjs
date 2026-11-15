@@ -1,5 +1,6 @@
 import { appPreview } from './walkthrough.mjs';
 import { agentHeading } from './agent-heading.mjs';
+import { nativeAgentMarkup } from './native-agent.mjs';
 import { escapeHtml as esc } from './markdown.mjs';
 import skillsEn from './i18n/skills-en.mjs';
 import skillsAr from './i18n/skills-ar.mjs';
@@ -14,7 +15,7 @@ const groups = [
 ];
 
 function guideIcon(slug,t) {
-  if(slug==='use-the-skill')return '<img class="skills-guide-icon" src="/brand/mark.svg" width="48" height="48" alt=""/>';
+  if(slug==='use-the-skill')return nativeAgentMarkup({id:'skills-setup-agent',className:'skills-guide-icon'});
   if(slug==='connect-your-agent')return '<span class="skills-guide-brand skills-guide-brand-agents" aria-hidden="true"><img src="/brands/chatgpt.svg" width="32" height="32" alt=""/><img src="/brands/claude.svg" width="32" height="32" alt=""/></span>';
   if(slug==='connect-your-cv')return '<span class="skills-guide-brand skills-guide-brand-tabbio" aria-hidden="true"><img src="/brands/tabbio-wordmark-violet-original.svg" width="144" height="35" alt=""/></span>';
   if(slug==='use-directory-packs')return `<span class="skills-guide-brand skills-guide-brand-flags" aria-hidden="true">${['AE','SA','QA','OM','KW','BH'].map(country=>`<img src="/flags/${country}.svg" width="26" height="18" alt=""/>`).join('')}</span>`;

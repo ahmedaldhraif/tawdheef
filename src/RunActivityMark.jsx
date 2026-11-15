@@ -19,6 +19,7 @@ export default function RunActivityMark({ active = false, size = 32 }) {
   }, []);
   return <svg
     className="tawdheef-mascot run-activity-mark"
+    data-agent-artwork="native-coding"
     data-option="wink"
     data-state="coding"
     data-busy={active ? 'true' : 'false'}
