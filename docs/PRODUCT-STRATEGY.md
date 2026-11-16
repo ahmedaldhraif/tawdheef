@@ -2,6 +2,8 @@
 
 Checked 14 November 2026. Product proposal and implementation review. Competitor findings come from current GitHub READMEs plus representative source, not installed-product testing. No competitor software was installed, executed or copied. This is a relevant landscape of 21 projects, not an exhaustive list of every job-search repository.
 
+The career-ops scope reference was corrected on 16 November 2026 after a separate REA and source review. The other landscape entries were not re-audited in that correction.
+
 ## Product direction
 
 Keep one working screen and the person's actual Codex or Claude Code client. The client reads public sources and the authorised CV, reasons about fit and reports evidence. Tawdheef stores discovery facts, bounded version references, decisions and confirmed outcomes. Discovery and a copied review request never authorise applications, profile changes, CV sharing or messages.
@@ -27,7 +29,7 @@ Every repository link opens its own README; the code link names the representati
 
 | Repository | Decision for Tawdheef | Concrete pattern and boundary |
 | --- | --- | --- |
-| [career-ops-hq/career-ops](https://github.com/career-ops-hq/career-ops) | **Adapt** task-first guidance. | [Scope entry point](https://github.com/career-ops-hq/career-ops/blob/main/apply-scope.mjs): a small shared router and explicit scope make onboarding explainable. Keep the first task short; skip the full mode/instruction surface. |
+| [career-ops-hq/career-ops](https://github.com/career-ops-hq/career-ops) | **Adapt** task-first guidance and validated boundaries. | The [skill router](https://github.com/career-ops-hq/career-ops/blob/c531302a52f3053068bdb0273e8ef36bc6138c21/.agents/skills/career-ops/SKILL.md#L221) loads the relevant workflow. [apply-scope.mjs](https://github.com/career-ops-hq/career-ops/blob/c531302a52f3053068bdb0273e8ef36bc6138c21/apply-scope.mjs#L29) guards code/data paths and fresh-browser launch options; it is not a general workflow/permission router. Keep the first task short and preserve Tawdheef's actual-client session reuse. |
 | [ajstars1/ai-job-apply](https://github.com/ajstars1/ai-job-apply) | **Adopt** evidence-backed reasons and honest missing answers. | [Core checks](https://github.com/ajstars1/ai-job-apply/blob/main/packages/core/src/check.ts): connect a decision to known facts and expose what cannot be answered. Preserve Tawdheef's stronger submission-receipt boundary. |
 | [meetshukla/JobSearch-MCP](https://github.com/meetshukla/JobSearch-MCP) (Hunt) | **Adopt** short new/unscored lists and one-line reasons. | [Tools](https://github.com/meetshukla/JobSearch-MCP/blob/main/server/tools.ts), [row](https://github.com/meetshukla/JobSearch-MCP/blob/main/client/src/jobs/JobRow.tsx), [detail](https://github.com/meetshukla/JobSearch-MCP/blob/main/client/src/jobs/JobDetail.tsx): compact list, lazy full description and a visible verdict note. Adapt hosted collection/storage to the actual Native client's ownership; do not import its cloud clock. |
 | [xCirno1/applyer](https://github.com/xCirno1/applyer) | **Adapt** one workspace and readable source-health messages. | [Board fetch record](https://github.com/xCirno1/applyer/blob/main/src/main/browser/ats/boardFetchRecord.ts): explain partial/query-only board coverage instead of pretending every fetch covers a whole board. Do not reuse an error-as-zero convention. Skip Electron, embedded model/terminal and any queued-as-applied implication. |
