@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export default function CvFileControl({ api, t = value => value, disabled = false }) {
+export default function CvFileControl({ api, t = value => value, disabled = false, onChange }) {
   const [file, setFile] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
   useEffect(() => { let active = true; api('/cv/file').then(value => { if (active) setFile(value); }).catch(() => {}); return () => { active = false; }; }, []);
   async function choose(event) {
@@ -10,6 +10,7 @@ export default function CvFileControl({ api, t = value => value, disabled = fals
       if (original.size > 10 * 1024 * 1024) throw new Error(t('Choose a PDF or DOCX file up to 10 MB.'));
       const encoded = await new Promise((accept, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error(t('The file could not be read. Choose it again.'))); reader.onload = () => accept(String(reader.result).split(',')[1]); reader.readAsDataURL(original); });
       setFile(await api('/cv/file', 'POST', { filename: original.name, contentBase64: encoded }));
+      onChange?.();
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); event.target.value = ''; }
   }

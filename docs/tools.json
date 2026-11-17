@@ -1199,8 +1199,48 @@
       }
     },
     {
+      "name": "get_native_readiness",
+      "description": "Read action-specific setup reports once, then reuse them while fresh. Distinguishes current CV facts, intended mailbox, browser access and an actual upload file. Does not inspect external accounts or grant authority.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "actions": {
+            "type": "object",
+            "properties": {
+              "applyMatchingJobs": {
+                "type": "boolean"
+              },
+              "createProfiles": {
+                "type": "boolean"
+              },
+              "sendCvEmails": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
       "name": "report_native_connection",
-      "description": "Report only freshly observed connection metadata from this actual client. No raw CV, passwords, tokens, cookies or credential files. Reporting available is not independent verification.",
+      "description": "Report only freshly observed connection metadata and actual access method from this client. A CV upload file must identify exact original bytes and the current CV source/hash. No raw CV, passwords, tokens, cookies or credential files. Reporting available is not independent verification.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1237,6 +1277,16 @@
           "provider": {
             "type": "string"
           },
+          "accessMethod": {
+            "type": "string",
+            "enum": [
+              "mcp",
+              "browser",
+              "computer",
+              "file",
+              "other"
+            ]
+          },
           "accountEmail": {
             "type": "string"
           },
@@ -1264,6 +1314,53 @@
               "versionHash": {
                 "type": "string",
                 "pattern": "^[a-fA-F0-9]{64}$"
+              },
+              "uploadFile": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "enum": [
+                      "application/pdf",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10485760
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{64}$"
+                  },
+                  "reference": {
+                    "type": "string",
+                    "maxLength": 2048
+                  },
+                  "cvSourceId": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "cvVersionHash": {
+                    "type": "string",
+                    "pattern": "^[a-fA-F0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "mimeType",
+                  "sizeBytes",
+                  "sha256",
+                  "reference",
+                  "cvSourceId",
+                  "cvVersionHash"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [],
@@ -1551,6 +1648,171 @@
         "readOnlyHint": true,
         "destructiveHint": false,
         "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_native_journey",
+      "description": "Read the saved career step, original account and bounded uncertain intent references before continuing. This context is not authority to act or proof of an outcome.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "companyId": {
+            "type": "string"
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          }
+        },
+        "required": [
+          "companyId"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "record_native_checkpoint",
+      "description": "Save the exact active career step before a handoff or context change with expectedRevision (0 initially). A stale revision requires read/merge/retry. Needs you requires a specific blocker and actionable next step. Preserve original account and intent identity; no secrets or authentication callback URLs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "claimToken": {
+            "type": "string"
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "check_jobs",
+              "match_jobs",
+              "sign_in",
+              "register",
+              "profile",
+              "cv_upload",
+              "application",
+              "complete"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "working",
+              "needs_you"
+            ]
+          },
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "sign_in",
+              "credential",
+              "consent",
+              "identity",
+              "captcha",
+              "verification",
+              "cv_file",
+              "missing_fact",
+              "tool_unavailable",
+              "source_error",
+              "submission_uncertain"
+            ]
+          },
+          "nextStep": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "accountEmail": {
+            "type": "string",
+            "maxLength": 320
+          },
+          "intentId": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "runId",
+          "companyId",
+          "claimToken",
+          "stage",
+          "status",
+          "nextStep",
+          "expectedRevision"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "resume_native_run",
+      "description": "Resume only an explicitly selected original target in a fresh single-company Run with the original actor/actions and structural filters. Requires explicit:true and an ended original Run; never renews an old claim or bypasses uncertain submissions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "assistant": {
+            "type": "string",
+            "enum": [
+              "codex",
+              "claude-code"
+            ]
+          },
+          "explicit": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "runId",
+          "companyId",
+          "explicit"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
         "openWorldHint": false
       }
     },

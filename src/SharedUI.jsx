@@ -38,7 +38,7 @@ export function Editable({ value, label, placeholder, onSave, display }) {
   </button>;
 }
 
-export function Modal({ title, close, children, t, narrow = false, wide = false, footer, pending = false, dirty = false }) {
+export function Modal({ title, close, children, t, narrow = false, wide = false, footer, headerStart, pending = false, dirty = false }) {
   const ref = useRef(null), previousEditing = useRef(null), state = useRef({});
   const [saving, setSaving] = useState(false), [formDirty, setFormDirty] = useState(false), [discard, setDiscard] = useState(false);
   const titleId = useId(), notification = React.useContext(ModalNotification);
@@ -107,7 +107,7 @@ export function Modal({ title, close, children, t, narrow = false, wide = false,
     <section ref={ref} tabIndex={-1} className={'dialog ' + (narrow ? 'narrow ' : '') + (wide ? 'wide' : '')}
       role="dialog" aria-modal="true" aria-labelledby={titleId} aria-busy={pending || saving}
       onClickCapture={e => { if (e.target.closest('[data-modal-close]')) { e.preventDefault(); e.stopPropagation(); requestClose(); } }}>
-      <header className="dialog-header"><h2 id={titleId}>{discard ? t('Discard unsaved changes?') : title}</h2>
+      <header className={`dialog-header${!discard && headerStart ? ' dialog-header-with-back' : ''}`}>{!discard && headerStart}<h2 id={titleId}>{discard ? t('Discard unsaved changes?') : title}</h2>
         {!discard && <button className="icon-button" aria-label={t('Close')} onClick={requestClose} disabled={pending || saving}><X /></button>}
       </header>
       {discard && <div className="dialog-content discard-changes"><p>{t('Your changes have not been saved.')}</p><div className="form-actions">

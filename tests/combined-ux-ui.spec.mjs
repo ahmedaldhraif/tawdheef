@@ -174,7 +174,7 @@ test('the overview opens Native Monitoring containing local Reports & replies wi
   expect(after.status.externalScheduleStatus).toBe(before.status.externalScheduleStatus);
 });
 
-test('Native Email saves an optional local contact hint without changing reported account or sender metadata', async ({ page, request }) => {
+test('Native Email saves the intended new-account email without changing reported account or sender metadata', async ({ page, request }) => {
   const { directory } = await fixture(request, 'Contact hint');
   const accountEmail = 'reported-owner@example.test';
   await json(request, '/api/native/client/report', 'post', {
@@ -195,18 +195,18 @@ test('Native Email saves an optional local contact hint without changing reporte
   await page.getByRole('dialog', { name: 'Email', exact: true }).getByRole('button', { name: 'Gmail', exact: true }).click();
   const panel = page.getByRole('dialog', { name: 'Gmail', exact: true });
   await expect(panel.getByText(accountEmail, { exact: true })).toBeVisible();
-  await expect(panel.getByRole('textbox', { name: 'Contact email (optional)', exact: true })).toHaveCount(0);
-  await panel.locator('.native-contact-hint > summary').filter({ hasText: /^Contact email \(optional\)$/ }).click();
-  await expect(panel).toContainText('Optional hint for your assistant. It confirms the account and sender.');
-  const edit = panel.getByRole('button', { name: 'Edit Contact email (optional)', exact: true });
-  await expect(edit).toContainText('Add contact email');
+  await expect(panel.getByRole('textbox', { name: 'Email for new accounts', exact: true })).toHaveCount(0);
+  await expect(panel.locator('.native-contact-label')).toHaveText('Email for new accounts');
+  await expect(panel).toContainText('Your assistant checks this mailbox. Existing accounts keep their sign-in.');
+  const edit = panel.getByRole('button', { name: 'Edit Email for new accounts', exact: true });
+  await expect(edit).toContainText('Use the observed mailbox');
   await edit.click();
-  const hint = panel.getByRole('textbox', { name: 'Contact email (optional)', exact: true });
+  const hint = panel.getByRole('textbox', { name: 'Email for new accounts', exact: true });
   await hint.fill('discarded-hint@example.test');
   await hint.press('Escape');
   await expect(panel).toBeVisible();
   await expect(edit).toBeFocused();
-  await expect(edit).toContainText('Add contact email');
+  await expect(edit).toContainText('Use the observed mailbox');
   expect((await json(request, '/api/settings')).applicationEmail).toBe('');
   expect(writes).toEqual([]);
   await edit.click();
@@ -559,7 +559,7 @@ for (const language of ['en', 'ar']) for (const width of [320, 1440]) {
       language: ar ? 'اللغة' : 'Language', timezone: ar ? 'المنطقة الزمنية' : 'Time zone',
       careers: ar ? 'صفحة الوظائف' : 'Careers page availability', profile: ar ? 'الحساب / الملف المهني' : 'Account / profile',
       evidence: ar ? 'المصدر أو السبب' : 'Source or reason', connections: ar ? 'الاتصالات' : 'Connections',
-      contact: ar ? 'بريد التواصل (اختياري)' : 'Contact email (optional)',
+      contact: ar ? 'البريد للحسابات الجديدة' : 'Email for new accounts',
     };
     const capture = async (name, dialog) => {
       await expectContained(page, dialog, labels.close);
@@ -598,7 +598,7 @@ for (const language of ['en', 'ar']) for (const width of [320, 1440]) {
     await page.getByRole('dialog', { name: labels.connections, exact: true }).getByRole('button', { name: ar ? /^البريد —/ : /^Email —/ }).click();
     await page.getByRole('dialog', { name: ar ? 'البريد' : 'Email', exact: true }).getByRole('button', { name: 'Gmail', exact: true }).click();
     panel = page.getByRole('dialog', { name: 'Gmail', exact: true });
-    await panel.locator('.native-contact-hint > summary').filter({ hasText: labels.contact }).click();
+    await expect(panel.locator('.native-contact-label')).toHaveText(labels.contact);
     await panel.getByRole('button', { name: `Edit ${labels.contact}`, exact: true }).click();
     const hint = panel.getByRole('textbox', { name: labels.contact, exact: true });
     await hint.fill('responsive-hint@example.test');

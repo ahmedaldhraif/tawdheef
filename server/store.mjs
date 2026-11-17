@@ -750,8 +750,10 @@ export function openStore({
         const apps = store.listApplications().filter(application => relatedIds.has(application.companyId));
         const previous = apps.find(a => a.idempotencyKey === key || (purpose !== 'application' && a.method === 'form' && a.purpose === purpose && a.deliveryStatus === 'confirmed' && a.url && formDestination(a.url) === formDestination(url)));
         if (previous) return { application: previous, reused: true, nextStep: 'Inspect this existing intent. Do not submit again.' };
+        const registrationIdentity = run.native && purpose === 'account' ? native.assertNativeRegistrationIdentity({ assistant: run.assistant }) : null;
         store.checkSubmission({ ...input, purpose });
         const a = { id: id('application'), companyId: input.companyId, runId: input.runId, monitoredJobId: input.monitoredJobId || null, role: text(input.role, 500), method: 'form', purpose, url, idempotencyKey: key, status: 'prepared', deliveryStatus: 'unknown', notes: 'Submission reserved. Inspect the form for a receipt before any retry.', createdAt: now(), updatedAt: now() };
+        if (registrationIdentity) { a.nativeAssistant = run.assistant; a.registrationEmail = registrationIdentity.accountEmail; a.registrationProvider = registrationIdentity.provider; }
         db.prepare('INSERT INTO applications VALUES(?,?,?)').run(a.id, a.companyId, JSON.stringify(a));
         activity('form_submission_started', a.role || 'Application form', a.companyId);
         return { application: a, reused: false, nextStep: 'Submit this form once, then resolve the intent with its actual receipt.' };

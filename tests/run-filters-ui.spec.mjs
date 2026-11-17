@@ -51,6 +51,7 @@ async function fakeRun(page, directory) {
   return () => submitted;
 }
 test.beforeEach(async ({ page, request }) => {
+  expect((await request.patch('/api/settings', { data: { language: 'en' } })).ok()).toBe(true);
   page.__pendingRouteReleases = [];
   page.__filterErrors = [];
   page.on('pageerror', error => page.__filterErrors.push(error.message));
@@ -122,7 +123,7 @@ test('multiple type and city choices narrow the table and checked rows alone are
   const companyId = companies.items.find(item => item.name === 'Filter Private').id;
   const sent = await fakeRun(page, directory);
   const dialog = await openRun(page);
-  await expect(dialog.getByRole('status')).toContainText('1 selected company');
+  await expect(dialog.locator('.dialog-intro[role="status"]')).toContainText('1 selected company');
   await dialog.getByRole('button', { name: 'Run on 1 selected', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Run progress', exact: true })).toBeVisible();
   expect(sent().companyIds).toEqual([companyId]);
@@ -154,7 +155,7 @@ test('Run includes every filtered company across pages and applies search and st
   const directory = await openFixture(page, request, 'Guided paginated scope', Array.from({ length: 130 }, (_, i) => ({ name: `Engineer ${String(i).padStart(3, '0')}`, type: 'Private company', location: 'Dubai' })));
   await expect(mainRun(page)).toHaveText('Run on 130 companies');
   const dialog = await openRun(page);
-  await expect(dialog.getByRole('status')).toContainText('130 companies');
+  await expect(dialog.locator('.dialog-intro[role="status"]')).toContainText('130 companies');
   await expect(dialog.getByRole('button', { name: 'Run on 130 companies', exact: true })).toHaveText('Run');
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search companies', exact: true }).fill('Engineer 12');

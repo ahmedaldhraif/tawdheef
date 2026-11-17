@@ -928,7 +928,7 @@ tbody tr:last-child td {
   font-weight: 500;
   margin-bottom: 16px;
 }
-.dialog input:not([type="checkbox"]):not([type="file"]),
+.dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .dialog select,
 .dialog textarea {
   width: 100%;
@@ -1931,7 +1931,7 @@ td {
   white-space: nowrap;
   border: 0;
 }
-.dialog input:not([type="checkbox"]):not([type="file"]),
+.dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .dialog select,
 .dialog textarea {
   font-size: 14px;
@@ -2323,7 +2323,7 @@ a:active {
   .selection-toolbar select,
   .selection-toolbar button,
   .status-filters button,
-  .dialog input:not([type="checkbox"]):not([type="file"]),
+  .dialog input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
   .dialog select,
   .dialog textarea {
     min-height: 44px;

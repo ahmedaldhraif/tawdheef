@@ -60,7 +60,7 @@ export async function configureAgent(client, options = {}) {
     ...(result.backup ? { backup: result.backup } : {}),
     included: config.included,
     accountConnected: false,
-    nextStep: options.monitor ? `Open ${JSON.stringify(workspace)} in the selected native client. Each client has its own bound monitoring identity. Use Copy schedule request to create one local native task. This setup command did not create a schedule.` : `Open ${JSON.stringify(workspace)} in the chosen client and accept its project/server trust prompt. Ask it to read AGENTS.md and get_native_client_status, inspect its actual Tabbio/email/calendar/browser/password-manager tools and guide only missing native setup. Report observed access through report_native_connection; configuration alone is not connected. No applications, profiles, CV sharing or schedules during setup.`
+    nextStep: options.monitor ? `Open ${JSON.stringify(workspace)} in the selected native client. Each client has its own bound monitoring identity. Use Copy schedule request to create one local native task. This setup command did not create a schedule.` : `Open ${JSON.stringify(workspace)} in the chosen client and accept its project/server trust prompt. Ask it to read AGENTS.md, get_agent_context, get_capabilities and get_native_readiness. Reuse working connections and the same browser/account; check the intended mailbox, readable CV, real upload file and supported browser access together. Report dated non-secret observations through report_native_connection, then guide only the missing step. Configuration alone is not connected. No applications, profiles, CV sharing or schedules during setup.`
   };
 }
 

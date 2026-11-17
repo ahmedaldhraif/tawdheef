@@ -13,7 +13,7 @@ import { createClientConfig, integrationStatus } from './integrations.mjs';
 import { monitoringRecipe, capabilityRecipe, registrationContext } from './client-guidance.mjs';
 import { saveCvArtifact, getCvArtifactStatus, stageCvArtifact, MAX_CV_ARTIFACT_BYTES } from './cv-artifacts.mjs';
 import { assertRunPurpose } from '../src/run-actions.js';
-import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus } from './native-guidance.mjs';
+import { nativeConnectionRequest, nativeRunRequest, nativeSetupStatus, nativeSetupRequest } from './native-guidance.mjs';
 import { createDirectoryPacks } from './directory-packs.mjs';
 import { discoveryReviewRequest } from './job-discovery-guidance.mjs';
 
@@ -25,6 +25,7 @@ const store = openStore();
 const directoryPacks = createDirectoryPacks({ store, root: ROOT });
 const setupStatus = input => nativeSetupStatus({ store, ...input });
 const nativeRun = input => { const result = store.startNativeRun({ assistant: store.getSettings().preferredAssistant, ...input }); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; };
+const nativeReadiness = async input => store.getNativeReadiness(input, { localCvFile: await getCvArtifactStatus({ dataDir: store.dataDir }) });
 const historicalRun = run => run.native ? run : { ...run, retired: true, runnable: false };
 const runView = id => { const run = store.getRun(id); return run.native ? { ...store.getNativeRun({ runId: id }), targets: store.listNativeTargets({ runId: id, limit: 20 }).items } : historicalRun(run); };
 const stopRun = id => {
@@ -100,11 +101,17 @@ app.get('/api/setup-status', wrap(req => setupStatus(req.query.assistant ? { ass
 app.post('/api/setup-status/check', wrap(req => setupStatus({ ...req.body, verify: true })));
 app.get('/api/native/client', wrap(req => store.getNativeClientStatus(req.query.assistant ? { assistant: req.query.assistant } : {})));
 app.post('/api/native/client/report', wrap(req => store.reportNativeConnection(req.body)));
+app.get('/api/native/readiness', wrap(req => nativeReadiness(req.query.assistant ? { assistant: req.query.assistant } : {})));
+app.post('/api/native/readiness', wrap(req => nativeReadiness(req.body)));
+app.post('/api/native/setup-request', wrap(req => nativeSetupRequest({ store, ...req.body })));
+app.get('/api/native/journey', wrap(req => store.getNativeJourney({ companyId: req.query.companyId, ...(req.query.assistant ? { assistant: req.query.assistant } : {}) })));
 app.get('/api/native/connection-request', wrap(req => nativeConnectionRequest({ store, ...req.query })));
 app.post('/api/native/runs', wrap(req => nativeRun(req.body)));
 app.post('/api/native/runs/:id/request', wrap(req => nativeRunRequest({ store, runId: req.params.id })));
 app.post('/api/native/runs/:id/claim', wrap(req => store.claimNativeTarget({ ...req.body, runId: req.params.id })));
 app.post('/api/native/runs/:id/finish', wrap(req => store.finishNativeTarget({ ...req.body, runId: req.params.id })));
+app.post('/api/native/runs/:id/checkpoint', wrap(req => store.recordNativeCheckpoint({ ...req.body, runId: req.params.id })));
+app.post('/api/native/runs/:id/resume', wrap(req => { const result = store.resumeNativeRun({ assistant: store.getSettings().preferredAssistant, ...req.body, runId: req.params.id }); return { ...result, handoff: nativeRunRequest({ store, runId: result.run.id }) }; }));
 app.post('/api/native/runs/:id/claim/check', wrap(req => store.getNativeClaim({ ...req.body, runId: req.params.id })));
 app.post('/api/native/email/prepare', wrap(req => store.prepareNativeEmail(req.body)));
 app.post('/api/native/email/resolve', wrap(req => store.resolveNativeEmail(req.body)));

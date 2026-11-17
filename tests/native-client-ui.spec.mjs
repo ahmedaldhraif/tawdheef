@@ -34,6 +34,14 @@ test.beforeEach(async ({ page, request }) => {
     if (cleanup) cleanup.completed = true;
   });
   await page.route('**/api/native/client?*', route => route.fulfill({ json: page.__nativeClient }));
+  await page.route('**/api/native/readiness*', route => {
+    const input = route.request().method() === 'POST' ? route.request().postDataJSON() : Object.fromEntries(new URL(route.request().url()).searchParams);
+    return route.fulfill({ json: { assistant: input.assistant || page.__nativeAssistant, status: 'unknown', ready: false, actions: input.actions || { applyMatchingJobs: true, createProfiles: true, sendCvEmails: false }, clientReported: true, independentlyVerified: false, checkedAt: null, checks: [{ id: 'cv', label: 'Readable CV', status: 'unknown', required: true, detail: 'Ask your actual assistant to read the selected CV.' }, { id: 'uploadFile', label: 'CV upload file', status: 'optional', required: false, detail: 'Needed only when a career site asks for a file.' }], nextStep: { id: 'cv', title: 'Read your CV in the selected assistant.', action: 'cv' }, intendedEmail: null, observedEmail: page.__nativeClient.primaryEmail } });
+  });
+  await page.route('**/api/native/setup-request', route => {
+    const input = route.request().postDataJSON(); page.__nativeRequests.push({ ...input, kind: 'setup' });
+    return route.fulfill({ json: { prompt: `Fixture ${input.assistant} complete setup. Reuse existing connections; do not send or submit.` } });
+  });
   await page.route('**/api/native/connection-request?*', route => {
     const input = Object.fromEntries(new URL(route.request().url()).searchParams); page.__nativeRequests.push(input);
     return route.fulfill({ json: { assistant: input.assistant, prompt: `Fixture ${input.assistant} ${input.kind} ${input.provider || ''} setup. Check your actual client tools; do not send or submit.` } });
@@ -88,7 +96,7 @@ test('native connections keep six familiar categories and never probe local prov
   const dialog = await openConnections(page);
   await expect(dialog.locator('.connection-category-row')).toHaveCount(6);
   await expect(dialog.getByRole('button', { name: 'Assistant — Codex', exact: true })).toBeVisible();
-  for (const label of ['Tabbio CV', 'Email', 'Calendar', 'Browser & computer use', 'Passwords']) await expect(dialog.getByRole('button', { name: `${label} — Unknown`, exact: true })).toBeVisible();
+  for (const label of ['Tabbio CV', 'Email', 'Calendar', 'Browser & computer use', 'Passwords']) await expect(dialog.getByRole('button', { name: `${label} — ${['Calendar', 'Passwords'].includes(label) ? 'Optional' : 'Not checked'}`, exact: true })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Check connections', exact: true })).toHaveCount(0);
   await expect(dialog.getByText('Connected', { exact: true })).toHaveCount(0);
   expect(page.__nativeRequests).toEqual([]); expect(page.__nativeWrites).toEqual([]);
@@ -100,7 +108,7 @@ test('email setup copies a request to the chosen actual client without showing O
   await dialog.getByRole('button', { name: 'Assistant — Codex', exact: true }).click();
   await dialog.getByRole('radio', { name: 'Use Claude Code', exact: true }).check();
   await dialog.getByRole('button', { name: 'Back to connections', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Email — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Email — Not checked', exact: true }).click();
   await dialog.locator('[data-connection-provider="gmail"]').click();
   await expect(dialog.getByRole('textbox')).toHaveCount(0);
   await expect(dialog.getByText('Claude Code', { exact: true })).toBeVisible();
@@ -120,7 +128,8 @@ test('native capability reports remain dated client reports and keep browser sep
   const dialog = await openConnections(page);
   await dialog.getByRole('button', { name: 'Email — Client reported', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Client reported');
-  await expect(dialog.getByRole('status')).toContainText('Reported');
+  await dialog.getByText('Connection details', { exact: true }).click();
+  await expect(dialog.locator('.native-connection-details')).toContainText('Reported');
   await expect(dialog.getByRole('status')).toContainText('fixture@example.test');
   await expect(dialog).not.toContainText('Connected');
   await dialog.getByRole('button', { name: 'Back to connections', exact: true }).click();
@@ -129,16 +138,16 @@ test('native capability reports remain dated client reports and keep browser sep
   await expect(dialog).toContainText('Enable supported computer tools in your actual client.');
   await dialog.getByRole('button', { name: 'Back to connections', exact: true }).click();
   await dialog.getByRole('button', { name: 'Assistant — Codex', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Tracker used');
+  await expect(dialog.getByRole('status')).toContainText('Local connection observed');
   await expect(dialog.getByRole('status')).not.toContainText('Client reported');
 });
 
 test('Tabbio CV uses native MCP guidance and keeps an optional local original file', async ({ page }) => {
   await page.route('**/api/cv/file', route => route.fulfill({ json: { available: false, code: 'CV_ARTIFACT_MISSING' } }));
   const dialog = await openConnections(page);
-  await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Tabbio CV — Not checked', exact: true }).click();
   await expect(dialog.getByRole('link', { name: 'Create a CV in Tabbio', exact: true })).toHaveAttribute('href', 'https://www.tabbio.com/en');
-  await expect(dialog).toContainText('Connect Tabbio MCP in your assistant');
+  await expect(dialog).toContainText('Use Tabbio in your assistant to read your real CV.');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect.poll(() => page.__nativeRequests.at(-1)).toMatchObject({ assistant: 'codex', kind: 'cv' });
   await dialog.locator('.cv-original-file > summary').click();
@@ -150,7 +159,7 @@ test('the original CV control saves exact local bytes and rejects a bad replacem
   const original = Buffer.from('%PDF-1.7\nSynthetic original for isolated interface verification.\n%%EOF\n');
   await page.route('**/api/cv/file', route => route.continue());
   const dialog = await openConnections(page);
-  await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Tabbio CV — Not checked', exact: true }).click();
   await dialog.locator('.cv-original-file > summary').click();
   const input = dialog.getByLabel('CV file', { exact: true });
   await input.setInputFiles({ name: 'Synthetic original.pdf', mimeType: 'application/pdf', buffer: original });
@@ -196,8 +205,8 @@ test('native run needs no CLI and waits for the existing client with selected ac
 test('blocked clipboard preserves native setup request as selectable text', async ({ page }) => {
   const dialog = await openConnections(page);
   await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error('Clipboard unavailable'); }; });
-  await dialog.getByRole('button', { name: 'Passwords — Unknown', exact: true }).click();
-  await expect(dialog).toContainText('Website passwords stay in your browser or password manager.');
+  await dialog.getByRole('button', { name: 'Passwords — Optional', exact: true }).click();
+  await expect(dialog).toContainText('Use a unique password for each career site through your assistant’s supported password manager. Reuse existing accounts.');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect(dialog.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveValue(/codex passwordManager/);
   await expect(dialog).not.toContainText('Connected');
@@ -246,7 +255,7 @@ test('native connections remain usable at 320px without exposing adapter control
   await expectReadableCategories(dialog);
   await capture(page, 'en-connections-320');
   await expect(dialog.getByRole('combobox', { name: 'Connections managed by', exact: true })).toBeHidden();
-  await dialog.getByRole('button', { name: 'Calendar — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Calendar — Optional', exact: true }).click();
   await dialog.locator('[data-connection-provider="icloud-calendar"]').click();
   await expect(dialog.getByRole('button', { name: 'Copy setup request', exact: true })).toBeVisible();
   await capture(page, 'en-provider-320');
@@ -260,10 +269,10 @@ for (const width of [320, 1440]) test(`Arabic native client connections and cale
   const dialog = page.getByRole('dialog');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(dialog.locator('.connection-category-row')).toHaveCount(6);
-  await expect(dialog.getByRole('button', { name: 'البريد — غير معروف', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'البريد — لم يُفحص', exact: true })).toBeVisible();
   await expectReadableCategories(dialog);
   await capture(page, `ar-connections-${width}`);
-  await dialog.getByRole('button', { name: 'البريد — غير معروف', exact: true }).click();
+  await dialog.getByRole('button', { name: 'البريد — لم يُفحص', exact: true }).click();
   await dialog.locator('[data-connection-provider="gmail"]').click();
   await expect(dialog.getByText('اربط بريدك في تطبيق مساعدك. يحتفظ توظيف بالنتائج المسجلة.', { exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: 'نسخ طلب الإعداد', exact: true }).click();
@@ -295,7 +304,7 @@ test('saved legacy mode cannot expose adapters or change the actual client owner
   await expect(dialog.locator('.connection-category-row')).toHaveCount(6);
   await expect(dialog.getByText('Advanced compatibility', { exact: true })).toHaveCount(0);
   await expect(dialog.getByRole('combobox', { name: 'Connections managed by', exact: true })).toHaveCount(0);
-  await dialog.getByRole('button', { name: 'Email — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Email — Not checked', exact: true }).click();
   await dialog.getByRole('button', { name: 'Gmail', exact: true }).click();
   await expect(dialog.getByText('Connect your email in your assistant. Tawdheef keeps the recorded outcomes.', { exact: true })).toBeVisible();
   await expect(dialog.locator('input[type="password"]')).toHaveCount(0);

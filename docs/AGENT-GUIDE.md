@@ -10,6 +10,15 @@ Setup is separate from job-search operation. Install only missing project tools,
 
 Call get_setup_status, get_agent_context, get_capabilities and get_native_client_status. Inspect the client's actual tools before report_native_connection. Reports are per assistant, dated and client-reported; readiness observations expire after 24 hours. Unknown means unreported/unverified, not disconnected. Refresh from actual tools; never invent availability.
 
+Call `get_native_readiness` with the selected actions for one combined check.
+Reuse fresh reports, working connections and the same browser session. Check
+the actual mailbox against the intended contact email, readable CV source/hash,
+real upload file and browser or computer access. Calendar/password-manager
+access is conditional. A signed-in Tabbio browser can supply the authorized CV
+when the client's MCP connection is unavailable; report the method actually used.
+Readiness is client-reported metadata, never an external probe or new authority.
+See [Native onboarding and continuation](NATIVE-WORKFLOW.md).
+
 Save only bounded provider/account identifiers, actual calendar IDs and minimal CV source metadata. No raw CV, passwords, tokens, cookies, vault exports or credential files belong here. Primary email comes only from a fresh available mailbox report, never a CV or guessed provider address. Local Tawdheef tool-use timestamps do not independently prove external sign-in/model access. Native setup needs no app-owned OAuth registration or paid model probe.
 
 ## Connect once
@@ -54,7 +63,7 @@ stale assessments and clear Needs you items are separate from applications.
 
 Only an explicit user request starts sending/submitting authority. The screen initially chooses matching jobs and profiles, with CV-only emails off. Read the actual saved actions. Machine calls omitting actions retain application-only compatibility defaults.
 
-Apply only to suitable current roles based on the real CV and requested locations. Use selected future-opportunity actions after a successful search finds no suitable role. A blocked search is not proof of no match. With applications off, perform only the selected future actions. Reuse accounts/profiles; never invent eligibility or experience.
+Apply only to suitable current roles based on the real CV and requested locations. Selected profile work is independent: reuse or complete the profile even when a matching vacancy exists. Selected CV-only emails are for future opportunities after a successful search finds no suitable role, or on their own when applications are off. A blocked search is not proof of no match. Reuse accounts/profiles; never invent eligibility or experience.
 
 1. Preview the intended filters/selection/actions. start_native_run requires the same scope, selected assistant, explicit:true and mode:"send_and_submit". UI Run already creates authority: continue its handoff, not a second Run.
 2. Read get_native_run, then claim_native_target. Work only on the returned company and retain its claimToken. list_native_targets pages progress.
@@ -65,6 +74,34 @@ Apply only to suitable current roles based on the real CV and requested location
 Search/status/attention/type/location filters combine. Values within an array use OR; separate filters use AND. Selected IDs intersect filters. Explicit companyIds:[] means no targets. Use returned facet IDs. Pagination never caps a Run.
 
 Native Run starts no subprocess and needs no separate CLI/model proof. One active claim lasts up to an hour. Stop, expiry and app restart revoke authority and require a fresh explicit Run; uncertain intents survive. This does not independently terminate a task in the user's client: stop that task too if needed. The app supports Native connections only.
+
+### Continue a saved step
+
+Claims include the company's saved journey; `get_native_journey` reads it
+separately without granting authority. Inspect its checkpoint, confirmed
+progress and bounded original pending intents before acting. Use the client's
+supported tools for ordinary actions already authorized by the Run; do not ask
+for generic confirmation at every company.
+
+An actual sign-in, credential, consent, identity, verification, missing fact or
+unsupported tool can produce **Needs you**. Save the exact stage and one next
+action through `record_native_checkpoint` with the active claim and
+`expectedRevision` (zero for a first checkpoint). A conflict means read, merge
+and retry. Then finish the blocked attempt
+and continue other permitted companies, or stop for a global client problem.
+Checkpoints never store credentials or count as application/profile receipts.
+
+After a Run ends, a user-selected Resume starts a new explicit Run for only the
+original company and assistant, preserving the original actions and structural
+scope. Keep all original filters in the history; changed status/attention from
+the first attempt must not prevent an explicitly selected continuation.
+Machine clients use `resume_native_run` with the original Run/company and
+`explicit:true` only after the person requests that continuation.
+Read the actual page/provider outcome after the handoff; a user saying “done”
+does not itself prove registration, sign-in or submission. Reuse existing
+accounts with their original login. Never change an uncertain intent's identity
+or create another key to bypass it. Stop/expiry/restart preserves the checkpoint
+but revokes its old claim and sending authority.
 
 ### Native email receipts
 
@@ -81,6 +118,15 @@ Before a new registration, read get_registration_context and fresh Native mailbo
 The client's supported browser/password manager owns credentials. Tawdheef never inspects vaults or verifies autofill. Ask for required unlock, CAPTCHA, approvals and declarations. Keep only a non-secret manager reference/login email with actual account evidence.
 
 Read CV facts and obtain its real original file/link through the client's own Tabbio/file tools. The person may optionally select their original PDF/DOCX locally: get_cv_file returns metadata and prepare_cv_attachment stages exact bytes for an active claimed cv_upload. This opens no provider connection, verifies no candidate facts and performs no upload. The actual client uses the file with its own supported browser tools. Do not generate a CV from JSON, invent paths/export URLs, publish it or change visibility. Immediately before final Submit call prepare_form_submission with the active claim and actual purpose (application/account/profile/cv_upload/talent_pool). Reused means inspect; resolve only actual confirmation. Clearing an uncertain form needs explicit user confirmation and verified evidence.
+
+For an upload file already accessible to the actual client, report
+`cv.uploadFile` in `report_native_connection`: `name`, PDF/DOCX `mimeType`, exact
+`sizeBytes` and `sha256`, a real non-secret `reference`, `cvSourceId` and
+`cvVersionHash`. Keep it bound to the current CV source/version and exclude
+signed download links. This dated report does not stage bytes or perform an
+upload. Report `accessMethod` as the actual `mcp`, `browser`, `computer`, `file`
+or `other` route. Changed CV reports invalidate file metadata that no longer
+matches. An optional locally selected file proves its exact bytes, not CV facts.
 
 ## Background connections and schedules
 

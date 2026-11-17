@@ -8,6 +8,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { openStore } from '../server/store.mjs';
 import { createMcpServer } from '../server/mcp.mjs';
 import { NATIVE_MONITOR_TOOLS } from '../server/native-mcp-tools.mjs';
+import { nativeRunRequest } from '../server/native-guidance.mjs';
 
 const keys = ['APPLY_TRACKER_CLIENT', 'APPLY_TRACKER_CONNECTION_MODE', 'APPLY_TRACKER_DATA', 'APPLY_TRACKER_PORT', 'APPLY_TRACKER_MONITOR', 'APPLY_TRACKER_MONITOR_ASSISTANT', 'APPLY_TRACKER_OPERATOR_RUN', 'APPLY_TRACKER_OPERATOR_COMPANY', 'APPLY_TRACKER_DIAGNOSTIC', 'APPLY_TRACKER_DIAGNOSTIC_RECEIPT'];
 const unpack = result => result.structuredContent || JSON.parse(result.content[0].text);
@@ -30,8 +31,9 @@ async function fixture(t) {
       if (url.pathname === '/api/health') return response({ app: 'apply-tracker' });
       if (url.pathname === '/api/agent-config') return response({ mcpServers: { 'apply-tracker': { env: { APPLY_TRACKER_DATA: dataDir } } } });
       if (url.pathname === '/api/native/runs') return response(store.startNativeRun(body));
-      const run = url.pathname.match(/^\/api\/native\/runs\/([^/]+)\/(claim|finish)$/);
-      if (run) return response(run[2] === 'claim' ? store.claimNativeTarget({ runId: decodeURIComponent(run[1]), ...body }) : store.finishNativeTarget({ runId: decodeURIComponent(run[1]), ...body }));
+      if (url.pathname === '/api/native/readiness') return response(store.getNativeReadiness(body));
+      const run = url.pathname.match(/^\/api\/native\/runs\/([^/]+)\/(claim|finish|checkpoint|resume)$/);
+      if (run) return response(store[({ claim: 'claimNativeTarget', finish: 'finishNativeTarget', checkpoint: 'recordNativeCheckpoint', resume: 'resumeNativeRun' })[run[2]]]({ runId: decodeURIComponent(run[1]), ...body }));
       const stop = url.pathname.match(/^\/api\/runs\/([^/]+)\/stop$/);
       if (stop) return response(store.stopNativeRun({ runId: decodeURIComponent(stop[1]) }));
       if (url.pathname === '/api/native/email/prepare') return response(store.prepareNativeEmail(body));
@@ -89,7 +91,7 @@ test('Native SDK exposes normalized evidenced route findings and profile-only el
 test('actual Native MCP defaults to local guidance and dated actor-bound metadata without inspecting legacy providers or CVs', async t => {
   const { store, connect, requests } = await fixture(t), client = await connect();
   const names = (await client.listTools()).tools.map(tool => tool.name);
-  assert.equal(names.length, 69); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
+  assert.equal(names.length, 73); assert.ok(names.includes('start_native_run')); assert.ok(names.includes('prepare_native_email'));
   for (const name of ['list_directory_packs', 'get_directory_pack', 'preview_directory_pack', 'install_directory_pack', 'remove_directory_pack', 'list_monitors', 'get_monitor_results', 'get_run_targets']) assert.ok(names.includes(name), name);
   for (const name of ['save_monitor', 'set_monitor_status', 'check_monitor', 'record_monitored_jobs']) assert.ok(!names.includes(name), name);
   for (const name of ['get_cv', 'configure_connection', 'connect_connection', 'get_connection_tools', 'refresh_replies', 'send_application_email', 'list_calendars', 'create_calendar_event']) assert.ok(!names.includes(name), name);
@@ -126,6 +128,42 @@ test('Native MCP proxies new Run authority, enforces active form claims and perm
   assert.equal((await client.callTool({ name: 'log_application', arguments: { id: resolved.id, runId, companyId: 'alpha', status: 'replied', role: 'Changed immutable role' } })).isError, true);
   assert.equal((await client.callTool({ name: 'check_submission', arguments: { ...key, role: 'Another role' } })).isError, true);
   assert.equal(store.getNativeRun({ runId }).outcomes.applicationsSent, 1);
+});
+
+test('Native SDK checks reported readiness and resumes an exact revision-checked step without reviving an uncertain account submission', async t => {
+  const { store, connect, requests } = await fixture(t), client = await connect();
+  await call(client, 'get_agent_context');
+  const cvHash = 'a'.repeat(64), observedAt = new Date().toISOString();
+  await call(client, 'report_native_connection', { kind: 'cv', status: 'available', observedAt, provider: 'tabbio', accessMethod: 'browser', cv: { id: 'synthetic-current-cv', versionHash: cvHash, uploadFile: { name: 'Synthetic CV.pdf', mimeType: 'application/pdf', sizeBytes: 150, sha256: 'b'.repeat(64), reference: 'synthetic-original-file-ref', cvSourceId: 'synthetic-current-cv', cvVersionHash: cvHash } } });
+  await call(client, 'report_native_connection', { kind: 'email', status: 'available', observedAt, provider: 'gmail', accessMethod: 'browser', accountEmail: 'personal@example.test' });
+  await call(client, 'report_native_connection', { kind: 'browser', status: 'available', observedAt, provider: 'native-browser', accessMethod: 'browser' });
+  const readiness = await call(client, 'get_native_readiness', { actions: startInput.actions });
+  assert.equal(readiness.ready, true); assert.equal(readiness.independentlyVerified, false); assert.equal(readiness.readyForUploads, true);
+  assert.equal(readiness.checks.find(check => check.id === 'passwordManager').required, false);
+  const instructions = 'UAE government HR roles only.\nKeep existing accounts and settings.';
+  const started = await call(client, 'start_native_run', { ...startInput, status: 'not_started', instructions });
+  assert.equal((await call(client, 'get_native_run', { runId: started.run.id })).instructions, instructions);
+  assert.ok(nativeRunRequest({ store, runId: started.run.id }).prompt.includes(JSON.stringify(instructions)), 'the actual handoff exposes the saved user constraint');
+  const lease = await call(client, 'claim_native_target', { runId: started.run.id }), key = ownership(lease);
+  const intent = await call(client, 'prepare_form_submission', { ...key, purpose: 'account', role: 'Career account', url: 'https://careers.example.com/register' });
+  const cpInput = { ...key, expectedRevision: 0, stage: 'register', status: 'needs_you', reasonCode: 'credential', nextStep: 'Complete this permitted credential step, then inspect the account result.', url: 'https://careers.example.com/register', intentId: intent.application.id };
+  const saved = await call(client, 'record_native_checkpoint', cpInput);
+  assert.equal(saved.checkpoint.accountEmail, 'personal@example.test'); assert.equal(saved.run.currentCheckpoint.status, 'needs_you');
+  assert.equal((await client.callTool({ name: 'record_native_checkpoint', arguments: cpInput })).isError, true, 'stale same-token retries must not overwrite the next step');
+  await call(client, 'stop_run', { id: started.run.id });
+  assert.equal((await client.callTool({ name: 'record_native_checkpoint', arguments: { ...cpInput, expectedRevision: 1 } })).isError, true);
+  assert.equal((await client.callTool({ name: 'resume_native_run', arguments: { runId: started.run.id, companyId: 'beta', explicit: true } })).isError, true);
+  const resumed = await call(client, 'resume_native_run', { runId: started.run.id, companyId: 'alpha', explicit: true });
+  assert.equal(resumed.run.total, 1); assert.equal(resumed.run.resumedFrom, started.run.id); assert.equal(resumed.run.originalFilters.status, 'not_started');
+  assert.equal(resumed.run.instructions, instructions); assert.ok(nativeRunRequest({ store, runId: resumed.run.id }).prompt.includes(JSON.stringify(instructions)));
+  const next = await call(client, 'claim_native_target', { runId: resumed.run.id });
+  assert.notEqual(next.claimToken, key.claimToken); assert.equal(next.journey.checkpoint.stage, 'register'); assert.equal(next.journey.requiresInspection, true);
+  const journey = await call(client, 'get_native_journey', { companyId: 'alpha' });
+  assert.equal(journey.pendingIntents[0].id, intent.application.id); assert.equal(journey.pendingIntents[0].assistant, 'codex');
+  assert.equal(Object.hasOwn(journey.pendingIntents[0], 'body'), false);
+  const retry = await client.callTool({ name: 'prepare_form_submission', arguments: { ...ownership(next), purpose: 'account', role: 'Different account key', url: 'https://careers.example.com/new-registration' } });
+  assert.equal(retry.isError, true); assert.ok(requests.some(request => request.path.endsWith('/checkpoint'))); assert.ok(requests.some(request => request.path.endsWith('/resume')));
+  assert.equal(store.getNativeRun({ runId: resumed.run.id }).outcomes.applicationsSent, 0);
 });
 
 test('Native MCP email never sends, preserves one exact plan and records a same-actor original-account late receipt', async t => {

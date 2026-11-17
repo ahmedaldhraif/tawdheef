@@ -6,31 +6,36 @@ import { COMPANY_TYPES } from './company-types.js';
 import { DEFAULT_RUN_ACTIONS } from './run-actions.js';
 import './run-filters.css';
 import './agent-readiness.css';
+import { ReadinessSummary, useNativeReadiness } from './NativeReadiness.jsx';
 
 export function RunProgress({ run, open, stop, t = value => value }) {
   const working = run.status === 'running';
+  const needsYou = working && run.currentCheckpoint?.status === 'needs_you';
   const waiting = working && !run.activeCompanyId;
   const total = run.total ?? run.companyIds?.length ?? 0;
   return <div className="run-banner" role="status">
-    <RunActivityMark size={28} active={working && Boolean(run.activeCompanyId)} />
+    <RunActivityMark size={28} active={working && Boolean(run.activeCompanyId) && !needsYou} />
     {run.assistant && <ProviderLogo provider={run.assistant} size={20} decorative />}
-    <span>{run.directoryName ? `${run.directoryName} · ` : ''}{run.currentName ? `${run.currentName} · ` : ''}{waiting ? t('Waiting for assistant') : working ? `Working · ${run.completed} of ${total} checked` : `Run ${run.status} · ${run.completed} of ${total} checked`}</span>
+    <span>{run.directoryName ? `${run.directoryName} · ` : ''}{run.currentName ? `${run.currentName} · ` : ''}{needsYou ? t('Needs you') : waiting ? t('Waiting for assistant') : working ? `Working · ${run.completed} of ${total} checked` : `Run ${run.status} · ${run.completed} of ${total} checked`}</span>
     <button onClick={open}>View progress</button>
     {working && <button onClick={stop}>Stop</button>}
   </div>;
 }
 
-export default function RunDialog({ t, directory, selected, scope, scopeLabels, settings, preferredAssistant, onChangeAssistant, run, onRunUpdate, pollingError, close, onStartNative, onCopyHandoff, api, Modal, stopped }) {
-  const [instructions, setInstructions] = useState('');
+export default function RunDialog({ t, directory, selected, scope, scopeLabels, settings, clientStatus, preferredAssistant, onChangeAssistant, onOpenConnections, draftRef, run, onRunUpdate, pollingError, close, onStartNative, onResumeNative, onCopyHandoff, api, Modal, stopped }) {
+  const draft = draftRef?.current?.directoryId === directory.id ? draftRef.current : null;
+  const [instructions, setInstructions] = useState(() => draft?.instructions || '');
   const assistant = (preferredAssistant || settings?.preferredAssistant) === 'claude-code' ? 'claude-code' : 'codex';
   const assistantName = assistant === 'codex' ? 'Codex' : 'Claude Code';
   const [handoff, setHandoff] = useState(''), [handoffCopied, setHandoffCopied] = useState(false), [handoffFallback, setHandoffFallback] = useState('');
-  const [actions, setActions] = useState(() => ({ ...DEFAULT_RUN_ACTIONS, createProfiles: true }));
+  const [handoffRunId, setHandoffRunId] = useState(null);
+  const [actions, setActions] = useState(() => draft?.actions || ({ ...DEFAULT_RUN_ACTIONS, createProfiles: true }));
   const [preview, setPreview] = useState(null);
   const [previewError, setPreviewError] = useState('');
   const [previewRetry, setPreviewRetry] = useState(0);
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [targetOffset, setTargetOffset] = useState(0), [targetPage, setTargetPage] = useState(null), [targetsError, setTargetsError] = useState(''), [targetsRetry, setTargetsRetry] = useState(0);
+  const readiness = useNativeReadiness({ api, assistant, actions, enabled: !run && Object.values(actions).some(Boolean), revision: JSON.stringify([settings?.applicationEmail, clientStatus?.capabilities]) });
   const listScope = scope || { directoryId: directory.id, ...(selected?.size ? { companyIds: [...selected].sort() } : {}) };
   const scopeKey = JSON.stringify({ ...listScope, actions });
   const count = preview?.scopeKey === scopeKey ? preview.count : null;
@@ -42,6 +47,7 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
   const companyTypeLabels = scopeLabels?.companyTypeLabels || COMPANY_TYPES.filter(type => companyTypes.includes(type.id)).map(type => type.label);
   const startLabel = count === null ? 'Checking companies…' : `Run on ${count} ${hasSelection ? 'selected' : count === 1 ? 'company' : 'companies'}`;
   const currentTargetPage = targetPage && targetPage.runId === run?.id && targetPage.offset === targetOffset ? targetPage : null;
+  useEffect(() => { if (!run && draftRef) draftRef.current = { directoryId: directory.id, instructions, actions }; }, [run?.id, directory.id, instructions, actions, draftRef]);
   useEffect(() => { setTargetOffset(0); setTargetPage(null); setTargetsError(''); }, [run?.id]);
   useEffect(() => {
     if (!run?.id) return;
@@ -52,7 +58,7 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
       setTargetPage({ ...value, runId: run.id });
     }).catch(failure => { if (active) setTargetsError(failure.message); });
     return () => { active = false; };
-  }, [run?.id, run?.completed, run?.status, run?.activeCompanyId, targetOffset, targetsRetry]);
+  }, [run?.id, run?.completed, run?.status, run?.activeCompanyId, run?.updatedAt, run?.checkpointRevision, targetOffset, targetsRetry]);
   useEffect(() => {
     if (run) return;
     let active = true;
@@ -66,13 +72,17 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
     return () => { active = false; };
   }, [run?.id, scopeKey, previewRetry]);
   const working = run?.status === 'running';
-  const current = run?.targets?.find(target => target.status === 'working');
+  const current = currentTargetPage?.items.find(target => target.companyId === run?.activeCompanyId) || run?.targets?.find(target => target.status === 'working');
+  const currentCheckpoint = run?.currentCheckpoint || current?.checkpoint;
   const confirmedCount = run?.outcomes?.applicationsSent ?? run?.appliedCount ?? (run?.targets ? run.targets.filter(target => target.status === 'applied').length : run?.targetCounts ? run.targetCounts.applied || 0 : run?.counts ? run.counts.applied || 0 : 'Loading');
-  async function copyHandoff(value) {
-    const result = value || handoff || await onCopyHandoff?.(run);
+  const currentHandoff = handoffRunId === run?.id ? handoff : '';
+  const currentHandoffCopied = handoffRunId === run?.id && handoffCopied;
+  const currentHandoffFallback = handoffRunId === run?.id ? handoffFallback : '';
+  async function copyHandoff(value, ownerRunId = run?.id) {
+    const result = value || currentHandoff || await onCopyHandoff?.(run);
     const prompt = typeof result === 'string' ? result : result?.prompt;
     if (typeof prompt !== 'string' || !prompt.trim()) throw new Error(t('The run request could not be prepared. Try again.'));
-    setHandoff(prompt); setHandoffCopied(false); setHandoffFallback('');
+    setHandoff(prompt); setHandoffRunId(ownerRunId); setHandoffCopied(false); setHandoffFallback('');
     try { await navigator.clipboard.writeText(prompt); setHandoffCopied(true); }
     catch { setHandoffFallback(prompt); }
   }
@@ -81,14 +91,24 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
     try {
       const result = await onStartNative(instructions, assistant, actions);
       onRunUpdate(result.run || result);
-      if (result.handoff) await copyHandoff(result.handoff);
+      if (result.handoff) await copyHandoff(result.handoff, (result.run || result).id);
+    } catch (failure) { setError(failure.message); }
+    finally { setBusy(false); }
+  }
+  async function resumeTarget(companyId) {
+    if (busy || working || !onResumeNative) return;
+    setBusy(true); setError('');
+    try {
+      const result = await onResumeNative(run, companyId);
+      onRunUpdate(result.run || result);
+      if (result.handoff) await copyHandoff(result.handoff, (result.run || result).id);
     } catch (failure) { setError(failure.message); }
     finally { setBusy(false); }
   }
   const footer = <div className="run-dialog-footer">
     {(error || pollingError || previewError) && <div className="run-dialog-error"><p className="form-error" role="alert">{error || pollingError || previewError}</p>{previewError && !run && <button type="button" onClick={() => { setPreview(null); setPreviewError(''); setPreviewRetry(value => value + 1); }}>Check again</button>}</div>}
     <div className="run-dialog-actions">
-      {run ? <><button onClick={close} disabled={busy}>Close</button>{working && <button type="button" className="primary" disabled={busy || (!handoff && !onCopyHandoff)} onClick={async () => { setBusy(true); setError(''); try { await copyHandoff(); } catch (failure) { setError(failure.message); } finally { setBusy(false); } }}><Copy size={15} />{t(handoffCopied ? 'Run request copied' : 'Copy run request')}</button>}{working && <button disabled={busy} onClick={async () => { setBusy(true); try { onRunUpdate(await api(`/runs/${run.id}/stop`, 'POST')); await stopped(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Stop run</button>}</> : <>
+      {run ? <><button onClick={close} disabled={busy}>Close</button>{working && <button type="button" className="primary" disabled={busy || (!currentHandoff && !onCopyHandoff)} onClick={async () => { setBusy(true); setError(''); try { await copyHandoff(); } catch (failure) { setError(failure.message); } finally { setBusy(false); } }}><Copy size={15} />{t(currentHandoffCopied ? 'Run request copied' : 'Copy run request')}</button>}{working && <button disabled={busy} onClick={async () => { setBusy(true); try { onRunUpdate(await api(`/runs/${run.id}/stop`, 'POST')); await stopped(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Stop run</button>}</> : <>
         <div className="run-assistant-selected"><ProviderLogo provider={assistant} size={20} decorative /><span>{assistantName}</span>{onChangeAssistant && <button type="button" className="text-button" disabled={busy} onClick={onChangeAssistant}>{t('Change')}</button>}</div>
         <button onClick={close} disabled={busy}>Cancel</button>
         <button className="primary" aria-label={busy ? 'Starting…' : startLabel} disabled={busy || !count || !hasAction || !onStartNative} onClick={startRun}><Play size={15} />{busy ? 'Starting…' : 'Run'}</button>
@@ -97,16 +117,22 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
   </div>;
   return <Modal title={run ? 'Run progress' : 'Run'} close={close} t={t} pending={busy} footer={footer}>
     {run ? <>
-      <div className="run-current"><RunActivityMark size={32} active={working && Boolean(run.activeCompanyId)} /><ProviderLogo provider={run.assistant} size={24} /><strong>{working ? (current?.name || run.currentName ? `Working on ${current?.name || run.currentName}` : t('Waiting for assistant')) : run.status === 'completed' ? 'Finished this pass' : 'Run stopped'}</strong></div>
+      <div className="run-current"><RunActivityMark size={32} active={working && Boolean(run.activeCompanyId) && currentCheckpoint?.status !== 'needs_you'} /><ProviderLogo provider={run.assistant} size={24} /><strong>{working ? currentCheckpoint?.status === 'needs_you' ? t('Needs you') : (current?.name || run.currentName ? `Working on ${current?.name || run.currentName}` : t('Waiting for assistant')) : run.status === 'completed' ? 'Finished this pass' : 'Run stopped'}</strong></div>
       <p className="dialog-intro">{run.completed} of {run.total ?? run.companyIds?.length ?? 0} companies checked. {confirmedCount} with confirmed submissions.</p>
       {run.companyTypes?.length > 0 && <p className="field-hint">Company types: {COMPANY_TYPES.filter(type => run.companyTypes.includes(type.id)).map(type => t(type.label)).join(', ')}.</p>}
       {run.locations?.length > 0 && <p className="field-hint">Locations: {(run.locationLabels || run.locations.map(id => id === 'unknown' ? 'Unknown location' : id.replace(/^location:/, ''))).join(', ')}.</p>}
       <p className="field-hint">{working ? <>{t('Paste the run request into your existing')} {run.assistant === 'claude-code' ? 'Claude Code' : 'Codex'} {t('chat. Keep Tawdheef open to record progress.')}</> : run.notes || 'Press Run again to retry unfinished companies.'}</p>
       {run.status === 'cancelled' && <p className="field-hint">{t('Stop any remaining work in your assistant.')}</p>}
-      {working && handoffFallback && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={handoffFallback} onFocus={event => event.target.select()} /></label>}
+      {working && currentHandoffFallback && <label>{t('Copy into your assistant')}<textarea rows={3} readOnly value={currentHandoffFallback} onFocus={event => event.target.select()} /></label>}
       {targetsError && <p className="form-error" role="alert">{targetsError} <button type="button" onClick={() => setTargetsRetry(value => value + 1)}>{t('Try again')}</button></p>}
       {!currentTargetPage && !targetsError && <p role="status">{t('Loading records…')}</p>}
-      <ol className="run-targets" start={targetOffset + 1}>{currentTargetPage?.items.map(target => <li key={target.companyId}><span>{target.name || target.companyId}</span><strong>{({ pending: working ? 'Waiting' : 'Not attempted', working: working ? 'Working…' : 'Needs you', applied: 'Applied', checked: 'Checked', failed: 'Try again', needs_you: 'Needs you', uncertain: 'Check submission', skipped: 'Skipped' })[target.status]}</strong>{target.reason && <small>{target.reason}</small>}</li>)}</ol>
+      <ol className="run-targets" start={targetOffset + 1}>{currentTargetPage?.items.map(target => {
+        const blocked = ['needs_you', 'failed', 'uncertain'].includes(target.status) || target.checkpoint?.status === 'needs_you';
+        const nextStep = target.nextStep || target.checkpoint?.nextStep || target.reason;
+        const stepUrl = target.checkpoint?.url;
+        const canOpen = typeof stepUrl === 'string' && /^https?:\/\//i.test(stepUrl);
+        return <li key={target.companyId}><span>{target.name || target.companyId}</span><strong>{t(({ pending: working ? 'Waiting' : 'Not attempted', working: blocked ? 'Needs you' : working ? 'Working…' : 'Needs you', applied: 'Applied', checked: 'Checked', failed: 'Try again', needs_you: 'Needs you', uncertain: 'Check submission', skipped: 'Skipped' })[target.status])}</strong>{nextStep && <small>{nextStep}</small>}{blocked && <div className="run-target-actions">{canOpen && <a href={stepUrl} target="_blank" rel="noopener noreferrer">{t('Open page')}</a>}{!working && onResumeNative && <button type="button" disabled={busy} aria-label={`${t('Resume')} ${target.name || target.companyId}`} onClick={() => resumeTarget(target.companyId)}>{t('Resume')}</button>}</div>}</li>;
+      })}</ol>
       {currentTargetPage && <div className="form-actions"><span>{targetOffset + (currentTargetPage.items.length ? 1 : 0)}–{targetOffset + currentTargetPage.items.length} {t('of')} {currentTargetPage.total}</span><button disabled={targetOffset === 0} onClick={() => setTargetOffset(value => Math.max(0, value - 50))}>{t('Previous records')}</button><button disabled={targetOffset + 50 >= currentTargetPage.total} onClick={() => setTargetOffset(value => value + 50)}>{t('Next records')}</button></div>}
     </> : <>
       <p className="dialog-intro" role="status"><strong>{count === null ? previewError ? 'Count unavailable' : 'Checking your list…' : `${count.toLocaleString()} ${hasSelection ? 'selected ' : ''}${count === 1 ? 'company' : 'companies'}`}</strong> in {directory.name}.</p>
@@ -125,6 +151,10 @@ export default function RunDialog({ t, directory, selected, scope, scopeLabels, 
         </div>
         {!hasAction && <p className="field-hint">Choose at least one action to start.</p>}
       </fieldset>
+
+      {hasAction && <ReadinessSummary readiness={readiness} assistantName={assistantName} t={t} compact>
+        {!readiness.value?.ready && (onOpenConnections || onChangeAssistant) && <button type="button" className="text-button" disabled={busy} onClick={onOpenConnections || onChangeAssistant}>{t('Connections')}</button>}
+      </ReadinessSummary>}
 
       <details className="run-more-options"><summary>Add a note</summary>
         <label>{t('Note (optional)')}<textarea rows={2} placeholder="e.g. Product roles only, remote or hybrid" value={instructions} onChange={e => setInstructions(e.target.value)} /></label>

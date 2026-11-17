@@ -1,5 +1,8 @@
 [hidden] { display: none !important; }
 .dialog-header h2 { min-width: 0; overflow-wrap: anywhere; }
+.dialog-header-with-back { gap: 8px; }
+.dialog-header-with-back h2 { flex: 1; }
+.dialog-header-with-back .connections-back { flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; margin: -8px 0; }
 .detail-tabs { min-width: 0; overflow-x: auto; }
 .form-fields { min-inline-size: 0; padding: 0; margin: 0; border: 0; }
 .discard-changes p { margin-top: 0; }

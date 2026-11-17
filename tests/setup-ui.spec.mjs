@@ -45,7 +45,7 @@ test('assistant choice persists through CV guidance and reloading without model 
   await dialog.getByRole('button', { name: /^Assistant —/ }).click();
   await dialog.getByRole('radio', { name: 'Use Claude Code', exact: true }).check();
   await dialog.getByRole('button', { name: 'Back to connections', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Tabbio CV — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Tabbio CV — Not checked', exact: true }).click();
   await expect(dialog).toContainText('Claude Code');
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.__setupClipboard)).toContain('claude-code');
@@ -66,7 +66,7 @@ test('a failed assistant preference save retains the earlier selection and retry
 test('Email and Calendar provider navigation returns focus without handling credentials', async ({ page }) => {
   const dialog = await openConnections(page);
   for (const [kind, provider] of [['Email', 'Gmail'], ['Calendar', 'Google Calendar']]) {
-    const category = dialog.getByRole('button', { name: `${kind} — Unknown`, exact: true });
+    const category = dialog.getByRole('button', { name: `${kind} — ${kind === 'Calendar' ? 'Optional' : 'Not checked'}`, exact: true });
     await category.click();
     const row = dialog.getByRole('button', { name: provider, exact: true });
     await row.click();
@@ -82,7 +82,7 @@ test('a blocked clipboard shows only the requested setup text and Escape returns
   await page.setViewportSize({ width: 320, height: 700 });
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('blocked'); } } }));
   const dialog = await openConnections(page);
-  await dialog.getByRole('button', { name: 'Browser & computer use — Unknown', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Browser & computer use — Not checked', exact: true }).click();
   await dialog.getByRole('button', { name: 'Copy setup request', exact: true }).click();
   await expect(dialog.getByRole('textbox', { name: 'Copy into your assistant', exact: true })).toHaveValue(/browser/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
