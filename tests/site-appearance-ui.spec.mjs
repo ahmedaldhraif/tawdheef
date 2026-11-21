@@ -16,6 +16,76 @@ const themeKey = 'tawdheef-docs-theme';
 
 const activeAgentAnimations = locator => locator.evaluate(element => element.getAnimations({subtree:true}).filter(animation => animation.playState === 'running').length);
 
+for (const width of [320,390,768,1440]) for (const locale of ['en','ar']) for (const colorScheme of ['light','dark']) {
+  test(`every typed headline fits its paint box at ${width}px ${locale} ${colorScheme}`,async({page})=>{
+    await page.setViewportSize({width,height:900});
+    await page.emulateMedia({colorScheme,reducedMotion:'no-preference'});
+    await page.clock.install();
+    await page.clock.pauseAt(new Date(Date.now()+1000));
+    await page.addInitScript(()=>{
+      document.addEventListener('DOMContentLoaded',()=>document.fonts.ready.then(()=>{
+        const text=document.querySelector('.agent-phrase-text'),slot=text?.closest('.agent-phrase-slot');
+        if(!text)return;
+        const audit=window.__headlineAudit={clips:[],seen:[],samples:0,geometry:[]},checked=new Set();
+        const inspect=()=>{
+          const value=text.textContent,phase=slot.dataset.phase,key=phase+':'+value;
+          if(!value||checked.has(key))return;
+          checked.add(key);audit.samples++;
+          if(phase==='hold'&&!audit.seen.includes(value))audit.seen.push(value);
+          const range=document.createRange();range.selectNodeContents(text);
+          const glyphs=range.getBoundingClientRect(),paint=text.getBoundingClientRect();
+          const fits=(inner,outer)=>inner.left>=outer.left-.75&&inner.right<=outer.right+.75&&inner.top>=outer.top-.75&&inner.bottom<=outer.bottom+.75;
+          const note=(reason)=>{if(audit.clips.length<10)audit.clips.push({reason,value,phase,glyphs:glyphs.toJSON(),paint:paint.toJSON()});};
+          if(!fits(glyphs,paint))note('glyph outside gradient paint box');
+          if(glyphs.left<-.75||glyphs.right>document.documentElement.clientWidth+.75)note('glyph outside viewport');
+          if(phase==='type'){
+            const cursor=getComputedStyle(text,'::after'),space=parseFloat(cursor.marginInlineStart)+parseFloat(cursor.width);
+            if(getComputedStyle(text).direction==='rtl'?glyphs.left-space<paint.left-.75:glyphs.right+space>paint.right+.75)note('cursor outside paint box');
+          }
+          for(let parent=text.parentElement;parent&&parent!==document.body;parent=parent.parentElement){
+            const css=getComputedStyle(parent),bounds=parent.getBoundingClientRect();
+            if(/hidden|clip/.test(css.overflowX)&&(glyphs.left<bounds.left-.75||glyphs.right>bounds.right+.75))note('horizontal ancestor clip');
+            if(/hidden|clip/.test(css.overflowY)&&(glyphs.top<bounds.top-.75||glyphs.bottom>bounds.bottom+.75))note('vertical ancestor clip');
+          }
+          const h=text.closest('h1').getBoundingClientRect();audit.geometry.push([h.x,h.y,h.width,h.height]);
+        };
+        new MutationObserver(inspect).observe(text,{childList:true,subtree:true,characterData:true});inspect();
+      }),{once:true});
+    });
+    for(const path of [locale==='ar'?'/welcome/ar/':'/welcome/',(locale==='ar'?'/ar':'')+'/skills/']){
+      await page.goto(path);await page.evaluate(()=>document.fonts.ready);
+      await expect(page.locator('#hero-native-agent')).toHaveAttribute('data-playing','true');
+      await page.clock.runFor(9000);
+      const audit=await page.evaluate(()=>window.__headlineAudit);
+      expect(audit.clips).toEqual([]);expect(audit.seen).toHaveLength(2);expect(audit.samples).toBeGreaterThan(40);
+      for(let i=0;i<4;i++)expect(Math.max(...audit.geometry.map(box=>box[i]))-Math.min(...audit.geometry.map(box=>box[i]))).toBeLessThanOrEqual(.75);
+    }
+  });
+}
+
+test('speaking-to-coding handoff preserves the visible native pose and settles smoothly',async({page})=>{
+  await page.goto('/skills/');
+  await expect(page.locator('#hero-native-agent')).toHaveAttribute('data-state','speaking');
+  const result=await page.evaluate(()=>new Promise(resolve=>{
+    const agent=document.querySelector('#hero-native-agent'),pose=agent.querySelector('.mascot-pose');
+    const y=()=>{const value=getComputedStyle(pose).transform;return value==='none'?0:new DOMMatrix(value).m42;};
+    let previous=y(),raf;
+    const sample=()=>{if(agent.dataset.state==='speaking')previous=y();raf=requestAnimationFrame(sample);};sample();
+    const observer=new MutationObserver(()=>{
+      if(agent.dataset.state!=='coding')return;
+      observer.disconnect();cancelAnimationFrame(raf);
+      const start=y(),blends=pose.getAnimations().filter(animation=>animation.id==='native-agent-state-blend');
+      setTimeout(()=>resolve({previous,start,additive:blends.some(animation=>animation.effect.composite==='add'),end:y()}),240);
+    });observer.observe(agent,{attributes:true,attributeFilter:['data-state']});
+  }));
+  expect(Math.abs(result.previous)).toBeGreaterThan(.5);
+  expect(Math.abs(result.start-result.previous)).toBeLessThan(.4);
+  expect(result.additive).toBe(true);expect(Math.abs(result.end)).toBeLessThan(.01);
+  await page.emulateMedia({forcedColors:'active'});
+  await expect(page.locator('#hero-native-agent')).toHaveAttribute('data-playing','false');
+  expect(await activeAgentAnimations(page.locator('#hero-native-agent'))).toBe(0);
+});
+
 test('the website agent stops when hidden or offscreen and keeps the native face',async({page})=>{
   await page.addInitScript(()=>{
     window.__agentDocumentHidden=false;
