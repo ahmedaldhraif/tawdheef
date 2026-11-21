@@ -1,4 +1,6 @@
-# توظيف - التقديم الآلي للوظائف
+# توظيف - أتمتة التقديم للوظائف وتتبع الطلبات
+
+[www.tawdheef.com](https://www.tawdheef.com/ar/) · [English](README.md)
 
 <picture>
   <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
@@ -9,9 +11,11 @@
 
 [![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
 
-[ابدأ هنا](docs/i18n/ar/guides/use-the-skill.md) · [حزم الشركات](directories/README.md) · [الأدلة](docs/i18n/ar/guides/README.md) · [ساهم](CONTRIBUTING.md) · [English](README.md)
+[ابدأ هنا](docs/i18n/ar/guides/use-the-skill.md) · [المهارات](https://www.tawdheef.com/ar/skills/) · [حزم الشركات](directories/README.md) · [الأدلة](https://www.tawdheef.com/ar/guides/) · [مصادر الأدلة](docs/i18n/ar/guides/README.md) · [ساهم](CONTRIBUTING.md) · [English](README.md)
 
 **اعثر على وظائف تناسبك. أنشئ ملفاتك المهنية.**
+
+توظيف (Tawdheef) مشروع مجاني ومفتوح المصدر للباحثين عن عمل في أي دولة. التطبيق وحزم الشركات والمهارة والأدلة أجزاء من مشروع واحد، والمساهمة متاحة للجميع.
 
 تطبيق مجاني ومفتوح المصدر لك ولمساعدك Codex أو Claude Code. استكشف الشركات
 والوظائف، وافهم سبب ملاءمة الفرصة لسيرتك، وتابع النتائج على جهازك. أنت تختار

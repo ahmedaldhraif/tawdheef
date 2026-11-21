@@ -39,3 +39,46 @@ test('both READMEs use the same brand GIF with dark and reduced-motion fallbacks
     }
   }
 });
+
+test('GitHub identity GIFs contain the complete bilingual loop, not a truncated preview', () => {
+  const folder = new URL('../public/brand/github-hero/', import.meta.url);
+  const source = JSON.parse(readFileSync(new URL('sources.json', folder), 'utf8'));
+  const themes = [];
+  for (const theme of ['light', 'dark']) {
+    const bytes = readFileSync(new URL(`wordmark-${theme}.gif`, folder));
+    assert.equal(bytes.subarray(0, 6).toString(), 'GIF89a');
+    assert.equal(bytes.readUInt16LE(6), 800);
+    assert.equal(bytes.readUInt16LE(8), 176);
+    let offset = 13 + ((bytes[10] & 128) ? 3 * (2 << (bytes[10] & 7)) : 0);
+    let frames = 0, duration = 0, delay = 0, ended = false;
+    const subblocks = () => {
+      for (;;) {
+        assert.ok(offset < bytes.length, `${theme}: missing block terminator`);
+        const size = bytes[offset++];
+        if (!size) break;
+        offset += size;
+        assert.ok(offset <= bytes.length, `${theme}: truncated block`);
+      }
+    };
+    while (offset < bytes.length) {
+      const type = bytes[offset++];
+      if (type === 0x3b) { ended = true; break; }
+      if (type === 0x21) {
+        const label = bytes[offset++];
+        if (label === 0xf9) delay = bytes.readUInt16LE(offset + 2) * 10;
+        subblocks();
+      } else if (type === 0x2c) {
+        const packed = bytes[offset + 8];
+        offset += 9 + ((packed & 128) ? 3 * (2 << (packed & 7)) : 0);
+        offset++; // LZW minimum code size
+        subblocks(); frames++; duration += delay; delay = 0;
+      } else assert.fail(`${theme}: unexpected GIF block ${type}`);
+    }
+    assert.ok(ended && offset === bytes.length, `${theme}: incomplete GIF`);
+    assert.equal(frames, source.frames);
+    assert.equal(duration, source.durationMs);
+    assert.ok(duration > 6000, 'Both languages must have a full typing and hold interval.');
+    themes.push(bytes);
+  }
+  assert.notDeepEqual(themes[0], themes[1]);
+});

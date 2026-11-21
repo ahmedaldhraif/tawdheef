@@ -1,5 +1,7 @@
 # Tawdheef guides
 
+[Website guides](https://www.tawdheef.com/guides/) · [Skills overview](https://www.tawdheef.com/skills/) · [Project home](https://www.tawdheef.com/)
+
 English | [العربية](../i18n/ar/guides/README.md)
 
 Your actual client owns external connections; Tawdheef keeps the shared local record. Start in Connections and copy the setup request into your client.

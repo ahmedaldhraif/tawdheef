@@ -208,7 +208,35 @@ export async function paintTimeline(canvas, input = {}) {
   const options = checkedOptions(input), position = timelinePosition(options.steps, options.timeMs || 0);
   const version = (paintVersions.get(canvas) || 0) + 1; paintVersions.set(canvas, version);
   const renderer = await rendererFor(position.state, options);
-  const image = await rasterImage(flattenSVG(renderer.svg, options.reducedMotion ? 0 : position.localMs));
+  // Optional deterministic export of the website's 160 ms additive pose handoff.
+  // Existing studio timelines retain their own unmodified state animation.
+  const bridge = !options.reducedMotion && options.poseBridge;
+  const blends = [];
+  if (bridge && bridge.elapsedMs >= 0 && bridge.elapsedMs < 160) {
+    const previous = await rendererFor(bridge.fromState, options);
+    const selectors = ['.mascot-pose', '.mascot-eye-square', '.mascot-eye-angle-right'];
+    const sample = (svg, time) => {
+      for (const animation of svg.getAnimations({ subtree: true })) { animation.pause(); animation.currentTime = time; }
+      return selectors.map(selector => {
+        const value = getComputedStyle(svg.querySelector(selector)).transform;
+        return new DOMMatrix(value === 'none' ? undefined : value);
+      });
+    };
+    const before = sample(previous.svg, bridge.fromTimeMs);
+    const targets = sample(renderer.svg, 0);
+    selectors.forEach((selector, index) => {
+      const correction = targets[index].inverse().multiply(before[index]);
+      const animation = renderer.svg.querySelector(selector).animate(
+        [{ transform: correction.toString() }, { transform: 'matrix(1,0,0,1,0,0)' }],
+        { duration: 160, easing: 'cubic-bezier(.23,1,.32,1)', composite: 'add' }
+      );
+      animation.pause(); blends.push(animation);
+    });
+  }
+  let frameSVG;
+  try { frameSVG = flattenSVG(renderer.svg, options.reducedMotion ? 0 : position.localMs); }
+  finally { blends.forEach(animation => animation.cancel()); }
+  const image = await rasterImage(frameSVG);
   if (paintVersions.get(canvas) !== version) return { ...position, superseded: true };
   if (canvas.width !== options.size || canvas.height !== options.size) { canvas.width = options.size; canvas.height = options.size; }
   const context = canvas.getContext('2d', { willReadFrequently: true });
