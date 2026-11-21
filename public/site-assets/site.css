@@ -144,13 +144,13 @@ html:has(.guide-layout){scroll-behavior:auto}
 .agent-phrase-text{text-align:start}
 
 /* Preserve descenders inside the clipped text gradient. */
-.agent-phrase-slot{padding-block:3px 7px}
-.agent-phrase-text{padding-block:3px 7px;line-height:inherit}
+.agent-phrase-slot{padding-block:8px 10px}
+.agent-phrase-text{padding-block:8px 10px;line-height:inherit}
 
 
 /* Shared by landing and Skills, including Arabic. Allow for glyphs and cursor. */
-.agent-phrase-slot{padding-inline:5px;overflow:visible}
-.agent-phrase-text{padding-inline:5px;overflow:visible}
+.agent-phrase-slot{padding-inline:5px 10px;overflow:visible}
+.agent-phrase-text{padding-inline:5px 10px;overflow:visible}
 
 .hero .hero-community{max-width:480px;margin:20px auto 0;font-size:12px;line-height:1.7;color:var(--site-muted,var(--muted))}.hero-community a{color:inherit;text-decoration-color:var(--site-line);text-underline-offset:4px}
 

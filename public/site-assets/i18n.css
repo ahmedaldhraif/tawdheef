@@ -146,3 +146,9 @@ html[lang=ar] .skills-step-number{left:auto;right:0}
 }
 
 @media(max-width:340px){.hero .agent-heading h1,.skills-overview .agent-heading h1,html[lang=ar] .hero .agent-heading h1{font-size:20px;letter-spacing:-.4px}.agent-heading .hero-native-agent{flex-basis:32px;width:32px}.agent-heading,.skills-hero .agent-heading{gap:8px}}
+
+/* Arabic joins and diacritics need their natural spacing and full line box. */
+html[lang=ar] .agent-heading h1,html[lang=ar] .hero .agent-heading h1,html[lang=ar] .skills-overview .agent-heading h1{letter-spacing:0;line-height:1.5}
+@media(max-width:340px){
+ html[lang=ar] .hero .agent-heading h1,html[lang=ar] .skills-overview .agent-heading h1{font-size:clamp(18px,5.7vw,20px)}
+}
