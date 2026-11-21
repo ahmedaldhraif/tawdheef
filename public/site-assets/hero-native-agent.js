@@ -8,9 +8,11 @@ if(agent){
  let visible=true,timer=0,index=0,count=0,mode='type',started=false;
  const allowed=()=>visible&&!document.hidden&&!reduced.matches;
  function motion(){
-  const working=allowed()&&(mode==='type'||mode==='erase');
-  agent.dataset.state='coding';
-  agent.dataset.busy=String(working);agent.dataset.playing=String(working);
+  // The marketing introduction speaks the finished line, then codes the next.
+  // This native demonstration is separate from the app's real Run indicator.
+  const playing=allowed();
+  agent.dataset.state=mode==='hold'?'speaking':'coding';
+  agent.dataset.busy=String(playing);agent.dataset.playing=String(playing);
  }
  function paint(){text.textContent=phrases[index].slice(0,count).join('');slot.dataset.phase=mode;motion();}
  function schedule(delay){clearTimeout(timer);if(allowed())timer=setTimeout(step,delay);}
