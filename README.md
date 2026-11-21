@@ -1,6 +1,6 @@
-# Tawdheef - Auto Apply for Jobs
+# Tawdheef - Auto Apply & Application Tracker
 
-[العربية](README.ar.md)
+[www.tawdheef.com](https://www.tawdheef.com/) · [العربية](README.ar.md)
 
 <picture>
   <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="public/brand/github-hero/wordmark-dark.png" />
@@ -11,9 +11,11 @@
 
 [![MIT license](https://img.shields.io/github/license/ahmedaldhraif/tawdheef-auto-apply-jobs?color=5a2aff)](LICENSE) [![Build and tests](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/actions/workflows/ci.yml) [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-5a2aff)](CONTRIBUTING.md)
 
-[Get started](docs/guides/use-the-skill.md) · [Directory packs](directories/README.md) · [Guides](docs/guides/README.md) · [Contribute](CONTRIBUTING.md) · [العربية](README.ar.md)
+[Get started](docs/guides/use-the-skill.md) · [Skills](https://www.tawdheef.com/skills/) · [Directory packs](directories/README.md) · [Guides](docs/guides/README.md) · [Contribute](CONTRIBUTING.md) · [العربية](README.ar.md)
 
 **Find matching jobs. Build career profiles.**
+
+Tawdheef (توظيف) means employment in Arabic. An open-source project for job seekers in any country. Contributions are welcome.
 
 A free, open-source job-search app for you and your AI assistant. Find jobs that fit your CV, apply to suitable roles, and build career profiles for future opportunities, even when no suitable job is open. Your agent can create or complete career accounts, fill your details and upload your CV where those options are available. Tawdheef tracks each outcome separately.
 
@@ -28,13 +30,11 @@ Interface preview with illustrative data. Directory records are research sources
 
 **Your actual AI client owns the connections.** Native connections: connect Tabbio CV, email, calendar, browser/computer and password manager in your Codex/Claude client. Tawdheef supplies local guidance, scoped tasks and shared records. It starts no second assistant or app-owned provider connection in the app.
 
-Tawdheef (توظيف) means employment in Arabic. This app is for job seekers, wherever they are.
-
 Created by [Ahmed AlDhraif](https://github.com/ahmedaldhraif). The app, community directories, skill and guides grow together. [Help improve the project](CONTRIBUTING.md).
 
 [Download current source](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/archive/refs/heads/main.zip) · [Previous preview release](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/releases/tag/v0.1.2) · [Setup and skill guide](docs/guides/use-the-skill.md) · [Directory packs](#gcc-directory-packs)
 
-[English guides](docs/guides/README.md) · [الأدلة بالعربية](docs/i18n/ar/guides/README.md)
+[Website guides](https://www.tawdheef.com/guides/) · [GitHub guide sources](docs/guides/README.md) · [الموقع بالعربية](https://www.tawdheef.com/ar/) · [الأدلة بالعربية](https://www.tawdheef.com/ar/guides/)
 
 ## Choose your starting point
 

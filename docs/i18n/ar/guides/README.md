@@ -1,5 +1,7 @@
 # أدلة Tawdheef بالعربية
 
+[الأدلة على الموقع](https://www.tawdheef.com/ar/guides/) · [المهارات](https://www.tawdheef.com/ar/skills/) · [الموقع](https://www.tawdheef.com/ar/)
+
 [English](../../../guides/README.md) | العربية
 
 تطبيق مساعدك يدير الاتصالات الخارجية؛ توظيف يحتفظ بالسجل المحلي. ابدأ من الاتصالات وانسخ طلب الإعداد إلى مساعدك.

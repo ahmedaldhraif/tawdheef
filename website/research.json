@@ -224,7 +224,7 @@
     ],
     "verificationStatus": "Source workflow files were read. Remote repository controls and hosted runs were not verified by this research."
   },
-  "liveStatus": "The project owner reports the public repository and v0.1.1 preview release are live. This documentation task does not replace release assets, publish the domain, establish search indexing or verify AI citations.",
+  "liveStatus": "The public repository and www.tawdheef.com are reachable as of 21 November 2026. This review does not establish search indexing, AI citations or conversion rates.",
   "heroDecision": {
     "basis": "Explicit owner-approved positioning and copy decision; not a tested conversion result.",
     "headline": "Find matching jobs. Build career profiles.",
@@ -271,15 +271,22 @@
     "aboutSource": "website/about.md is the canonical human body. Use supplied facts and verified profile URLs; renderer may add the provided portrait.",
     "preserved": "Approved centered hero and assets, free/open-source message, GitHub-first setup, independent project maintenance, separate Tabbio CV service and existing operational authority. Versioned release snapshots remain distinct from new source/documentation.",
     "notClaimed": "No comparative conversion benefit, indexing/AI-citation guarantee, imported social proof, new hosted connection or fabricated community contribution is established.",
-    "guideCount": 9,
+    "guideCount": 8,
     "skillPlacement": {
       "date": "2026-11-13",
       "basis": "The owner's explicit correction places the skill within Guides and rejects a typed Arabic letter as a logo. No new external evidence or performance claim is added.",
       "canonical": "/guides/use-the-skill/",
       "source": "docs/guides/use-the-skill.md",
-      "legacy": "/skills/ and /skills/tawdheef/ redirect to the canonical guide; remove the separate Skills navigation item.",
+      "legacy": "Keep /skills/ and /ar/skills/ as overviews. Redirect only legacy detail/setup routes to /guides/use-the-skill/ and its Arabic counterpart.",
       "mark": "Approved /brand/mark.svg, the selected Arabic Grid artwork with two square dots, beside the guide heading; preserve exact proportions.",
       "scope": "Human instructions and marketing routes change; tracking, application-run behavior, account ownership and provider permissions do not."
     }
+  },
+  "ecosystemReview": {
+    "date": "2026-11-21",
+    "domain": "https://www.tawdheef.com",
+    "repository": "https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs",
+    "skills": "/skills/ and /ar/skills/ remain the overview. Only legacy detail/setup URLs redirect to the setup guide.",
+    "principle": "One local product, public packs, one workflow skill and bilingual guides. The actual client owns connections. No indexing or conversion guarantee."
   }
 }

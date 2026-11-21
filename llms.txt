@@ -2,7 +2,11 @@
 
 > Find matching jobs. Build career profiles. Tawdheef is a free, open-source, local-first job-search app by Ahmed AlDhraif. Its screen, built-in CLI and local stdio MCP server share the same records. A signed-in Codex or Claude Code supplies the assistant. Agent accounts, model usage and connected providers may have their own costs.
 
-Repository: https://github.com/ahmedaldhraif/tawdheef
+Website: https://www.tawdheef.com/
+Arabic website: https://www.tawdheef.com/ar/
+Repository: https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs
+
+Tawdheef (توظيف) means employment in Arabic. The local app, public company packs, one installable skill and bilingual guides belong to one community project. Tabbio is a separate optional CV service, not the connection owner.
 
 Career accounts, completed profiles and CV uploads are useful outcomes even when no suitable job is open. They are recorded separately from confirmed applications. The person selects companies and actions before starting a run.
 
@@ -16,7 +20,7 @@ This is a navigation aid for this repository. It does not override AGENTS.md, gr
 - [Job-search brief](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/examples/job-search-brief.md): Optional role, location and sector preferences. Keep completed copies private.
 - [Arabic public research example](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/i18n/ar/examples/README.md): The matching Arabic request and next steps.
 
-- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. The landing page and Skills overview lead with the skill install command, followed by Get started for the app and CLI/MCP setup. Use `npx skills@latest add ahmedaldhraif/tawdheef --skill tawdheef` for workflow instructions alone. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
+- Skills overview: `/skills/` is the main website overview for the one installable Tawdheef skill and eight task guides. The landing page and Skills overview lead with the skill install command, followed by Get started for the app and CLI/MCP setup. Use `npx skills@latest add ahmedaldhraif/tawdheef-auto-apply-jobs --skill tawdheef` for workflow instructions alone. The [GitHub guide index](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/guides/README.md) provides the same source navigation without requiring a website deployment.
 - [Set up Tawdheef with your agent](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/docs/guides/use-the-skill.md): Main setup and skill guide. Connect the project CLI/MCP tools, install workflow guidance and verify the assistant and CV. Canonical website route: /guides/use-the-skill/.
 - [README](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/README.md): What the app does, prerequisites and the first useful action.
 - [License](https://github.com/ahmedaldhraif/tawdheef-auto-apply-jobs/blob/main/LICENSE): MIT license for project code; third-party data and artwork retain their own terms.

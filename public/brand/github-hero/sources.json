@@ -8,8 +8,7 @@
   ],
   "nativeArtwork": "Canonical state-*-animated.svg, original CSS/keyframes and native moving highlight. No hand-approximated motion.",
   "wordmarks": [
-    "../wordmark-latin-purple.svg",
-    "../wordmark-arabic-purple.svg"
+    "prefixes.json"
   ],
   "layout": {
     "agentSize": 80,
@@ -27,5 +26,12 @@
   "purpose": "Decorative identity loop, not live progress.",
   "frames": 165,
   "durationMs": 6880,
-  "loop": 0
+  "loop": 0,
+  "prefixGenerator": "scripts/branding/build-github-prefixes.py",
+  "textShaping": "Canonical Manrope / Noto Kufi Arabic 750, original square dots. Each prefix shaped as a whole, consistent full-word baseline and scale.",
+  "transition": {
+    "durationMs": 160,
+    "easing": "cubic-bezier(.23,1,.32,1)",
+    "method": "Additive native pose matrix correction, matching hero-native-agent.js; Coding continues between words and across loop seam."
+  }
 }

@@ -1,5 +1,7 @@
 # Directory packs for Tawdheef
 
+[Browse country packs on tawdheef.com](https://www.tawdheef.com/directories/) · [Get started](https://www.tawdheef.com/guides/use-the-skill/)
+
 Free country, regional and sector packs for the local tracker. Contributions can
 add or improve data for **any country**. Initial research is by Ahmed AlDhraif;
 community contributions are welcome.

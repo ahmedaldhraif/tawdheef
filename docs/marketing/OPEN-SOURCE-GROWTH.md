@@ -1,5 +1,31 @@
 # Tawdheef open-source growth plan
 
+## Ecosystem review, 21 November 2026
+
+The live home is [www.tawdheef.com](https://www.tawdheef.com/), with [Arabic](https://www.tawdheef.com/ar/). GitHub's About website points there. The local app, public packs and one installable skill are entry points into one independent community project. Tabbio is a separate optional CV service. The actual Codex/Claude client owns external connections.
+
+| Current primary reference | Pattern applied |
+| --- | --- |
+| [uv README](https://github.com/astral-sh/uv#readme) | Explain the category, show a concrete result, then link installation and documentation. Define Tawdheef's Arabic name early. |
+| [Supabase README](https://github.com/supabase/supabase#readme) | Distinguish product, docs, help and contribution paths. Keep packs usable before app installation. |
+| [GitHub README guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) | Explain usefulness, starting steps, support and maintainers. Keep genuine license, CI and contribution badges. |
+| [Google AI Search guidance](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) | Useful visible facts, crawlable links and consistent identity. The optional llms.txt is a navigation aid, not a ranking signal. |
+
+These are observed presentation patterns, not evidence of conversion rates or a claim that Tawdheef ranks first.
+
+### Prioritized implementation review
+
+- [x] P1: Match Native ownership and setup in both READMEs, landing, Skills and guides. Installing a skill or pack grants no application authority.
+- [x] P1: Link GitHub and the canonical domain in both directions, including English/Arabic Skills and guides. Retain relative source links for forks and offline readers.
+- [x] P1: Keep Skills as the overview and one setup guide per language. Correct the obsolete planning note that said to redirect the Skills overview.
+- [x] P1: Verify sitemap coverage, canonical URLs, robots, reciprocal language alternates and navigation reachability. CI rejects orphan pages and mismatched repository/domain entry points.
+- [x] P2: Save the native hero generator, joined Arabic prefixes, solid text, light/dark GIFs and reduced-motion stills.
+- [x] P2: Review the [Checklist Design landing-page checklist](https://www.checklist.design/website/landing-page): clear promise, actual app preview, setup CTA, useful outcomes, linked FAQ and repeated start path. Genuine CI and licensing supply trust evidence. Do not invent testimonials or community counts. This is a focused ecosystem review, not a new whole-app visual audit.
+- [ ] After deployment: verify production HTTP responses and current build. Local output checks alone do not prove deployment, indexing or ranking.
+- [ ] Measure the real path before making conversion claims: useful company research → setup → local app → optional CV connection → contribution. No private CV, mail or native-record tracking is added.
+
+Keep the existing brand artwork and motion tokens. Amicro's short-transition guidance informs the review; its registry, font and application framework are not introduced into Tawdheef.
+
 Reviewed 14 November 2026. This compares ten established developer-product repositories and their own sites. It is a selected sample, not a ranking of every repository. Observed patterns inform the recommendations below; public pages and stars do not establish conversion rates.
 
 ## What we can learn
@@ -49,8 +75,7 @@ website pages, places public packs before setup and the CV section, and states
 the actual client's real-CV requirement before matching or acting. [Launch drafts](LAUNCH-KIT.md),
 [pack update notes](../../directories/PACK-UPDATES.md) and a distinct
 [Tabbio integration-page draft](TABBIO-INTEGRATION-PAGE.md) are prepared.
-The owner deferred domain connection on 14 November 2026; no personal post or
-Tabbio page is published by preparing these files.
+Historical note: the owner deferred domain connection on 14 November 2026. The domain was reachable during the 21 November review above. Preparing these files does not publish a personal post or Tabbio integration page.
 
 - README starting-point choices for public research, app setup and contribution.
 - One copyable public-data research task and a private, fillable job-search brief in English and Arabic.
@@ -61,7 +86,7 @@ Tabbio page is published by preparing these files.
 ## Next priorities
 
 1. **Make the public website reachable.** Deploy only the static `site-dist` output. Verify HTTPS, canonical URLs, redirects, assets and production `robots.txt` on the real domain. The local tracker's blocking robots file and loopback server are separate. Add the working domain to GitHub About only after verifying it.
-2. **Verify discovery.** Use Google Search Console and Bing Webmaster Tools for the deployed domain, submit the real sitemap and inspect representative English, Arabic, Skills and country URLs. [Google's AI guidance](https://developers.google.com/search/docs/appearance/ai-features) requires normal search eligibility, useful textual content and crawlable links; it requires no special AI file or schema. [Bing's guidance](https://www.bing.com/webmasters/help/webmaster-guidelines-30fba23a) likewise emphasizes discovery, canonical URLs, useful content and accurate freshness signals. IndexNow is a post-deployment update-notification option, not proof of indexing.
+2. **Verify discovery.** Use Google Search Console and Bing Webmaster Tools for the deployed domain, submit the real sitemap and inspect representative English, Arabic, Skills and country URLs. [Google's AI guidance](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide) requires normal search eligibility, useful textual content and crawlable links; it requires no special AI file or schema. [Bing's guidance](https://www.bing.com/webmasters/help/webmaster-guidelines-30fba23a) likewise emphasizes discovery, canonical URLs, useful content and accurate freshness signals. IndexNow is a post-deployment update-notification option, not proof of indexing.
 3. **Publish original, useful country guidance.** Use actual questions and source-backed research, such as finding an official careers page or distinguishing an employer from a portal. Link the relevant pack and research task. Validate demand and maintain the content before expanding it. Current company pages should use directory/Dataset semantics; `JobPosting` needs an actual eligible vacancy. Do not create thousands of near-identical company or location pages.
 4. **Give people a reason to return.** When a pack is actually published, list its version, changed records, source check dates and linked merged contributions. Credit the real contributor handle/PR. Link GitHub Releases for updates; a star is not a release subscription. A merged correction and a released download are different events.
 5. **Make the first contribution small.** Publish bounded starter tasks only for real identified work, with the source, expected result and checks. Keep the existing code, bug, feature and data forms. Do not invent an empty backlog or another community channel.

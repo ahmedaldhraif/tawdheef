@@ -157,6 +157,35 @@ try {
     if (expected.has(path)) check(/<script\b[^>]*type=["']application\/ld\+json["']/i.test(page.html), `Missing JSON-LD: ${path}`);
   }
   for (const path of expected) check(canonicalPages.has(path), `Missing expected canonical page: ${path}`);
+  // A sitemap entry alone is not a usable journey. Every public canonical
+  // route must also be reachable through ordinary links from the homepage.
+  const reached = new Set(), pending = ['/'];
+  while (pending.length) {
+    const path = pending.shift();
+    if (reached.has(path) || !canonicalPages.has(path)) continue;
+    reached.add(path);
+    for (const anchor of tags(canonicalPages.get(path).html, 'a')) {
+      if (!anchor.href) continue;
+      const url = new URL(anchor.href, domain.origin + path);
+      if (url.origin !== domain.origin) continue;
+      const target = await targetFor(url);
+      if (target && canonicalPages.has(target.pathname) && !reached.has(target.pathname)) pending.push(target.pathname);
+    }
+  }
+  for (const path of canonicalPages.keys()) check(reached.has(path), `Orphan canonical page without a homepage link path: ${path}`);
+  // GitHub, the site and the agent navigation aid describe one project.
+  for (const [file, prefix] of [['README.md', ''], ['README.ar.md', '/ar']]) {
+    const text = await read(join(root, file));
+    for (const path of ['/', '/skills/', '/guides/']) check(text.includes(domain.origin + prefix + path), `${file} missing website journey: ${prefix + path}`);
+    check(text.includes(config.intendedRepository), `${file} points to a different repository.`);
+  }
+  const repositoryIndex = await read(join(root, 'llms.txt'));
+  check(repositoryIndex.includes(`Repository: ${config.intendedRepository}`), 'Agent index repository identity differs from the website.');
+  check(repositoryIndex.includes(`Website: ${domain.origin}/`), 'Agent index website identity differs from the canonical domain.');
+  for (const path of ['/', '/ar/', '/skills/', '/ar/skills/', '/guides/', '/ar/guides/']) {
+    const page = canonicalPages.get(path);
+    check(tags(page?.html || '', 'a').some(link => link.href === config.intendedRepository), `No direct GitHub backlink: ${path}`);
+  }
   for (const [path, page] of canonicalPages) {
     const localized = path === '/' || path === '/ar/' || /^\/(?:ar\/)?(?:skills\/|guides\/|examples\/)/.test(path);
     const alternates = page.links.filter(link => link.rel === 'alternate' && link.hreflang);
