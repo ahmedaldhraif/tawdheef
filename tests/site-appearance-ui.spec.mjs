@@ -36,7 +36,7 @@ test('the website agent stops when hidden or offscreen and keeps the native face
 });
 
 for (const width of [320,1440]) for (const locale of ['en','ar']) for (const colorScheme of ['light','dark']) {
-  test(`native agent is shared, unclipped and works only during typing at ${width}px ${locale} ${colorScheme}`, async ({page}) => {
+  test(`native agent codes and speaks with the headline at ${width}px ${locale} ${colorScheme}`, async ({page}) => {
     await page.setViewportSize({width,height:900});
     await page.emulateMedia({colorScheme,reducedMotion:'no-preference'});
     const prefix=locale==='ar'?'/ar':'';
@@ -45,14 +45,18 @@ for (const width of [320,1440]) for (const locale of ['en','ar']) for (const col
       const agent=page.locator('#hero-native-agent');
       await expect(agent).toHaveAttribute('data-agent-artwork','native-coding');
       await expect(agent.locator('.mascot-eye-angle-right')).toHaveCSS('opacity','1');
+      await expect(agent).toHaveAttribute('data-state','coding');
       await expect.poll(()=>activeAgentAnimations(agent)).toBeGreaterThan(0);
       await expect(page.locator('.agent-phrase-slot')).toHaveAttribute('data-phase','hold');
-      await expect(agent).toHaveAttribute('data-playing','false');
-      expect(await activeAgentAnimations(agent)).toBe(0);
+      await expect(agent).toHaveAttribute('data-state','speaking');
+      await expect(agent).toHaveAttribute('data-playing','true');
+      // Check the native body/eye performance, not merely the moving sheen.
+      await expect(agent.locator('.mascot-pose')).toHaveCSS('animation-name','mascot-speak');
+      await expect(agent.locator('.mascot-eye-square')).toHaveCSS('animation-name','mascot-write');
       const bounds=await agent.boundingBox();
       expect(bounds.x).toBeGreaterThanOrEqual(0);
       expect(bounds.x+bounds.width).toBeLessThanOrEqual(width);
-      await expect.poll(()=>activeAgentAnimations(agent)).toBeGreaterThan(0);
+      await expect(agent).toHaveAttribute('data-state','coding');
       await page.emulateMedia({reducedMotion:'reduce'});
       await expect(agent).toHaveAttribute('data-playing','false');
       expect(await activeAgentAnimations(agent)).toBe(0);
