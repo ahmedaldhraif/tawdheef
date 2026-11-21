@@ -8,7 +8,7 @@ const moonIcon='<svg class="theme-moon" viewBox="0 0 24 24" width="18" height="1
 export function pageLayout({title,description,path='/',body,active='',preview=false,home='/',wide=false,locale='en'},{config,repositoryHome,cta,guidePages,guides,resourcePages=[]}){
  const t=ui[locale],p=locale==='ar'?'/ar':'',plain=p?path.slice(3)||'/':path,canonical=config.domain+path,docs=wide||plain==='/skills/'||plain==='/guides/';
  const localized=plain==='/'||plain==='/skills/'||plain.startsWith('/guides/')||plain.startsWith('/examples/');
- const heroStyleVersion=plain==='/'||plain==='/skills/'?'?v=hero-typing-2':'';
+ const heroStyleVersion=plain==='/'||plain==='/skills/'?'?v=hero-typing-3':'';
  const paths={en:plain,ar:'/ar'+(plain==='/'?'/':plain)},localeHref=lang=>preview&&plain==='/'?(lang==='ar'?'/welcome/ar/':'/welcome/'):paths[lang];
  const languages=localized?`<nav class="language-switch" dir="ltr" aria-label="${locale==='ar'?'اللغة':'Language'}">${['en','ar'].map(lang=>`<a href="${localeHref(lang)}" lang="${lang}" hreflang="${lang}" aria-label="${lang==='ar'?'العربية':'English'}" data-language-link ${lang===locale?'aria-current="page"':''}>${lang==='ar'?'العربية':'EN'}</a>`).join('')}</nav>`:'';
  const alternates=localized?['en','ar','x-default'].map(lang=>`<link rel="alternate" hreflang="${lang}" href="${config.domain+paths[lang==='x-default'?'en':lang]}"/>`).join(''):'';
